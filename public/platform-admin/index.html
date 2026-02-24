@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CMS Platform Admin</title>
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --card: #ffffff;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --line: #e2e8f0;
+        --brand: #7f3e98;
+        --brand-soft: #f3e8ff;
+        --danger: #b91c1c;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .title { font-size: 28px; font-weight: 800; margin: 0; }
+      .sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+      .grid {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+      }
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 16px;
+      }
+      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+      input, select, textarea, button {
+        font: inherit;
+      }
+      input, select, textarea {
+        width: 100%;
+        margin-top: 6px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #fff;
+      }
+      textarea { min-height: 80px; resize: vertical; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+      button {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button.primary {
+        border-color: var(--brand);
+        background: var(--brand);
+        color: #fff;
+      }
+      button.ghost-brand {
+        border-color: #d8b4fe;
+        background: var(--brand-soft);
+        color: #6b21a8;
+      }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      .notice {
+        margin: 0 0 14px;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 13px;
+        border: 1px solid var(--line);
+        background: #fff;
+      }
+      .notice.error { border-color: #fecaca; background: #fef2f2; color: var(--danger); }
+      .notice.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+      .pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        border: 1px solid var(--line);
+        color: var(--muted);
+      }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+      th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; }
+      .tenant-row { cursor: pointer; }
+      .tenant-row:hover { background: #faf5ff; }
+      .tenant-row.selected { background: #faf5ff; }
+      .tenant-name { font-weight: 700; }
+      .tenant-slug { color: var(--muted); font-size: 12px; margin-top: 2px; }
+      .meta { color: var(--muted); font-size: 12px; }
+      .hidden { display: none !important; }
+      .login-shell {
+        max-width: 460px;
+        margin: 8vh auto 0;
+      }
+      .footer-note {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      code {
+        background: #f1f5f9;
+        padding: 1px 5px;
+        border-radius: 6px;
+      }
+      @media (max-width: 980px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="login-view" class="wrap login-shell">
+      <div class="card">
+        <h1 class="title" style="font-size:24px;margin-bottom:6px;">CMS Platform Admin</h1>
+        <p class="sub">Bootstrap login for Phase 2 tenant management.</p>
+        <p id="login-notice" class="notice hidden"></p>
+        <label>
+          Platform admin email
+          <input id="login-email" type="email" placeholder="you@example.com" />
+        </label>
+        <label>
+          Bootstrap secret
+          <input id="login-secret" type="password" placeholder="PLATFORM_BOOTSTRAP_SECRET" />
+        </label>
+        <div class="actions">
+          <button id="login-btn" class="primary">Sign in</button>
+          <button id="refresh-auth-btn">Check session</button>
+        </div>
+        <p class="footer-note">
+          Set <code>PLATFORM_BOOTSTRAP_SECRET</code> in Render to enable this login.
+        </p>
+      </div>
+    </div>
+
+    <div id="app-view" class="wrap hidden">
+      <div class="header">
+        <div>
+          <h1 class="title">CMS Platform Admin</h1>
+          <p class="sub">Manage customer tenants, branding, and access foundations.</p>
+        </div>
+        <div class="actions">
+          <span id="auth-pill" class="pill">Checking session…</span>
+          <button id="logout-btn">Sign out</button>
+        </div>
+      </div>
+
+      <p id="app-notice" class="notice hidden"></p>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Create Customer / Tenant</h2>
+          <label>
+            Tenant name
+            <input id="create-name" type="text" placeholder="Acme Payments" />
+          </label>
+          <label>
+            Tenant slug
+            <input id="create-slug" type="text" placeholder="acme-payments" />
+          </label>
+          <div class="row">
+            <label>
+              Status
+              <select id="create-status">
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </label>
+            <label>
+              Primary color
+              <input id="create-primary-color" type="text" placeholder="#2563EB" />
+            </label>
+          </div>
+          <label>
+            Logo URL
+            <input id="create-logo-url" type="text" placeholder="https://..." />
+          </label>
+          <label>
+            Public site URL
+            <input id="create-public-site-url" type="url" placeholder="https://example.com" />
+          </label>
+          <label>
+            CMS domain URL
+            <input id="create-cms-domain" type="url" placeholder="https://cms.example.com" />
+          </label>
+          <label>
+            Support email
+            <input id="create-support-email" type="email" placeholder="support@example.com" />
+          </label>
+          <div class="actions">
+            <button id="create-tenant-btn" class="primary">Create tenant</button>
+            <button id="refresh-tenants-btn">Refresh list</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Customers / Tenants</h2>
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tenant</th>
+                  <th>Status</th>
+                  <th>Usage</th>
+                  <th>Branding</th>
+                </tr>
+              </thead>
+              <tbody id="tenant-table-body">
+                <tr><td colspan="4" class="meta">Loading tenants…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Edit Selected Tenant</h2>
+        <p id="selected-tenant-empty" class="meta">Select a tenant from the table above to edit branding and status.</p>
+        <div id="selected-tenant-form" class="hidden">
+          <div class="row">
+            <label>
+              Tenant name
+              <input id="edit-name" type="text" />
+            </label>
+            <label>
+              Status
+              <select id="edit-status">
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              Slug (read-only)
+              <input id="edit-slug" type="text" disabled />
+            </label>
+            <label>
+              Primary color
+              <input id="edit-primary-color" type="text" />
+            </label>
+          </div>
+          <label>
+            Logo URL
+            <input id="edit-logo-url" type="text" />
+          </label>
+          <div class="row">
+            <label>
+              Public site URL
+              <input id="edit-public-site-url" type="url" />
+            </label>
+            <label>
+              CMS domain URL
+              <input id="edit-cms-domain" type="url" />
+            </label>
+          </div>
+          <label>
+            Support email
+            <input id="edit-support-email" type="email" />
+          </label>
+          <div class="actions">
+            <button id="save-tenant-btn" class="primary">Save tenant</button>
+            <button id="reload-selected-btn">Reload list</button>
+          </div>
+          <p id="selected-tenant-meta" class="footer-note"></p>
+        </div>
+      </div>
+    </div>
+
+    <script src="/platform-admin/app.js"></script>
+  </body>
+  </html>
+

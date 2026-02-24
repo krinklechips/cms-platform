@@ -13,7 +13,7 @@ It does **not** modify Kardal's current production CMS code.
 - platform admin tenant management API (`/api/platform/tenants`)
 - tenant context middleware (`x-tenant-id` or `x-tenant-slug`)
 - demo tenant-scoped article API (`/api/tenant/articles`)
-- seed data for a `kardal` tenant (keeps Kardal as one tenant inside the future platform model)
+- seed data for a neutral `demo` tenant (you can create Kardal later as a real tenant)
 
 ## What Phase 1 intentionally does NOT include yet
 
@@ -22,6 +22,21 @@ It does **not** modify Kardal's current production CMS code.
 - platform super-admin dashboard UI
 - billing/subscriptions
 - domain provisioning automation
+
+## Phase 2 (current progress)
+
+- Basic Platform Admin UI at `/platform-admin`
+- Tenant list / create / edit branding flows
+- Temporary bootstrap login for platform admin access
+
+### Bootstrap login (temporary)
+
+Set `PLATFORM_BOOTSTRAP_SECRET` and sign in at `/platform-admin` using:
+
+- `PLATFORM_OWNER_EMAIL`
+- the bootstrap secret
+
+This is temporary until full auth/invite flows are implemented.
 
 ## Local setup
 
@@ -61,8 +76,8 @@ curl http://localhost:4100/api/platform/tenants -b /tmp/platform-cookies.txt
 ## Phase 2 (recommended next)
 
 1. Build a small `Platform Admin` UI (`/platform-admin`) to:
-   - create/edit tenants
-   - manage branding (logo/colors/domain)
+   - create/edit tenants ✅
+   - manage branding (logo/colors/domain) ✅
    - invite tenant admins
    - enable/disable features
 2. Introduce real auth (password + reset or magic-link)
@@ -80,10 +95,11 @@ curl http://localhost:4100/api/platform/tenants -b /tmp/platform-cookies.txt
 ### Render
 - Start with **one Render web service** for the platform API (this project).
 - Attach a **persistent disk** for the SQLite DB (`PLATFORM_DB_PATH`).
+- Set `PLATFORM_BOOTSTRAP_SECRET` if you want to use the built-in Platform Admin UI login.
 - Later add a second service for the platform admin frontend (or host frontend on Vercel).
 
 ### Vercel
-- Use Vercel later for the **platform admin frontend** (React app), not required in Phase 1.
+- Use Vercel later for a richer **platform admin frontend** (React app) if you outgrow the built-in `/platform-admin` UI.
 - Keep it separate from Kardal marketing site deployment.
 
 ### Cloudflare
