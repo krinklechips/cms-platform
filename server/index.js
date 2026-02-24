@@ -6,7 +6,9 @@ import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
 import { db, seedPlatformDefaults } from './db.js';
 import platformTenantsRouter from './routes/platformTenants.js';
+import platformPlacementsRouter from './routes/platformPlacements.js';
 import tenantArticlesRouter from './routes/tenantArticles.js';
+import publicSlotsRouter from './routes/publicSlots.js';
 
 seedPlatformDefaults();
 
@@ -15,6 +17,9 @@ const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, '..', 'public');
 
 const app = express();
+// Render terminates TLS at the proxy. Trust proxy so secure session cookies are
+// set and read correctly in production behind Render's HTTPS endpoint.
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '2mb' }));
 app.use(
   cors({
@@ -111,7 +116,9 @@ app.post('/api/platform/auth/logout', (req, res) => {
 });
 
 app.use('/api/platform/tenants', platformTenantsRouter);
+app.use('/api/platform/placements', platformPlacementsRouter);
 app.use('/api/tenant/articles', tenantArticlesRouter);
+app.use('/api/public', publicSlotsRouter);
 app.use('/platform-admin', express.static(path.join(publicDir, 'platform-admin')));
 
 app.get('/', (req, res) => {

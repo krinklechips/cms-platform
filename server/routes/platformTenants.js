@@ -1,5 +1,5 @@
 import express from 'express';
-import { db } from '../db.js';
+import { db, ensureDefaultTenantSlots } from '../db.js';
 import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 
 const router = express.Router();
@@ -19,6 +19,7 @@ function mapTenant(row) {
       cmsDomain: row.cms_domain,
     },
     articleCount: Number(row.article_count || 0),
+    contentItemCount: Number(row.content_item_count || 0),
     mediaCount: Number(row.media_count || 0),
     userCount: Number(row.user_count || 0),
     createdAt: row.created_at,
@@ -34,6 +35,7 @@ router.get('/', (req, res) => {
       t.*,
       b.logo_url, b.primary_color, b.support_email, b.public_site_url, b.cms_domain,
       (SELECT COUNT(*) FROM articles a WHERE a.tenant_id = t.id) AS article_count,
+      (SELECT COUNT(*) FROM content_items ci WHERE ci.tenant_id = t.id) AS content_item_count,
       (SELECT COUNT(*) FROM media m WHERE m.tenant_id = t.id) AS media_count,
       (SELECT COUNT(*) FROM tenant_memberships tm WHERE tm.tenant_id = t.id AND tm.status = 'active') AS user_count
     FROM tenants t
@@ -86,6 +88,7 @@ router.post('/', (req, res) => {
       INSERT INTO tenant_settings (tenant_id, settings_json, updated_at)
       VALUES (?, '{}', CURRENT_TIMESTAMP)
     `).run(tenantId);
+    ensureDefaultTenantSlots(tenantId);
 
     const row = db.prepare(`
       SELECT t.*, b.logo_url, b.primary_color, b.support_email, b.public_site_url, b.cms_domain

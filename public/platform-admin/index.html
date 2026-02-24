@@ -124,6 +124,27 @@
         color: var(--muted);
         font-size: 12px;
       }
+      .section-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 16px;
+      }
+      .stack {
+        display: grid;
+        gap: 16px;
+      }
+      .mini-table td, .mini-table th { padding: 8px 6px; font-size: 12px; }
+      .mini-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+      .badge-tab {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        border: 1px solid var(--line);
+        background: #fff;
+      }
+      .badge-tab.news { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
+      .badge-tab.promotions { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
       code {
         background: #f1f5f9;
         padding: 1px 5px;
@@ -131,6 +152,7 @@
       }
       @media (max-width: 980px) {
         .grid { grid-template-columns: 1fr; }
+        .section-grid { grid-template-columns: 1fr; }
       }
     </style>
   </head>
@@ -290,9 +312,137 @@
           <p id="selected-tenant-meta" class="footer-note"></p>
         </div>
       </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Homepage Section: News & Promotions</h2>
+        <p class="sub" style="margin:0 0 12px;">MVP placement manager for slot <code>home.news-promotions</code> with <code>news</code> and <code>promotions</code> tabs.</p>
+        <p id="placement-notice" class="notice hidden"></p>
+        <div id="placement-empty" class="meta">Select a tenant above to manage homepage news/promotions items and placement.</div>
+        <div id="placement-panel" class="section-grid hidden">
+          <div class="stack">
+            <div class="card" style="padding:12px;">
+              <h2 style="margin-bottom:8px;">Create Content Item</h2>
+              <div class="row">
+                <label>
+                  Type
+                  <select id="content-type">
+                    <option value="news">News</option>
+                    <option value="promotion">Promotion</option>
+                  </select>
+                </label>
+                <label>
+                  Status
+                  <select id="content-status">
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                Title
+                <input id="content-title" type="text" placeholder="Blood donation event at Head Office..." />
+              </label>
+              <label>
+                Summary
+                <textarea id="content-summary" placeholder="Short summary for the homepage card."></textarea>
+              </label>
+              <div class="row">
+                <label>
+                  Image URL
+                  <input id="content-image-url" type="text" placeholder="https://..." />
+                </label>
+                <label>
+                  Location (optional)
+                  <input id="content-location" type="text" placeholder="Phnom Penh" />
+                </label>
+              </div>
+              <div class="row">
+                <label>
+                  CTA label
+                  <input id="content-cta-label" type="text" placeholder="Read More" />
+                </label>
+                <label>
+                  CTA URL
+                  <input id="content-cta-url" type="text" placeholder="/news/slug or https://..." />
+                </label>
+              </div>
+              <div class="actions">
+                <button id="create-content-btn" class="primary">Create item</button>
+              </div>
+            </div>
+
+            <div class="card" style="padding:12px;">
+              <h2 style="margin-bottom:8px;">Current Slot Assignments</h2>
+              <div style="overflow:auto;">
+                <table class="mini-table">
+                  <thead>
+                    <tr>
+                      <th>Tab</th>
+                      <th>Order</th>
+                      <th>Item</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="assignment-table-body">
+                    <tr><td colspan="5" class="meta">Select a tenant to load assignments.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card" style="padding:12px;">
+              <h2 style="margin-bottom:8px;">Assign Item To Homepage Slot</h2>
+              <label>
+                Content item
+                <select id="assign-content-item">
+                  <option value="">Select item…</option>
+                </select>
+              </label>
+              <div class="row">
+                <label>
+                  Tab
+                  <select id="assign-tab-key">
+                    <option value="news">News</option>
+                    <option value="promotions">Promotions</option>
+                  </select>
+                </label>
+                <label>
+                  Sort order
+                  <input id="assign-sort-order" type="number" min="0" step="1" value="0" />
+                </label>
+              </div>
+              <div class="actions">
+                <button id="assign-item-btn" class="ghost-brand">Assign to slot</button>
+                <button id="refresh-placement-btn">Refresh slot</button>
+              </div>
+              <p class="footer-note">Assigning an existing item again updates its tab/order for this slot.</p>
+            </div>
+
+            <div class="card" style="padding:12px;">
+              <h2 style="margin-bottom:8px;">Tenant Content Items</h2>
+              <div style="overflow:auto; max-height: 360px;">
+                <table class="mini-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Title</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="content-table-body">
+                    <tr><td colspan="3" class="meta">Select a tenant to load content items.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="/platform-admin/app.js"></script>
   </body>
   </html>
-

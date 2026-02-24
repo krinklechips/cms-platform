@@ -102,6 +102,58 @@ CREATE TABLE IF NOT EXISTS media (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS content_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  type TEXT NOT NULL DEFAULT 'news',
+  title TEXT NOT NULL,
+  summary TEXT,
+  body TEXT,
+  image_url TEXT,
+  location TEXT,
+  cta_label TEXT,
+  cta_url TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  publish_start_at DATETIME,
+  publish_end_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS page_slots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  slot_key TEXT NOT NULL,
+  page_key TEXT NOT NULL,
+  section_key TEXT NOT NULL,
+  title TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  config_json TEXT NOT NULL DEFAULT '{}',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, slot_key),
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS slot_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  slot_id INTEGER NOT NULL,
+  content_item_id INTEGER NOT NULL,
+  tab_key TEXT NOT NULL DEFAULT 'news',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'active',
+  starts_at DATETIME,
+  ends_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(slot_id, content_item_id),
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  FOREIGN KEY(slot_id) REFERENCES page_slots(id) ON DELETE CASCADE,
+  FOREIGN KEY(content_item_id) REFERENCES content_items(id) ON DELETE CASCADE
+);
 `);
 
 function ensureColumn(table, column, ddl) {
@@ -112,6 +164,15 @@ function ensureColumn(table, column, ddl) {
 // Phase 1 migration safety for future schema evolution.
 ensureColumn('articles', 'tenant_id', 'ALTER TABLE articles ADD COLUMN tenant_id INTEGER');
 ensureColumn('media', 'tenant_id', 'ALTER TABLE media ADD COLUMN tenant_id INTEGER');
+
+function ensureDefaultTenantSlots(tenantId) {
+  db.prepare(`
+    INSERT INTO page_slots (
+      tenant_id, slot_key, page_key, section_key, title, status, config_json, updated_at
+    ) VALUES (?, 'home.news-promotions', 'home', 'news-promotions', 'News & Promotions', 'active', '{"tabs":["news","promotions"],"maxItemsPerTab":6}', CURRENT_TIMESTAMP)
+    ON CONFLICT(tenant_id, slot_key) DO NOTHING
+  `).run(tenantId);
+}
 
 export function seedPlatformDefaults() {
   const insertUser = db.prepare(`
@@ -162,4 +223,8 @@ export function seedPlatformDefaults() {
     VALUES (?, '{}', CURRENT_TIMESTAMP)
     ON CONFLICT(tenant_id) DO NOTHING
   `).run(tenant.id);
+
+  ensureDefaultTenantSlots(tenant.id);
 }
+
+export { ensureDefaultTenantSlots };
