@@ -38,8 +38,11 @@
     loginBtn: document.getElementById('login-btn'),
     refreshAuthBtn: document.getElementById('refresh-auth-btn'),
     logoutBtn: document.getElementById('logout-btn'),
+    appModeAdminBtn: document.getElementById('app-mode-admin'),
+    appModeTenantBtn: document.getElementById('app-mode-tenant'),
     sidebarPlatformGroup: document.getElementById('sidebar-platform-group'),
     sidebarTenantGroup: document.getElementById('sidebar-tenant-group'),
+    tenantExitAdminLink: document.getElementById('tenant-exit-admin-link'),
     sidebarLogoTitle: document.getElementById('sidebar-logo-title'),
     sidebarLogoSubtitle: document.getElementById('sidebar-logo-subtitle'),
     topbarTitle: document.getElementById('topbar-title'),
@@ -284,6 +287,10 @@
       els.loginModeAdminBtn.classList.toggle('is-active', !isTenantMode);
       els.loginModeTenantBtn.classList.toggle('is-active', isTenantMode);
     }
+    if (els.appModeAdminBtn && els.appModeTenantBtn) {
+      els.appModeAdminBtn.classList.toggle('is-active', !isTenantMode);
+      els.appModeTenantBtn.classList.toggle('is-active', isTenantMode);
+    }
     if (els.loginEmailLabel) {
       els.loginEmailLabel.textContent = isTenantMode ? 'Tenant operator email (platform bootstrap for now)' : 'Platform admin email';
     }
@@ -297,6 +304,9 @@
     }
     if (els.sidebarTenantGroup) {
       els.sidebarTenantGroup.classList.remove('hidden');
+    }
+    if (els.tenantExitAdminLink) {
+      els.tenantExitAdminLink.classList.toggle('hidden', !isTenantMode);
     }
     if (els.sectionTenants) {
       els.sectionTenants.classList.toggle('hidden', isTenantMode);
@@ -1477,15 +1487,33 @@
     applyUiMode();
     els.loginModeAdminBtn.addEventListener('click', () => setUiMode('admin'));
     els.loginModeTenantBtn.addEventListener('click', () => setUiMode('tenant'));
+    if (els.appModeAdminBtn && els.appModeTenantBtn) {
+      els.appModeAdminBtn.addEventListener('click', () => {
+        setUiMode('admin');
+        requestAnimationFrame(() => scrollToSectionHash('#section-tenants'));
+      });
+      els.appModeTenantBtn.addEventListener('click', () => {
+        setUiMode('tenant');
+        const targetHash = (state.tenantWorkspaceView || '') === 'tenant-settings'
+          ? '#section-tenant-settings'
+          : (state.tenantWorkspaceView || '') === 'placements'
+            ? '#section-homepage-slot'
+            : '#section-tenant-cms';
+        requestAnimationFrame(() => scrollToSectionHash(targetHash));
+      });
+    }
     sidebarNavLinks.forEach((link) => {
       link.addEventListener('click', (event) => {
         const hash = link.getAttribute('href') || '';
         if (!hash.startsWith('#')) return;
         event.preventDefault();
 
+        const requestedUiMode = link.dataset.uiMode || '';
         const requestedWorkspaceView = link.dataset.workspaceView || '';
         const isTenantWorkspaceLink = Boolean(requestedWorkspaceView);
-        if (isTenantWorkspaceLink && state.uiMode !== 'tenant') {
+        if (requestedUiMode === 'admin' && state.uiMode !== 'admin') {
+          setUiMode('admin');
+        } else if (isTenantWorkspaceLink && state.uiMode !== 'tenant') {
           setUiMode('tenant');
         }
         if (requestedWorkspaceView) {

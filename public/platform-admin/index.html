@@ -379,6 +379,10 @@
           </div>
           <div id="sidebar-tenant-group" class="platform-nav-group">
             <p class="platform-nav-group-title">Tenant Workspace</p>
+            <a id="tenant-exit-admin-link" class="hidden" href="#section-tenants" data-ui-mode="admin">
+              <span class="label">Back to Platform Admin</span>
+              <span class="helper">Exit tenant workspace</span>
+            </a>
             <a href="#section-tenant-settings" data-workspace-view="tenant-settings">
               <span class="label">Tenant Settings</span>
               <span class="helper">Branding, status, support</span>
@@ -415,6 +419,13 @@
               <p id="topbar-subtitle" class="platform-topbar-sub">Manage customer tenants, branding, and access foundations.</p>
             </div>
             <div class="actions" style="margin-top:0;">
+              <label style="display:block; margin:0;">
+                <span style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Mode</span>
+                <div class="segmented" style="margin-top:0;">
+                  <button id="app-mode-admin" type="button" class="is-active">Admin View</button>
+                  <button id="app-mode-tenant" type="button">Tenant CMS View</button>
+                </div>
+              </label>
               <label id="tenant-switch-wrap" class="hidden" style="display:block; margin:0; min-width:220px;">
                 <span style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Tenant workspace</span>
                 <select id="tenant-switch" style="margin-top:0;">
