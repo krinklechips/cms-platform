@@ -95,6 +95,7 @@ curl http://localhost:4100/api/platform/tenants -b /tmp/platform-cookies.txt
 ### Render
 - Start with **one Render web service** for the platform API (this project).
 - Attach a **persistent disk** for the SQLite DB (`PLATFORM_DB_PATH`).
+- Use the same disk for tenant media uploads (`PLATFORM_UPLOADS_DIR`, e.g. `/var/data/uploads`).
 - Set `PLATFORM_BOOTSTRAP_SECRET` if you want to use the built-in Platform Admin UI login.
 - Later add a second service for the platform admin frontend (or host frontend on Vercel).
 

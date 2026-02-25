@@ -85,6 +85,17 @@ CREATE TABLE IF NOT EXISTS articles (
   body TEXT,
   status TEXT NOT NULL DEFAULT 'draft',
   category TEXT NOT NULL DEFAULT 'newsroom',
+  source TEXT DEFAULT 'manual',
+  seo_title TEXT,
+  seo_description TEXT,
+  seo_image TEXT,
+  seo_canonical_url TEXT,
+  seo_noindex INTEGER NOT NULL DEFAULT 0,
+  publish_at DATETIME,
+  first_publish_at DATETIME,
+  published_by TEXT,
+  cover_image TEXT,
+  image_caption TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(tenant_id, slug),
@@ -101,6 +112,35 @@ CREATE TABLE IF NOT EXISTS media (
   size INTEGER,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS article_media (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  article_id INTEGER NOT NULL,
+  media_id INTEGER NOT NULL,
+  role TEXT DEFAULT 'attachment',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(article_id, media_id),
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  FOREIGN KEY(article_id) REFERENCES articles(id) ON DELETE CASCADE,
+  FOREIGN KEY(media_id) REFERENCES media(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS annual_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  year INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  summary TEXT,
+  file_url TEXT NOT NULL,
+  media_id INTEGER,
+  status TEXT NOT NULL DEFAULT 'published',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  FOREIGN KEY(media_id) REFERENCES media(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS content_items (
@@ -164,6 +204,21 @@ function ensureColumn(table, column, ddl) {
 // Phase 1 migration safety for future schema evolution.
 ensureColumn('articles', 'tenant_id', 'ALTER TABLE articles ADD COLUMN tenant_id INTEGER');
 ensureColumn('media', 'tenant_id', 'ALTER TABLE media ADD COLUMN tenant_id INTEGER');
+ensureColumn('articles', 'source', "ALTER TABLE articles ADD COLUMN source TEXT DEFAULT 'manual'");
+ensureColumn('articles', 'seo_title', 'ALTER TABLE articles ADD COLUMN seo_title TEXT');
+ensureColumn('articles', 'seo_description', 'ALTER TABLE articles ADD COLUMN seo_description TEXT');
+ensureColumn('articles', 'seo_image', 'ALTER TABLE articles ADD COLUMN seo_image TEXT');
+ensureColumn('articles', 'seo_canonical_url', 'ALTER TABLE articles ADD COLUMN seo_canonical_url TEXT');
+ensureColumn('articles', 'seo_noindex', 'ALTER TABLE articles ADD COLUMN seo_noindex INTEGER NOT NULL DEFAULT 0');
+ensureColumn('articles', 'publish_at', 'ALTER TABLE articles ADD COLUMN publish_at DATETIME');
+ensureColumn('articles', 'first_publish_at', 'ALTER TABLE articles ADD COLUMN first_publish_at DATETIME');
+ensureColumn('articles', 'published_by', 'ALTER TABLE articles ADD COLUMN published_by TEXT');
+ensureColumn('articles', 'cover_image', 'ALTER TABLE articles ADD COLUMN cover_image TEXT');
+ensureColumn('articles', 'image_caption', 'ALTER TABLE articles ADD COLUMN image_caption TEXT');
+ensureColumn('annual_reports', 'summary', 'ALTER TABLE annual_reports ADD COLUMN summary TEXT');
+ensureColumn('annual_reports', 'media_id', 'ALTER TABLE annual_reports ADD COLUMN media_id INTEGER');
+ensureColumn('annual_reports', 'status', "ALTER TABLE annual_reports ADD COLUMN status TEXT NOT NULL DEFAULT 'published'");
+ensureColumn('annual_reports', 'sort_order', 'ALTER TABLE annual_reports ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0');
 
 function ensureDefaultTenantSlots(tenantId) {
   db.prepare(`

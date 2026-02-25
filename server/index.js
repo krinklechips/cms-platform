@@ -8,7 +8,10 @@ import { db, seedPlatformDefaults } from './db.js';
 import platformTenantsRouter from './routes/platformTenants.js';
 import platformPlacementsRouter from './routes/platformPlacements.js';
 import tenantArticlesRouter from './routes/tenantArticles.js';
+import tenantMediaRouter from './routes/tenantMedia.js';
 import publicSlotsRouter from './routes/publicSlots.js';
+import tenantAnnualReportsRouter from './routes/tenantAnnualReports.js';
+import publicAnnualReportsRouter from './routes/publicAnnualReports.js';
 
 seedPlatformDefaults();
 
@@ -118,7 +121,11 @@ app.post('/api/platform/auth/logout', (req, res) => {
 app.use('/api/platform/tenants', platformTenantsRouter);
 app.use('/api/platform/placements', platformPlacementsRouter);
 app.use('/api/tenant/articles', tenantArticlesRouter);
+app.use('/api/tenant/media', tenantMediaRouter);
+app.use('/api/tenant/annual-reports', tenantAnnualReportsRouter);
 app.use('/api/public', publicSlotsRouter);
+app.use('/api/public', publicAnnualReportsRouter);
+app.use('/uploads', express.static(path.join(__dirname, '..', '..', env.UPLOADS_DIR)));
 app.use('/platform-admin', express.static(path.join(publicDir, 'platform-admin')));
 
 app.get('/', (req, res) => {

@@ -13,6 +13,7 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: Number(process.env.PORT || 4100),
   DB_PATH: process.env.PLATFORM_DB_PATH || './server/data/platform.db',
+  UPLOADS_DIR: process.env.PLATFORM_UPLOADS_DIR || './server/data/uploads',
   SESSION_SECRET: process.env.PLATFORM_SESSION_SECRET || 'change-me-platform-session-secret',
   BOOTSTRAP_SECRET: process.env.PLATFORM_BOOTSTRAP_SECRET || '',
   CORS_ORIGINS: splitCsv(process.env.PLATFORM_CORS_ORIGIN || 'http://localhost:5173'),

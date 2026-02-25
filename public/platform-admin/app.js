@@ -3,12 +3,20 @@
 
   const state = {
     auth: null,
+    uiMode: localStorage.getItem('cms-platform-ui-mode') === 'tenant' ? 'tenant' : 'admin',
     tenants: [],
     selectedTenantId: null,
     placement: {
       slot: null,
       items: [],
       assignments: [],
+    },
+    cms: {
+      articles: [],
+      media: [],
+      editingArticle: null,
+      annualReports: [],
+      editingAnnualReport: null,
     },
   };
 
@@ -20,9 +28,21 @@
     authPill: document.getElementById('auth-pill'),
     loginEmail: document.getElementById('login-email'),
     loginSecret: document.getElementById('login-secret'),
+    loginModeAdminBtn: document.getElementById('login-mode-admin'),
+    loginModeTenantBtn: document.getElementById('login-mode-tenant'),
+    loginEmailLabel: document.getElementById('login-email-label'),
+    loginModeHelp: document.getElementById('login-mode-help'),
     loginBtn: document.getElementById('login-btn'),
     refreshAuthBtn: document.getElementById('refresh-auth-btn'),
     logoutBtn: document.getElementById('logout-btn'),
+    sidebarPlatformGroup: document.getElementById('sidebar-platform-group'),
+    sidebarTenantGroup: document.getElementById('sidebar-tenant-group'),
+    sidebarLogoTitle: document.getElementById('sidebar-logo-title'),
+    sidebarLogoSubtitle: document.getElementById('sidebar-logo-subtitle'),
+    topbarTitle: document.getElementById('topbar-title'),
+    topbarSubtitle: document.getElementById('topbar-subtitle'),
+    tenantSwitchWrap: document.getElementById('tenant-switch-wrap'),
+    tenantSwitch: document.getElementById('tenant-switch'),
     createName: document.getElementById('create-name'),
     createSlug: document.getElementById('create-slug'),
     createStatus: document.getElementById('create-status'),
@@ -66,7 +86,62 @@
     assignItemBtn: document.getElementById('assign-item-btn'),
     refreshPlacementBtn: document.getElementById('refresh-placement-btn'),
     contentTableBody: document.getElementById('content-table-body'),
+    cmsNotice: document.getElementById('cms-notice'),
+    cmsContentEmpty: document.getElementById('cms-content-empty'),
+    cmsContentPanel: document.getElementById('cms-content-panel'),
+    mediaFilter: document.getElementById('media-filter'),
+    libraryPanelTitle: document.getElementById('library-panel-title'),
+    libraryMediaBtn: document.getElementById('library-media-btn'),
+    libraryDocsBtn: document.getElementById('library-docs-btn'),
+    libraryAllBtn: document.getElementById('library-all-btn'),
+    mediaUploadInput: document.getElementById('media-upload-input'),
+    mediaUploadBtn: document.getElementById('media-upload-btn'),
+    mediaRefreshBtn: document.getElementById('media-refresh-btn'),
+    mediaTableBody: document.getElementById('media-table-body'),
+    articleRefreshBtn: document.getElementById('article-refresh-btn'),
+    articleNewBtn: document.getElementById('article-new-btn'),
+    articleTableBody: document.getElementById('article-table-body'),
+    articleEditorMeta: document.getElementById('article-editor-meta'),
+    articleEditId: document.getElementById('article-edit-id'),
+    articleStatus: document.getElementById('article-status'),
+    articleCategory: document.getElementById('article-category'),
+    articleTitle: document.getElementById('article-title'),
+    articleSummary: document.getElementById('article-summary'),
+    articleBody: document.getElementById('article-body'),
+    articlePublishAt: document.getElementById('article-publish-at'),
+    articleSource: document.getElementById('article-source'),
+    articleImageUrl: document.getElementById('article-image-url'),
+    articleImageCaption: document.getElementById('article-image-caption'),
+    articleAttachments: document.getElementById('article-attachments'),
+    articleSeoTitle: document.getElementById('article-seo-title'),
+    articleSeoDescription: document.getElementById('article-seo-description'),
+    articleSeoImage: document.getElementById('article-seo-image'),
+    articleSeoCanonical: document.getElementById('article-seo-canonical'),
+    articleSeoNoIndex: document.getElementById('article-seo-noindex'),
+    articleSaveBtn: document.getElementById('article-save-btn'),
+    articleDeleteBtn: document.getElementById('article-delete-btn'),
+    articleOpenLink: document.getElementById('article-open-link'),
+    annualRefreshBtn: document.getElementById('annual-refresh-btn'),
+    annualNewBtn: document.getElementById('annual-new-btn'),
+    annualTableBody: document.getElementById('annual-table-body'),
+    annualEditorMeta: document.getElementById('annual-editor-meta'),
+    annualEditId: document.getElementById('annual-edit-id'),
+    annualYear: document.getElementById('annual-year'),
+    annualStatus: document.getElementById('annual-status'),
+    annualTitle: document.getElementById('annual-title'),
+    annualSummary: document.getElementById('annual-summary'),
+    annualMediaSelect: document.getElementById('annual-media-select'),
+    annualSortOrder: document.getElementById('annual-sort-order'),
+    annualFileUrl: document.getElementById('annual-file-url'),
+    annualSaveBtn: document.getElementById('annual-save-btn'),
+    annualDeleteBtn: document.getElementById('annual-delete-btn'),
+    annualOpenLink: document.getElementById('annual-open-link'),
+    sectionTenants: document.getElementById('section-tenants'),
+    sectionTenantSettings: document.getElementById('section-tenant-settings'),
+    sectionHomepageSlot: document.getElementById('section-homepage-slot'),
+    sectionTenantCms: document.getElementById('section-tenant-cms'),
   };
+  const sidebarNavLinks = Array.from(document.querySelectorAll('.platform-nav a[href^="#"]'));
 
   async function api(path, options) {
     const res = await fetch(path, {
@@ -99,6 +174,8 @@
   function showApp() {
     els.loginView.classList.add('hidden');
     els.appView.classList.remove('hidden');
+    applyUiMode();
+    syncSidebarActiveLink();
   }
 
   function escapeHtml(value) {
@@ -110,12 +187,406 @@
       .replace(/'/g, '&#039;');
   }
 
+  function setUiMode(mode) {
+    state.uiMode = mode === 'tenant' ? 'tenant' : 'admin';
+    localStorage.setItem('cms-platform-ui-mode', state.uiMode);
+    applyUiMode();
+  }
+
+  function applyUiMode() {
+    const isTenantMode = state.uiMode === 'tenant';
+    if (els.loginModeAdminBtn && els.loginModeTenantBtn) {
+      els.loginModeAdminBtn.classList.toggle('is-active', !isTenantMode);
+      els.loginModeTenantBtn.classList.toggle('is-active', isTenantMode);
+    }
+    if (els.loginEmailLabel) {
+      els.loginEmailLabel.textContent = isTenantMode ? 'Tenant operator email (platform bootstrap for now)' : 'Platform admin email';
+    }
+    if (els.loginModeHelp) {
+      els.loginModeHelp.innerHTML = isTenantMode
+        ? 'Tenant CMS View currently uses the same bootstrap login during Phase 2. A dedicated tenant login will be added next.'
+        : 'Set <code>PLATFORM_BOOTSTRAP_SECRET</code> in Render to enable this login.';
+    }
+    if (els.sidebarPlatformGroup) {
+      els.sidebarPlatformGroup.classList.toggle('hidden', isTenantMode);
+    }
+    if (els.sidebarTenantGroup) {
+      els.sidebarTenantGroup.classList.remove('hidden');
+    }
+    if (els.sectionTenants) {
+      els.sectionTenants.classList.toggle('hidden', isTenantMode);
+    }
+    if (els.sectionTenantSettings) {
+      els.sectionTenantSettings.classList.toggle('hidden', isTenantMode);
+    }
+    if (els.tenantSwitchWrap) {
+      els.tenantSwitchWrap.classList.toggle('hidden', !isTenantMode);
+    }
+    if (els.topbarTitle) {
+      els.topbarTitle.textContent = isTenantMode ? 'Tenant CMS Workspace' : 'Content Management System';
+    }
+    if (els.topbarSubtitle) {
+      els.topbarSubtitle.textContent = isTenantMode
+        ? 'Manage homepage placements, articles, libraries, and annual reports for a selected tenant.'
+        : 'Manage customer tenants, branding, and access foundations.';
+    }
+    if (els.sidebarLogoTitle) {
+      els.sidebarLogoTitle.textContent = isTenantMode ? 'Tenant CMS' : 'CMS Platform';
+    }
+    if (els.sidebarLogoSubtitle) {
+      els.sidebarLogoSubtitle.textContent = isTenantMode ? 'Kardal-style workspace view' : 'Multi-tenant SaaS admin';
+    }
+    syncSidebarActiveLink();
+  }
+
+  function syncSidebarActiveLink() {
+    if (!sidebarNavLinks.length) return;
+    const sections = sidebarNavLinks
+      .map((link) => {
+        if (link.classList.contains('hidden') || link.offsetParent === null) return null;
+        const href = link.getAttribute('href') || '';
+        const target = href.startsWith('#') ? document.querySelector(href) : null;
+        if (!target || target.classList.contains('hidden')) return null;
+        return target ? { link, target } : null;
+      })
+      .filter(Boolean);
+
+    if (!sections.length) return;
+
+    const markerY = window.scrollY + 120;
+    let active = sections[0];
+    sections.forEach((entry) => {
+      if (entry.target.offsetTop <= markerY) active = entry;
+    });
+
+    sections.forEach((entry) => {
+      entry.link.classList.toggle('is-active', entry === active);
+    });
+  }
+
   function getSelectedTenant() {
     return state.tenants.find((t) => t.id === state.selectedTenantId) || null;
   }
 
   function resetPlacementState() {
     state.placement = { slot: null, items: [], assignments: [] };
+  }
+
+  function resetCmsState() {
+    state.cms = { articles: [], media: [], editingArticle: null, annualReports: [], editingAnnualReport: null };
+  }
+
+  function tenantApi(path, options) {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      return Promise.reject(new Error('Select a tenant first.'));
+    }
+    return api(path, {
+      ...options,
+      headers: {
+        ...(options?.headers || {}),
+        'x-tenant-id': String(tenant.id),
+      },
+    });
+  }
+
+  function formatBytes(bytes) {
+    const value = Number(bytes || 0);
+    if (!value) return '—';
+    if (value < 1024) return `${value} B`;
+    if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+    return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function formatDateTime(value) {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return d.toLocaleString();
+  }
+
+  function articlePublicHref(article) {
+    const tenant = getSelectedTenant();
+    if (!tenant || !article?.slug) return '#';
+    const base = tenant.branding?.publicSiteUrl || '';
+    if (!base) return '#';
+    return `${String(base).replace(/\/$/, '')}/insights/${article.slug}`;
+  }
+
+  function populateAttachmentOptions(selectedIds) {
+    const media = Array.isArray(state.cms.media) ? state.cms.media : [];
+    const selected = new Set((selectedIds || []).map((id) => Number(id)));
+    els.articleAttachments.innerHTML = media.length
+      ? media
+          .map((item) => {
+            const kind = item.kind === 'document' || item.mimeType === 'application/pdf' ? 'PDF' : (item.kind || 'file');
+            const fileName = item.label || (item.fileUrl || '').split('/').pop() || `File #${item.id}`;
+            return `<option value="${item.id}" ${selected.has(Number(item.id)) ? 'selected' : ''}>[${escapeHtml(kind)}] ${escapeHtml(fileName)}</option>`;
+          })
+          .join('')
+      : '<option value="">No media uploaded yet</option>';
+    els.articleAttachments.disabled = !media.length;
+  }
+
+  function clearArticleEditor() {
+    state.cms.editingArticle = null;
+    els.articleEditId.value = '';
+    els.articleStatus.value = 'draft';
+    els.articleCategory.value = 'newsroom';
+    els.articleTitle.value = '';
+    els.articleSummary.value = '';
+    els.articleBody.value = '';
+    els.articlePublishAt.value = '';
+    els.articleSource.value = '';
+    els.articleImageUrl.value = '';
+    els.articleImageCaption.value = '';
+    els.articleSeoTitle.value = '';
+    els.articleSeoDescription.value = '';
+    els.articleSeoImage.value = '';
+    els.articleSeoCanonical.value = '';
+    els.articleSeoNoIndex.checked = false;
+    els.articleEditorMeta.textContent = 'Create or edit a tenant article. This mirrors Kardal CMS fields (SEO + inline image caption).';
+    els.articleOpenLink.href = '#';
+    els.articleOpenLink.style.pointerEvents = 'none';
+    els.articleOpenLink.style.opacity = '0.6';
+    els.articleDeleteBtn.disabled = true;
+    populateAttachmentOptions([]);
+  }
+
+  function populateAnnualPdfOptions(selectedMediaId) {
+    const pdfs = (Array.isArray(state.cms.media) ? state.cms.media : []).filter(
+      (item) => item.kind === 'document' || item.mimeType === 'application/pdf',
+    );
+    const selectedId = selectedMediaId ? Number(selectedMediaId) : null;
+    els.annualMediaSelect.innerHTML =
+      '<option value="">Select a PDF…</option>' +
+      pdfs
+        .map((item) => `<option value="${item.id}" ${selectedId === Number(item.id) ? 'selected' : ''}>${escapeHtml(item.label || (item.fileUrl || '').split('/').pop() || `PDF #${item.id}`)}</option>`)
+        .join('');
+  }
+
+  function clearAnnualReportEditor() {
+    state.cms.editingAnnualReport = null;
+    els.annualEditId.value = '';
+    els.annualYear.value = '';
+    els.annualStatus.value = 'published';
+    els.annualTitle.value = '';
+    els.annualSummary.value = '';
+    els.annualSortOrder.value = '0';
+    els.annualFileUrl.value = '';
+    populateAnnualPdfOptions(null);
+    els.annualEditorMeta.textContent = 'Create annual report entries and attach PDF files from the tenant media library.';
+    els.annualDeleteBtn.disabled = true;
+    els.annualOpenLink.href = '#';
+    els.annualOpenLink.style.pointerEvents = 'none';
+    els.annualOpenLink.style.opacity = '0.6';
+  }
+
+  function loadAnnualReportIntoEditor(item) {
+    state.cms.editingAnnualReport = item;
+    els.annualEditId.value = String(item.id || '');
+    els.annualYear.value = item.year ? String(item.year) : '';
+    els.annualStatus.value = item.status || 'published';
+    els.annualTitle.value = item.title || '';
+    els.annualSummary.value = item.summary || '';
+    els.annualSortOrder.value = String(item.sortOrder || 0);
+    els.annualFileUrl.value = item.fileUrl || '';
+    populateAnnualPdfOptions(item.mediaId || null);
+    els.annualEditorMeta.textContent = `Editing annual report • Updated: ${formatDateTime(item.updatedAt)}`;
+    els.annualDeleteBtn.disabled = !item.id;
+    els.annualOpenLink.href = item.fileUrl || '#';
+    els.annualOpenLink.style.pointerEvents = item.fileUrl ? 'auto' : 'none';
+    els.annualOpenLink.style.opacity = item.fileUrl ? '1' : '0.6';
+  }
+
+  function loadArticleIntoEditor(article) {
+    state.cms.editingArticle = article;
+    els.articleEditId.value = String(article.id || '');
+    els.articleStatus.value = article.status || 'draft';
+    els.articleCategory.value = article.category || 'newsroom';
+    els.articleTitle.value = article.title || '';
+    els.articleSummary.value = article.summary || '';
+    els.articleBody.value = article.body || '';
+    els.articlePublishAt.value = article.publishAt ? String(article.publishAt).slice(0, 16) : '';
+    els.articleSource.value = article.source || '';
+    els.articleImageUrl.value = article.coverImage || '';
+    els.articleImageCaption.value = article.imageCaption || '';
+    els.articleSeoTitle.value = article.seoTitle || '';
+    els.articleSeoDescription.value = article.seoDescription || '';
+    els.articleSeoImage.value = article.seoImage || '';
+    els.articleSeoCanonical.value = article.seoCanonicalUrl || '';
+    els.articleSeoNoIndex.checked = Boolean(article.seoNoIndex);
+    els.articleEditorMeta.textContent =
+      `Editing ${article.title || 'Untitled'} • Published: ${formatDateTime(article.firstPublishAt)} • Updated: ${formatDateTime(article.updatedAt)}`;
+    populateAttachmentOptions(Array.isArray(article.attachments) ? article.attachments.map((a) => a.id) : []);
+    const href = article.status === 'published' ? articlePublicHref(article) : '#';
+    els.articleOpenLink.href = href;
+    els.articleOpenLink.style.pointerEvents = href === '#' ? 'none' : 'auto';
+    els.articleOpenLink.style.opacity = href === '#' ? '0.6' : '1';
+    els.articleDeleteBtn.disabled = !article.id;
+  }
+
+  function renderCmsPanel() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      els.cmsContentEmpty.classList.remove('hidden');
+      els.cmsContentPanel.classList.add('hidden');
+      els.mediaTableBody.innerHTML = '<tr><td colspan="4" class="meta">Select a tenant to load media.</td></tr>';
+      els.articleTableBody.innerHTML = '<tr><td colspan="5" class="meta">Select a tenant to load articles.</td></tr>';
+      clearArticleEditor();
+      return;
+    }
+    els.cmsContentEmpty.classList.add('hidden');
+    els.cmsContentPanel.classList.remove('hidden');
+
+    const mediaFilter = els.mediaFilter.value || 'all';
+    const allMedia = Array.isArray(state.cms.media) ? state.cms.media : [];
+    const media = allMedia.filter((item) => {
+      if (mediaFilter === 'all') return true;
+      if (mediaFilter === 'image') return item.kind === 'image' || item.mimeType?.startsWith('image/');
+      if (mediaFilter === 'document') return item.kind === 'document' || item.mimeType === 'application/pdf';
+      return true;
+    });
+
+    if (els.libraryPanelTitle) {
+      els.libraryPanelTitle.textContent =
+        mediaFilter === 'image'
+          ? 'Media Library (Images)'
+          : mediaFilter === 'document'
+            ? 'Document Library (PDFs)'
+            : 'Libraries (All Files)';
+    }
+    if (els.mediaUploadInput) {
+      els.mediaUploadInput.accept =
+        mediaFilter === 'image'
+          ? 'image/*'
+          : mediaFilter === 'document'
+            ? 'application/pdf'
+            : 'image/*,application/pdf';
+    }
+    if (els.mediaUploadBtn) {
+      els.mediaUploadBtn.textContent =
+        mediaFilter === 'image'
+          ? 'Upload image'
+          : mediaFilter === 'document'
+            ? 'Upload PDF'
+            : 'Upload image/PDF';
+    }
+    [
+      [els.libraryMediaBtn, mediaFilter === 'image'],
+      [els.libraryDocsBtn, mediaFilter === 'document'],
+      [els.libraryAllBtn, mediaFilter === 'all'],
+    ].forEach(([btn, active]) => {
+      if (!btn) return;
+      btn.classList.toggle('ghost-brand', Boolean(active));
+    });
+
+    els.mediaTableBody.innerHTML = media.length
+      ? media
+          .map((item) => `
+            <tr>
+              <td>
+                <div><strong>${escapeHtml(item.label || (item.fileUrl || '').split('/').pop() || `File #${item.id}`)}</strong></div>
+                <div class="meta">${escapeHtml(item.fileUrl || '')}</div>
+              </td>
+              <td>${escapeHtml(item.kind === 'document' || item.mimeType === 'application/pdf' ? 'PDF' : (item.kind || 'File'))}</td>
+              <td>${escapeHtml(formatBytes(item.size))}</td>
+              <td>
+                <div class="mini-actions">
+                  <a href="${escapeHtml(item.fileUrl || '#')}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open</a>
+                  <button class="delete-media-btn" data-media-id="${item.id}">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `)
+          .join('')
+      : '<tr><td colspan="4" class="meta">No media uploaded yet for this tenant.</td></tr>';
+
+    els.mediaTableBody.querySelectorAll('.delete-media-btn').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        handleDeleteTenantMedia(btn.getAttribute('data-media-id'));
+      });
+    });
+
+    const articles = Array.isArray(state.cms.articles) ? state.cms.articles : [];
+    els.articleTableBody.innerHTML = articles.length
+      ? articles
+          .map((article) => `
+            <tr>
+              <td>
+                <div><strong>${escapeHtml(article.title || 'Untitled')}</strong></div>
+                <div class="meta">${escapeHtml(article.slug || '')}</div>
+              </td>
+              <td><span class="pill">${escapeHtml(article.status || 'draft')}</span></td>
+              <td>${escapeHtml(article.category || 'newsroom')}</td>
+              <td class="meta">${escapeHtml(formatDateTime(article.updatedAt))}</td>
+              <td>
+                <div class="mini-actions">
+                  <button class="edit-article-btn" data-article-id="${article.id}">Edit</button>
+                  ${article.status === 'published' && articlePublicHref(article) !== '#'
+                    ? `<a href="${escapeHtml(articlePublicHref(article))}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open</a>`
+                    : ''}
+                </div>
+              </td>
+            </tr>
+          `)
+          .join('')
+      : '<tr><td colspan="5" class="meta">No articles yet for this tenant.</td></tr>';
+
+    els.articleTableBody.querySelectorAll('.edit-article-btn').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        const id = Number(btn.getAttribute('data-article-id'));
+        const article = articles.find((a) => a.id === id);
+        if (article) loadArticleIntoEditor(article);
+      });
+    });
+
+    const annualReports = Array.isArray(state.cms.annualReports) ? state.cms.annualReports : [];
+    els.annualTableBody.innerHTML = annualReports.length
+      ? annualReports
+          .map((item) => `
+            <tr>
+              <td>${escapeHtml(String(item.year || '—'))}</td>
+              <td>
+                <div><strong>${escapeHtml(item.title || 'Untitled')}</strong></div>
+                ${item.summary ? `<div class="meta">${escapeHtml(item.summary)}</div>` : ''}
+              </td>
+              <td><span class="pill">${escapeHtml(item.status || 'published')}</span></td>
+              <td>
+                <div class="mini-actions">
+                  <button class="edit-annual-btn" data-annual-id="${item.id}">Edit</button>
+                  ${item.fileUrl ? `<a href="${escapeHtml(item.fileUrl)}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">PDF</a>` : ''}
+                </div>
+              </td>
+            </tr>
+          `)
+          .join('')
+      : '<tr><td colspan="4" class="meta">No annual reports yet.</td></tr>';
+    els.annualTableBody.querySelectorAll('.edit-annual-btn').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        const id = Number(btn.getAttribute('data-annual-id'));
+        const item = annualReports.find((a) => a.id === id);
+        if (item) loadAnnualReportIntoEditor(item);
+      });
+    });
+
+    if (!state.cms.editingArticle) {
+      populateAttachmentOptions([]);
+      els.articleDeleteBtn.disabled = true;
+      els.articleOpenLink.href = '#';
+      els.articleOpenLink.style.pointerEvents = 'none';
+      els.articleOpenLink.style.opacity = '0.6';
+    } else {
+      populateAttachmentOptions(Array.isArray(state.cms.editingArticle.attachments) ? state.cms.editingArticle.attachments.map((a) => a.id) : []);
+    }
+    if (!state.cms.editingAnnualReport) {
+      clearAnnualReportEditor();
+    } else {
+      populateAnnualPdfOptions(state.cms.editingAnnualReport.mediaId || null);
+    }
   }
 
   function renderPlacementPanel() {
@@ -180,6 +651,7 @@
       els.selectedTenantForm.classList.add('hidden');
       els.selectedTenantMeta.textContent = '';
       renderPlacementPanel();
+      renderCmsPanel();
       return;
     }
 
@@ -196,12 +668,14 @@
     els.selectedTenantMeta.textContent =
       `Created: ${new Date(tenant.createdAt).toLocaleString()} • Updated: ${new Date(tenant.updatedAt).toLocaleString()}`;
     renderPlacementPanel();
+    renderCmsPanel();
   }
 
   function renderTenants() {
     const rows = state.tenants;
     if (!rows.length) {
       els.tenantTableBody.innerHTML = '<tr><td colspan="4" class="meta">No tenants yet.</td></tr>';
+      renderTenantSwitcher();
       renderSelectedTenant();
       return;
     }
@@ -231,6 +705,7 @@
         state.selectedTenantId = Number(row.getAttribute('data-tenant-id'));
         renderTenants();
         await loadHomepagePlacement();
+        await loadTenantCmsContent();
       });
     });
 
@@ -240,7 +715,23 @@
       return;
     }
 
+    renderTenantSwitcher();
     renderSelectedTenant();
+  }
+
+  function renderTenantSwitcher() {
+    if (!els.tenantSwitch) return;
+    const rows = Array.isArray(state.tenants) ? state.tenants : [];
+    els.tenantSwitch.innerHTML = rows.length
+      ? rows
+          .map((tenant) => `<option value="${tenant.id}">${escapeHtml(tenant.name)} (${escapeHtml(tenant.slug)})</option>`)
+          .join('')
+      : '<option value="">No tenants</option>';
+    if (state.selectedTenantId && rows.some((t) => t.id === state.selectedTenantId)) {
+      els.tenantSwitch.value = String(state.selectedTenantId);
+    } else if (rows[0]) {
+      els.tenantSwitch.value = String(rows[0].id);
+    }
   }
 
   async function loadAuth() {
@@ -290,6 +781,238 @@
     }
   }
 
+  async function loadTenantCmsContent() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      resetCmsState();
+      renderCmsPanel();
+      return;
+    }
+    try {
+      const [articles, media, annualReports] = await Promise.all([
+        tenantApi('/api/tenant/articles', { method: 'GET' }),
+        tenantApi('/api/tenant/media', { method: 'GET' }),
+        tenantApi('/api/tenant/annual-reports', { method: 'GET' }),
+      ]);
+      state.cms.articles = Array.isArray(articles) ? articles : [];
+      state.cms.media = Array.isArray(media) ? media : [];
+      state.cms.annualReports = Array.isArray(annualReports) ? annualReports : [];
+
+      if (state.cms.editingArticle?.id) {
+        const latest = state.cms.articles.find((a) => a.id === state.cms.editingArticle.id);
+        state.cms.editingArticle = latest || null;
+      }
+      if (state.cms.editingAnnualReport?.id) {
+        const latestAnnual = state.cms.annualReports.find((a) => a.id === state.cms.editingAnnualReport.id);
+        state.cms.editingAnnualReport = latestAnnual || null;
+      }
+      renderCmsPanel();
+      if (state.cms.editingArticle) {
+        loadArticleIntoEditor(state.cms.editingArticle);
+      }
+      if (state.cms.editingAnnualReport) {
+        loadAnnualReportIntoEditor(state.cms.editingAnnualReport);
+      }
+    } catch (err) {
+      resetCmsState();
+      renderCmsPanel();
+      setNotice(els.cmsNotice, err.message || 'Failed to load tenant CMS content', 'error');
+    }
+  }
+
+  function collectSelectedAttachmentIds() {
+    return Array.from(els.articleAttachments.selectedOptions || [])
+      .map((option) => Number(option.value))
+      .filter((value) => Number.isFinite(value) && value > 0);
+  }
+
+  function buildArticlePayloadFromForm() {
+    const publishAtValue = String(els.articlePublishAt.value || '').trim();
+    return {
+      title: els.articleTitle.value.trim(),
+      summary: els.articleSummary.value,
+      body: els.articleBody.value,
+      status: els.articleStatus.value,
+      category: els.articleCategory.value,
+      source: els.articleSource.value.trim() || 'manual',
+      publishAt: publishAtValue ? new Date(publishAtValue).toISOString() : null,
+      coverImage: els.articleImageUrl.value.trim(),
+      imageCaption: els.articleImageCaption.value.trim(),
+      attachments: collectSelectedAttachmentIds(),
+      seoTitle: els.articleSeoTitle.value.trim() || null,
+      seoDescription: els.articleSeoDescription.value.trim() || null,
+      seoImage: els.articleSeoImage.value.trim() || null,
+      seoCanonicalUrl: els.articleSeoCanonical.value.trim() || null,
+      seoNoIndex: Boolean(els.articleSeoNoIndex.checked),
+    };
+  }
+
+  async function handleSaveArticle() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.cmsNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const articleId = Number(els.articleEditId.value);
+    const payload = buildArticlePayloadFromForm();
+    if (!payload.title) {
+      setNotice(els.cmsNotice, 'Article title is required.', 'error');
+      return;
+    }
+    els.articleSaveBtn.disabled = true;
+    try {
+      const saved = await tenantApi(articleId ? `/api/tenant/articles/${articleId}` : '/api/tenant/articles', {
+        method: articleId ? 'PUT' : 'POST',
+        body: JSON.stringify(payload),
+      });
+      state.cms.editingArticle = saved;
+      setNotice(els.cmsNotice, `Article ${articleId ? 'updated' : 'created'}: ${saved.title}`, 'ok');
+      await loadTenantCmsContent();
+      const latest = state.cms.articles.find((a) => a.id === saved.id) || saved;
+      loadArticleIntoEditor(latest);
+    } catch (err) {
+      setNotice(els.cmsNotice, err.message || 'Failed to save article', 'error');
+    } finally {
+      els.articleSaveBtn.disabled = false;
+    }
+  }
+
+  async function handleDeleteArticle() {
+    const id = Number(els.articleEditId.value);
+    if (!id) return;
+    if (!window.confirm('Delete this article?')) return;
+    els.articleDeleteBtn.disabled = true;
+    try {
+      await tenantApi(`/api/tenant/articles/${id}`, { method: 'DELETE' });
+      setNotice(els.cmsNotice, 'Article deleted.', 'ok');
+      clearArticleEditor();
+      await loadTenantCmsContent();
+    } catch (err) {
+      setNotice(els.cmsNotice, err.message || 'Failed to delete article', 'error');
+      els.articleDeleteBtn.disabled = false;
+    }
+  }
+
+  async function handleUploadTenantMedia() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.cmsNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const file = els.mediaUploadInput.files?.[0];
+    if (!file) {
+      setNotice(els.cmsNotice, 'Choose an image or PDF file first.', 'error');
+      return;
+    }
+    els.mediaUploadBtn.disabled = true;
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/tenant/media/upload', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'x-tenant-id': String(tenant.id) },
+        body: form,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
+      setNotice(els.cmsNotice, `Uploaded ${data.media?.label || file.name}`, 'ok');
+      els.mediaUploadInput.value = '';
+      await loadTenantCmsContent();
+    } catch (err) {
+      setNotice(els.cmsNotice, err.message || 'Failed to upload media', 'error');
+    } finally {
+      els.mediaUploadBtn.disabled = false;
+    }
+  }
+
+  async function handleDeleteTenantMedia(mediaId) {
+    const id = Number(mediaId);
+    if (!id) return;
+    if (!window.confirm('Delete this media file?')) return;
+    try {
+      await tenantApi(`/api/tenant/media/${id}`, { method: 'DELETE' });
+      setNotice(els.cmsNotice, 'Media deleted.', 'ok');
+      await loadTenantCmsContent();
+      if (state.cms.editingArticle) {
+        const attachments = Array.isArray(state.cms.editingArticle.attachments)
+          ? state.cms.editingArticle.attachments.filter((a) => a.id !== id)
+          : [];
+        state.cms.editingArticle = { ...state.cms.editingArticle, attachments };
+        populateAttachmentOptions(attachments.map((a) => a.id));
+      }
+    } catch (err) {
+      setNotice(els.cmsNotice, err.message || 'Failed to delete media', 'error');
+    }
+  }
+
+  function buildAnnualReportPayloadFromForm() {
+    const mediaId = els.annualMediaSelect.value ? Number(els.annualMediaSelect.value) : null;
+    return {
+      year: Number(els.annualYear.value),
+      title: els.annualTitle.value.trim(),
+      summary: els.annualSummary.value.trim() || null,
+      fileUrl: els.annualFileUrl.value.trim() || null,
+      mediaId: Number.isFinite(mediaId) && mediaId > 0 ? mediaId : null,
+      status: els.annualStatus.value,
+      sortOrder: Number(els.annualSortOrder.value || 0),
+    };
+  }
+
+  async function handleSaveAnnualReport() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.cmsNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const id = Number(els.annualEditId.value);
+    const payload = buildAnnualReportPayloadFromForm();
+    if (!Number.isInteger(payload.year) || payload.year < 1900) {
+      setNotice(els.cmsNotice, 'Valid annual report year is required.', 'error');
+      return;
+    }
+    if (!payload.title) {
+      setNotice(els.cmsNotice, 'Annual report title is required.', 'error');
+      return;
+    }
+    if (!payload.fileUrl && !payload.mediaId) {
+      setNotice(els.cmsNotice, 'Choose a PDF from media or enter a PDF URL.', 'error');
+      return;
+    }
+    els.annualSaveBtn.disabled = true;
+    try {
+      const saved = await tenantApi(id ? `/api/tenant/annual-reports/${id}` : '/api/tenant/annual-reports', {
+        method: id ? 'PUT' : 'POST',
+        body: JSON.stringify(payload),
+      });
+      state.cms.editingAnnualReport = saved;
+      setNotice(els.cmsNotice, `Annual report ${id ? 'updated' : 'created'}: ${saved.title}`, 'ok');
+      await loadTenantCmsContent();
+      const latest = state.cms.annualReports.find((a) => a.id === saved.id) || saved;
+      loadAnnualReportIntoEditor(latest);
+    } catch (err) {
+      setNotice(els.cmsNotice, err.message || 'Failed to save annual report', 'error');
+    } finally {
+      els.annualSaveBtn.disabled = false;
+    }
+  }
+
+  async function handleDeleteAnnualReport() {
+    const id = Number(els.annualEditId.value);
+    if (!id) return;
+    if (!window.confirm('Delete this annual report entry?')) return;
+    els.annualDeleteBtn.disabled = true;
+    try {
+      await tenantApi(`/api/tenant/annual-reports/${id}`, { method: 'DELETE' });
+      setNotice(els.cmsNotice, 'Annual report deleted.', 'ok');
+      clearAnnualReportEditor();
+      await loadTenantCmsContent();
+    } catch (err) {
+      setNotice(els.cmsNotice, err.message || 'Failed to delete annual report', 'error');
+      els.annualDeleteBtn.disabled = false;
+    }
+  }
+
   async function handleLogin() {
     els.loginBtn.disabled = true;
     try {
@@ -305,6 +1028,7 @@
       if (ok) {
         await loadTenants();
         await loadHomepagePlacement();
+        await loadTenantCmsContent();
       }
     } catch (err) {
       setNotice(els.loginNotice, err.message || 'Sign-in failed', 'error');
@@ -321,6 +1045,7 @@
     }
     state.auth = null;
     resetPlacementState();
+    resetCmsState();
     showLogin();
   }
 
@@ -354,6 +1079,7 @@
       state.selectedTenantId = tenant.id;
       renderTenants();
       await loadHomepagePlacement();
+      await loadTenantCmsContent();
     } catch (err) {
       setNotice(els.appNotice, err.message || 'Failed to create tenant', 'error');
     } finally {
@@ -470,6 +1196,17 @@
   }
 
   function wireEvents() {
+    applyUiMode();
+    els.loginModeAdminBtn.addEventListener('click', () => setUiMode('admin'));
+    els.loginModeTenantBtn.addEventListener('click', () => setUiMode('tenant'));
+    sidebarNavLinks.forEach((link) => {
+      link.addEventListener('click', () => {
+        requestAnimationFrame(syncSidebarActiveLink);
+      });
+    });
+    window.addEventListener('scroll', syncSidebarActiveLink, { passive: true });
+    window.addEventListener('hashchange', syncSidebarActiveLink);
+
     els.loginBtn.addEventListener('click', handleLogin);
     els.refreshAuthBtn.addEventListener('click', async () => {
       try {
@@ -481,17 +1218,62 @@
     });
 
     els.logoutBtn.addEventListener('click', handleLogout);
+    els.tenantSwitch.addEventListener('change', async () => {
+      const tenantId = Number(els.tenantSwitch.value);
+      if (!tenantId || tenantId === state.selectedTenantId) return;
+      state.selectedTenantId = tenantId;
+      renderTenants();
+      await loadHomepagePlacement();
+      await loadTenantCmsContent();
+    });
     els.createTenantBtn.addEventListener('click', handleCreateTenant);
     els.refreshTenantsBtn.addEventListener('click', loadTenants);
     els.reloadSelectedBtn.addEventListener('click', async () => {
       await loadTenants();
       await loadHomepagePlacement();
+      await loadTenantCmsContent();
     });
     els.saveTenantBtn.addEventListener('click', handleSaveTenant);
 
     els.createContentBtn.addEventListener('click', handleCreateContentItem);
     els.assignItemBtn.addEventListener('click', handleAssignItemToSlot);
     els.refreshPlacementBtn.addEventListener('click', loadHomepagePlacement);
+    els.mediaFilter.addEventListener('change', renderCmsPanel);
+    els.libraryMediaBtn.addEventListener('click', () => {
+      els.mediaFilter.value = 'image';
+      renderCmsPanel();
+    });
+    els.libraryDocsBtn.addEventListener('click', () => {
+      els.mediaFilter.value = 'document';
+      renderCmsPanel();
+    });
+    els.libraryAllBtn.addEventListener('click', () => {
+      els.mediaFilter.value = 'all';
+      renderCmsPanel();
+    });
+    els.mediaUploadBtn.addEventListener('click', handleUploadTenantMedia);
+    els.mediaRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    els.articleRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    els.articleNewBtn.addEventListener('click', () => {
+      clearArticleEditor();
+      setNotice(els.cmsNotice, 'Creating a new article.', 'ok');
+    });
+    els.articleSaveBtn.addEventListener('click', handleSaveArticle);
+    els.articleDeleteBtn.addEventListener('click', handleDeleteArticle);
+    els.annualRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    els.annualNewBtn.addEventListener('click', () => {
+      clearAnnualReportEditor();
+      setNotice(els.cmsNotice, 'Creating a new annual report entry.', 'ok');
+    });
+    els.annualSaveBtn.addEventListener('click', handleSaveAnnualReport);
+    els.annualDeleteBtn.addEventListener('click', handleDeleteAnnualReport);
+    els.annualMediaSelect.addEventListener('change', () => {
+      const selectedId = Number(els.annualMediaSelect.value);
+      const selected = (Array.isArray(state.cms.media) ? state.cms.media : []).find((item) => item.id === selectedId);
+      if (selected?.fileUrl) {
+        els.annualFileUrl.value = selected.fileUrl;
+      }
+    });
 
     els.createSlug.addEventListener('input', () => {
       const value = els.createSlug.value;
@@ -511,6 +1293,7 @@
       if (authenticated) {
         await loadTenants();
         await loadHomepagePlacement();
+        await loadTenantCmsContent();
       } else {
         els.loginEmail.value = '';
       }
