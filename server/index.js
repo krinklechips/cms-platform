@@ -12,6 +12,7 @@ import tenantMediaRouter from './routes/tenantMedia.js';
 import publicSlotsRouter from './routes/publicSlots.js';
 import tenantAnnualReportsRouter from './routes/tenantAnnualReports.js';
 import publicAnnualReportsRouter from './routes/publicAnnualReports.js';
+import tenantSettingsRouter from './routes/tenantSettings.js';
 
 seedPlatformDefaults();
 
@@ -123,6 +124,7 @@ app.use('/api/platform/placements', platformPlacementsRouter);
 app.use('/api/tenant/articles', tenantArticlesRouter);
 app.use('/api/tenant/media', tenantMediaRouter);
 app.use('/api/tenant/annual-reports', tenantAnnualReportsRouter);
+app.use('/api/tenant/settings', tenantSettingsRouter);
 app.use('/api/public', publicSlotsRouter);
 app.use('/api/public', publicAnnualReportsRouter);
 app.use('/uploads', express.static(path.join(__dirname, '..', '..', env.UPLOADS_DIR)));

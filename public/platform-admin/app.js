@@ -4,6 +4,7 @@
   const state = {
     auth: null,
     uiMode: localStorage.getItem('cms-platform-ui-mode') === 'tenant' ? 'tenant' : 'admin',
+    tenantWorkspaceView: localStorage.getItem('cms-platform-tenant-workspace-view') || 'articles',
     tenants: [],
     selectedTenantId: null,
     placement: {
@@ -17,6 +18,8 @@
       editingArticle: null,
       annualReports: [],
       editingAnnualReport: null,
+      navTabs: [],
+      editingNavTabId: null,
     },
   };
 
@@ -136,12 +139,33 @@
     annualSaveBtn: document.getElementById('annual-save-btn'),
     annualDeleteBtn: document.getElementById('annual-delete-btn'),
     annualOpenLink: document.getElementById('annual-open-link'),
+    tenantWorkspaceModePill: document.getElementById('tenant-workspace-mode-pill'),
+    navTabEditorMeta: document.getElementById('nav-tab-editor-meta'),
+    navTabsTableBody: document.getElementById('nav-tabs-table-body'),
+    navTabNewBtn: document.getElementById('nav-tab-new-btn'),
+    navTabsRefreshBtn: document.getElementById('nav-tabs-refresh-btn'),
+    navTabEditId: document.getElementById('nav-tab-edit-id'),
+    navTabGroup: document.getElementById('nav-tab-group'),
+    navTabOrder: document.getElementById('nav-tab-order'),
+    navTabLabel: document.getElementById('nav-tab-label'),
+    navTabHref: document.getElementById('nav-tab-href'),
+    navTabVisible: document.getElementById('nav-tab-visible'),
+    navTabSaveBtn: document.getElementById('nav-tab-save-btn'),
+    navTabDeleteBtn: document.getElementById('nav-tab-delete-btn'),
+    tenantPanelLibraries: document.getElementById('tenant-panel-libraries'),
+    tenantPanelArticles: document.getElementById('tenant-panel-articles'),
+    tenantPanelAnnualList: document.getElementById('tenant-panel-annual-list'),
+    tenantPanelArticleEditor: document.getElementById('tenant-panel-article-editor'),
+    tenantPanelAnnualEditor: document.getElementById('tenant-panel-annual-editor'),
+    tenantPanelNavTabsList: document.getElementById('tenant-panel-nav-tabs-list'),
+    tenantPanelNavTabsEditor: document.getElementById('tenant-panel-nav-tabs-editor'),
     sectionTenants: document.getElementById('section-tenants'),
     sectionTenantSettings: document.getElementById('section-tenant-settings'),
     sectionHomepageSlot: document.getElementById('section-homepage-slot'),
     sectionTenantCms: document.getElementById('section-tenant-cms'),
   };
   const sidebarNavLinks = Array.from(document.querySelectorAll('.platform-nav a[href^="#"]'));
+  const workspaceNavLinks = Array.from(document.querySelectorAll('.platform-nav a[data-workspace-view]'));
 
   async function api(path, options) {
     const res = await fetch(path, {
@@ -193,6 +217,67 @@
     applyUiMode();
   }
 
+  function setTenantWorkspaceView(view) {
+    const allowed = new Set(['tenant-settings', 'placements', 'articles', 'libraries', 'annual-reports', 'nav-tabs']);
+    state.tenantWorkspaceView = allowed.has(view) ? view : 'articles';
+    localStorage.setItem('cms-platform-tenant-workspace-view', state.tenantWorkspaceView);
+    applyTenantWorkspaceView();
+  }
+
+  function applyTenantWorkspaceView() {
+    const isTenantMode = state.uiMode === 'tenant';
+    const view = state.tenantWorkspaceView || 'articles';
+    if (!isTenantMode) {
+      [els.sectionHomepageSlot, els.sectionTenantCms, els.sectionTenantSettings].forEach((el) => el && el.classList.remove('hidden'));
+      [
+        els.tenantPanelLibraries,
+        els.tenantPanelArticles,
+        els.tenantPanelAnnualList,
+        els.tenantPanelArticleEditor,
+        els.tenantPanelAnnualEditor,
+      ].forEach((el) => el && el.classList.remove('hidden'));
+      [els.tenantPanelNavTabsList, els.tenantPanelNavTabsEditor].forEach((el) => el && el.classList.add('hidden'));
+      if (els.tenantWorkspaceModePill) els.tenantWorkspaceModePill.textContent = 'Workspace module: Full dashboard';
+      workspaceNavLinks.forEach((link) => {
+        const active = (link.dataset.workspaceView || '') === 'tenant-settings';
+        link.classList.toggle('is-active', false);
+      });
+      return;
+    }
+
+    if (els.sectionTenantSettings) els.sectionTenantSettings.classList.toggle('hidden', view !== 'tenant-settings');
+    if (els.sectionHomepageSlot) els.sectionHomepageSlot.classList.toggle('hidden', view !== 'placements');
+    if (els.sectionTenantCms) els.sectionTenantCms.classList.toggle('hidden', !['articles', 'libraries', 'annual-reports', 'nav-tabs'].includes(view));
+
+    if (els.tenantWorkspaceModePill) {
+      const labels = {
+        articles: 'Workspace module: Articles',
+        libraries: 'Workspace module: Libraries',
+        'annual-reports': 'Workspace module: Annual Reports',
+        'nav-tabs': 'Workspace module: Navigation Tabs',
+      };
+      els.tenantWorkspaceModePill.textContent = labels[view] || 'Workspace module';
+    }
+
+    const showLibraries = view === 'libraries';
+    const showArticles = view === 'articles';
+    const showAnnual = view === 'annual-reports';
+    const showNavTabs = view === 'nav-tabs';
+
+    if (els.tenantPanelLibraries) els.tenantPanelLibraries.classList.toggle('hidden', !showLibraries);
+    if (els.tenantPanelArticles) els.tenantPanelArticles.classList.toggle('hidden', !showArticles);
+    if (els.tenantPanelArticleEditor) els.tenantPanelArticleEditor.classList.toggle('hidden', !showArticles);
+    if (els.tenantPanelAnnualList) els.tenantPanelAnnualList.classList.toggle('hidden', !showAnnual);
+    if (els.tenantPanelAnnualEditor) els.tenantPanelAnnualEditor.classList.toggle('hidden', !showAnnual);
+    if (els.tenantPanelNavTabsList) els.tenantPanelNavTabsList.classList.toggle('hidden', !showNavTabs);
+    if (els.tenantPanelNavTabsEditor) els.tenantPanelNavTabsEditor.classList.toggle('hidden', !showNavTabs);
+
+    workspaceNavLinks.forEach((link) => {
+      const active = (link.dataset.workspaceView || '') === view;
+      link.classList.toggle('is-active', active);
+    });
+  }
+
   function applyUiMode() {
     const isTenantMode = state.uiMode === 'tenant';
     if (els.loginModeAdminBtn && els.loginModeTenantBtn) {
@@ -236,11 +321,25 @@
     if (els.sidebarLogoSubtitle) {
       els.sidebarLogoSubtitle.textContent = isTenantMode ? 'Kardal-style workspace view' : 'Multi-tenant SaaS admin';
     }
+    applyTenantWorkspaceView();
     syncSidebarActiveLink();
   }
 
   function syncSidebarActiveLink() {
     if (!sidebarNavLinks.length) return;
+    if (state.uiMode === 'tenant') {
+      sidebarNavLinks.forEach((link) => {
+        const workspaceView = link.dataset.workspaceView || '';
+        if (workspaceView) {
+          link.classList.toggle('is-active', workspaceView === state.tenantWorkspaceView);
+          return;
+        }
+        if ((link.getAttribute('href') || '') === '#section-tenants') {
+          link.classList.remove('is-active');
+        }
+      });
+      return;
+    }
     const sections = sidebarNavLinks
       .map((link) => {
         if (link.classList.contains('hidden') || link.offsetParent === null) return null;
@@ -264,6 +363,19 @@
     });
   }
 
+  function scrollToSectionHash(hash, behavior = 'smooth') {
+    if (!hash || !hash.startsWith('#')) return;
+    const target = document.querySelector(hash);
+    if (!target || target.classList.contains('hidden')) return;
+    const topOffset = 88;
+    const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - topOffset);
+    window.scrollTo({ top, behavior });
+    if (window.location.hash !== hash) {
+      history.replaceState(null, '', hash);
+    }
+    requestAnimationFrame(syncSidebarActiveLink);
+  }
+
   function getSelectedTenant() {
     return state.tenants.find((t) => t.id === state.selectedTenantId) || null;
   }
@@ -273,7 +385,15 @@
   }
 
   function resetCmsState() {
-    state.cms = { articles: [], media: [], editingArticle: null, annualReports: [], editingAnnualReport: null };
+    state.cms = {
+      articles: [],
+      media: [],
+      editingArticle: null,
+      annualReports: [],
+      editingAnnualReport: null,
+      navTabs: [],
+      editingNavTabId: null,
+    };
   }
 
   function tenantApi(path, options) {
@@ -351,6 +471,65 @@
     els.articleOpenLink.style.opacity = '0.6';
     els.articleDeleteBtn.disabled = true;
     populateAttachmentOptions([]);
+  }
+
+  function clearNavTabEditor() {
+    state.cms.editingNavTabId = null;
+    if (els.navTabEditId) els.navTabEditId.value = '';
+    if (els.navTabGroup) els.navTabGroup.value = 'general';
+    if (els.navTabOrder) els.navTabOrder.value = '0';
+    if (els.navTabLabel) els.navTabLabel.value = '';
+    if (els.navTabHref) els.navTabHref.value = '';
+    if (els.navTabVisible) els.navTabVisible.checked = true;
+    if (els.navTabDeleteBtn) els.navTabDeleteBtn.disabled = true;
+    if (els.navTabEditorMeta) {
+      els.navTabEditorMeta.textContent = 'Create or edit navigation tabs for this tenant’s website header/sidebar menus.';
+    }
+  }
+
+  function loadNavTabIntoEditor(tab) {
+    if (!tab) return;
+    state.cms.editingNavTabId = String(tab.id);
+    els.navTabEditId.value = String(tab.id || '');
+    els.navTabGroup.value = tab.group || 'general';
+    els.navTabOrder.value = String(Number.isFinite(Number(tab.order)) ? Number(tab.order) : 0);
+    els.navTabLabel.value = tab.label || '';
+    els.navTabHref.value = tab.href || '';
+    els.navTabVisible.checked = tab.visible !== false;
+    els.navTabDeleteBtn.disabled = false;
+    els.navTabEditorMeta.textContent = `Editing nav tab: ${tab.label || 'Untitled'} (${tab.group || 'general'})`;
+  }
+
+  function renderNavTabsPanel() {
+    const tabs = Array.isArray(state.cms.navTabs) ? state.cms.navTabs : [];
+    if (!els.navTabsTableBody) return;
+    els.navTabsTableBody.innerHTML = tabs.length
+      ? tabs
+          .map((tab) => `
+            <tr>
+              <td>${escapeHtml(tab.group || 'general')}</td>
+              <td><strong>${escapeHtml(tab.label || 'Untitled')}</strong></td>
+              <td class="meta">${escapeHtml(tab.href || '')}</td>
+              <td>${escapeHtml(String(tab.order ?? 0))}</td>
+              <td>${tab.visible === false ? '<span class="pill">Hidden</span>' : '<span class="pill">Visible</span>'}</td>
+              <td>
+                <div class="mini-actions">
+                  <button class="edit-nav-tab-btn" data-nav-tab-id="${escapeHtml(String(tab.id))}">Edit</button>
+                </div>
+              </td>
+            </tr>
+          `)
+          .join('')
+      : '<tr><td colspan="6" class="meta">No navigation tabs yet for this tenant.</td></tr>';
+
+    els.navTabsTableBody.querySelectorAll('.edit-nav-tab-btn').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        const id = String(btn.getAttribute('data-nav-tab-id') || '');
+        const tab = tabs.find((item) => String(item.id) === id);
+        if (tab) loadNavTabIntoEditor(tab);
+      });
+    });
   }
 
   function populateAnnualPdfOptions(selectedMediaId) {
@@ -433,7 +612,11 @@
       els.cmsContentPanel.classList.add('hidden');
       els.mediaTableBody.innerHTML = '<tr><td colspan="4" class="meta">Select a tenant to load media.</td></tr>';
       els.articleTableBody.innerHTML = '<tr><td colspan="5" class="meta">Select a tenant to load articles.</td></tr>';
+      if (els.navTabsTableBody) {
+        els.navTabsTableBody.innerHTML = '<tr><td colspan="6" class="meta">Select a tenant to load navigation tabs.</td></tr>';
+      }
       clearArticleEditor();
+      clearNavTabEditor();
       return;
     }
     els.cmsContentEmpty.classList.add('hidden');
@@ -537,6 +720,7 @@
     els.articleTableBody.querySelectorAll('.edit-article-btn').forEach((btn) => {
       btn.addEventListener('click', (event) => {
         event.preventDefault();
+        setTenantWorkspaceView('articles');
         const id = Number(btn.getAttribute('data-article-id'));
         const article = articles.find((a) => a.id === id);
         if (article) loadArticleIntoEditor(article);
@@ -567,6 +751,7 @@
     els.annualTableBody.querySelectorAll('.edit-annual-btn').forEach((btn) => {
       btn.addEventListener('click', (event) => {
         event.preventDefault();
+        setTenantWorkspaceView('annual-reports');
         const id = Number(btn.getAttribute('data-annual-id'));
         const item = annualReports.find((a) => a.id === id);
         if (item) loadAnnualReportIntoEditor(item);
@@ -587,6 +772,11 @@
     } else {
       populateAnnualPdfOptions(state.cms.editingAnnualReport.mediaId || null);
     }
+    renderNavTabsPanel();
+    if (!state.cms.editingNavTabId) {
+      clearNavTabEditor();
+    }
+    applyTenantWorkspaceView();
   }
 
   function renderPlacementPanel() {
@@ -789,14 +979,16 @@
       return;
     }
     try {
-      const [articles, media, annualReports] = await Promise.all([
+      const [articles, media, annualReports, tenantSettings] = await Promise.all([
         tenantApi('/api/tenant/articles', { method: 'GET' }),
         tenantApi('/api/tenant/media', { method: 'GET' }),
         tenantApi('/api/tenant/annual-reports', { method: 'GET' }),
+        tenantApi('/api/tenant/settings', { method: 'GET' }),
       ]);
       state.cms.articles = Array.isArray(articles) ? articles : [];
       state.cms.media = Array.isArray(media) ? media : [];
       state.cms.annualReports = Array.isArray(annualReports) ? annualReports : [];
+      state.cms.navTabs = Array.isArray(tenantSettings?.navigationTabs) ? tenantSettings.navigationTabs : [];
 
       if (state.cms.editingArticle?.id) {
         const latest = state.cms.articles.find((a) => a.id === state.cms.editingArticle.id);
@@ -806,12 +998,20 @@
         const latestAnnual = state.cms.annualReports.find((a) => a.id === state.cms.editingAnnualReport.id);
         state.cms.editingAnnualReport = latestAnnual || null;
       }
+      if (state.cms.editingNavTabId) {
+        const latestTab = state.cms.navTabs.find((tab) => String(tab.id) === String(state.cms.editingNavTabId));
+        state.cms.editingNavTabId = latestTab ? String(latestTab.id) : null;
+      }
       renderCmsPanel();
       if (state.cms.editingArticle) {
         loadArticleIntoEditor(state.cms.editingArticle);
       }
       if (state.cms.editingAnnualReport) {
         loadAnnualReportIntoEditor(state.cms.editingAnnualReport);
+      }
+      if (state.cms.editingNavTabId) {
+        const latestTab = state.cms.navTabs.find((tab) => String(tab.id) === String(state.cms.editingNavTabId));
+        if (latestTab) loadNavTabIntoEditor(latestTab);
       }
     } catch (err) {
       resetCmsState();
@@ -1013,6 +1213,84 @@
     }
   }
 
+  async function saveTenantNavigationTabs(nextTabs, successMessage) {
+    const normalized = (Array.isArray(nextTabs) ? nextTabs : [])
+      .map((tab, index) => ({
+        id: String(tab.id || `${Date.now()}-${index}`),
+        label: String(tab.label || '').trim(),
+        href: String(tab.href || '').trim(),
+        group: String(tab.group || 'general').trim() || 'general',
+        visible: tab.visible !== false,
+        order: Number.isFinite(Number(tab.order)) ? Number(tab.order) : index,
+      }))
+      .filter((tab) => tab.label)
+      .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label));
+    const res = await tenantApi('/api/tenant/settings', {
+      method: 'PUT',
+      body: JSON.stringify({ navigationTabs: normalized }),
+    });
+    state.cms.navTabs = Array.isArray(res.navigationTabs) ? res.navigationTabs : normalized;
+    renderNavTabsPanel();
+    if (successMessage) setNotice(els.cmsNotice, successMessage, 'ok');
+    return state.cms.navTabs;
+  }
+
+  async function handleSaveNavTab() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.cmsNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const label = els.navTabLabel.value.trim();
+    const href = els.navTabHref.value.trim();
+    if (!label) {
+      setNotice(els.cmsNotice, 'Navigation tab label is required.', 'error');
+      return;
+    }
+    const id = String(els.navTabEditId.value || `nav-${Date.now()}`);
+    const tabs = Array.isArray(state.cms.navTabs) ? [...state.cms.navTabs] : [];
+    const payload = {
+      id,
+      group: els.navTabGroup.value.trim() || 'general',
+      order: Number(els.navTabOrder.value || 0),
+      label,
+      href,
+      visible: Boolean(els.navTabVisible.checked),
+    };
+    const existingIndex = tabs.findIndex((tab) => String(tab.id) === id);
+    if (existingIndex >= 0) {
+      tabs[existingIndex] = { ...tabs[existingIndex], ...payload };
+    } else {
+      tabs.push(payload);
+    }
+    els.navTabSaveBtn.disabled = true;
+    try {
+      await saveTenantNavigationTabs(tabs, `Navigation tab ${existingIndex >= 0 ? 'updated' : 'created'}: ${label}`);
+      const saved = state.cms.navTabs.find((tab) => String(tab.id) === id);
+      if (saved) loadNavTabIntoEditor(saved);
+    } catch (err) {
+      setNotice(els.cmsNotice, err.message || 'Failed to save navigation tab', 'error');
+    } finally {
+      els.navTabSaveBtn.disabled = false;
+    }
+  }
+
+  async function handleDeleteNavTab() {
+    const id = String(els.navTabEditId.value || '');
+    if (!id) return;
+    if (!window.confirm('Delete this navigation tab?')) return;
+    els.navTabDeleteBtn.disabled = true;
+    try {
+      const tabs = (Array.isArray(state.cms.navTabs) ? state.cms.navTabs : []).filter((tab) => String(tab.id) !== id);
+      await saveTenantNavigationTabs(tabs, 'Navigation tab deleted.');
+      clearNavTabEditor();
+    } catch (err) {
+      setNotice(els.cmsNotice, err.message || 'Failed to delete navigation tab', 'error');
+    } finally {
+      els.navTabDeleteBtn.disabled = false;
+    }
+  }
+
   async function handleLogin() {
     els.loginBtn.disabled = true;
     try {
@@ -1200,8 +1478,21 @@
     els.loginModeAdminBtn.addEventListener('click', () => setUiMode('admin'));
     els.loginModeTenantBtn.addEventListener('click', () => setUiMode('tenant'));
     sidebarNavLinks.forEach((link) => {
-      link.addEventListener('click', () => {
-        requestAnimationFrame(syncSidebarActiveLink);
+      link.addEventListener('click', (event) => {
+        const hash = link.getAttribute('href') || '';
+        if (!hash.startsWith('#')) return;
+        event.preventDefault();
+
+        const requestedWorkspaceView = link.dataset.workspaceView || '';
+        const isTenantWorkspaceLink = Boolean(requestedWorkspaceView);
+        if (isTenantWorkspaceLink && state.uiMode !== 'tenant') {
+          setUiMode('tenant');
+        }
+        if (requestedWorkspaceView) {
+          setTenantWorkspaceView(requestedWorkspaceView);
+        }
+
+        requestAnimationFrame(() => scrollToSectionHash(hash));
       });
     });
     window.addEventListener('scroll', syncSidebarActiveLink, { passive: true });
@@ -1240,14 +1531,17 @@
     els.refreshPlacementBtn.addEventListener('click', loadHomepagePlacement);
     els.mediaFilter.addEventListener('change', renderCmsPanel);
     els.libraryMediaBtn.addEventListener('click', () => {
+      setTenantWorkspaceView('libraries');
       els.mediaFilter.value = 'image';
       renderCmsPanel();
     });
     els.libraryDocsBtn.addEventListener('click', () => {
+      setTenantWorkspaceView('libraries');
       els.mediaFilter.value = 'document';
       renderCmsPanel();
     });
     els.libraryAllBtn.addEventListener('click', () => {
+      setTenantWorkspaceView('libraries');
       els.mediaFilter.value = 'all';
       renderCmsPanel();
     });
@@ -1255,6 +1549,7 @@
     els.mediaRefreshBtn.addEventListener('click', loadTenantCmsContent);
     els.articleRefreshBtn.addEventListener('click', loadTenantCmsContent);
     els.articleNewBtn.addEventListener('click', () => {
+      setTenantWorkspaceView('articles');
       clearArticleEditor();
       setNotice(els.cmsNotice, 'Creating a new article.', 'ok');
     });
@@ -1262,11 +1557,20 @@
     els.articleDeleteBtn.addEventListener('click', handleDeleteArticle);
     els.annualRefreshBtn.addEventListener('click', loadTenantCmsContent);
     els.annualNewBtn.addEventListener('click', () => {
+      setTenantWorkspaceView('annual-reports');
       clearAnnualReportEditor();
       setNotice(els.cmsNotice, 'Creating a new annual report entry.', 'ok');
     });
     els.annualSaveBtn.addEventListener('click', handleSaveAnnualReport);
     els.annualDeleteBtn.addEventListener('click', handleDeleteAnnualReport);
+    els.navTabNewBtn.addEventListener('click', () => {
+      setTenantWorkspaceView('nav-tabs');
+      clearNavTabEditor();
+      setNotice(els.cmsNotice, 'Creating a new navigation tab.', 'ok');
+    });
+    els.navTabsRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    els.navTabSaveBtn.addEventListener('click', handleSaveNavTab);
+    els.navTabDeleteBtn.addEventListener('click', handleDeleteNavTab);
     els.annualMediaSelect.addEventListener('change', () => {
       const selectedId = Number(els.annualMediaSelect.value);
       const selected = (Array.isArray(state.cms.media) ? state.cms.media : []).find((item) => item.id === selectedId);

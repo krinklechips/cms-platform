@@ -379,13 +379,29 @@
           </div>
           <div id="sidebar-tenant-group" class="platform-nav-group">
             <p class="platform-nav-group-title">Tenant Workspace</p>
-            <a href="#section-homepage-slot">
+            <a href="#section-tenant-settings" data-workspace-view="tenant-settings">
+              <span class="label">Tenant Settings</span>
+              <span class="helper">Branding, status, support</span>
+            </a>
+            <a href="#section-homepage-slot" data-workspace-view="placements">
               <span class="label">Homepage Placements</span>
               <span class="helper">News & promotions slot</span>
             </a>
-            <a href="#section-tenant-cms">
-              <span class="label">Tenant CMS Workspace</span>
-              <span class="helper">Articles, libraries, annual reports</span>
+            <a href="#section-tenant-cms" data-workspace-view="articles">
+              <span class="label">Articles</span>
+              <span class="helper">List and edit content</span>
+            </a>
+            <a href="#section-tenant-cms" data-workspace-view="libraries">
+              <span class="label">Libraries</span>
+              <span class="helper">Images and documents</span>
+            </a>
+            <a href="#section-tenant-cms" data-workspace-view="annual-reports">
+              <span class="label">Annual Reports</span>
+              <span class="helper">PDF reports section</span>
+            </a>
+            <a href="#section-tenant-cms" data-workspace-view="nav-tabs">
+              <span class="label">Navigation Tabs</span>
+              <span class="helper">Customer nav bar items</span>
             </a>
           </div>
         </nav>
@@ -665,11 +681,12 @@
       <div id="section-tenant-cms" class="card section-anchor" style="margin-top:16px;">
         <h2>Tenant CMS Content (Articles + Media Library)</h2>
         <p class="sub" style="margin:0 0 12px;">Bring over Kardal-style CMS functions into the SaaS platform: article metadata, SEO fields, inline article image caption, media library, and PDF uploads.</p>
+        <div id="tenant-workspace-mode-pill" class="pill" style="margin-bottom:12px;">Workspace module: Articles</div>
         <p id="cms-notice" class="notice hidden"></p>
         <div id="cms-content-empty" class="meta">Select a tenant above to manage that customer’s CMS articles and media library.</div>
         <div id="cms-content-panel" class="section-grid hidden">
           <div class="stack">
-            <div class="card" style="padding:12px;">
+            <div id="tenant-panel-libraries" class="card" style="padding:12px;">
               <h2 id="library-panel-title" style="margin-bottom:8px;">Libraries</h2>
               <p class="meta" style="margin:0 0 10px;">Switch between Media Library (images) and Document Library (PDF files).</p>
               <div class="actions" style="margin-top:0;">
@@ -712,7 +729,7 @@
               </div>
             </div>
 
-            <div class="card" style="padding:12px;">
+            <div id="tenant-panel-articles" class="card" style="padding:12px;">
               <h2 style="margin-bottom:8px;">Articles</h2>
               <div class="actions" style="margin-top:0;">
                 <button id="article-new-btn" class="ghost-brand">New article</button>
@@ -736,7 +753,7 @@
               </div>
             </div>
 
-            <div class="card" style="padding:12px;">
+            <div id="tenant-panel-annual-list" class="card" style="padding:12px;">
               <h2 style="margin-bottom:8px;">Annual Reports</h2>
               <div class="actions" style="margin-top:0;">
                 <button id="annual-new-btn" class="ghost-brand">New annual report</button>
@@ -758,10 +775,35 @@
                 </table>
               </div>
             </div>
+            <div id="tenant-panel-nav-tabs-list" class="card hidden" style="padding:12px;">
+              <h2 style="margin-bottom:8px;">Navigation Tabs</h2>
+              <p class="meta" style="margin:0 0 10px;">Define customer-specific navigation tabs/menu entries (for website nav bars).</p>
+              <div class="actions" style="margin-top:0;">
+                <button id="nav-tab-new-btn" class="ghost-brand">New nav tab</button>
+                <button id="nav-tabs-refresh-btn">Reload tabs</button>
+              </div>
+              <div style="overflow:auto; max-height: 320px; margin-top:10px;">
+                <table class="mini-table">
+                  <thead>
+                    <tr>
+                      <th>Group</th>
+                      <th>Label</th>
+                      <th>Path</th>
+                      <th>Order</th>
+                      <th>Visible</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="nav-tabs-table-body">
+                    <tr><td colspan="6" class="meta">Select a tenant to load navigation tabs.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           <div class="stack">
-            <div class="card" style="padding:12px;">
+            <div id="tenant-panel-article-editor" class="card" style="padding:12px;">
               <h2 style="margin-bottom:8px;">Article Editor</h2>
               <p class="meta" id="article-editor-meta">Create or edit a tenant article. This mirrors Kardal CMS fields (SEO + inline image caption).</p>
               <input id="article-edit-id" type="hidden" />
@@ -853,7 +895,7 @@
               </div>
             </div>
 
-            <div class="card" style="padding:12px;">
+            <div id="tenant-panel-annual-editor" class="card" style="padding:12px;">
               <h2 style="margin-bottom:8px;">Annual Report Editor</h2>
               <p class="meta" id="annual-editor-meta">Create annual report entries and attach PDF files from the tenant media library.</p>
               <input id="annual-edit-id" type="hidden" />
@@ -899,6 +941,38 @@
                 <button id="annual-delete-btn">Delete annual report</button>
                 <a id="annual-open-link" href="#" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open PDF</a>
               </div>
+            </div>
+            <div id="tenant-panel-nav-tabs-editor" class="card hidden" style="padding:12px;">
+              <h2 style="margin-bottom:8px;">Navigation Tab Editor</h2>
+              <p class="meta" id="nav-tab-editor-meta">Create or edit navigation tabs for this tenant’s website header/sidebar menus.</p>
+              <input id="nav-tab-edit-id" type="hidden" />
+              <div class="row">
+                <label>
+                  Group
+                  <input id="nav-tab-group" type="text" placeholder="personal" />
+                </label>
+                <label>
+                  Order
+                  <input id="nav-tab-order" type="number" min="0" step="1" value="0" />
+                </label>
+              </div>
+              <label>
+                Label
+                <input id="nav-tab-label" type="text" placeholder="Savings Accounts" />
+              </label>
+              <label>
+                Path / URL
+                <input id="nav-tab-href" type="text" placeholder="/personal/savings or https://..." />
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:0;">
+                <input id="nav-tab-visible" type="checkbox" checked style="width:auto; margin-top:0;" />
+                <span>Visible in nav bar</span>
+              </label>
+              <div class="actions">
+                <button id="nav-tab-save-btn" class="primary">Save nav tab</button>
+                <button id="nav-tab-delete-btn">Delete nav tab</button>
+              </div>
+              <p class="footer-note">These tabs are stored per tenant and can be consumed by your customer sites for top/side navigation rendering.</p>
             </div>
           </div>
         </div>
