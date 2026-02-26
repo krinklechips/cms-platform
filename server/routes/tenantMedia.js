@@ -8,7 +8,9 @@ import { requireAuth } from '../middleware/requireAuth.js';
 import { requireTenantContext } from '../middleware/tenantContext.js';
 
 const router = express.Router();
-const uploadsDir = path.resolve(path.join(process.cwd(), env.UPLOADS_DIR));
+const uploadsDir = path.isAbsolute(env.UPLOADS_DIR)
+  ? env.UPLOADS_DIR
+  : path.resolve(path.join(process.cwd(), env.UPLOADS_DIR));
 
 router.use(requireAuth);
 router.use(requireTenantContext);

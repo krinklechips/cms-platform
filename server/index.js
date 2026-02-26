@@ -32,6 +32,9 @@ seedPlatformDefaults();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, '..', 'public');
+const uploadsDir = path.isAbsolute(env.UPLOADS_DIR)
+  ? env.UPLOADS_DIR
+  : path.resolve(path.join(__dirname, '..', '..', env.UPLOADS_DIR));
 
 const app = express();
 // Render terminates TLS at the proxy. Trust proxy so secure session cookies are
@@ -174,7 +177,7 @@ app.use('/api/public', publicSlotsRouter);
 app.use('/api/public', publicAnnualReportsRouter);
 app.use('/api/public', publicArticlesRouter);
 app.use('/api/public', publicNavigationTabsRouter);
-app.use('/uploads', express.static(path.join(__dirname, '..', '..', env.UPLOADS_DIR)));
+app.use('/uploads', express.static(uploadsDir));
 app.use('/platform-admin', blockPlatformAdminOnTenantHost, express.static(path.join(publicDir, 'platform-admin')));
 app.use('/tenant-login', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-login')));
 app.use('/tenant-dashboard', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-dashboard')));

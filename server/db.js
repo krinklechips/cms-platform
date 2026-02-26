@@ -7,7 +7,9 @@ import { env } from './config/env.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dbFile = path.resolve(path.join(__dirname, '..', '..', env.DB_PATH));
+const dbFile = path.isAbsolute(env.DB_PATH)
+  ? env.DB_PATH
+  : path.resolve(path.join(__dirname, '..', '..', env.DB_PATH));
 const dbDir = path.dirname(dbFile);
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
