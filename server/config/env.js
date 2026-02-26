@@ -17,6 +17,7 @@ export const env = {
   SESSION_SECRET: process.env.PLATFORM_SESSION_SECRET || 'change-me-platform-session-secret',
   BOOTSTRAP_SECRET: process.env.PLATFORM_BOOTSTRAP_SECRET || '',
   CORS_ORIGINS: splitCsv(process.env.PLATFORM_CORS_ORIGIN || 'http://localhost:5173'),
+  PLATFORM_ADMIN_HOSTS: splitCsv(process.env.PLATFORM_ADMIN_HOSTS || ''),
   PLATFORM_OWNER_EMAIL: process.env.PLATFORM_OWNER_EMAIL || 'owner@example.com',
   SEED_TENANT: {
     slug: process.env.SEED_TENANT_SLUG || 'demo',

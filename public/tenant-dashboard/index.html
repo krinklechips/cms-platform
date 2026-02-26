@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tenant CMS Dashboard</title>
+    <style>
+      :root {
+        --bg: #f5f7fb;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --line: #e2e8f0;
+        --card: #ffffff;
+        --brand: #0f766e;
+        --brand-soft: #ecfdf5;
+        --danger: #b91c1c;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 8% 8%, rgba(16, 185, 129, 0.10) 0 16%, transparent 42%),
+          radial-gradient(circle at 92% 10%, rgba(14, 165, 233, 0.10) 0 14%, transparent 40%),
+          linear-gradient(180deg, #fbfefe 0%, var(--bg) 55%);
+      }
+      .hidden { display: none !important; }
+      .app-shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 270px 1fr;
+      }
+      .sidebar {
+        border-right: 1px solid var(--line);
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(8px);
+        padding: 18px 14px;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        display: grid;
+        align-content: start;
+        gap: 14px;
+      }
+      .brandbox {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        padding: 14px;
+      }
+      .brandrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .mark {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 800;
+        box-shadow: 0 8px 18px rgba(15, 118, 110, 0.20);
+      }
+      .brandbox strong { display: block; font-size: 14px; }
+      .brandbox span { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+      .pill {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        margin-top: 10px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        border: 1px solid #cbd5e1;
+        font-size: 11px;
+        color: #475569;
+        background: #fff;
+      }
+      .nav {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 8px;
+        background: #fff;
+      }
+      .nav a {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        border-radius: 10px;
+        padding: 10px 11px;
+        border: 1px solid transparent;
+        font-size: 13px;
+      }
+      .nav a:hover { background: #f8fafc; }
+      .nav a.active {
+        background: var(--brand-soft);
+        border-color: #bbf7d0;
+        color: #065f46;
+        font-weight: 700;
+      }
+      .nav small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+      .sidebar .actions {
+        display: grid;
+        gap: 8px;
+      }
+      button, .btn {
+        font: inherit;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        padding: 10px 12px;
+        cursor: pointer;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      button.primary {
+        background: linear-gradient(180deg, #14b8a6 0%, #0f766e 100%);
+        border-color: #0f766e;
+        color: #fff;
+      }
+      button:disabled { opacity: 0.65; cursor: not-allowed; }
+      .main {
+        min-width: 0;
+        padding: 20px;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 14px;
+      }
+      .topbar h1 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+      .topbar p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+        max-width: 68ch;
+      }
+      .session-chip {
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .notice {
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 13px;
+        border: 1px solid var(--line);
+        background: #fff;
+        margin-bottom: 14px;
+      }
+      .notice.error { border-color: #fecaca; background: #fef2f2; color: var(--danger); }
+      .notice.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .metric {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px;
+        box-shadow: 0 8px 26px rgba(15, 23, 42, 0.04);
+      }
+      .metric .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+      .metric .value { margin-top: 6px; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+      .metric .hint { margin-top: 4px; color: var(--muted); font-size: 12px; }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 12px;
+      }
+      .stack { display: grid; gap: 12px; }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+        overflow: hidden;
+      }
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+      }
+      .card-head h2 {
+        margin: 0;
+        font-size: 15px;
+      }
+      .card-head .subtle { color: var(--muted); font-size: 11px; }
+      .card-body { padding: 14px 16px; }
+      .empty {
+        border: 1px dashed #cbd5e1;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 14px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th, td {
+        text-align: left;
+        padding: 9px 6px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: #475569;
+      }
+      .status.published, .status.active { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+      .status.draft { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+      .tabs-wrap { display: grid; gap: 8px; }
+      .tab-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: #fff;
+      }
+      .tab-item strong { display: block; font-size: 13px; }
+      .tab-item span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+      .slot-grid { display: grid; gap: 10px; }
+      .slot-tab {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .slot-tab-head {
+        padding: 8px 10px;
+        font-weight: 700;
+        font-size: 12px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .slot-list { padding: 8px 10px; display: grid; gap: 8px; }
+      .slot-item {
+        border: 1px solid #f1f5f9;
+        border-radius: 10px;
+        padding: 8px 9px;
+        background: #fff;
+      }
+      .slot-item strong { display: block; font-size: 12px; }
+      .slot-item span { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; }
+      .mini-kv { display: grid; gap: 8px; }
+      .kv {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 8px;
+        font-size: 12px;
+        align-items: start;
+      }
+      .kv .k { color: var(--muted); }
+      .kv .v { color: #334155; word-break: break-word; }
+      .loading {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      @media (max-width: 1120px) {
+        .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 900px) {
+        .app-shell { grid-template-columns: 1fr; }
+        .sidebar {
+          position: static;
+          height: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+          gap: 10px;
+        }
+        .main { padding-top: 16px; }
+        .topbar { flex-direction: column; align-items: stretch; }
+        .metrics { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading-view" class="main" style="max-width:960px;margin:0 auto;padding-top:48px;">
+      <div class="card" style="padding:18px;">
+        <div class="loading">Loading tenant dashboard...</div>
+      </div>
+    </div>
+
+    <div id="app-view" class="app-shell hidden">
+      <aside class="sidebar">
+        <div class="brandbox">
+          <div class="brandrow">
+            <div class="mark" id="tenant-mark">TC</div>
+            <div>
+              <strong id="tenant-name">Tenant CMS</strong>
+              <span id="tenant-slug">Workspace dashboard</span>
+            </div>
+          </div>
+          <div id="tenant-host-pill" class="pill hidden"></div>
+        </div>
+
+        <nav class="nav" id="dashboard-nav">
+          <a href="#overview" class="active"><span>Overview</span><small>Metrics and session</small></a>
+          <a href="#articles"><span>Articles</span><small>Recent content items</small></a>
+          <a href="#media"><span>Media</span><small>Latest uploads</small></a>
+          <a href="#annual-reports"><span>Annual Reports</span><small>Published and draft entries</small></a>
+          <a href="#site-preview"><span>Site Preview Data</span><small>Nav tabs and homepage slot</small></a>
+        </nav>
+
+        <div class="actions">
+          <button id="refresh-btn" class="primary" type="button">Refresh Dashboard</button>
+          <button id="logout-btn" type="button">Sign Out</button>
+          <a class="btn" href="/tenant-login">Open Login Page</a>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="topbar" id="overview">
+          <div>
+            <h1>Main Dashboard</h1>
+            <p id="dashboard-subtitle">
+              Tenant content workspace overview with protected CMS data and public site previews.
+            </p>
+          </div>
+          <div id="session-chip" class="session-chip hidden"></div>
+        </div>
+
+        <div id="app-notice" class="notice hidden"></div>
+
+        <section class="metrics" id="metrics-grid">
+          <div class="metric"><div class="label">Articles</div><div class="value" id="metric-articles">-</div><div class="hint" id="metric-articles-hint">Loading...</div></div>
+          <div class="metric"><div class="label">Media</div><div class="value" id="metric-media">-</div><div class="hint" id="metric-media-hint">Loading...</div></div>
+          <div class="metric"><div class="label">Annual Reports</div><div class="value" id="metric-annual">-</div><div class="hint" id="metric-annual-hint">Loading...</div></div>
+          <div class="metric"><div class="label">Homepage Slot</div><div class="value" id="metric-slot">-</div><div class="hint" id="metric-slot-hint">Loading...</div></div>
+        </section>
+
+        <div class="grid">
+          <div class="stack">
+            <section class="card" id="articles">
+              <div class="card-head">
+                <h2>Recent Articles</h2>
+                <span class="subtle" id="articles-count-label">Loading...</span>
+              </div>
+              <div class="card-body">
+                <div id="articles-empty" class="empty hidden">No articles available for this tenant yet.</div>
+                <div style="overflow:auto;">
+                  <table id="articles-table">
+                    <thead>
+                      <tr><th>Title</th><th>Status</th><th>Category</th><th>Published</th><th>Updated</th></tr>
+                    </thead>
+                    <tbody id="articles-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            <section class="card" id="media">
+              <div class="card-head">
+                <h2>Recent Media</h2>
+                <span class="subtle" id="media-count-label">Loading...</span>
+              </div>
+              <div class="card-body">
+                <div id="media-empty" class="empty hidden">No media uploaded yet.</div>
+                <div style="overflow:auto;">
+                  <table id="media-table">
+                    <thead>
+                      <tr><th>Label</th><th>Kind</th><th>MIME</th><th>Size</th><th>Created</th></tr>
+                    </thead>
+                    <tbody id="media-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="stack">
+            <section class="card" id="annual-reports">
+              <div class="card-head">
+                <h2>Annual Reports</h2>
+                <span class="subtle" id="annual-count-label">Loading...</span>
+              </div>
+              <div class="card-body">
+                <div id="annual-empty" class="empty hidden">No annual reports configured yet.</div>
+                <div style="overflow:auto;">
+                  <table id="annual-table">
+                    <thead>
+                      <tr><th>Year</th><th>Title</th><th>Status</th><th>Updated</th></tr>
+                    </thead>
+                    <tbody id="annual-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            <section class="card" id="site-preview">
+              <div class="card-head">
+                <h2>Site Preview Data</h2>
+                <span class="subtle">Public API outputs</span>
+              </div>
+              <div class="card-body" style="display:grid; gap:12px;">
+                <div>
+                  <h3 style="margin:0 0 8px; font-size:13px;">Navigation Tabs</h3>
+                  <div id="nav-tabs-empty" class="empty hidden">No visible navigation tabs published yet.</div>
+                  <div id="nav-tabs-list" class="tabs-wrap"></div>
+                </div>
+                <div>
+                  <h3 style="margin:0 0 8px; font-size:13px;">Homepage News & Promotions Slot</h3>
+                  <div id="slot-empty" class="empty hidden">Slot data unavailable or not configured.</div>
+                  <div id="slot-content" class="slot-grid"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card" id="tenant-info">
+              <div class="card-head">
+                <h2>Tenant Info</h2>
+                <span class="subtle">Resolved from host</span>
+              </div>
+              <div class="card-body">
+                <div id="tenant-info-grid" class="mini-kv"></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/tenant-dashboard/app.js"></script>
+  </body>
+</html>

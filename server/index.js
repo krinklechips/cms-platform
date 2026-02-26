@@ -7,6 +7,7 @@ import { env } from './config/env.js';
 import { db, seedPlatformDefaults } from './db.js';
 import platformTenantsRouter from './routes/platformTenants.js';
 import platformPlacementsRouter from './routes/platformPlacements.js';
+import platformTenantUsersRouter from './routes/platformTenantUsers.js';
 import tenantArticlesRouter from './routes/tenantArticles.js';
 import tenantMediaRouter from './routes/tenantMedia.js';
 import publicSlotsRouter from './routes/publicSlots.js';
@@ -15,6 +16,14 @@ import publicAnnualReportsRouter from './routes/publicAnnualReports.js';
 import tenantSettingsRouter from './routes/tenantSettings.js';
 import publicArticlesRouter from './routes/publicArticles.js';
 import publicNavigationTabsRouter from './routes/publicNavigationTabs.js';
+import tenantAuthRouter from './routes/tenantAuth.js';
+import {
+  attachHostContext,
+  blockTenantLoginOnPlatformHost,
+  blockPlatformAdminOnTenantHost,
+  getHostContextDebug,
+  requirePlatformHost,
+} from './middleware/hostContext.js';
 
 seedPlatformDefaults();
 
@@ -52,12 +61,40 @@ app.use(
   }),
 );
 
+app.use(attachHostContext);
+
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'cms-platform', time: new Date().toISOString() });
+  res.json({
+    ok: true,
+    service: 'cms-platform',
+    time: new Date().toISOString(),
+    hostMode: req.hostContext?.mode || 'unknown',
+    requestHost: req.hostContext?.requestHost || null,
+  });
+});
+
+app.get('/api/platform/host-context', (req, res) => {
+  res.json({
+    host: req.hostContext?.requestHost || null,
+    mode: req.hostContext?.mode || 'unknown',
+    tenant: req.hostContext?.tenant
+      ? {
+          id: req.hostContext.tenant.id,
+          slug: req.hostContext.tenant.slug,
+          name: req.hostContext.tenant.name,
+          status: req.hostContext.tenant.status,
+          branding: req.hostContext.tenant.branding,
+        }
+      : null,
+    debug: process.env.NODE_ENV === 'production' ? undefined : getHostContextDebug(),
+  });
 });
 
 // Dev bootstrap auth route so you can test platform APIs before building real auth/SSO.
 app.post('/api/platform/auth/dev-login', (req, res) => {
+  if (!req.hostContext?.isPlatformHost) {
+    return res.status(403).json({ error: 'Platform host required' });
+  }
   if (env.NODE_ENV === 'production') {
     return res.status(404).json({ error: 'Not found' });
   }
@@ -79,7 +116,7 @@ app.post('/api/platform/auth/dev-login', (req, res) => {
 
 // Temporary production-safe bootstrap login for Phase 2 platform admin UI.
 // Replace with real auth before onboarding external customers.
-app.post('/api/platform/auth/bootstrap-login', (req, res) => {
+app.post('/api/platform/auth/bootstrap-login', requirePlatformHost, (req, res) => {
   if (!env.BOOTSTRAP_SECRET) {
     return res.status(503).json({ error: 'Bootstrap login is not configured.' });
   }
@@ -121,8 +158,10 @@ app.post('/api/platform/auth/logout', (req, res) => {
   });
 });
 
+app.use('/api/tenant/auth', tenantAuthRouter);
 app.use('/api/platform/tenants', platformTenantsRouter);
 app.use('/api/platform/placements', platformPlacementsRouter);
+app.use('/api/platform/tenant-users', platformTenantUsersRouter);
 app.use('/api/tenant/articles', tenantArticlesRouter);
 app.use('/api/tenant/media', tenantMediaRouter);
 app.use('/api/tenant/annual-reports', tenantAnnualReportsRouter);
@@ -132,13 +171,22 @@ app.use('/api/public', publicAnnualReportsRouter);
 app.use('/api/public', publicArticlesRouter);
 app.use('/api/public', publicNavigationTabsRouter);
 app.use('/uploads', express.static(path.join(__dirname, '..', '..', env.UPLOADS_DIR)));
-app.use('/platform-admin', express.static(path.join(publicDir, 'platform-admin')));
+app.use('/platform-admin', blockPlatformAdminOnTenantHost, express.static(path.join(publicDir, 'platform-admin')));
+app.use('/tenant-login', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-login')));
+app.use('/tenant-dashboard', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-dashboard')));
 
 app.get('/', (req, res) => {
+  if (req.hostContext?.isTenantHost) {
+    return res.redirect('/tenant-dashboard');
+  }
   res.redirect('/platform-admin');
 });
 
 app.listen(env.PORT, () => {
   console.log(`[platform] listening on http://localhost:${env.PORT}`);
   console.log(`[platform] db: ${env.DB_PATH}`);
+  if (process.env.NODE_ENV !== 'production') {
+    const debug = getHostContextDebug();
+    console.log(`[platform] platform admin hosts: ${debug.platformHosts.join(', ')}`);
+  }
 });
