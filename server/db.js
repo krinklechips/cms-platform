@@ -179,6 +179,26 @@ CREATE TABLE IF NOT EXISTS annual_reports (
   FOREIGN KEY(media_id) REFERENCES media(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS product_lines (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  slug TEXT NOT NULL,
+  label TEXT NOT NULL,
+  summary TEXT,
+  href TEXT,
+  group_key TEXT NOT NULL DEFAULT 'equipment',
+  group_label TEXT,
+  item_type TEXT NOT NULL DEFAULT 'product',
+  status TEXT NOT NULL DEFAULT 'published',
+  featured INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  metadata_json TEXT NOT NULL DEFAULT '{}',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, slug),
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS content_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   tenant_id INTEGER NOT NULL,
