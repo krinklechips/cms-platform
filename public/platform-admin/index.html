@@ -518,6 +518,187 @@
         display: grid;
         gap: 12px;
       }
+      .tenant-toolbar {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 180px auto;
+        gap: 10px;
+        align-items: end;
+        margin: 0 0 10px;
+      }
+      .tenant-toolbar label {
+        margin: 0;
+      }
+      .tenant-toolbar .toolbar-label {
+        display: block;
+        font-size: 10px;
+        line-height: 1.2;
+        color: var(--muted);
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .tenant-toolbar .toolbar-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .tenant-summary-row {
+        margin: 0 0 10px;
+      }
+      .tenant-context {
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, #ffffff 0%, #fbfbfc 100%);
+        border-radius: 14px;
+        padding: 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .tenant-context-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .tenant-context-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .tenant-context-sub {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .tenant-context-pills {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .tenant-quick-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .tenant-quick-actions a[aria-disabled="true"] {
+        pointer-events: none;
+        opacity: 0.5;
+      }
+      .subtabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 2px 0 0;
+      }
+      .subtabs button {
+        padding: 8px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .subtabs button.is-active {
+        background: var(--brand-soft);
+        border-color: var(--brand-line);
+        color: #5b21b6;
+      }
+      .tenant-settings-panel {
+        display: grid;
+        gap: 10px;
+      }
+      .tenant-settings-panel.hidden {
+        display: none !important;
+      }
+      .subsection {
+        border: 1px solid #efeff2;
+        border-radius: 12px;
+        background: #fff;
+        padding: 12px;
+      }
+      .subsection h3 {
+        margin: 0 0 6px;
+        font-size: 14px;
+        letter-spacing: -0.01em;
+      }
+      .subsection .meta {
+        margin: 0 0 10px;
+      }
+      .expand {
+        border: 1px solid #efeff2;
+        border-radius: 12px;
+        background: #fff;
+        padding: 8px 10px;
+      }
+      .expand > summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #27272a;
+      }
+      .expand > summary::-webkit-details-marker { display: none; }
+      .expand > summary::after {
+        content: '+';
+        color: var(--muted);
+        font-family: var(--font-mono);
+        font-size: 14px;
+      }
+      .expand[open] > summary::after {
+        content: '−';
+      }
+      .expand-body {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #efeff2;
+      }
+      .field-help {
+        display: block;
+        margin-top: 5px;
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+      .field-help.error {
+        color: var(--danger);
+      }
+      .input-invalid {
+        border-color: #fca5a5 !important;
+        box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.08) !important;
+      }
+      .savebar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .savebar-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .placeholder-card {
+        border: 1px dashed #e4e4e7;
+        background: #fcfcfd;
+        border-radius: 12px;
+        padding: 12px;
+      }
+      .placeholder-card h3 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+      .empty-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+      }
       .ops-grid {
         display: grid;
         grid-template-columns: 1.1fr 0.9fr;
@@ -672,6 +853,9 @@
         .grid { grid-template-columns: 1fr; }
         .section-grid { grid-template-columns: 1fr; }
         .ops-grid { grid-template-columns: 1fr; }
+        .tenant-toolbar { grid-template-columns: 1fr; }
+        .savebar { align-items: stretch; }
+        .savebar > * { width: 100%; }
         .platform-sidebar { display: none; }
         .platform-topbar-inner, .platform-content { padding-left: 16px; padding-right: 16px; }
         .platform-topbar-actions { justify-content: stretch; width: 100%; }
@@ -923,6 +1107,25 @@
               <p class="card-head-meta">Select a tenant to edit settings, provision the CMS domain, and manage tenant workspace modules.</p>
             </div>
           </div>
+          <div class="tenant-toolbar">
+            <label>
+              <span class="toolbar-label">Search tenants</span>
+              <input id="tenant-search-input" type="search" placeholder="Search name, slug, or domain" />
+            </label>
+            <label>
+              <span class="toolbar-label">Status</span>
+              <select id="tenant-status-filter">
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+                <option value="domain-unverified">Domain not verified</option>
+              </select>
+            </label>
+            <div class="toolbar-actions">
+              <button id="tenant-filter-clear-btn" type="button">Clear</button>
+            </div>
+          </div>
+          <p id="tenant-list-summary" class="meta tenant-summary-row">Loading tenants…</p>
           <div class="table-wrap">
             <table>
               <thead>
@@ -945,48 +1148,94 @@
         <h2>Edit Selected Tenant</h2>
         <p id="selected-tenant-empty" class="meta">Select a tenant from the table above to edit branding and status.</p>
         <div id="selected-tenant-form" class="hidden tenant-settings-grid">
-          <div class="row">
-            <label>
-              Tenant name
-              <input id="edit-name" type="text" />
-            </label>
-            <label>
-              Status
-              <select id="edit-status">
-                <option value="active">Active</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </label>
+          <div id="tenant-context-header" class="tenant-context hidden">
+            <div class="tenant-context-head">
+              <div>
+                <h3 id="tenant-context-name" class="tenant-context-title">Select a tenant</h3>
+                <p id="tenant-context-sub" class="tenant-context-sub">Choose a customer from the list to start editing settings and content modules.</p>
+              </div>
+              <div class="tenant-context-pills">
+                <span id="tenant-context-status-pill" class="pill">Status</span>
+                <span id="tenant-context-domain-pill" class="pill">Domain</span>
+                <span id="tenant-form-dirty-pill" class="pill">No changes</span>
+              </div>
+            </div>
+            <div class="tenant-quick-actions">
+              <a id="tenant-context-open-cms" class="pill" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true" style="text-decoration:none;">Open CMS Host</a>
+              <a id="tenant-context-open-site" class="pill" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true" style="text-decoration:none;">Open Public Site</a>
+              <button id="tenant-context-open-domains-tab" type="button" class="ghost-brand">Open Domains Tab</button>
+              <button id="tenant-context-open-content-tab" type="button">Content Modules</button>
+            </div>
           </div>
-          <div class="row">
-            <label>
-              Slug (read-only)
-              <input id="edit-slug" type="text" disabled />
-            </label>
-            <label>
-              Primary color
-              <input id="edit-primary-color" type="text" />
-            </label>
+
+          <div id="tenant-settings-tabs" class="subtabs" role="tablist" aria-label="Tenant settings sections">
+            <button type="button" data-tenant-settings-tab="branding" class="is-active">Branding</button>
+            <button type="button" data-tenant-settings-tab="domains">Domains</button>
+            <button type="button" data-tenant-settings-tab="support">Support</button>
+            <button type="button" data-tenant-settings-tab="users">Users</button>
+            <button type="button" data-tenant-settings-tab="content">Content Modules</button>
           </div>
-          <label>
-            Logo URL
-            <input id="edit-logo-url" type="text" />
-          </label>
-          <div class="row">
-            <label>
-              Public site URL
-              <input id="edit-public-site-url" type="url" />
-            </label>
-            <label>
-              CMS domain URL
-              <input id="edit-cms-domain" type="url" />
-            </label>
+
+          <div data-tenant-settings-panel="branding" class="tenant-settings-panel">
+            <div class="subsection">
+              <h3>Basic Tenant Setup</h3>
+              <p class="meta">Keep the core business details here. Advanced branding and URLs can stay collapsed until needed.</p>
+              <div class="row">
+                <label>
+                  Tenant name
+                  <input id="edit-name" type="text" />
+                  <span id="edit-name-help" class="field-help hidden"></span>
+                </label>
+                <label>
+                  Status
+                  <select id="edit-status">
+                    <option value="active">Active</option>
+                    <option value="disabled">Disabled</option>
+                  </select>
+                </label>
+              </div>
+              <div class="row">
+                <label>
+                  Slug (read-only)
+                  <input id="edit-slug" type="text" disabled />
+                </label>
+                <label>
+                  Primary color
+                  <input id="edit-primary-color" type="text" />
+                  <span id="edit-primary-color-help" class="field-help hidden"></span>
+                </label>
+              </div>
+            </div>
+            <details id="tenant-branding-advanced" class="expand">
+              <summary>Advanced Branding & URLs</summary>
+              <div class="expand-body">
+                <label>
+                  Logo URL
+                  <input id="edit-logo-url" type="text" />
+                </label>
+                <label>
+                  Public site URL
+                  <input id="edit-public-site-url" type="url" />
+                  <span id="edit-public-site-url-help" class="field-help hidden"></span>
+                </label>
+              </div>
+            </details>
           </div>
-          <label>
-            Support email
-            <input id="edit-support-email" type="email" />
-          </label>
-          <div class="card nested-card" style="padding:12px; margin:8px 0 4px;">
+
+          <div data-tenant-settings-panel="domains" class="tenant-settings-panel hidden">
+            <div class="subsection">
+              <h3>Tenant CMS Domain</h3>
+              <p class="meta">Store the tenant’s CMS hostname and manage custom domain provisioning/verification for the Render-hosted SaaS CMS.</p>
+              <label>
+                CMS domain URL
+                <input id="edit-cms-domain" type="url" />
+                <span id="edit-cms-domain-help" class="field-help hidden"></span>
+              </label>
+            </div>
+            <details id="tenant-domain-provisioning-details" class="expand">
+              <summary>Domain Provisioning (Render + DNS Instructions)</summary>
+              <div class="expand-body">
+          <div class="card nested-card" style="padding:12px; margin:0;">
             <h2 style="margin-bottom:6px;">Tenant CMS Domain Provisioning (v1)</h2>
             <p class="meta" style="margin:0 0 10px;">
               Render custom domain + customer-managed DNS instructions (Exabytes/manual mode). Media on Cloudflare R2 is separate and unaffected.
@@ -1039,9 +1288,56 @@
               <textarea id="tenant-domain-instructions" readonly style="min-height:140px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace;"></textarea>
             </label>
           </div>
-          <div class="actions">
+              </div>
+            </details>
+          </div>
+
+          <div data-tenant-settings-panel="support" class="tenant-settings-panel hidden">
+            <div class="subsection">
+              <h3>Support Contact</h3>
+              <p class="meta">This email is used as the tenant-facing support contact for UI and content modules.</p>
+              <label>
+                Support email
+                <input id="edit-support-email" type="email" />
+                <span id="edit-support-email-help" class="field-help hidden"></span>
+              </label>
+            </div>
+          </div>
+
+          <div data-tenant-settings-panel="users" class="tenant-settings-panel hidden">
+            <div class="placeholder-card">
+              <h3>Tenant User Access</h3>
+              <p class="meta" style="margin:0 0 10px;">Tenant user provisioning exists in the backend. Next UX step is a dedicated user-management table here (invite, reset password, role changes).</p>
+              <div class="actions" style="margin-top:0;">
+                <a href="#section-tenant-settings" class="pill" data-ui-mode="admin" style="text-decoration:none;">Stay in tenant settings</a>
+                <button type="button" id="tenant-users-open-domains-btn">Review domain setup first</button>
+              </div>
+              <p class="footer-note" style="margin-top:8px;">Current API: <code>POST /api/platform/tenant-users</code> (platform admin only)</p>
+            </div>
+          </div>
+
+          <div data-tenant-settings-panel="content" class="tenant-settings-panel hidden">
+            <div class="placeholder-card">
+              <h3>Content Modules Quick Start</h3>
+              <p class="meta" style="margin:0 0 10px;">Use these shortcuts after onboarding to immediately populate the tenant’s public-facing site content.</p>
+              <div class="actions" style="margin-top:0;">
+                <button type="button" id="tenant-content-open-articles-btn" class="ghost-brand">Go to Articles</button>
+                <button type="button" id="tenant-content-open-library-btn">Go to Libraries</button>
+                <button type="button" id="tenant-content-open-homepage-btn">Go to Homepage Placements</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="tenant-form-validation-summary" class="notice hidden"></div>
+          <div class="actions savebar">
+            <div class="savebar-meta">
+              <span id="tenant-form-save-state-pill" class="pill">No changes</span>
+              <span id="tenant-form-save-feedback" class="meta">Select a tenant to begin editing.</span>
+            </div>
+            <div class="actions" style="margin-top:0;">
             <button id="save-tenant-btn" class="primary">Save tenant</button>
             <button id="reload-selected-btn">Reload list</button>
+            </div>
           </div>
           <p id="selected-tenant-meta" class="footer-note"></p>
         </div>

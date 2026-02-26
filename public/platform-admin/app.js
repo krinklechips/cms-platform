@@ -5,8 +5,21 @@
     auth: null,
     uiMode: localStorage.getItem('cms-platform-ui-mode') === 'tenant' ? 'tenant' : 'admin',
     tenantWorkspaceView: localStorage.getItem('cms-platform-tenant-workspace-view') || 'articles',
+    tenantSettingsTab: localStorage.getItem('cms-platform-tenant-settings-tab') || 'branding',
     tenants: [],
     selectedTenantId: null,
+    tenantFilters: {
+      search: '',
+      status: 'all',
+    },
+    tenantForm: {
+      loadedTenantId: null,
+      snapshot: null,
+      dirty: false,
+      lastSavedAt: null,
+      lastSaveMessage: '',
+      validationErrors: {},
+    },
     placement: {
       slot: null,
       items: [],
@@ -80,18 +93,42 @@
     createSupportEmail: document.getElementById('create-support-email'),
     createTenantBtn: document.getElementById('create-tenant-btn'),
     refreshTenantsBtn: document.getElementById('refresh-tenants-btn'),
+    tenantSearchInput: document.getElementById('tenant-search-input'),
+    tenantStatusFilter: document.getElementById('tenant-status-filter'),
+    tenantFilterClearBtn: document.getElementById('tenant-filter-clear-btn'),
+    tenantListSummary: document.getElementById('tenant-list-summary'),
     tenantTableBody: document.getElementById('tenant-table-body'),
     selectedTenantEmpty: document.getElementById('selected-tenant-empty'),
     selectedTenantForm: document.getElementById('selected-tenant-form'),
     selectedTenantMeta: document.getElementById('selected-tenant-meta'),
+    tenantContextHeader: document.getElementById('tenant-context-header'),
+    tenantContextName: document.getElementById('tenant-context-name'),
+    tenantContextSub: document.getElementById('tenant-context-sub'),
+    tenantContextStatusPill: document.getElementById('tenant-context-status-pill'),
+    tenantContextDomainPill: document.getElementById('tenant-context-domain-pill'),
+    tenantContextOpenCms: document.getElementById('tenant-context-open-cms'),
+    tenantContextOpenSite: document.getElementById('tenant-context-open-site'),
+    tenantContextOpenDomainsTabBtn: document.getElementById('tenant-context-open-domains-tab'),
+    tenantContextOpenContentTabBtn: document.getElementById('tenant-context-open-content-tab'),
+    tenantFormDirtyPill: document.getElementById('tenant-form-dirty-pill'),
+    tenantSettingsTabs: document.getElementById('tenant-settings-tabs'),
+    tenantUsersOpenDomainsBtn: document.getElementById('tenant-users-open-domains-btn'),
+    tenantContentOpenArticlesBtn: document.getElementById('tenant-content-open-articles-btn'),
+    tenantContentOpenLibraryBtn: document.getElementById('tenant-content-open-library-btn'),
+    tenantContentOpenHomepageBtn: document.getElementById('tenant-content-open-homepage-btn'),
     editName: document.getElementById('edit-name'),
     editStatus: document.getElementById('edit-status'),
     editSlug: document.getElementById('edit-slug'),
     editPrimaryColor: document.getElementById('edit-primary-color'),
+    editPrimaryColorHelp: document.getElementById('edit-primary-color-help'),
     editLogoUrl: document.getElementById('edit-logo-url'),
     editPublicSiteUrl: document.getElementById('edit-public-site-url'),
+    editPublicSiteUrlHelp: document.getElementById('edit-public-site-url-help'),
     editCmsDomain: document.getElementById('edit-cms-domain'),
+    editCmsDomainHelp: document.getElementById('edit-cms-domain-help'),
     editSupportEmail: document.getElementById('edit-support-email'),
+    editSupportEmailHelp: document.getElementById('edit-support-email-help'),
+    editNameHelp: document.getElementById('edit-name-help'),
     tenantDomainProvisionNotice: document.getElementById('tenant-domain-provision-notice'),
     tenantDomainHostname: document.getElementById('tenant-domain-hostname'),
     tenantDomainDnsMode: document.getElementById('tenant-domain-dns-mode'),
@@ -108,6 +145,9 @@
     tenantDomainInstructions: document.getElementById('tenant-domain-instructions'),
     saveTenantBtn: document.getElementById('save-tenant-btn'),
     reloadSelectedBtn: document.getElementById('reload-selected-btn'),
+    tenantFormValidationSummary: document.getElementById('tenant-form-validation-summary'),
+    tenantFormSaveStatePill: document.getElementById('tenant-form-save-state-pill'),
+    tenantFormSaveFeedback: document.getElementById('tenant-form-save-feedback'),
     placementNotice: document.getElementById('placement-notice'),
     placementEmpty: document.getElementById('placement-empty'),
     placementPanel: document.getElementById('placement-panel'),
@@ -204,6 +244,8 @@
   };
   const sidebarNavLinks = Array.from(document.querySelectorAll('.platform-nav a[href^="#"]'));
   const workspaceNavLinks = Array.from(document.querySelectorAll('.platform-nav a[data-workspace-view]'));
+  const tenantSettingsTabButtons = Array.from(document.querySelectorAll('[data-tenant-settings-tab]'));
+  const tenantSettingsTabPanels = Array.from(document.querySelectorAll('[data-tenant-settings-panel]'));
 
   async function api(path, options) {
     const res = await fetch(path, {
@@ -247,6 +289,316 @@
       idx += 1;
     }
     return `${size.toFixed(size >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+  }
+
+  function ensureAbsoluteUrl(url) {
+    const raw = String(url || '').trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return `https://${raw}`;
+  }
+
+  function extractHostname(url) {
+    const raw = String(url || '').trim();
+    if (!raw) return '';
+    try {
+      return new URL(ensureAbsoluteUrl(raw)).host;
+    } catch {
+      return raw.replace(/^https?:\/\//i, '').split('/')[0];
+    }
+  }
+
+  function inferTenantDomainState(tenant) {
+    const selected = getSelectedTenant();
+    if (selected && tenant && selected.id === tenant.id && state.domainProvisioning?.current?.domain?.status) {
+      return String(state.domainProvisioning.current.domain.status);
+    }
+    return String(tenant?.domainProvisioning?.status || (tenant?.branding?.cmsDomain ? 'draft' : 'not configured'));
+  }
+
+  function isTenantDomainUnverified(tenant) {
+    const status = inferTenantDomainState(tenant).toLowerCase();
+    return status !== 'verified';
+  }
+
+  function getFilteredTenants() {
+    const rows = Array.isArray(state.tenants) ? state.tenants : [];
+    const query = String(state.tenantFilters.search || '').trim().toLowerCase();
+    const statusFilter = String(state.tenantFilters.status || 'all');
+    return rows.filter((tenant) => {
+      if (statusFilter === 'active' && tenant.status !== 'active') return false;
+      if (statusFilter === 'disabled' && tenant.status !== 'disabled') return false;
+      if (statusFilter === 'domain-unverified' && !isTenantDomainUnverified(tenant)) return false;
+      if (!query) return true;
+      const haystack = [
+        tenant.name,
+        tenant.slug,
+        tenant.branding?.cmsDomain,
+        tenant.branding?.publicSiteUrl,
+        tenant.branding?.supportEmail,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  function summarizeTenantList(filtered, all) {
+    const total = Array.isArray(all) ? all.length : 0;
+    const visible = Array.isArray(filtered) ? filtered.length : 0;
+    const active = filtered.filter((t) => t.status === 'active').length;
+    const disabled = filtered.filter((t) => t.status === 'disabled').length;
+    const selected = getSelectedTenant();
+    const selectedHidden = selected && !filtered.some((t) => t.id === selected.id);
+    const parts = [
+      `${visible} shown`,
+      `${total} total`,
+      `${active} active`,
+      `${disabled} disabled`,
+    ];
+    if (selectedHidden) parts.push('selected tenant hidden by filters');
+    return parts.join(' • ');
+  }
+
+  function setAnchorEnabled(anchorEl, href, labelWhenMissing) {
+    if (!anchorEl) return;
+    if (href) {
+      anchorEl.href = href;
+      anchorEl.setAttribute('aria-disabled', 'false');
+      anchorEl.title = href;
+    } else {
+      anchorEl.href = '#';
+      anchorEl.setAttribute('aria-disabled', 'true');
+      anchorEl.title = labelWhenMissing || 'Not configured';
+    }
+  }
+
+  function getTenantFormSnapshot() {
+    return {
+      name: (els.editName?.value || '').trim(),
+      status: els.editStatus?.value || 'active',
+      primaryColor: (els.editPrimaryColor?.value || '').trim(),
+      logoUrl: (els.editLogoUrl?.value || '').trim(),
+      publicSiteUrl: (els.editPublicSiteUrl?.value || '').trim(),
+      cmsDomain: (els.editCmsDomain?.value || '').trim(),
+      supportEmail: (els.editSupportEmail?.value || '').trim(),
+    };
+  }
+
+  function snapshotsEqual(a, b) {
+    return JSON.stringify(a || null) === JSON.stringify(b || null);
+  }
+
+  function setTenantFieldError(inputEl, helpEl, message) {
+    if (!inputEl) return;
+    if (!message) {
+      inputEl.classList.remove('input-invalid');
+      inputEl.removeAttribute('aria-invalid');
+      if (helpEl) {
+        helpEl.classList.add('hidden');
+        helpEl.classList.remove('error');
+        helpEl.textContent = '';
+      }
+      return;
+    }
+    inputEl.classList.add('input-invalid');
+    inputEl.setAttribute('aria-invalid', 'true');
+    if (helpEl) {
+      helpEl.classList.remove('hidden');
+      helpEl.classList.add('error');
+      helpEl.textContent = message;
+    }
+  }
+
+  function clearTenantFormValidation() {
+    state.tenantForm.validationErrors = {};
+    setNotice(els.tenantFormValidationSummary, '', '');
+    setTenantFieldError(els.editName, els.editNameHelp, '');
+    setTenantFieldError(els.editPrimaryColor, els.editPrimaryColorHelp, '');
+    setTenantFieldError(els.editPublicSiteUrl, els.editPublicSiteUrlHelp, '');
+    setTenantFieldError(els.editCmsDomain, els.editCmsDomainHelp, '');
+    setTenantFieldError(els.editSupportEmail, els.editSupportEmailHelp, '');
+  }
+
+  function validateTenantForm() {
+    clearTenantFormValidation();
+    const values = getTenantFormSnapshot();
+    const errors = {};
+
+    if (!values.name) errors.name = 'Tenant name is required.';
+    if (values.primaryColor && !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.primaryColor)) {
+      errors.primaryColor = 'Use a hex color such as #2563EB.';
+    }
+
+    [['publicSiteUrl', values.publicSiteUrl], ['cmsDomain', values.cmsDomain]].forEach(([key, value]) => {
+      if (!value) return;
+      try {
+        new URL(ensureAbsoluteUrl(value));
+      } catch {
+        errors[key] = 'Enter a valid URL or hostname.';
+      }
+    });
+
+    if (values.supportEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.supportEmail)) {
+      errors.supportEmail = 'Enter a valid support email.';
+    }
+
+    state.tenantForm.validationErrors = errors;
+    setTenantFieldError(els.editName, els.editNameHelp, errors.name || '');
+    setTenantFieldError(els.editPrimaryColor, els.editPrimaryColorHelp, errors.primaryColor || '');
+    setTenantFieldError(els.editPublicSiteUrl, els.editPublicSiteUrlHelp, errors.publicSiteUrl || '');
+    setTenantFieldError(els.editCmsDomain, els.editCmsDomainHelp, errors.cmsDomain || '');
+    setTenantFieldError(els.editSupportEmail, els.editSupportEmailHelp, errors.supportEmail || '');
+
+    const messages = Object.values(errors);
+    if (messages.length) {
+      setNotice(els.tenantFormValidationSummary, `Please fix ${messages.length} field${messages.length > 1 ? 's' : ''} before saving.`, 'error');
+      const fieldToTab = {
+        name: 'branding',
+        primaryColor: 'branding',
+        publicSiteUrl: 'branding',
+        cmsDomain: 'domains',
+        supportEmail: 'support',
+      };
+      const firstErrorKey = Object.keys(errors)[0];
+      if (fieldToTab[firstErrorKey]) setTenantSettingsTab(fieldToTab[firstErrorKey]);
+      if (firstErrorKey === 'publicSiteUrl') {
+        const details = document.getElementById('tenant-branding-advanced');
+        if (details) details.open = true;
+      }
+      if (firstErrorKey === 'cmsDomain') {
+        const details = document.getElementById('tenant-domain-provisioning-details');
+        if (details) details.open = true;
+      }
+    }
+    return { valid: messages.length === 0, values, errors };
+  }
+
+  function renderTenantFormState() {
+    const tenant = getSelectedTenant();
+    const dirty = Boolean(state.tenantForm.dirty);
+    const lastSavedAt = state.tenantForm.lastSavedAt;
+    const lastSaveMessage = state.tenantForm.lastSaveMessage;
+    if (els.tenantFormSaveStatePill) {
+      els.tenantFormSaveStatePill.className = 'pill';
+      els.tenantFormSaveStatePill.textContent = !tenant ? 'No tenant selected' : (dirty ? 'Unsaved changes' : 'Saved');
+      if (!dirty && tenant) els.tenantFormSaveStatePill.classList.add('ok');
+    }
+    if (els.tenantFormDirtyPill) {
+      els.tenantFormDirtyPill.className = 'pill';
+      els.tenantFormDirtyPill.textContent = !tenant ? 'Select tenant' : (dirty ? 'Unsaved changes' : 'No changes');
+      if (!dirty && tenant) els.tenantFormDirtyPill.classList.add('ok');
+    }
+    if (els.tenantFormSaveFeedback) {
+      if (!tenant) {
+        els.tenantFormSaveFeedback.textContent = 'Select a tenant to begin editing.';
+      } else if (dirty) {
+        els.tenantFormSaveFeedback.textContent = 'You have unsaved changes in this tenant profile.';
+      } else if (lastSavedAt) {
+        els.tenantFormSaveFeedback.textContent = `${lastSaveMessage || 'Saved'} • ${new Date(lastSavedAt).toLocaleString()}`;
+      } else {
+        els.tenantFormSaveFeedback.textContent = 'Changes save to the selected tenant only.';
+      }
+    }
+  }
+
+  function refreshTenantFormDirtyState() {
+    const tenant = getSelectedTenant();
+    if (!tenant || !state.tenantForm.snapshot) {
+      state.tenantForm.dirty = false;
+      renderTenantFormState();
+      return;
+    }
+    const current = getTenantFormSnapshot();
+    state.tenantForm.dirty = !snapshotsEqual(current, state.tenantForm.snapshot);
+    renderTenantFormState();
+  }
+
+  function markTenantFormPristine(message) {
+    state.tenantForm.snapshot = getTenantFormSnapshot();
+    state.tenantForm.dirty = false;
+    state.tenantForm.lastSavedAt = new Date().toISOString();
+    state.tenantForm.lastSaveMessage = message || 'Saved';
+    renderTenantFormState();
+  }
+
+  function resetTenantFormTracking() {
+    state.tenantForm.loadedTenantId = null;
+    state.tenantForm.snapshot = null;
+    state.tenantForm.dirty = false;
+    state.tenantForm.lastSavedAt = null;
+    state.tenantForm.lastSaveMessage = '';
+    state.tenantForm.validationErrors = {};
+    clearTenantFormValidation();
+    renderTenantFormState();
+  }
+
+  function setTenantSettingsTab(tab) {
+    const next = ['branding', 'domains', 'support', 'users', 'content'].includes(tab) ? tab : 'branding';
+    state.tenantSettingsTab = next;
+    localStorage.setItem('cms-platform-tenant-settings-tab', next);
+    tenantSettingsTabButtons.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.tenantSettingsTab === next));
+    tenantSettingsTabPanels.forEach((panel) => panel.classList.toggle('hidden', panel.dataset.tenantSettingsPanel !== next));
+  }
+
+  function renderTenantContextHeader(tenant) {
+    if (!els.tenantContextHeader) return;
+    if (!tenant) {
+      els.tenantContextHeader.classList.add('hidden');
+      return;
+    }
+    els.tenantContextHeader.classList.remove('hidden');
+    const draftName = (els.editName?.value || '').trim() || tenant.name || 'Untitled tenant';
+    const draftStatus = els.editStatus?.value || tenant.status || 'active';
+    const draftCmsDomain = (els.editCmsDomain?.value || '').trim() || tenant.branding?.cmsDomain || '';
+    const draftPublicSiteUrl = (els.editPublicSiteUrl?.value || '').trim() || tenant.branding?.publicSiteUrl || '';
+    if (els.tenantContextName) els.tenantContextName.textContent = draftName;
+    if (els.tenantContextSub) {
+      els.tenantContextSub.textContent = `Slug: ${tenant.slug || '-'} • Manage onboarding, domain, and content modules for this customer workspace.`;
+    }
+    setPillStatus(els.tenantContextStatusPill, `Status: ${draftStatus}`, draftStatus === 'active' ? 'ok' : '');
+    const domainStatus = inferTenantDomainState({ ...tenant, branding: { ...(tenant.branding || {}), cmsDomain: draftCmsDomain } });
+    const domainLabel = draftCmsDomain
+      ? `CMS: ${extractHostname(draftCmsDomain)} • ${domainStatus}`
+      : 'CMS domain not set';
+    setPillStatus(els.tenantContextDomainPill, domainLabel, domainStatus === 'verified' ? 'ok' : (draftCmsDomain ? '' : 'error'));
+    setAnchorEnabled(els.tenantContextOpenCms, draftCmsDomain ? ensureAbsoluteUrl(draftCmsDomain) : '', 'Set CMS domain first');
+    setAnchorEnabled(els.tenantContextOpenSite, draftPublicSiteUrl ? ensureAbsoluteUrl(draftPublicSiteUrl) : '', 'Set public site URL first');
+    renderTenantFormState();
+  }
+
+  function clearTenantFieldErrorByInputId(inputId) {
+    if (!inputId) return;
+    const mappings = {
+      'edit-name': [els.editName, els.editNameHelp],
+      'edit-primary-color': [els.editPrimaryColor, els.editPrimaryColorHelp],
+      'edit-public-site-url': [els.editPublicSiteUrl, els.editPublicSiteUrlHelp],
+      'edit-cms-domain': [els.editCmsDomain, els.editCmsDomainHelp],
+      'edit-support-email': [els.editSupportEmail, els.editSupportEmailHelp],
+    };
+    const [inputEl, helpEl] = mappings[inputId] || [];
+    if (inputEl) setTenantFieldError(inputEl, helpEl, '');
+    if (els.tenantFormValidationSummary && !Object.keys(state.tenantForm.validationErrors || {}).length) {
+      setNotice(els.tenantFormValidationSummary, '', '');
+    }
+  }
+
+  function handleTenantFormChanged(event) {
+    const inputId = event?.target?.id || '';
+    if (inputId) {
+      const validationKeyMap = {
+        'edit-name': 'name',
+        'edit-primary-color': 'primaryColor',
+        'edit-public-site-url': 'publicSiteUrl',
+        'edit-cms-domain': 'cmsDomain',
+        'edit-support-email': 'supportEmail',
+      };
+      if (state.tenantForm.validationErrors) {
+        const key = validationKeyMap[inputId];
+        if (key) delete state.tenantForm.validationErrors[key];
+      }
+      clearTenantFieldErrorByInputId(inputId);
+    }
+    refreshTenantFormDirtyState();
+    renderTenantContextHeader(getSelectedTenant());
   }
 
   function showLogin() {
@@ -714,7 +1066,7 @@
             </tr>
           `)
           .join('')
-      : '<tr><td colspan="6" class="meta">No navigation tabs yet for this tenant.</td></tr>';
+      : '<tr><td colspan="6" class="meta">No navigation tabs yet. <button type="button" class="empty-new-nav-tab-btn">Create first navigation tab</button></td></tr>';
 
     els.navTabsTableBody.querySelectorAll('.edit-nav-tab-btn').forEach((btn) => {
       btn.addEventListener('click', (event) => {
@@ -722,6 +1074,13 @@
         const id = String(btn.getAttribute('data-nav-tab-id') || '');
         const tab = tabs.find((item) => String(item.id) === id);
         if (tab) loadNavTabIntoEditor(tab);
+      });
+    });
+    els.navTabsTableBody.querySelectorAll('.empty-new-nav-tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setTenantWorkspaceView('nav-tabs');
+        clearNavTabEditor();
+        setNotice(els.cmsNotice, 'Creating a new navigation tab.', 'ok');
       });
     });
   }
@@ -804,6 +1163,7 @@
     if (!tenant) {
       els.cmsContentEmpty.classList.remove('hidden');
       els.cmsContentPanel.classList.add('hidden');
+      els.cmsContentEmpty.innerHTML = 'Select a tenant above, then open a workspace module (Articles, Libraries, Annual Reports, or Navigation Tabs) to start editing customer content.';
       els.mediaTableBody.innerHTML = '<tr><td colspan="4" class="meta">Select a tenant to load media.</td></tr>';
       els.articleTableBody.innerHTML = '<tr><td colspan="5" class="meta">Select a tenant to load articles.</td></tr>';
       if (els.navTabsTableBody) {
@@ -814,6 +1174,7 @@
       return;
     }
     els.cmsContentEmpty.classList.add('hidden');
+    els.cmsContentEmpty.textContent = 'Select a tenant above to manage that customer’s CMS articles and media library.';
     els.cmsContentPanel.classList.remove('hidden');
 
     const mediaFilter = els.mediaFilter.value || 'all';
@@ -877,12 +1238,17 @@
             </tr>
           `)
           .join('')
-      : '<tr><td colspan="4" class="meta">No media uploaded yet for this tenant.</td></tr>';
+      : '<tr><td colspan="4" class="meta">No files yet. Upload an image or PDF to start the tenant library. <button type="button" class="empty-upload-media-btn">Choose file</button></td></tr>';
 
     els.mediaTableBody.querySelectorAll('.delete-media-btn').forEach((btn) => {
       btn.addEventListener('click', (event) => {
         event.preventDefault();
         handleDeleteTenantMedia(btn.getAttribute('data-media-id'));
+      });
+    });
+    els.mediaTableBody.querySelectorAll('.empty-upload-media-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        els.mediaUploadInput?.click();
       });
     });
 
@@ -909,7 +1275,7 @@
             </tr>
           `)
           .join('')
-      : '<tr><td colspan="5" class="meta">No articles yet for this tenant.</td></tr>';
+      : '<tr><td colspan="5" class="meta">No articles yet. Create the first article to populate the tenant news page. <button type="button" class="empty-new-article-btn">Create article</button></td></tr>';
 
     els.articleTableBody.querySelectorAll('.edit-article-btn').forEach((btn) => {
       btn.addEventListener('click', (event) => {
@@ -918,6 +1284,13 @@
         const id = Number(btn.getAttribute('data-article-id'));
         const article = articles.find((a) => a.id === id);
         if (article) loadArticleIntoEditor(article);
+      });
+    });
+    els.articleTableBody.querySelectorAll('.empty-new-article-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setTenantWorkspaceView('articles');
+        clearArticleEditor();
+        setNotice(els.cmsNotice, 'Creating a new article.', 'ok');
       });
     });
 
@@ -941,7 +1314,7 @@
             </tr>
           `)
           .join('')
-      : '<tr><td colspan="4" class="meta">No annual reports yet.</td></tr>';
+      : '<tr><td colspan="4" class="meta">No annual reports yet. Add a year and attach a PDF from the library. <button type="button" class="empty-new-annual-btn">Create annual report</button></td></tr>';
     els.annualTableBody.querySelectorAll('.edit-annual-btn').forEach((btn) => {
       btn.addEventListener('click', (event) => {
         event.preventDefault();
@@ -949,6 +1322,13 @@
         const id = Number(btn.getAttribute('data-annual-id'));
         const item = annualReports.find((a) => a.id === id);
         if (item) loadAnnualReportIntoEditor(item);
+      });
+    });
+    els.annualTableBody.querySelectorAll('.empty-new-annual-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setTenantWorkspaceView('annual-reports');
+        clearAnnualReportEditor();
+        setNotice(els.cmsNotice, 'Creating a new annual report entry.', 'ok');
       });
     });
 
@@ -978,6 +1358,7 @@
     if (!tenant) {
       els.placementEmpty.classList.remove('hidden');
       els.placementPanel.classList.add('hidden');
+      els.placementEmpty.innerHTML = 'Select a tenant first, then create content items and assign them into the homepage News & Promotions slot.';
       els.assignContentItem.innerHTML = '<option value="">Select item…</option>';
       els.assignmentTableBody.innerHTML = '<tr><td colspan="5" class="meta">Select a tenant to load assignments.</td></tr>';
       els.contentTableBody.innerHTML = '<tr><td colspan="3" class="meta">Select a tenant to load content items.</td></tr>';
@@ -985,6 +1366,7 @@
     }
 
     els.placementEmpty.classList.add('hidden');
+    els.placementEmpty.textContent = 'Select a tenant above to manage homepage news/promotions items and placement.';
     els.placementPanel.classList.remove('hidden');
 
     const items = Array.isArray(state.placement.items) ? state.placement.items : [];
@@ -1002,7 +1384,7 @@
             <td><span class="pill">${escapeHtml(item.status)}</span></td>
           </tr>
         `).join('')
-      : '<tr><td colspan="3" class="meta">No content items yet.</td></tr>';
+      : '<tr><td colspan="3" class="meta">No slot content items yet. Start with “Create item” on the left, then assign it to a homepage tab.</td></tr>';
 
     const sortedAssignments = assignments
       .slice()
@@ -1018,7 +1400,7 @@
             <td><button class="delete-assignment-btn" data-assignment-id="${a.id}">Remove</button></td>
           </tr>
         `).join('')
-      : '<tr><td colspan="5" class="meta">No assignments in this slot yet.</td></tr>';
+      : '<tr><td colspan="5" class="meta">No assignments yet. Create an item, then use “Assign to slot” to publish it on the homepage section.</td></tr>';
 
     els.assignmentTableBody.querySelectorAll('.delete-assignment-btn').forEach((btn) => {
       btn.addEventListener('click', (event) => {
@@ -1227,6 +1609,7 @@
       els.tenantDomainInstructions.value = formatDomainInstructionsText(payload?.instructions || null);
     }
     renderDomainProvisioningChecklist(tenant, payload);
+    renderTenantContextHeader(tenant);
   }
 
   async function loadTenantDomainProvisioning() {
@@ -1321,34 +1704,66 @@
       els.selectedTenantEmpty.classList.remove('hidden');
       els.selectedTenantForm.classList.add('hidden');
       els.selectedTenantMeta.textContent = '';
+      renderTenantContextHeader(null);
       setNotice(els.tenantDomainProvisionNotice, '', '');
       renderPlacementPanel();
       resetDomainProvisioningState();
+      resetTenantFormTracking();
       renderCmsPanel();
       return;
     }
 
     els.selectedTenantEmpty.classList.add('hidden');
     els.selectedTenantForm.classList.remove('hidden');
-    els.editName.value = tenant.name || '';
-    els.editStatus.value = tenant.status || 'active';
-    els.editSlug.value = tenant.slug || '';
-    els.editPrimaryColor.value = tenant.branding?.primaryColor || '';
-    els.editLogoUrl.value = tenant.branding?.logoUrl || '';
-    els.editPublicSiteUrl.value = tenant.branding?.publicSiteUrl || '';
-    els.editCmsDomain.value = tenant.branding?.cmsDomain || '';
-    els.editSupportEmail.value = tenant.branding?.supportEmail || '';
+    const tenantChanged = state.tenantForm.loadedTenantId !== tenant.id;
+    const shouldPopulateForm =
+      tenantChanged ||
+      !state.tenantForm.dirty ||
+      !state.tenantForm.snapshot;
+    if (shouldPopulateForm) {
+      els.editName.value = tenant.name || '';
+      els.editStatus.value = tenant.status || 'active';
+      els.editSlug.value = tenant.slug || '';
+      els.editPrimaryColor.value = tenant.branding?.primaryColor || '';
+      els.editLogoUrl.value = tenant.branding?.logoUrl || '';
+      els.editPublicSiteUrl.value = tenant.branding?.publicSiteUrl || '';
+      els.editCmsDomain.value = tenant.branding?.cmsDomain || '';
+      els.editSupportEmail.value = tenant.branding?.supportEmail || '';
+      state.tenantForm.loadedTenantId = tenant.id;
+      state.tenantForm.snapshot = getTenantFormSnapshot();
+      state.tenantForm.dirty = false;
+      if (tenantChanged) {
+        state.tenantForm.lastSavedAt = null;
+        state.tenantForm.lastSaveMessage = '';
+      }
+      clearTenantFormValidation();
+    }
     els.selectedTenantMeta.textContent =
       `Created: ${new Date(tenant.createdAt).toLocaleString()} • Updated: ${new Date(tenant.updatedAt).toLocaleString()}`;
+    renderTenantContextHeader(tenant);
+    renderTenantFormState();
+    setTenantSettingsTab(state.tenantSettingsTab || 'branding');
     renderDomainProvisioningPanel();
     renderPlacementPanel();
     renderCmsPanel();
   }
 
   function renderTenants() {
-    const rows = state.tenants;
-    if (!rows.length) {
+    const allRows = Array.isArray(state.tenants) ? state.tenants : [];
+    const rows = getFilteredTenants();
+    if (els.tenantListSummary) {
+      els.tenantListSummary.textContent = summarizeTenantList(rows, allRows);
+    }
+
+    if (!allRows.length) {
       els.tenantTableBody.innerHTML = '<tr><td colspan="4" class="meta">No tenants yet.</td></tr>';
+      renderTenantSwitcher();
+      renderSelectedTenant();
+      return;
+    }
+
+    if (!rows.length) {
+      els.tenantTableBody.innerHTML = '<tr><td colspan="4" class="meta">No tenants match the current search/filter. Clear filters to view all customers.</td></tr>';
       renderTenantSwitcher();
       renderSelectedTenant();
       return;
@@ -1357,16 +1772,18 @@
     els.tenantTableBody.innerHTML = rows
       .map((tenant) => {
         const selected = tenant.id === state.selectedTenantId ? 'selected' : '';
+        const domainStatus = inferTenantDomainState(tenant);
+        const domainPillClass = domainStatus === 'verified' ? 'pill ok' : 'pill';
         return `
           <tr class="tenant-row ${selected}" data-tenant-id="${tenant.id}">
             <td>
               <div class="tenant-name">${escapeHtml(tenant.name)}</div>
               <div class="tenant-slug">${escapeHtml(tenant.slug)}</div>
             </td>
-            <td><span class="pill">${escapeHtml(tenant.status)}</span></td>
+            <td><span class="pill ${tenant.status === 'active' ? 'ok' : ''}">${escapeHtml(tenant.status)}</span></td>
             <td class="meta">${tenant.articleCount} articles • ${tenant.contentItemCount || 0} items • ${tenant.mediaCount} media • ${tenant.userCount} users</td>
             <td class="meta">
-              ${tenant.branding?.cmsDomain ? `CMS: ${escapeHtml(tenant.branding.cmsDomain)}` : 'No CMS domain'}<br />
+              ${tenant.branding?.cmsDomain ? `CMS: ${escapeHtml(tenant.branding.cmsDomain)} <span class="${domainPillClass}" style="margin-left:6px;">${escapeHtml(domainStatus)}</span>` : 'No CMS domain'}<br />
               ${tenant.branding?.publicSiteUrl ? `Site: ${escapeHtml(tenant.branding.publicSiteUrl)}` : 'No public site URL'}
             </td>
           </tr>
@@ -1384,8 +1801,8 @@
       });
     });
 
-    if (!getSelectedTenant() && rows[0]) {
-      state.selectedTenantId = rows[0].id;
+    if (!getSelectedTenant() && allRows[0]) {
+      state.selectedTenantId = allRows[0].id;
       renderTenants();
       return;
     }
@@ -1798,6 +2215,7 @@
       setNotice(els.loginNotice, 'Signed in.', 'ok');
       const ok = await loadAuth();
       if (ok) {
+        await loadPlatformBackups();
         await loadTenants();
         await loadHomepagePlacement();
         await loadTenantDomainProvisioning();
@@ -1819,6 +2237,7 @@
     state.auth = null;
     resetPlacementState();
     resetDomainProvisioningState();
+    resetTenantFormTracking();
     resetCmsState();
     showLogin();
   }
@@ -1865,31 +2284,42 @@
   async function handleSaveTenant() {
     const tenant = getSelectedTenant();
     if (!tenant) return;
+    const validation = validateTenantForm();
+    if (!validation.valid) {
+      renderTenantFormState();
+      return;
+    }
     els.saveTenantBtn.disabled = true;
+    state.tenantForm.lastSaveMessage = 'Saving…';
+    renderTenantFormState();
     try {
       const updated = await api(`/api/platform/tenants/${tenant.id}`, {
         method: 'PUT',
         body: JSON.stringify({
-          name: els.editName.value.trim(),
+          name: validation.values.name,
           status: els.editStatus.value,
           branding: {
-            primaryColor: els.editPrimaryColor.value.trim() || null,
-            logoUrl: els.editLogoUrl.value.trim() || null,
-            publicSiteUrl: els.editPublicSiteUrl.value.trim() || null,
-            cmsDomain: els.editCmsDomain.value.trim() || null,
-            supportEmail: els.editSupportEmail.value.trim() || null,
+            primaryColor: validation.values.primaryColor || null,
+            logoUrl: validation.values.logoUrl || null,
+            publicSiteUrl: validation.values.publicSiteUrl || null,
+            cmsDomain: validation.values.cmsDomain || null,
+            supportEmail: validation.values.supportEmail || null,
           },
         }),
       });
       setNotice(els.appNotice, `Tenant updated: ${updated.name}`, 'ok');
+      markTenantFormPristine(`Saved ${updated.name}`);
       await loadTenants();
       state.selectedTenantId = updated.id;
       renderTenants();
       await loadTenantDomainProvisioning();
     } catch (err) {
+      state.tenantForm.lastSaveMessage = 'Save failed';
+      renderTenantFormState();
       setNotice(els.appNotice, err.message || 'Failed to save tenant', 'error');
     } finally {
       els.saveTenantBtn.disabled = false;
+      renderTenantFormState();
     }
   }
 
@@ -1973,6 +2403,10 @@
 
   function wireEvents() {
     applyUiMode();
+    setTenantSettingsTab(state.tenantSettingsTab || 'branding');
+    if (els.tenantSearchInput) els.tenantSearchInput.value = state.tenantFilters.search || '';
+    if (els.tenantStatusFilter) els.tenantStatusFilter.value = state.tenantFilters.status || 'all';
+    renderTenantFormState();
     els.loginModeAdminBtn.addEventListener('click', () => setUiMode('admin'));
     els.loginModeTenantBtn.addEventListener('click', () => setUiMode('tenant'));
     if (els.appModeAdminBtn && els.appModeTenantBtn) {
@@ -2025,6 +2459,76 @@
     });
 
     els.logoutBtn.addEventListener('click', handleLogout);
+    if (els.tenantSearchInput) {
+      els.tenantSearchInput.addEventListener('input', () => {
+        state.tenantFilters.search = els.tenantSearchInput.value || '';
+        renderTenants();
+      });
+    }
+    if (els.tenantStatusFilter) {
+      els.tenantStatusFilter.addEventListener('change', () => {
+        state.tenantFilters.status = els.tenantStatusFilter.value || 'all';
+        renderTenants();
+      });
+    }
+    if (els.tenantFilterClearBtn) {
+      els.tenantFilterClearBtn.addEventListener('click', () => {
+        state.tenantFilters.search = '';
+        state.tenantFilters.status = 'all';
+        if (els.tenantSearchInput) els.tenantSearchInput.value = '';
+        if (els.tenantStatusFilter) els.tenantStatusFilter.value = 'all';
+        renderTenants();
+      });
+    }
+    tenantSettingsTabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => setTenantSettingsTab(btn.dataset.tenantSettingsTab || 'branding'));
+    });
+    if (els.tenantContextOpenDomainsTabBtn) {
+      els.tenantContextOpenDomainsTabBtn.addEventListener('click', () => {
+        setTenantSettingsTab('domains');
+        const details = document.getElementById('tenant-domain-provisioning-details');
+        if (details) details.open = true;
+      });
+    }
+    if (els.tenantContextOpenContentTabBtn) {
+      els.tenantContextOpenContentTabBtn.addEventListener('click', () => setTenantSettingsTab('content'));
+    }
+    if (els.tenantUsersOpenDomainsBtn) {
+      els.tenantUsersOpenDomainsBtn.addEventListener('click', () => setTenantSettingsTab('domains'));
+    }
+    if (els.tenantContentOpenArticlesBtn) {
+      els.tenantContentOpenArticlesBtn.addEventListener('click', () => {
+        setUiMode('tenant');
+        setTenantWorkspaceView('articles');
+        requestAnimationFrame(() => scrollToSectionHash('#section-tenant-cms'));
+      });
+    }
+    if (els.tenantContentOpenLibraryBtn) {
+      els.tenantContentOpenLibraryBtn.addEventListener('click', () => {
+        setUiMode('tenant');
+        setTenantWorkspaceView('libraries');
+        requestAnimationFrame(() => scrollToSectionHash('#section-tenant-cms'));
+      });
+    }
+    if (els.tenantContentOpenHomepageBtn) {
+      els.tenantContentOpenHomepageBtn.addEventListener('click', () => {
+        setUiMode('tenant');
+        setTenantWorkspaceView('placements');
+        requestAnimationFrame(() => scrollToSectionHash('#section-homepage-slot'));
+      });
+    }
+    [
+      els.editName,
+      els.editStatus,
+      els.editPrimaryColor,
+      els.editLogoUrl,
+      els.editPublicSiteUrl,
+      els.editCmsDomain,
+      els.editSupportEmail,
+    ].filter(Boolean).forEach((field) => {
+      field.addEventListener('input', handleTenantFormChanged);
+      field.addEventListener('change', handleTenantFormChanged);
+    });
     if (els.platformBackupRefreshBtn) els.platformBackupRefreshBtn.addEventListener('click', loadPlatformBackups);
     if (els.platformBackupRunBtn) els.platformBackupRunBtn.addEventListener('click', handleRunPlatformDbBackup);
     els.tenantSwitch.addEventListener('change', async () => {

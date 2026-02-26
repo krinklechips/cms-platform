@@ -18,6 +18,10 @@ function mapTenant(row) {
       publicSiteUrl: row.public_site_url,
       cmsDomain: row.cms_domain,
     },
+    domainProvisioning: {
+      status: row.domain_status || null,
+      verifiedAt: row.domain_verified_at || null,
+    },
     articleCount: Number(row.article_count || 0),
     contentItemCount: Number(row.content_item_count || 0),
     mediaCount: Number(row.media_count || 0),
@@ -34,12 +38,15 @@ router.get('/', (req, res) => {
     SELECT
       t.*,
       b.logo_url, b.primary_color, b.support_email, b.public_site_url, b.cms_domain,
+      td.status AS domain_status,
+      td.verified_at AS domain_verified_at,
       (SELECT COUNT(*) FROM articles a WHERE a.tenant_id = t.id) AS article_count,
       (SELECT COUNT(*) FROM content_items ci WHERE ci.tenant_id = t.id) AS content_item_count,
       (SELECT COUNT(*) FROM media m WHERE m.tenant_id = t.id) AS media_count,
       (SELECT COUNT(*) FROM tenant_memberships tm WHERE tm.tenant_id = t.id AND tm.status = 'active') AS user_count
     FROM tenants t
     LEFT JOIN tenant_branding b ON b.tenant_id = t.id
+    LEFT JOIN tenant_domains td ON td.tenant_id = t.id
     ORDER BY t.created_at DESC
   `).all();
 
