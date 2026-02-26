@@ -138,9 +138,18 @@
       .join('')
       .toUpperCase() || 'TC';
 
-    els.tenantMark.textContent = initials;
-    if (tenant.branding && tenant.branding.primaryColor) {
-      els.tenantMark.style.background = 'linear-gradient(135deg, ' + tenant.branding.primaryColor + ' 0%, #0f172a 100%)';
+    const logoImg = els.tenantMark && els.tenantMark.querySelector('img');
+    if (logoImg) {
+      els.tenantMark.setAttribute('title', tenant.name || tenant.slug || 'Tenant CMS');
+      els.tenantMark.dataset.initials = initials;
+      if (tenant.branding && tenant.branding.primaryColor) {
+        els.tenantMark.style.borderColor = tenant.branding.primaryColor;
+      }
+    } else {
+      els.tenantMark.textContent = initials;
+      if (tenant.branding && tenant.branding.primaryColor) {
+        els.tenantMark.style.background = 'linear-gradient(135deg, ' + tenant.branding.primaryColor + ' 0%, #0f172a 100%)';
+      }
     }
 
     els.tenantName.textContent = tenant.name || 'Tenant CMS';

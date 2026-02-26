@@ -39,6 +39,8 @@ function sqlStringLiteral(value) {
 }
 
 function getDbStorageDiagnostics() {
+  const expectedDiskMountPath = '/var/data';
+  const projectMirrorDiskPath = '/opt/render/project/var/data';
   const stats = fs.existsSync(dbFile) ? fs.statSync(dbFile) : null;
   const walFile = `${dbFile}-wal`;
   const shmFile = `${dbFile}-shm`;
@@ -52,12 +54,29 @@ function getDbStorageDiagnostics() {
     journalMode = null;
   }
 
+  const dbOnVarData = dbFile === expectedDiskMountPath || dbFile.startsWith(`${expectedDiskMountPath}/`);
+  const dbOnProjectMirrorPath = dbFile === projectMirrorDiskPath || dbFile.startsWith(`${projectMirrorDiskPath}/`);
+  const persistentDiskStatus = dbOnVarData
+    ? 'ok'
+    : dbOnProjectMirrorPath
+      ? 'path_mismatch'
+      : 'not_persistent_path';
+
   return {
     resolvedDbPath: dbFile,
     dbExists: Boolean(stats),
     dbSize: stats?.size || 0,
     dbUpdatedAt: stats?.mtime?.toISOString?.() || null,
-    dbOnVarData: dbFile.startsWith('/var/data/'),
+    dbOnVarData,
+    expectedDiskMountPath,
+    dbOnProjectMirrorPath,
+    persistentDiskStatus,
+    persistentDiskHint:
+      persistentDiskStatus === 'path_mismatch'
+        ? 'Disk is mounted at /var/data, but the app DB path points to /opt/render/project/var/data. Set PLATFORM_DB_PATH=/var/data/platform.db and PLATFORM_UPLOADS_DIR=/var/data/uploads.'
+        : persistentDiskStatus === 'not_persistent_path'
+          ? 'DB path is not under the expected Render disk mount path (/var/data). Check PLATFORM_DB_PATH and PLATFORM_UPLOADS_DIR.'
+          : '',
     walFileExists: Boolean(walStats),
     walFileSize: walStats?.size || 0,
     shmFileExists: Boolean(shmStats),
@@ -190,4 +209,3 @@ router.post('/db', async (req, res) => {
 });
 
 export default router;
-

@@ -727,12 +727,18 @@
       if (els.platformDbSize) els.platformDbSize.textContent = '—';
       if (els.platformDbJournal) els.platformDbJournal.textContent = '—';
     } else {
-      setPillStatus(
-        els.platformStoragePathPill,
-        storage.dbOnVarData ? 'On /var/data' : 'Not on /var/data',
-        storage.dbOnVarData ? 'ok' : 'error',
-      );
+      const persistentStatus = storage.persistentDiskStatus || (storage.dbOnVarData ? 'ok' : 'not_persistent_path');
+      const persistentLabel =
+        persistentStatus === 'ok'
+          ? `On ${storage.expectedDiskMountPath || '/var/data'}`
+          : persistentStatus === 'path_mismatch'
+            ? 'Disk attached, path mismatch'
+            : 'Not on persistent path';
+      setPillStatus(els.platformStoragePathPill, persistentLabel, persistentStatus === 'ok' ? 'ok' : 'error');
       if (els.platformDbPath) els.platformDbPath.textContent = storage.resolvedDbPath || '—';
+      if (els.platformDbPath && storage.persistentDiskHint) {
+        els.platformDbPath.textContent = `${storage.resolvedDbPath || '—'} • ${storage.persistentDiskHint}`;
+      }
       if (els.platformDbSize) {
         const parts = [];
         parts.push(formatBytes(storage.dbSize || 0));

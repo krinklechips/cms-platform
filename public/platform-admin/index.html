@@ -75,14 +75,19 @@
         width: 34px;
         height: 34px;
         border-radius: 10px;
-        background: linear-gradient(135deg, #111827 0%, #27272a 100%);
-        color: #fafafa;
+        background: #ffffff;
+        border: 1px solid #ececf0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-weight: 800;
-        font-size: 13px;
+        overflow: hidden;
         box-shadow: none;
+      }
+      .platform-logo-mark img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
       }
       .platform-logo-text {
         line-height: 1.1;
@@ -973,7 +978,7 @@
     <div id="app-view" class="platform-shell hidden">
       <aside class="platform-sidebar">
         <div class="platform-logo">
-          <span class="platform-logo-mark">CP</span>
+          <span class="platform-logo-mark"><img src="/think.png" alt="CMS Platform logo" /></span>
           <div class="platform-logo-text">
             <strong id="sidebar-logo-title">CMS Platform</strong>
             <span id="sidebar-logo-subtitle">Multi-tenant SaaS admin</span>
