@@ -37,19 +37,44 @@ const uploadsDir = path.isAbsolute(env.UPLOADS_DIR)
   ? env.UPLOADS_DIR
   : path.resolve(path.join(__dirname, '..', '..', env.UPLOADS_DIR));
 
+function normalizeHostForCors(value) {
+  if (!value) return '';
+  let raw = String(value).trim();
+  if (!raw) return '';
+  if (raw.includes(',')) raw = raw.split(',')[0].trim();
+  try {
+    if (/^https?:\/\//i.test(raw)) {
+      return new URL(raw).host.toLowerCase();
+    }
+  } catch {
+    // fall through
+  }
+  return raw.toLowerCase();
+}
+
 const app = express();
 // Render terminates TLS at the proxy. Trust proxy so secure session cookies are
 // set and read correctly in production behind Render's HTTPS endpoint.
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '2mb' }));
 app.use(
-  cors({
-    origin(origin, cb) {
-      if (!origin) return cb(null, true);
-      if (env.CORS_ORIGINS.includes(origin)) return cb(null, true);
-      return cb(new Error('CORS blocked'));
-    },
-    credentials: true,
+  cors((req, cb) => {
+    const origin = req.headers.origin;
+    if (!origin) {
+      return cb(null, { origin: true, credentials: true });
+    }
+
+    const requestHost = normalizeHostForCors(req.headers['x-forwarded-host'] || req.headers.host || '');
+    const originHost = normalizeHostForCors(origin);
+    if (requestHost && originHost && requestHost === originHost) {
+      return cb(null, { origin: true, credentials: true });
+    }
+
+    if (env.CORS_ORIGINS.includes(origin)) {
+      return cb(null, { origin: true, credentials: true });
+    }
+
+    return cb(new Error(`CORS blocked for origin: ${origin}`));
   }),
 );
 
