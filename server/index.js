@@ -13,6 +13,8 @@ import publicSlotsRouter from './routes/publicSlots.js';
 import tenantAnnualReportsRouter from './routes/tenantAnnualReports.js';
 import publicAnnualReportsRouter from './routes/publicAnnualReports.js';
 import tenantSettingsRouter from './routes/tenantSettings.js';
+import publicArticlesRouter from './routes/publicArticles.js';
+import publicNavigationTabsRouter from './routes/publicNavigationTabs.js';
 
 seedPlatformDefaults();
 
@@ -127,6 +129,8 @@ app.use('/api/tenant/annual-reports', tenantAnnualReportsRouter);
 app.use('/api/tenant/settings', tenantSettingsRouter);
 app.use('/api/public', publicSlotsRouter);
 app.use('/api/public', publicAnnualReportsRouter);
+app.use('/api/public', publicArticlesRouter);
+app.use('/api/public', publicNavigationTabsRouter);
 app.use('/uploads', express.static(path.join(__dirname, '..', '..', env.UPLOADS_DIR)));
 app.use('/platform-admin', express.static(path.join(publicDir, 'platform-admin')));
 
