@@ -7,6 +7,7 @@ import { env } from './config/env.js';
 import { db, seedPlatformDefaults } from './db.js';
 import platformTenantsRouter from './routes/platformTenants.js';
 import platformPlacementsRouter from './routes/platformPlacements.js';
+import platformTenantDomainsRouter from './routes/platformTenantDomains.js';
 import platformTenantUsersRouter from './routes/platformTenantUsers.js';
 import tenantArticlesRouter from './routes/tenantArticles.js';
 import tenantMediaRouter from './routes/tenantMedia.js';
@@ -160,6 +161,7 @@ app.post('/api/platform/auth/logout', (req, res) => {
 
 app.use('/api/tenant/auth', tenantAuthRouter);
 app.use('/api/platform/tenants', platformTenantsRouter);
+app.use('/api/platform/tenants/:tenantId/domain', platformTenantDomainsRouter);
 app.use('/api/platform/placements', platformPlacementsRouter);
 app.use('/api/platform/tenant-users', platformTenantUsersRouter);
 app.use('/api/tenant/articles', tenantArticlesRouter);

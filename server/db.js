@@ -76,6 +76,25 @@ CREATE TABLE IF NOT EXISTS tenant_settings (
   FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS tenant_domains (
+  tenant_id INTEGER PRIMARY KEY,
+  hostname TEXT UNIQUE,
+  dns_mode TEXT NOT NULL DEFAULT 'customer_managed',
+  dns_provider TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  render_custom_domain_id TEXT,
+  render_custom_domain_name TEXT,
+  render_status TEXT,
+  dns_records_json TEXT,
+  render_response_json TEXT,
+  last_error TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  last_checked_at DATETIME,
+  verified_at DATETIME,
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS articles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   tenant_id INTEGER NOT NULL,
@@ -219,6 +238,17 @@ ensureColumn('annual_reports', 'summary', 'ALTER TABLE annual_reports ADD COLUMN
 ensureColumn('annual_reports', 'media_id', 'ALTER TABLE annual_reports ADD COLUMN media_id INTEGER');
 ensureColumn('annual_reports', 'status', "ALTER TABLE annual_reports ADD COLUMN status TEXT NOT NULL DEFAULT 'published'");
 ensureColumn('annual_reports', 'sort_order', 'ALTER TABLE annual_reports ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0');
+ensureColumn('tenant_domains', 'dns_mode', "ALTER TABLE tenant_domains ADD COLUMN dns_mode TEXT NOT NULL DEFAULT 'customer_managed'");
+ensureColumn('tenant_domains', 'dns_provider', 'ALTER TABLE tenant_domains ADD COLUMN dns_provider TEXT');
+ensureColumn('tenant_domains', 'status', "ALTER TABLE tenant_domains ADD COLUMN status TEXT NOT NULL DEFAULT 'draft'");
+ensureColumn('tenant_domains', 'render_custom_domain_id', 'ALTER TABLE tenant_domains ADD COLUMN render_custom_domain_id TEXT');
+ensureColumn('tenant_domains', 'render_custom_domain_name', 'ALTER TABLE tenant_domains ADD COLUMN render_custom_domain_name TEXT');
+ensureColumn('tenant_domains', 'render_status', 'ALTER TABLE tenant_domains ADD COLUMN render_status TEXT');
+ensureColumn('tenant_domains', 'dns_records_json', 'ALTER TABLE tenant_domains ADD COLUMN dns_records_json TEXT');
+ensureColumn('tenant_domains', 'render_response_json', 'ALTER TABLE tenant_domains ADD COLUMN render_response_json TEXT');
+ensureColumn('tenant_domains', 'last_error', 'ALTER TABLE tenant_domains ADD COLUMN last_error TEXT');
+ensureColumn('tenant_domains', 'last_checked_at', 'ALTER TABLE tenant_domains ADD COLUMN last_checked_at DATETIME');
+ensureColumn('tenant_domains', 'verified_at', 'ALTER TABLE tenant_domains ADD COLUMN verified_at DATETIME');
 
 function ensureDefaultTenantSlots(tenantId) {
   db.prepare(`

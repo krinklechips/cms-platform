@@ -552,6 +552,59 @@
             Support email
             <input id="edit-support-email" type="email" />
           </label>
+          <div class="card" style="padding:12px; margin:8px 0 4px;">
+            <h2 style="margin-bottom:6px;">Tenant CMS Domain Provisioning (v1)</h2>
+            <p class="meta" style="margin:0 0 10px;">
+              Render custom domain + customer-managed DNS instructions (Exabytes/manual mode). Media on Cloudflare R2 is separate and unaffected.
+            </p>
+            <p id="tenant-domain-provision-notice" class="notice hidden"></p>
+            <div class="row">
+              <label>
+                Hostname
+                <input id="tenant-domain-hostname" type="text" placeholder="cms.client.com" />
+              </label>
+              <label>
+                DNS mode
+                <select id="tenant-domain-dns-mode">
+                  <option value="customer_managed">Customer / Manual DNS (v1)</option>
+                </select>
+              </label>
+            </div>
+            <div class="row">
+              <label>
+                DNS provider (label only)
+                <select id="tenant-domain-dns-provider">
+                  <option value="exabytes">Exabytes</option>
+                  <option value="manual">Manual / Other</option>
+                </select>
+              </label>
+              <label>
+                Provisioning status
+                <div style="margin-top:6px;">
+                  <span id="tenant-domain-status-pill" class="pill">Not provisioned</span>
+                  <span id="tenant-domain-last-checked" class="meta" style="margin-left:8px;"></span>
+                </div>
+              </label>
+            </div>
+            <div class="actions" style="margin-top:6px;">
+              <button id="tenant-domain-provision-btn" class="primary" type="button">Provision in Render</button>
+              <button id="tenant-domain-verify-btn" type="button">Verify / Recheck</button>
+              <button id="tenant-domain-refresh-btn" type="button">Refresh Status</button>
+              <button id="tenant-domain-copy-instructions-btn" type="button">Copy DNS Instructions</button>
+            </div>
+            <div class="card" style="padding:10px; margin-top:10px;">
+              <div style="display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:6px;">
+                <strong style="font-size:13px;">Provisioning Checklist</strong>
+                <span id="tenant-domain-check-summary" class="meta">Waiting for tenant selection</span>
+              </div>
+              <div id="tenant-domain-checklist" class="meta" style="display:grid; gap:6px;"></div>
+              <p id="tenant-domain-last-error" class="meta" style="margin:8px 0 0; color:#b91c1c;"></p>
+            </div>
+            <label style="margin-top:12px;">
+              DNS instructions
+              <textarea id="tenant-domain-instructions" readonly style="min-height:140px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace;"></textarea>
+            </label>
+          </div>
           <div class="actions">
             <button id="save-tenant-btn" class="primary">Save tenant</button>
             <button id="reload-selected-btn">Reload list</button>

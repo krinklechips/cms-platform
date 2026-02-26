@@ -12,6 +12,9 @@
       items: [],
       assignments: [],
     },
+    domainProvisioning: {
+      current: null,
+    },
     cms: {
       articles: [],
       media: [],
@@ -71,6 +74,20 @@
     editPublicSiteUrl: document.getElementById('edit-public-site-url'),
     editCmsDomain: document.getElementById('edit-cms-domain'),
     editSupportEmail: document.getElementById('edit-support-email'),
+    tenantDomainProvisionNotice: document.getElementById('tenant-domain-provision-notice'),
+    tenantDomainHostname: document.getElementById('tenant-domain-hostname'),
+    tenantDomainDnsMode: document.getElementById('tenant-domain-dns-mode'),
+    tenantDomainDnsProvider: document.getElementById('tenant-domain-dns-provider'),
+    tenantDomainStatusPill: document.getElementById('tenant-domain-status-pill'),
+    tenantDomainLastChecked: document.getElementById('tenant-domain-last-checked'),
+    tenantDomainProvisionBtn: document.getElementById('tenant-domain-provision-btn'),
+    tenantDomainVerifyBtn: document.getElementById('tenant-domain-verify-btn'),
+    tenantDomainRefreshBtn: document.getElementById('tenant-domain-refresh-btn'),
+    tenantDomainCopyInstructionsBtn: document.getElementById('tenant-domain-copy-instructions-btn'),
+    tenantDomainCheckSummary: document.getElementById('tenant-domain-check-summary'),
+    tenantDomainChecklist: document.getElementById('tenant-domain-checklist'),
+    tenantDomainLastError: document.getElementById('tenant-domain-last-error'),
+    tenantDomainInstructions: document.getElementById('tenant-domain-instructions'),
     saveTenantBtn: document.getElementById('save-tenant-btn'),
     reloadSelectedBtn: document.getElementById('reload-selected-btn'),
     placementNotice: document.getElementById('placement-notice'),
@@ -844,13 +861,315 @@
     });
   }
 
+  function resetDomainProvisioningState() {
+    state.domainProvisioning.current = null;
+    renderDomainProvisioningPanel();
+  }
+
+  function formatDomainInstructionsText(payload) {
+    if (!payload) return '';
+    const lines = [];
+    lines.push(`Hostname: ${payload.hostname || '-'}`);
+    lines.push(`DNS mode: ${payload.mode || '-'}`);
+    lines.push(`DNS provider: ${payload.provider || '-'}`);
+    if (payload.targetHint) lines.push(`Render target host (hint): ${payload.targetHint}`);
+    if (payload.summary) {
+      lines.push('');
+      lines.push(payload.summary);
+    }
+    if (Array.isArray(payload.records) && payload.records.length) {
+      lines.push('');
+      lines.push('DNS Records');
+      payload.records.forEach((record, index) => {
+        lines.push(
+          `${index + 1}. ${record.type || 'RECORD'} | Name: ${record.name || '-'} | Value: ${record.value || '-'}${record.ttl ? ` | TTL: ${record.ttl}` : ''}`,
+        );
+        if (record.notes) lines.push(`   Notes: ${record.notes}`);
+      });
+    }
+    if (Array.isArray(payload.providerHints) && payload.providerHints.length) {
+      lines.push('');
+      lines.push('Provider Hints');
+      payload.providerHints.forEach((hint, index) => lines.push(`${index + 1}. ${hint}`));
+    }
+    return lines.join('\n');
+  }
+
+  function buildDomainProvisionChecks(tenant, payload) {
+    const renderConfigured = Boolean(payload?.render?.configured);
+    const renderTarget = payload?.render?.serviceHostname || '';
+    const hostname = (payload?.domain?.hostname || tenant?.branding?.cmsDomain || '').trim();
+    const status = String(payload?.domain?.status || '').toLowerCase();
+    const renderRegistered = Boolean(payload?.domain?.renderCustomDomainId || payload?.domain?.renderCustomDomainName);
+    const dnsRecords = Array.isArray(payload?.instructions?.records) ? payload.instructions.records : [];
+    const hasInstructions = Boolean(payload?.instructions?.hostname && (dnsRecords.length || payload?.instructions?.targetHint));
+    const brandingSynced = !hostname || (tenant?.branding?.cmsDomain || '').trim() === hostname;
+
+    const checks = [
+      {
+        key: 'render-config',
+        label: 'Render API integration configured',
+        status: renderConfigured ? 'pass' : 'fail',
+        detail: renderConfigured
+          ? `Service ${payload?.render?.serviceId || ''}${renderTarget ? ` • target ${renderTarget}` : ''}`
+          : 'Set RENDER_API_TOKEN and RENDER_SERVICE_ID in Render env vars.',
+      },
+      {
+        key: 'hostname',
+        label: 'Tenant CMS hostname saved',
+        status: hostname ? 'pass' : 'pending',
+        detail: hostname || 'Enter a hostname like cms.client.com and save/provision.',
+      },
+      {
+        key: 'render-domain',
+        label: 'Custom domain registered in Render',
+        status: renderRegistered ? 'pass' : (hostname ? 'pending' : 'pending'),
+        detail: renderRegistered
+          ? `${payload?.domain?.renderCustomDomainName || hostname}${payload?.domain?.renderStatus ? ` • ${payload.domain.renderStatus}` : ''}`
+          : 'Click “Provision in Render” to create (or sync) the custom domain on your Render service.',
+      },
+      {
+        key: 'dns-instructions',
+        label: 'DNS instructions ready (Exabytes/manual)',
+        status: hasInstructions ? 'pass' : (renderRegistered || hostname ? 'pending' : 'pending'),
+        detail: hasInstructions
+          ? `${dnsRecords.length} DNS record(s) prepared`
+          : 'Provision first so the portal can show DNS record instructions.',
+      },
+      {
+        key: 'dns-verify',
+        label: 'Render verification passed',
+        status: status === 'verified' ? 'pass' : (status === 'failed' ? 'fail' : 'pending'),
+        detail: status === 'verified'
+          ? `Verified${payload?.domain?.verifiedAt ? ` at ${new Date(payload.domain.verifiedAt).toLocaleString()}` : ''}`
+          : status === 'failed'
+            ? (payload?.domain?.lastError || 'Verification failed. Fix DNS and recheck.')
+            : 'After updating DNS in Exabytes, click “Verify / Recheck”.',
+      },
+      {
+        key: 'branding-sync',
+        label: 'Tenant branding CMS domain synced',
+        status: brandingSynced ? 'pass' : 'warn',
+        detail: brandingSynced
+          ? (tenant?.branding?.cmsDomain || 'Will sync on provision')
+          : `Tenant branding has ${tenant?.branding?.cmsDomain || '-'} but provisioning row has ${hostname}`,
+      },
+    ];
+
+    return checks;
+  }
+
+  function renderDomainProvisioningChecklist(tenant, payload) {
+    if (!els.tenantDomainChecklist || !els.tenantDomainCheckSummary || !els.tenantDomainLastError) return;
+
+    if (!tenant) {
+      els.tenantDomainChecklist.innerHTML = '';
+      els.tenantDomainCheckSummary.textContent = 'Waiting for tenant selection';
+      els.tenantDomainLastError.textContent = '';
+      return;
+    }
+
+    const checks = buildDomainProvisionChecks(tenant, payload);
+    const done = checks.filter((item) => item.status === 'pass').length;
+    const blocking = checks.some((item) => item.status === 'fail');
+    const total = checks.length;
+    const overallStatus = payload?.domain?.status || (tenant.branding?.cmsDomain ? 'draft' : 'not configured');
+    els.tenantDomainCheckSummary.textContent = `${done}/${total} checks passed • Status: ${overallStatus}`;
+
+    const iconFor = (status) => {
+      if (status === 'pass') return '✓';
+      if (status === 'fail') return '✕';
+      if (status === 'warn') return '!';
+      return '…';
+    };
+    const colorFor = (status) => {
+      if (status === 'pass') return '#166534';
+      if (status === 'fail') return '#b91c1c';
+      if (status === 'warn') return '#92400e';
+      return '#64748b';
+    };
+    const bgFor = (status) => {
+      if (status === 'pass') return '#f0fdf4';
+      if (status === 'fail') return '#fef2f2';
+      if (status === 'warn') return '#fffbeb';
+      return '#f8fafc';
+    };
+    const borderFor = (status) => {
+      if (status === 'pass') return '#bbf7d0';
+      if (status === 'fail') return '#fecaca';
+      if (status === 'warn') return '#fde68a';
+      return '#e2e8f0';
+    };
+
+    els.tenantDomainChecklist.innerHTML = checks.map((item) => `
+      <div style="display:grid; grid-template-columns:22px 1fr; gap:8px; align-items:start; padding:8px 9px; border:1px solid ${borderFor(item.status)}; border-radius:10px; background:${bgFor(item.status)};">
+        <span style="display:inline-flex; width:18px; height:18px; border-radius:999px; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:${colorFor(item.status)}; border:1px solid ${borderFor(item.status)}; background:#fff;">${iconFor(item.status)}</span>
+        <div>
+          <div style="font-size:12px; color:#0f172a; font-weight:600;">${escapeHtml(item.label)}</div>
+          <div style="margin-top:2px; font-size:11px; color:${colorFor(item.status)};">${escapeHtml(item.detail || '')}</div>
+        </div>
+      </div>
+    `).join('');
+
+    const lastError = payload?.domain?.lastError || '';
+    els.tenantDomainLastError.textContent = lastError
+      ? `Last error: ${lastError}`
+      : (blocking ? 'Resolve the blocking checks above, then click Verify / Recheck.' : '');
+  }
+
+  function renderDomainProvisioningPanel() {
+    const tenant = getSelectedTenant();
+    const payload = state.domainProvisioning.current;
+    const tenantHostname = tenant?.branding?.cmsDomain || '';
+
+    if (!tenant) {
+      if (els.tenantDomainHostname) els.tenantDomainHostname.value = '';
+      if (els.tenantDomainInstructions) els.tenantDomainInstructions.value = '';
+      if (els.tenantDomainStatusPill) els.tenantDomainStatusPill.textContent = 'Not provisioned';
+      if (els.tenantDomainLastChecked) els.tenantDomainLastChecked.textContent = '';
+      if (els.tenantDomainProvisionBtn) els.tenantDomainProvisionBtn.disabled = true;
+      if (els.tenantDomainVerifyBtn) els.tenantDomainVerifyBtn.disabled = true;
+      if (els.tenantDomainRefreshBtn) els.tenantDomainRefreshBtn.disabled = true;
+      if (els.tenantDomainCopyInstructionsBtn) els.tenantDomainCopyInstructionsBtn.disabled = true;
+      setNotice(els.tenantDomainProvisionNotice, '', '');
+      renderDomainProvisioningChecklist(null, null);
+      return;
+    }
+
+    const renderConfigured = Boolean(payload?.render?.configured);
+    if (els.tenantDomainProvisionBtn) els.tenantDomainProvisionBtn.disabled = !renderConfigured;
+    if (els.tenantDomainRefreshBtn) els.tenantDomainRefreshBtn.disabled = false;
+    if (els.tenantDomainVerifyBtn) {
+      els.tenantDomainVerifyBtn.disabled = !renderConfigured || (!payload?.domain?.hostname && !tenantHostname);
+    }
+    if (els.tenantDomainCopyInstructionsBtn) {
+      els.tenantDomainCopyInstructionsBtn.disabled = !(payload?.instructions && formatDomainInstructionsText(payload.instructions));
+    }
+
+    if (els.tenantDomainHostname) {
+      const domainValue = payload?.domain?.hostname || tenantHostname || '';
+      if (!els.tenantDomainHostname.value || els.tenantDomainHostname.value === tenantHostname || payload) {
+        els.tenantDomainHostname.value = domainValue;
+      }
+    }
+    if (els.tenantDomainDnsMode && payload?.domain?.dnsMode) {
+      els.tenantDomainDnsMode.value = payload.domain.dnsMode;
+    }
+    if (els.tenantDomainDnsProvider && payload?.domain?.dnsProvider) {
+      els.tenantDomainDnsProvider.value = payload.domain.dnsProvider;
+    }
+
+    const status = payload?.domain?.status || (tenantHostname ? 'draft' : 'not configured');
+    if (els.tenantDomainStatusPill) {
+      els.tenantDomainStatusPill.textContent = `Status: ${status}`;
+      els.tenantDomainStatusPill.className = 'pill';
+      if (status === 'verified') els.tenantDomainStatusPill.classList.add('ok');
+    }
+    if (els.tenantDomainLastChecked) {
+      const checkedAt = payload?.domain?.lastCheckedAt;
+      els.tenantDomainLastChecked.textContent = checkedAt ? `Last checked: ${new Date(checkedAt).toLocaleString()}` : '';
+    }
+    if (els.tenantDomainInstructions) {
+      els.tenantDomainInstructions.value = formatDomainInstructionsText(payload?.instructions || null);
+    }
+    renderDomainProvisioningChecklist(tenant, payload);
+  }
+
+  async function loadTenantDomainProvisioning() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      resetDomainProvisioningState();
+      return;
+    }
+    try {
+      const data = await api(`/api/platform/tenants/${tenant.id}/domain`, { method: 'GET' });
+      state.domainProvisioning.current = data || null;
+      renderDomainProvisioningPanel();
+    } catch (err) {
+      state.domainProvisioning.current = null;
+      renderDomainProvisioningPanel();
+      setNotice(els.tenantDomainProvisionNotice, err.message || 'Failed to load domain provisioning status', 'error');
+    }
+  }
+
+  async function handleProvisionTenantDomain() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.tenantDomainProvisionNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const hostname = (els.tenantDomainHostname?.value || '').trim();
+    if (!hostname) {
+      setNotice(els.tenantDomainProvisionNotice, 'Enter a tenant CMS hostname (for example: cms.client.com).', 'error');
+      return;
+    }
+    els.tenantDomainProvisionBtn.disabled = true;
+    try {
+      const data = await api(`/api/platform/tenants/${tenant.id}/domain/provision`, {
+        method: 'POST',
+        body: JSON.stringify({
+          hostname,
+          dnsMode: els.tenantDomainDnsMode?.value || 'customer_managed',
+          dnsProvider: els.tenantDomainDnsProvider?.value || 'exabytes',
+        }),
+      });
+      state.domainProvisioning.current = data || null;
+      if (els.editCmsDomain) els.editCmsDomain.value = data?.tenant?.branding?.cmsDomain || hostname;
+      await loadTenants();
+      state.selectedTenantId = tenant.id;
+      renderTenants();
+      renderDomainProvisioningPanel();
+      const status = data?.domain?.status || 'updated';
+      setNotice(els.tenantDomainProvisionNotice, `Domain provisioning updated. Status: ${status}`, status === 'failed' ? 'error' : 'ok');
+    } catch (err) {
+      const message = err.message || 'Failed to provision tenant domain';
+      const suffix = /Render domain provisioning is not configured/i.test(message)
+        ? ' Configure one-time env vars on Render: RENDER_API_TOKEN, RENDER_SERVICE_ID, and optionally RENDER_SERVICE_CANONICAL_HOSTNAME.'
+        : '';
+      setNotice(els.tenantDomainProvisionNotice, `${message}${suffix}`, 'error');
+    } finally {
+      els.tenantDomainProvisionBtn.disabled = false;
+    }
+  }
+
+  async function handleVerifyTenantDomain() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.tenantDomainProvisionNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    els.tenantDomainVerifyBtn.disabled = true;
+    try {
+      const data = await api(`/api/platform/tenants/${tenant.id}/domain/verify`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      state.domainProvisioning.current = data || null;
+      renderDomainProvisioningPanel();
+      const status = data?.domain?.status || 'updated';
+      setNotice(
+        els.tenantDomainProvisionNotice,
+        status === 'verified'
+          ? `Domain verified: ${data?.domain?.hostname || ''}`
+          : `Verification checked. Current status: ${status}`,
+        status === 'verified' ? 'ok' : '',
+      );
+    } catch (err) {
+      setNotice(els.tenantDomainProvisionNotice, err.message || 'Failed to verify tenant domain', 'error');
+    } finally {
+      els.tenantDomainVerifyBtn.disabled = false;
+    }
+  }
+
   function renderSelectedTenant() {
     const tenant = getSelectedTenant();
     if (!tenant) {
       els.selectedTenantEmpty.classList.remove('hidden');
       els.selectedTenantForm.classList.add('hidden');
       els.selectedTenantMeta.textContent = '';
+      setNotice(els.tenantDomainProvisionNotice, '', '');
       renderPlacementPanel();
+      resetDomainProvisioningState();
       renderCmsPanel();
       return;
     }
@@ -867,6 +1186,7 @@
     els.editSupportEmail.value = tenant.branding?.supportEmail || '';
     els.selectedTenantMeta.textContent =
       `Created: ${new Date(tenant.createdAt).toLocaleString()} • Updated: ${new Date(tenant.updatedAt).toLocaleString()}`;
+    renderDomainProvisioningPanel();
     renderPlacementPanel();
     renderCmsPanel();
   }
@@ -905,6 +1225,7 @@
         state.selectedTenantId = Number(row.getAttribute('data-tenant-id'));
         renderTenants();
         await loadHomepagePlacement();
+        await loadTenantDomainProvisioning();
         await loadTenantCmsContent();
       });
     });
@@ -1316,6 +1637,7 @@
       if (ok) {
         await loadTenants();
         await loadHomepagePlacement();
+        await loadTenantDomainProvisioning();
         await loadTenantCmsContent();
       }
     } catch (err) {
@@ -1333,6 +1655,7 @@
     }
     state.auth = null;
     resetPlacementState();
+    resetDomainProvisioningState();
     resetCmsState();
     showLogin();
   }
@@ -1367,6 +1690,7 @@
       state.selectedTenantId = tenant.id;
       renderTenants();
       await loadHomepagePlacement();
+      await loadTenantDomainProvisioning();
       await loadTenantCmsContent();
     } catch (err) {
       setNotice(els.appNotice, err.message || 'Failed to create tenant', 'error');
@@ -1398,6 +1722,7 @@
       await loadTenants();
       state.selectedTenantId = updated.id;
       renderTenants();
+      await loadTenantDomainProvisioning();
     } catch (err) {
       setNotice(els.appNotice, err.message || 'Failed to save tenant', 'error');
     } finally {
@@ -1543,6 +1868,7 @@
       state.selectedTenantId = tenantId;
       renderTenants();
       await loadHomepagePlacement();
+      await loadTenantDomainProvisioning();
       await loadTenantCmsContent();
     });
     els.createTenantBtn.addEventListener('click', handleCreateTenant);
@@ -1550,9 +1876,35 @@
     els.reloadSelectedBtn.addEventListener('click', async () => {
       await loadTenants();
       await loadHomepagePlacement();
+      await loadTenantDomainProvisioning();
       await loadTenantCmsContent();
     });
     els.saveTenantBtn.addEventListener('click', handleSaveTenant);
+    if (els.tenantDomainProvisionBtn) els.tenantDomainProvisionBtn.addEventListener('click', handleProvisionTenantDomain);
+    if (els.tenantDomainVerifyBtn) els.tenantDomainVerifyBtn.addEventListener('click', handleVerifyTenantDomain);
+    if (els.tenantDomainRefreshBtn) els.tenantDomainRefreshBtn.addEventListener('click', loadTenantDomainProvisioning);
+    if (els.tenantDomainCopyInstructionsBtn) {
+      els.tenantDomainCopyInstructionsBtn.addEventListener('click', async () => {
+        const text = (els.tenantDomainInstructions?.value || '').trim();
+        if (!text) {
+          setNotice(els.tenantDomainProvisionNotice, 'No DNS instructions to copy yet. Provision the domain first.', 'error');
+          return;
+        }
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            setNotice(els.tenantDomainProvisionNotice, 'DNS instructions copied to clipboard.', 'ok');
+          } else {
+            els.tenantDomainInstructions.focus();
+            els.tenantDomainInstructions.select();
+            document.execCommand('copy');
+            setNotice(els.tenantDomainProvisionNotice, 'DNS instructions copied.', 'ok');
+          }
+        } catch (err) {
+          setNotice(els.tenantDomainProvisionNotice, err.message || 'Failed to copy DNS instructions', 'error');
+        }
+      });
+    }
 
     els.createContentBtn.addEventListener('click', handleCreateContentItem);
     els.assignItemBtn.addEventListener('click', handleAssignItemToSlot);
@@ -1625,6 +1977,7 @@
       if (authenticated) {
         await loadTenants();
         await loadHomepagePlacement();
+        await loadTenantDomainProvisioning();
         await loadTenantCmsContent();
       } else {
         els.loginEmail.value = '';
