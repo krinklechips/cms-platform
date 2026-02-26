@@ -152,7 +152,27 @@
         padding: 10px 11px;
         font: inherit;
       }
+      .field select,
+      .field textarea {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid #dbe3ef;
+        background: #fff;
+        color: var(--ink);
+        padding: 10px 11px;
+        font: inherit;
+      }
+      .field textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
       .field input:focus {
+        outline: none;
+        border-color: #5eead4;
+        box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12);
+      }
+      .field select:focus,
+      .field textarea:focus {
         outline: none;
         border-color: #5eead4;
         box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12);
@@ -180,6 +200,37 @@
       .subnotice.hidden { display: none; }
       .subnotice.error { border-color: #fecaca; background: #fef2f2; color: var(--danger); }
       .subnotice.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+      .editor-panel {
+        margin-top: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fbfdff;
+        padding: 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .editor-panel.hidden { display: none !important; }
+      .editor-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+      }
+      .editor-head h3 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .editor-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 180px 180px;
+        gap: 10px;
+      }
+      .table-action-btn {
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 700;
+      }
       button:disabled { opacity: 0.65; cursor: not-allowed; }
       .main {
         min-width: 0;
@@ -353,6 +404,7 @@
       @media (max-width: 1120px) {
         .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .grid { grid-template-columns: 1fr; }
+        .editor-grid-2 { grid-template-columns: 1fr; }
       }
       @media (max-width: 900px) {
         .app-shell { grid-template-columns: 1fr; }
@@ -430,17 +482,62 @@
             <section class="card" id="articles">
               <div class="card-head">
                 <h2>Recent Articles</h2>
-                <span class="subtle" id="articles-count-label">Loading...</span>
+                <div class="inline-actions">
+                  <span class="subtle" id="articles-count-label">Loading...</span>
+                  <button id="tenant-article-new-btn" type="button">New Article</button>
+                </div>
               </div>
               <div class="card-body">
                 <div id="articles-empty" class="empty hidden">No articles available for this tenant yet.</div>
                 <div style="overflow:auto;">
                   <table id="articles-table">
                     <thead>
-                      <tr><th>Title</th><th>Status</th><th>Category</th><th>Published</th><th>Updated</th></tr>
+                      <tr><th>Title</th><th>Status</th><th>Category</th><th>Published</th><th>Updated</th><th>Actions</th></tr>
                     </thead>
                     <tbody id="articles-tbody"></tbody>
                   </table>
+                </div>
+                <div id="tenant-article-editor" class="editor-panel hidden">
+                  <div class="editor-head">
+                    <h3 id="tenant-article-editor-title">Article Editor</h3>
+                    <span id="tenant-article-editor-meta" class="subtle">Draft</span>
+                  </div>
+                  <div id="tenant-article-notice" class="subnotice hidden"></div>
+                  <input id="tenant-article-id" type="hidden" />
+                  <div class="editor-grid-2">
+                    <div class="field">
+                      <label for="tenant-article-title">Title</label>
+                      <input id="tenant-article-title" type="text" placeholder="Article title" />
+                    </div>
+                    <div class="field">
+                      <label for="tenant-article-status">Status</label>
+                      <select id="tenant-article-status">
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label for="tenant-article-category">Category</label>
+                      <select id="tenant-article-category">
+                        <option value="newsroom">Newsroom</option>
+                        <option value="insights">Insights</option>
+                        <option value="announcements">Announcements</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label for="tenant-article-summary">Summary</label>
+                    <textarea id="tenant-article-summary" placeholder="Short summary (optional)"></textarea>
+                  </div>
+                  <div class="field">
+                    <label for="tenant-article-body">Body</label>
+                    <textarea id="tenant-article-body" style="min-height: 180px;" placeholder="Write your article content here"></textarea>
+                  </div>
+                  <div class="inline-actions">
+                    <button id="tenant-article-save-btn" class="primary" type="button">Save Article</button>
+                    <button id="tenant-article-delete-btn" type="button">Delete</button>
+                    <button id="tenant-article-cancel-btn" type="button">Close Editor</button>
+                  </div>
                 </div>
               </div>
             </section>

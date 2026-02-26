@@ -33,6 +33,20 @@
     articlesCountLabel: document.getElementById('articles-count-label'),
     articlesEmpty: document.getElementById('articles-empty'),
     articlesTbody: document.getElementById('articles-tbody'),
+    tenantArticleNewBtn: document.getElementById('tenant-article-new-btn'),
+    tenantArticleEditor: document.getElementById('tenant-article-editor'),
+    tenantArticleEditorTitle: document.getElementById('tenant-article-editor-title'),
+    tenantArticleEditorMeta: document.getElementById('tenant-article-editor-meta'),
+    tenantArticleNotice: document.getElementById('tenant-article-notice'),
+    tenantArticleIdInput: document.getElementById('tenant-article-id'),
+    tenantArticleTitleInput: document.getElementById('tenant-article-title'),
+    tenantArticleStatusInput: document.getElementById('tenant-article-status'),
+    tenantArticleCategoryInput: document.getElementById('tenant-article-category'),
+    tenantArticleSummaryInput: document.getElementById('tenant-article-summary'),
+    tenantArticleBodyInput: document.getElementById('tenant-article-body'),
+    tenantArticleSaveBtn: document.getElementById('tenant-article-save-btn'),
+    tenantArticleDeleteBtn: document.getElementById('tenant-article-delete-btn'),
+    tenantArticleCancelBtn: document.getElementById('tenant-article-cancel-btn'),
     mediaCountLabel: document.getElementById('media-count-label'),
     mediaEmpty: document.getElementById('media-empty'),
     mediaTbody: document.getElementById('media-tbody'),
@@ -70,6 +84,12 @@
     publicNavTabs: [],
     publicSlot: null,
     publicSlotItemsByTab: null,
+    articleEditor: {
+      open: false,
+      articleId: null,
+      saving: false,
+      deleting: false,
+    },
   };
 
   async function api(path, options) {
@@ -160,6 +180,17 @@
     }
     els.passwordChangeNotice.className = ('subnotice ' + (kind || '')).trim();
     els.passwordChangeNotice.textContent = message;
+  }
+
+  function setArticleNotice(message, kind) {
+    if (!els.tenantArticleNotice) return;
+    if (!message) {
+      els.tenantArticleNotice.className = 'subnotice hidden';
+      els.tenantArticleNotice.textContent = '';
+      return;
+    }
+    els.tenantArticleNotice.className = ('subnotice ' + (kind || '')).trim();
+    els.tenantArticleNotice.textContent = message;
   }
 
   function setLoading(loading) {
@@ -280,6 +311,10 @@
     const rows = Array.isArray(state.tenantArticles) ? state.tenantArticles.slice(0, 8) : [];
     els.articlesCountLabel.textContent = (state.tenantArticles?.length || 0) + ' total';
     els.articlesEmpty.classList.toggle('hidden', rows.length > 0);
+    if (els.tenantArticleNewBtn) {
+      els.tenantArticleNewBtn.classList.toggle('hidden', normalizeModuleAccess(state.moduleAccess).articles === false);
+      els.tenantArticleNewBtn.disabled = state.articleEditor.saving || state.articleEditor.deleting;
+    }
     els.articlesTbody.innerHTML = rows.length
       ? rows.map((row) => {
           const status = escapeHtml(row.status || 'draft');
@@ -289,9 +324,187 @@
             '<td>' + escapeHtml(row.category || '-') + '</td>' +
             '<td>' + escapeHtml(row.publishAt ? formatDate(row.publishAt) : '-') + '</td>' +
             '<td>' + escapeHtml(formatDate(row.updatedAt)) + '</td>' +
+            '<td><div class="inline-actions">' +
+              '<button type="button" class="table-action-btn" data-article-action="edit" data-article-id="' + Number(row.id) + '">Edit</button>' +
+              '<button type="button" class="table-action-btn" data-article-action="delete" data-article-id="' + Number(row.id) + '">Delete</button>' +
+            '</div></td>' +
           '</tr>';
         }).join('')
       : '';
+
+    renderArticleEditor();
+  }
+
+  function getArticleById(id) {
+    const numericId = Number(id);
+    if (!numericId) return null;
+    return (Array.isArray(state.tenantArticles) ? state.tenantArticles : []).find((item) => Number(item.id) === numericId) || null;
+  }
+
+  function resetArticleEditorForm(article) {
+    const item = article || null;
+    if (els.tenantArticleIdInput) els.tenantArticleIdInput.value = item ? String(item.id) : '';
+    if (els.tenantArticleTitleInput) els.tenantArticleTitleInput.value = item?.title || '';
+    if (els.tenantArticleStatusInput) els.tenantArticleStatusInput.value = item?.status === 'published' ? 'published' : 'draft';
+    if (els.tenantArticleCategoryInput) els.tenantArticleCategoryInput.value = item?.category || 'newsroom';
+    if (els.tenantArticleSummaryInput) els.tenantArticleSummaryInput.value = item?.summary || '';
+    if (els.tenantArticleBodyInput) els.tenantArticleBodyInput.value = item?.body || '';
+  }
+
+  function openArticleEditor(article) {
+    state.articleEditor.open = true;
+    state.articleEditor.articleId = article ? Number(article.id) : null;
+    resetArticleEditorForm(article || null);
+    setArticleNotice('', '');
+    renderArticleEditor();
+    if (els.tenantArticleEditor) {
+      els.tenantArticleEditor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    if (els.tenantArticleTitleInput) {
+      window.setTimeout(() => {
+        try { els.tenantArticleTitleInput.focus(); } catch (_) {}
+      }, 0);
+    }
+  }
+
+  function closeArticleEditor() {
+    state.articleEditor.open = false;
+    state.articleEditor.articleId = null;
+    state.articleEditor.saving = false;
+    state.articleEditor.deleting = false;
+    resetArticleEditorForm(null);
+    setArticleNotice('', '');
+    renderArticleEditor();
+  }
+
+  function renderArticleEditor() {
+    if (!els.tenantArticleEditor) return;
+    const access = normalizeModuleAccess(state.moduleAccess);
+    const canUseArticles = access.articles !== false;
+    const isOpen = canUseArticles && state.articleEditor.open;
+    const article = state.articleEditor.articleId ? getArticleById(state.articleEditor.articleId) : null;
+
+    els.tenantArticleEditor.classList.toggle('hidden', !isOpen);
+    if (!isOpen) return;
+
+    if (els.tenantArticleEditorTitle) {
+      els.tenantArticleEditorTitle.textContent = article ? 'Edit Article' : 'New Article';
+    }
+    if (els.tenantArticleEditorMeta) {
+      const status = (els.tenantArticleStatusInput?.value || (article?.status || 'draft')).toLowerCase();
+      const slug = article?.slug ? (' /' + article.slug) : '';
+      const updated = article?.updatedAt ? (' • Updated ' + formatDate(article.updatedAt)) : '';
+      els.tenantArticleEditorMeta.textContent = status + slug + updated;
+    }
+
+    const busy = state.articleEditor.saving || state.articleEditor.deleting;
+    [els.tenantArticleTitleInput, els.tenantArticleStatusInput, els.tenantArticleCategoryInput, els.tenantArticleSummaryInput, els.tenantArticleBodyInput]
+      .filter(Boolean)
+      .forEach((field) => { field.disabled = busy; });
+    if (els.tenantArticleSaveBtn) {
+      els.tenantArticleSaveBtn.disabled = busy;
+      els.tenantArticleSaveBtn.textContent = state.articleEditor.saving ? 'Saving...' : 'Save Article';
+    }
+    if (els.tenantArticleDeleteBtn) {
+      els.tenantArticleDeleteBtn.disabled = busy || !article;
+      els.tenantArticleDeleteBtn.textContent = state.articleEditor.deleting ? 'Deleting...' : 'Delete';
+    }
+    if (els.tenantArticleCancelBtn) {
+      els.tenantArticleCancelBtn.disabled = busy;
+      els.tenantArticleCancelBtn.textContent = article ? 'Close Editor' : 'Cancel';
+    }
+  }
+
+  function buildTenantArticlePayloadFromForm() {
+    const title = String(els.tenantArticleTitleInput?.value || '').trim();
+    const status = String(els.tenantArticleStatusInput?.value || 'draft').trim().toLowerCase() === 'published'
+      ? 'published'
+      : 'draft';
+    const category = String(els.tenantArticleCategoryInput?.value || 'newsroom').trim() || 'newsroom';
+    const summary = String(els.tenantArticleSummaryInput?.value || '');
+    const body = String(els.tenantArticleBodyInput?.value || '');
+    if (!title) {
+      throw new Error('Article title is required');
+    }
+
+    const existing = state.articleEditor.articleId ? getArticleById(state.articleEditor.articleId) : null;
+    const payload = {
+      title,
+      status,
+      category,
+      summary,
+      body,
+      source: 'tenant-dashboard',
+    };
+    if (status === 'published' && !(existing && existing.publishAt)) {
+      payload.publishAt = new Date().toISOString();
+    }
+    return payload;
+  }
+
+  async function saveArticleFromEditor() {
+    if (state.articleEditor.saving || state.articleEditor.deleting) return;
+    try {
+      const payload = buildTenantArticlePayloadFromForm();
+      state.articleEditor.saving = true;
+      setArticleNotice('Saving article...', '');
+      renderArticleEditor();
+
+      const currentId = state.articleEditor.articleId ? Number(state.articleEditor.articleId) : null;
+      const saved = currentId
+        ? await api('/api/tenant/articles/' + currentId, { method: 'PUT', body: JSON.stringify(payload) })
+        : await api('/api/tenant/articles', { method: 'POST', body: JSON.stringify(payload) });
+
+      await loadDashboardData();
+      if (saved && saved.id) {
+        state.articleEditor.open = true;
+        state.articleEditor.articleId = Number(saved.id);
+      }
+      renderAll();
+      setArticleNotice(currentId ? 'Article updated.' : 'Article created.', 'ok');
+      setNotice(currentId ? 'Article updated.' : 'Article created.', 'ok');
+    } catch (err) {
+      setArticleNotice(err.message || 'Failed to save article', 'error');
+    } finally {
+      state.articleEditor.saving = false;
+      renderArticleEditor();
+    }
+  }
+
+  async function deleteArticleFromEditor(articleId) {
+    const article = getArticleById(articleId);
+    if (!article || state.articleEditor.saving || state.articleEditor.deleting) return;
+    const ok = window.confirm('Delete article "' + (article.title || article.slug || article.id) + '"?');
+    if (!ok) return;
+
+    try {
+      state.articleEditor.deleting = true;
+      if (state.articleEditor.articleId && Number(state.articleEditor.articleId) === Number(article.id)) {
+        setArticleNotice('Deleting article...', '');
+      } else {
+        setNotice('Deleting article...', '');
+      }
+      renderArticleEditor();
+
+      await api('/api/tenant/articles/' + Number(article.id), { method: 'DELETE' });
+      await loadDashboardData();
+
+      if (Number(state.articleEditor.articleId) === Number(article.id)) {
+        closeArticleEditor();
+      } else {
+        renderAll();
+      }
+      setNotice('Article deleted.', 'ok');
+    } catch (err) {
+      if (Number(state.articleEditor.articleId) === Number(article.id)) {
+        setArticleNotice(err.message || 'Failed to delete article', 'error');
+      } else {
+        setNotice(err.message || 'Failed to delete article', 'error');
+      }
+    } finally {
+      state.articleEditor.deleting = false;
+      renderArticleEditor();
+    }
   }
 
   function renderMedia() {
@@ -556,8 +769,74 @@
     });
   }
 
+  function wireArticleEditor() {
+    if (els.tenantArticleNewBtn) {
+      els.tenantArticleNewBtn.addEventListener('click', function () {
+        openArticleEditor(null);
+      });
+    }
+    if (els.tenantArticleSaveBtn) {
+      els.tenantArticleSaveBtn.addEventListener('click', saveArticleFromEditor);
+    }
+    if (els.tenantArticleDeleteBtn) {
+      els.tenantArticleDeleteBtn.addEventListener('click', function () {
+        if (!state.articleEditor.articleId) return;
+        deleteArticleFromEditor(state.articleEditor.articleId);
+      });
+    }
+    if (els.tenantArticleCancelBtn) {
+      els.tenantArticleCancelBtn.addEventListener('click', function () {
+        closeArticleEditor();
+      });
+    }
+    [els.tenantArticleTitleInput, els.tenantArticleStatusInput, els.tenantArticleCategoryInput, els.tenantArticleSummaryInput, els.tenantArticleBodyInput]
+      .filter(Boolean)
+      .forEach((field) => {
+        field.addEventListener('input', function () {
+          renderArticleEditor();
+        });
+        field.addEventListener('change', function () {
+          renderArticleEditor();
+        });
+      });
+    if (els.articlesTbody) {
+      els.articlesTbody.addEventListener('click', function (event) {
+        const btn = event.target.closest('[data-article-action]');
+        if (!btn) return;
+        const action = btn.getAttribute('data-article-action');
+        const articleId = Number(btn.getAttribute('data-article-id'));
+        if (!articleId) return;
+        if (action === 'edit') {
+          const article = getArticleById(articleId);
+          if (article) openArticleEditor(article);
+          return;
+        }
+        if (action === 'delete') {
+          deleteArticleFromEditor(articleId);
+        }
+      });
+    }
+    [els.tenantArticleTitleInput, els.tenantArticleSummaryInput].filter(Boolean).forEach((input) => {
+      input.addEventListener('keydown', function (event) {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+          event.preventDefault();
+          saveArticleFromEditor();
+        }
+      });
+    });
+    if (els.tenantArticleBodyInput) {
+      els.tenantArticleBodyInput.addEventListener('keydown', function (event) {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+          event.preventDefault();
+          saveArticleFromEditor();
+        }
+      });
+    }
+  }
+
   async function init() {
     wireNavHighlight();
+    wireArticleEditor();
     els.refreshBtn.addEventListener('click', function () {
       refreshDashboard({ showLoading: false });
     });
