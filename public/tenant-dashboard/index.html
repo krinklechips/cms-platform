@@ -361,10 +361,10 @@
         <div id="app-notice" class="notice hidden"></div>
 
         <section class="metrics" id="metrics-grid">
-          <div class="metric"><div class="label">Articles</div><div class="value" id="metric-articles">-</div><div class="hint" id="metric-articles-hint">Loading...</div></div>
-          <div class="metric"><div class="label">Media</div><div class="value" id="metric-media">-</div><div class="hint" id="metric-media-hint">Loading...</div></div>
-          <div class="metric"><div class="label">Annual Reports</div><div class="value" id="metric-annual">-</div><div class="hint" id="metric-annual-hint">Loading...</div></div>
-          <div class="metric"><div class="label">Homepage Slot</div><div class="value" id="metric-slot">-</div><div class="hint" id="metric-slot-hint">Loading...</div></div>
+          <div class="metric" id="metric-card-articles"><div class="label">Articles</div><div class="value" id="metric-articles">-</div><div class="hint" id="metric-articles-hint">Loading...</div></div>
+          <div class="metric" id="metric-card-media"><div class="label">Media</div><div class="value" id="metric-media">-</div><div class="hint" id="metric-media-hint">Loading...</div></div>
+          <div class="metric" id="metric-card-annual"><div class="label">Annual Reports</div><div class="value" id="metric-annual">-</div><div class="hint" id="metric-annual-hint">Loading...</div></div>
+          <div class="metric" id="metric-card-slot"><div class="label">Homepage Slot</div><div class="value" id="metric-slot">-</div><div class="hint" id="metric-slot-hint">Loading...</div></div>
         </section>
 
         <div class="grid">
@@ -431,12 +431,12 @@
                 <span class="subtle">Public API outputs</span>
               </div>
               <div class="card-body" style="display:grid; gap:12px;">
-                <div>
+                <div id="site-preview-nav-tabs-block">
                   <h3 style="margin:0 0 8px; font-size:13px;">Navigation Tabs</h3>
                   <div id="nav-tabs-empty" class="empty hidden">No visible navigation tabs published yet.</div>
                   <div id="nav-tabs-list" class="tabs-wrap"></div>
                 </div>
-                <div>
+                <div id="site-preview-slot-block">
                   <h3 style="margin:0 0 8px; font-size:13px;">Homepage News & Promotions Slot</h3>
                   <div id="slot-empty" class="empty hidden">Slot data unavailable or not configured.</div>
                   <div id="slot-content" class="slot-grid"></div>

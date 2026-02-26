@@ -11,6 +11,11 @@
     tenantHostPill: document.getElementById('tenant-host-pill'),
     sessionChip: document.getElementById('session-chip'),
     dashboardSubtitle: document.getElementById('dashboard-subtitle'),
+    metricsGrid: document.getElementById('metrics-grid'),
+    metricCardArticles: document.getElementById('metric-card-articles'),
+    metricCardMedia: document.getElementById('metric-card-media'),
+    metricCardAnnual: document.getElementById('metric-card-annual'),
+    metricCardSlot: document.getElementById('metric-card-slot'),
     metricArticles: document.getElementById('metric-articles'),
     metricArticlesHint: document.getElementById('metric-articles-hint'),
     metricMedia: document.getElementById('metric-media'),
@@ -32,6 +37,12 @@
     navTabsList: document.getElementById('nav-tabs-list'),
     slotEmpty: document.getElementById('slot-empty'),
     slotContent: document.getElementById('slot-content'),
+    sitePreviewNavTabsBlock: document.getElementById('site-preview-nav-tabs-block'),
+    sitePreviewSlotBlock: document.getElementById('site-preview-slot-block'),
+    articlesSection: document.getElementById('articles'),
+    mediaSection: document.getElementById('media'),
+    annualReportsSection: document.getElementById('annual-reports'),
+    sitePreviewSection: document.getElementById('site-preview'),
     tenantInfoGrid: document.getElementById('tenant-info-grid'),
     dashboardNav: document.getElementById('dashboard-nav'),
   };
@@ -40,6 +51,13 @@
     host: null,
     tenant: null,
     user: null,
+    moduleAccess: {
+      homepagePlacements: true,
+      articles: true,
+      libraries: true,
+      annualReports: true,
+      navigationTabs: true,
+    },
     tenantArticles: [],
     tenantMedia: [],
     tenantAnnualReports: [],
@@ -81,6 +99,17 @@
     if (n < 1024) return n + ' B';
     if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
     return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function normalizeModuleAccess(input) {
+    const source = input && typeof input === 'object' ? input : {};
+    return {
+      homepagePlacements: source.homepagePlacements !== false,
+      articles: source.articles !== false,
+      libraries: source.libraries !== false,
+      annualReports: source.annualReports !== false,
+      navigationTabs: source.navigationTabs !== false,
+    };
   }
 
   function setNotice(message, kind) {
@@ -129,8 +158,45 @@
     }
 
     if (tenant.name) {
+      const disabled = Object.entries(state.moduleAccess || {})
+        .filter(([, enabled]) => enabled === false)
+        .map(([key]) => key);
+      const restrictionNote = disabled.length
+        ? ' Some modules are hidden by platform access controls.'
+        : '';
       els.dashboardSubtitle.textContent =
-        'Protected tenant CMS data and public site previews for ' + tenant.name + '. Use this dashboard to verify content readiness before wiring the full tenant editor experience.';
+        'Protected tenant CMS data and public site previews for ' + tenant.name + '. Use this dashboard to verify content readiness before wiring the full tenant editor experience.' +
+        restrictionNote;
+    }
+  }
+
+  function renderAccessVisibility() {
+    const access = normalizeModuleAccess(state.moduleAccess);
+    const links = Array.from((els.dashboardNav && els.dashboardNav.querySelectorAll('a[href^="#"]')) || []);
+    const navMap = {
+      '#articles': access.articles,
+      '#media': access.libraries,
+      '#annual-reports': access.annualReports,
+      '#site-preview': access.navigationTabs || access.homepagePlacements,
+    };
+    links.forEach((link) => {
+      const href = link.getAttribute('href') || '';
+      if (!Object.prototype.hasOwnProperty.call(navMap, href)) return;
+      link.classList.toggle('hidden', navMap[href] === false);
+    });
+
+    if (els.metricCardArticles) els.metricCardArticles.classList.toggle('hidden', access.articles === false);
+    if (els.metricCardMedia) els.metricCardMedia.classList.toggle('hidden', access.libraries === false);
+    if (els.metricCardAnnual) els.metricCardAnnual.classList.toggle('hidden', access.annualReports === false);
+    if (els.metricCardSlot) els.metricCardSlot.classList.toggle('hidden', access.homepagePlacements === false);
+
+    if (els.articlesSection) els.articlesSection.classList.toggle('hidden', access.articles === false);
+    if (els.mediaSection) els.mediaSection.classList.toggle('hidden', access.libraries === false);
+    if (els.annualReportsSection) els.annualReportsSection.classList.toggle('hidden', access.annualReports === false);
+    if (els.sitePreviewNavTabsBlock) els.sitePreviewNavTabsBlock.classList.toggle('hidden', access.navigationTabs === false);
+    if (els.sitePreviewSlotBlock) els.sitePreviewSlotBlock.classList.toggle('hidden', access.homepagePlacements === false);
+    if (els.sitePreviewSection) {
+      els.sitePreviewSection.classList.toggle('hidden', access.navigationTabs === false && access.homepagePlacements === false);
     }
   }
 
@@ -267,6 +333,7 @@
   }
 
   function renderAll() {
+    renderAccessVisibility();
     renderTenantChrome();
     renderMetrics();
     renderArticles();
@@ -294,6 +361,7 @@
       return false;
     }
     state.user = session.user;
+    state.moduleAccess = normalizeModuleAccess(session.moduleAccess);
     return true;
   }
 
@@ -301,12 +369,13 @@
     const tenantSlug = state.tenant?.slug;
     if (!tenantSlug) throw new Error('Tenant context is missing');
 
+    const access = normalizeModuleAccess(state.moduleAccess);
     const [articlesRes, mediaRes, annualRes, navTabsRes, slotRes] = await Promise.allSettled([
-      api('/api/tenant/articles', { method: 'GET' }),
-      api('/api/tenant/media', { method: 'GET' }),
-      api('/api/tenant/annual-reports', { method: 'GET' }),
-      api('/api/public/navigation-tabs?tenantSlug=' + encodeURIComponent(tenantSlug), { method: 'GET' }),
-      api('/api/public/slots/home.news-promotions?tenantSlug=' + encodeURIComponent(tenantSlug), { method: 'GET' }),
+      access.articles ? api('/api/tenant/articles', { method: 'GET' }) : Promise.resolve([]),
+      access.libraries ? api('/api/tenant/media', { method: 'GET' }) : Promise.resolve([]),
+      access.annualReports ? api('/api/tenant/annual-reports', { method: 'GET' }) : Promise.resolve([]),
+      access.navigationTabs ? api('/api/public/navigation-tabs?tenantSlug=' + encodeURIComponent(tenantSlug), { method: 'GET' }) : Promise.resolve({ navigationTabs: [] }),
+      access.homepagePlacements ? api('/api/public/slots/home.news-promotions?tenantSlug=' + encodeURIComponent(tenantSlug), { method: 'GET' }) : Promise.resolve({ slot: null, itemsByTab: null }),
     ]);
 
     if (articlesRes.status === 'fulfilled') state.tenantArticles = Array.isArray(articlesRes.value) ? articlesRes.value : [];

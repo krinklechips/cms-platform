@@ -18,6 +18,31 @@ function loadActiveMembership(userId, tenantId) {
   `).get(userId, tenantId);
 }
 
+function readTenantModuleAccess(tenantId) {
+  const fallback = {
+    homepagePlacements: true,
+    articles: true,
+    libraries: true,
+    annualReports: true,
+    navigationTabs: true,
+  };
+  const row = db.prepare('SELECT settings_json FROM tenant_settings WHERE tenant_id = ?').get(tenantId);
+  if (!row?.settings_json) return fallback;
+  try {
+    const parsed = JSON.parse(row.settings_json || '{}') || {};
+    const source = parsed.moduleAccess && typeof parsed.moduleAccess === 'object' ? parsed.moduleAccess : {};
+    return {
+      homepagePlacements: source.homepagePlacements !== false,
+      articles: source.articles !== false,
+      libraries: source.libraries !== false,
+      annualReports: source.annualReports !== false,
+      navigationTabs: source.navigationTabs !== false,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 function tenantSessionPayload({ user, membership, tenant }) {
   return {
     id: user.id,
@@ -65,6 +90,7 @@ router.get('/me', requireTenantHost, (req, res) => {
       email: user.email,
       tenantRole: membership.role,
     },
+    moduleAccess: readTenantModuleAccess(tenant.id),
   });
 });
 
@@ -103,6 +129,7 @@ router.post('/login', requireTenantHost, (req, res) => {
       email: user.email,
       tenantRole: membership.role,
     },
+    moduleAccess: readTenantModuleAccess(tenant.id),
   });
 });
 
@@ -113,4 +140,3 @@ router.post('/logout', (req, res) => {
 });
 
 export default router;
-

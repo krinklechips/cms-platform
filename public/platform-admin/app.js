@@ -1,5 +1,12 @@
 (function () {
   const SLOT_KEY = 'home.news-promotions';
+  const DEFAULT_TENANT_MODULE_ACCESS = Object.freeze({
+    homepagePlacements: true,
+    articles: true,
+    libraries: true,
+    annualReports: true,
+    navigationTabs: true,
+  });
 
   const state = {
     auth: null,
@@ -41,6 +48,8 @@
       editingAnnualReport: null,
       navTabs: [],
       editingNavTabId: null,
+      moduleAccess: { ...DEFAULT_TENANT_MODULE_ACCESS },
+      moduleAccessSnapshot: { ...DEFAULT_TENANT_MODULE_ACCESS },
     },
   };
 
@@ -113,6 +122,14 @@
     tenantFormDirtyPill: document.getElementById('tenant-form-dirty-pill'),
     tenantSettingsTabs: document.getElementById('tenant-settings-tabs'),
     tenantUsersOpenDomainsBtn: document.getElementById('tenant-users-open-domains-btn'),
+    tenantModuleAccessNotice: document.getElementById('tenant-module-access-notice'),
+    tenantModuleHomepagePlacements: document.getElementById('tenant-module-homepage-placements'),
+    tenantModuleArticles: document.getElementById('tenant-module-articles'),
+    tenantModuleLibraries: document.getElementById('tenant-module-libraries'),
+    tenantModuleAnnualReports: document.getElementById('tenant-module-annual-reports'),
+    tenantModuleNavigationTabs: document.getElementById('tenant-module-navigation-tabs'),
+    tenantModuleAccessSaveBtn: document.getElementById('tenant-module-access-save-btn'),
+    tenantModuleAccessResetBtn: document.getElementById('tenant-module-access-reset-btn'),
     tenantContentOpenArticlesBtn: document.getElementById('tenant-content-open-articles-btn'),
     tenantContentOpenLibraryBtn: document.getElementById('tenant-content-open-library-btn'),
     tenantContentOpenHomepageBtn: document.getElementById('tenant-content-open-homepage-btn'),
@@ -289,6 +306,17 @@
       idx += 1;
     }
     return `${size.toFixed(size >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+  }
+
+  function normalizeTenantModuleAccess(input) {
+    const source = input && typeof input === 'object' ? input : {};
+    return {
+      homepagePlacements: source.homepagePlacements !== false,
+      articles: source.articles !== false,
+      libraries: source.libraries !== false,
+      annualReports: source.annualReports !== false,
+      navigationTabs: source.navigationTabs !== false,
+    };
   }
 
   function ensureAbsoluteUrl(url) {
@@ -539,6 +567,72 @@
     tenantSettingsTabPanels.forEach((panel) => panel.classList.toggle('hidden', panel.dataset.tenantSettingsPanel !== next));
   }
 
+  function getCurrentTenantModuleAccess() {
+    return normalizeTenantModuleAccess(state.cms?.moduleAccess || DEFAULT_TENANT_MODULE_ACCESS);
+  }
+
+  function moduleAccessEquals(a, b) {
+    return JSON.stringify(normalizeTenantModuleAccess(a)) === JSON.stringify(normalizeTenantModuleAccess(b));
+  }
+
+  function renderTenantModuleAccessControls() {
+    const tenant = getSelectedTenant();
+    const access = getCurrentTenantModuleAccess();
+    const snapshot = normalizeTenantModuleAccess(state.cms?.moduleAccessSnapshot || DEFAULT_TENANT_MODULE_ACCESS);
+    const dirty = !moduleAccessEquals(access, snapshot);
+
+    const pairs = [
+      [els.tenantModuleHomepagePlacements, access.homepagePlacements],
+      [els.tenantModuleArticles, access.articles],
+      [els.tenantModuleLibraries, access.libraries],
+      [els.tenantModuleAnnualReports, access.annualReports],
+      [els.tenantModuleNavigationTabs, access.navigationTabs],
+    ];
+    pairs.forEach(([input, checked]) => {
+      if (!input) return;
+      input.checked = Boolean(checked);
+      input.disabled = !tenant;
+    });
+
+    if (els.tenantModuleAccessSaveBtn) {
+      els.tenantModuleAccessSaveBtn.disabled = !tenant || !dirty;
+      els.tenantModuleAccessSaveBtn.textContent = dirty ? 'Save Module Access' : 'Module Access Saved';
+    }
+    if (els.tenantModuleAccessResetBtn) {
+      els.tenantModuleAccessResetBtn.disabled = !tenant || !dirty;
+    }
+
+    if (!tenant) {
+      setNotice(els.tenantModuleAccessNotice, '', '');
+      return;
+    }
+    if (dirty) {
+      setNotice(els.tenantModuleAccessNotice, 'Module access changes are not saved yet.', 'error');
+    } else {
+      setNotice(els.tenantModuleAccessNotice, '', '');
+    }
+  }
+
+  function collectTenantModuleAccessFromControls() {
+    return normalizeTenantModuleAccess({
+      homepagePlacements: Boolean(els.tenantModuleHomepagePlacements?.checked),
+      articles: Boolean(els.tenantModuleArticles?.checked),
+      libraries: Boolean(els.tenantModuleLibraries?.checked),
+      annualReports: Boolean(els.tenantModuleAnnualReports?.checked),
+      navigationTabs: Boolean(els.tenantModuleNavigationTabs?.checked),
+    });
+  }
+
+  function setTenantModuleAccessLocal(nextAccess, options) {
+    const normalized = normalizeTenantModuleAccess(nextAccess);
+    if (!state.cms) return;
+    state.cms.moduleAccess = normalized;
+    if (options?.markSaved) state.cms.moduleAccessSnapshot = { ...normalized };
+    renderTenantModuleAccessControls();
+    applyTenantWorkspaceView();
+    syncSidebarActiveLink();
+  }
+
   function renderTenantContextHeader(tenant) {
     if (!els.tenantContextHeader) return;
     if (!tenant) {
@@ -765,6 +859,25 @@
 
   function applyTenantWorkspaceView() {
     const isTenantMode = state.uiMode === 'tenant';
+    const access = getCurrentTenantModuleAccess();
+    const viewAccessMap = {
+      placements: 'homepagePlacements',
+      articles: 'articles',
+      libraries: 'libraries',
+      'annual-reports': 'annualReports',
+      'nav-tabs': 'navigationTabs',
+    };
+    const requestedView = state.tenantWorkspaceView || 'articles';
+    const requestedAccessKey = viewAccessMap[requestedView];
+    if (requestedAccessKey && access[requestedAccessKey] === false) {
+      const fallbackView = ['articles', 'libraries', 'annual-reports', 'nav-tabs', 'placements', 'tenant-settings']
+        .find((candidate) => {
+          const key = viewAccessMap[candidate];
+          return !key || access[key] !== false;
+        }) || 'tenant-settings';
+      state.tenantWorkspaceView = fallbackView;
+      localStorage.setItem('cms-platform-tenant-workspace-view', state.tenantWorkspaceView);
+    }
     const view = state.tenantWorkspaceView || 'articles';
     if (!isTenantMode) {
       [els.sectionHomepageSlot, els.sectionTenantCms, els.sectionTenantSettings].forEach((el) => el && el.classList.remove('hidden'));
@@ -778,7 +891,9 @@
       [els.tenantPanelNavTabsList, els.tenantPanelNavTabsEditor].forEach((el) => el && el.classList.add('hidden'));
       if (els.tenantWorkspaceModePill) els.tenantWorkspaceModePill.textContent = 'Workspace module: Full dashboard';
       workspaceNavLinks.forEach((link) => {
-        const active = (link.dataset.workspaceView || '') === 'tenant-settings';
+        const workspaceView = link.dataset.workspaceView || '';
+        const accessKey = viewAccessMap[workspaceView];
+        link.classList.toggle('hidden', Boolean(accessKey));
         link.classList.toggle('is-active', false);
       });
       return;
@@ -812,7 +927,11 @@
     if (els.tenantPanelNavTabsEditor) els.tenantPanelNavTabsEditor.classList.toggle('hidden', !showNavTabs);
 
     workspaceNavLinks.forEach((link) => {
-      const active = (link.dataset.workspaceView || '') === view;
+      const workspaceView = link.dataset.workspaceView || '';
+      const accessKey = viewAccessMap[workspaceView];
+      const isAllowed = !accessKey || access[accessKey] !== false;
+      link.classList.toggle('hidden', !isAllowed);
+      const active = isAllowed && workspaceView === view;
       link.classList.toggle('is-active', active);
     });
   }
@@ -839,7 +958,7 @@
       els.sidebarPlatformGroup.classList.toggle('hidden', isTenantMode);
     }
     if (els.sidebarTenantGroup) {
-      els.sidebarTenantGroup.classList.remove('hidden');
+      els.sidebarTenantGroup.classList.toggle('hidden', !isTenantMode);
     }
     if (els.tenantExitAdminLink) {
       els.tenantExitAdminLink.classList.toggle('hidden', !isTenantMode);
@@ -939,6 +1058,8 @@
       editingAnnualReport: null,
       navTabs: [],
       editingNavTabId: null,
+      moduleAccess: { ...DEFAULT_TENANT_MODULE_ACCESS },
+      moduleAccessSnapshot: { ...DEFAULT_TENANT_MODULE_ACCESS },
     };
   }
 
@@ -1160,6 +1281,7 @@
 
   function renderCmsPanel() {
     const tenant = getSelectedTenant();
+    renderTenantModuleAccessControls();
     if (!tenant) {
       els.cmsContentEmpty.classList.remove('hidden');
       els.cmsContentPanel.classList.add('hidden');
@@ -1176,6 +1298,10 @@
     els.cmsContentEmpty.classList.add('hidden');
     els.cmsContentEmpty.textContent = 'Select a tenant above to manage that customer’s CMS articles and media library.';
     els.cmsContentPanel.classList.remove('hidden');
+    const moduleAccess = getCurrentTenantModuleAccess();
+    if (els.tenantContentOpenArticlesBtn) els.tenantContentOpenArticlesBtn.disabled = moduleAccess.articles === false;
+    if (els.tenantContentOpenLibraryBtn) els.tenantContentOpenLibraryBtn.disabled = moduleAccess.libraries === false;
+    if (els.tenantContentOpenHomepageBtn) els.tenantContentOpenHomepageBtn.disabled = moduleAccess.homepagePlacements === false;
 
     const mediaFilter = els.mediaFilter.value || 'all';
     const allMedia = Array.isArray(state.cms.media) ? state.cms.media : [];
@@ -1900,6 +2026,8 @@
       state.cms.media = Array.isArray(media) ? media : [];
       state.cms.annualReports = Array.isArray(annualReports) ? annualReports : [];
       state.cms.navTabs = Array.isArray(tenantSettings?.navigationTabs) ? tenantSettings.navigationTabs : [];
+      state.cms.moduleAccess = normalizeTenantModuleAccess(tenantSettings?.moduleAccess);
+      state.cms.moduleAccessSnapshot = { ...state.cms.moduleAccess };
 
       if (state.cms.editingArticle?.id) {
         const latest = state.cms.articles.find((a) => a.id === state.cms.editingArticle.id);
@@ -1913,6 +2041,7 @@
         const latestTab = state.cms.navTabs.find((tab) => String(tab.id) === String(state.cms.editingNavTabId));
         state.cms.editingNavTabId = latestTab ? String(latestTab.id) : null;
       }
+      renderTenantModuleAccessControls();
       renderCmsPanel();
       if (state.cms.editingArticle) {
         loadArticleIntoEditor(state.cms.editingArticle);
@@ -1926,6 +2055,7 @@
       }
     } catch (err) {
       resetCmsState();
+      renderTenantModuleAccessControls();
       renderCmsPanel();
       setNotice(els.cmsNotice, err.message || 'Failed to load tenant CMS content', 'error');
     }
@@ -2141,9 +2271,41 @@
       body: JSON.stringify({ navigationTabs: normalized }),
     });
     state.cms.navTabs = Array.isArray(res.navigationTabs) ? res.navigationTabs : normalized;
+    state.cms.moduleAccess = normalizeTenantModuleAccess(res.moduleAccess || state.cms.moduleAccess);
+    state.cms.moduleAccessSnapshot = { ...state.cms.moduleAccess };
+    renderTenantModuleAccessControls();
     renderNavTabsPanel();
     if (successMessage) setNotice(els.cmsNotice, successMessage, 'ok');
     return state.cms.navTabs;
+  }
+
+  async function handleSaveTenantModuleAccess() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.tenantModuleAccessNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const moduleAccess = collectTenantModuleAccessFromControls();
+    if (els.tenantModuleAccessSaveBtn) els.tenantModuleAccessSaveBtn.disabled = true;
+    try {
+      const res = await tenantApi('/api/tenant/settings', {
+        method: 'PUT',
+        body: JSON.stringify({ moduleAccess }),
+      });
+      setTenantModuleAccessLocal(res.moduleAccess || moduleAccess, { markSaved: true });
+      setNotice(els.tenantModuleAccessNotice, 'Tenant module access saved. Tenant view sidebar and dashboard will reflect these settings.', 'ok');
+      renderCmsPanel();
+    } catch (err) {
+      setNotice(els.tenantModuleAccessNotice, err.message || 'Failed to save tenant module access', 'error');
+    } finally {
+      renderTenantModuleAccessControls();
+    }
+  }
+
+  function handleResetTenantModuleAccess() {
+    const snapshot = normalizeTenantModuleAccess(state.cms?.moduleAccessSnapshot || DEFAULT_TENANT_MODULE_ACCESS);
+    setTenantModuleAccessLocal(snapshot, { markSaved: false });
+    setNotice(els.tenantModuleAccessNotice, 'Module access changes reset to last saved values.', 'ok');
   }
 
   async function handleSaveNavTab() {
@@ -2483,6 +2645,23 @@
     tenantSettingsTabButtons.forEach((btn) => {
       btn.addEventListener('click', () => setTenantSettingsTab(btn.dataset.tenantSettingsTab || 'branding'));
     });
+    [
+      els.tenantModuleHomepagePlacements,
+      els.tenantModuleArticles,
+      els.tenantModuleLibraries,
+      els.tenantModuleAnnualReports,
+      els.tenantModuleNavigationTabs,
+    ].filter(Boolean).forEach((input) => {
+      input.addEventListener('change', () => {
+        setTenantModuleAccessLocal(collectTenantModuleAccessFromControls(), { markSaved: false });
+      });
+    });
+    if (els.tenantModuleAccessSaveBtn) {
+      els.tenantModuleAccessSaveBtn.addEventListener('click', handleSaveTenantModuleAccess);
+    }
+    if (els.tenantModuleAccessResetBtn) {
+      els.tenantModuleAccessResetBtn.addEventListener('click', handleResetTenantModuleAccess);
+    }
     if (els.tenantContextOpenDomainsTabBtn) {
       els.tenantContextOpenDomainsTabBtn.addEventListener('click', () => {
         setTenantSettingsTab('domains');
@@ -2498,6 +2677,7 @@
     }
     if (els.tenantContentOpenArticlesBtn) {
       els.tenantContentOpenArticlesBtn.addEventListener('click', () => {
+        if (getCurrentTenantModuleAccess().articles === false) return;
         setUiMode('tenant');
         setTenantWorkspaceView('articles');
         requestAnimationFrame(() => scrollToSectionHash('#section-tenant-cms'));
@@ -2505,6 +2685,7 @@
     }
     if (els.tenantContentOpenLibraryBtn) {
       els.tenantContentOpenLibraryBtn.addEventListener('click', () => {
+        if (getCurrentTenantModuleAccess().libraries === false) return;
         setUiMode('tenant');
         setTenantWorkspaceView('libraries');
         requestAnimationFrame(() => scrollToSectionHash('#section-tenant-cms'));
@@ -2512,6 +2693,7 @@
     }
     if (els.tenantContentOpenHomepageBtn) {
       els.tenantContentOpenHomepageBtn.addEventListener('click', () => {
+        if (getCurrentTenantModuleAccess().homepagePlacements === false) return;
         setUiMode('tenant');
         setTenantWorkspaceView('placements');
         requestAnimationFrame(() => scrollToSectionHash('#section-homepage-slot'));

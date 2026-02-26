@@ -693,6 +693,76 @@
         margin: 0 0 6px;
         font-size: 14px;
       }
+      .toggle-list {
+        display: grid;
+        gap: 8px;
+      }
+      .toggle-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid #efeff2;
+        border-radius: 12px;
+        background: #fff;
+        padding: 10px 12px;
+      }
+      .toggle-row-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #27272a;
+      }
+      .toggle-row-sub {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.4;
+      }
+      .switch {
+        position: relative;
+        width: 46px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .switch input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        margin: 0;
+        cursor: pointer;
+      }
+      .switch-ui {
+        width: 46px;
+        height: 28px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #e5e7eb;
+        display: inline-flex;
+        align-items: center;
+        padding: 2px;
+        transition: background 120ms ease, border-color 120ms ease;
+      }
+      .switch-ui::after {
+        content: '';
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        transition: transform 120ms ease;
+      }
+      .switch input:checked + .switch-ui {
+        background: #d1fae5;
+        border-color: #86efac;
+      }
+      .switch input:checked + .switch-ui::after {
+        transform: translateX(18px);
+      }
+      .switch input:focus-visible + .switch-ui {
+        outline: 2px solid #c4b5fd;
+        outline-offset: 2px;
+      }
       .empty-action {
         display: inline-flex;
         align-items: center;
@@ -1317,6 +1387,68 @@
           </div>
 
           <div data-tenant-settings-panel="content" class="tenant-settings-panel hidden">
+            <div class="subsection">
+              <h3>Tenant CMS Module Access</h3>
+              <p class="meta">Control what the tenant sees in the tenant dashboard/workspace. Changes are saved in tenant settings and returned by the tenant auth API.</p>
+              <p id="tenant-module-access-notice" class="notice hidden"></p>
+              <div class="toggle-list">
+                <div class="toggle-row">
+                  <div>
+                    <div class="toggle-row-title">Homepage Placements</div>
+                    <div class="toggle-row-sub">Allows homepage News & Promotions placement management and preview data in tenant view.</div>
+                  </div>
+                  <label class="switch" aria-label="Enable Homepage Placements module">
+                    <input id="tenant-module-homepage-placements" type="checkbox" />
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <div>
+                    <div class="toggle-row-title">Articles</div>
+                    <div class="toggle-row-sub">Allows article list/editor data and article metrics in tenant view.</div>
+                  </div>
+                  <label class="switch" aria-label="Enable Articles module">
+                    <input id="tenant-module-articles" type="checkbox" />
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <div>
+                    <div class="toggle-row-title">Libraries</div>
+                    <div class="toggle-row-sub">Allows image/PDF library access and media metrics in tenant view.</div>
+                  </div>
+                  <label class="switch" aria-label="Enable Libraries module">
+                    <input id="tenant-module-libraries" type="checkbox" />
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <div>
+                    <div class="toggle-row-title">Annual Reports</div>
+                    <div class="toggle-row-sub">Allows annual report entries and annual report metrics in tenant view.</div>
+                  </div>
+                  <label class="switch" aria-label="Enable Annual Reports module">
+                    <input id="tenant-module-annual-reports" type="checkbox" />
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <div>
+                    <div class="toggle-row-title">Navigation Tabs</div>
+                    <div class="toggle-row-sub">Allows navigation tab management and site preview nav tab data in tenant view.</div>
+                  </div>
+                  <label class="switch" aria-label="Enable Navigation Tabs module">
+                    <input id="tenant-module-navigation-tabs" type="checkbox" />
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="actions">
+                <button type="button" id="tenant-module-access-save-btn" class="primary">Save Module Access</button>
+                <button type="button" id="tenant-module-access-reset-btn">Reset</button>
+              </div>
+              <p class="footer-note" style="margin-top:8px;">Debug note: the top-bar `Tenant CMS View` toggle is still available for super admin testing, but the left nav now respects these module toggles.</p>
+            </div>
             <div class="placeholder-card">
               <h3>Content Modules Quick Start</h3>
               <p class="meta" style="margin:0 0 10px;">Use these shortcuts after onboarding to immediately populate the tenant’s public-facing site content.</p>

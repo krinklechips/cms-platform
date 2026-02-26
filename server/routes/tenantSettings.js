@@ -20,6 +20,31 @@ function readSettings(tenantId) {
   }
 }
 
+function defaultModuleAccess() {
+  return {
+    homepagePlacements: true,
+    articles: true,
+    libraries: true,
+    annualReports: true,
+    navigationTabs: true,
+  };
+}
+
+function normalizeModuleAccess(input, current) {
+  const base = {
+    ...defaultModuleAccess(),
+    ...(current && typeof current === 'object' ? current : {}),
+  };
+  if (!input || typeof input !== 'object') return base;
+  const next = { ...base };
+  Object.keys(base).forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(input, key)) {
+      next[key] = Boolean(input[key]);
+    }
+  });
+  return next;
+}
+
 function normalizeNavigationTabs(input) {
   if (!Array.isArray(input)) return [];
   return input
@@ -48,15 +73,21 @@ router.get('/', (req, res) => {
   return res.json({
     tenantId: req.tenant.id,
     navigationTabs: Array.isArray(settings.navigationTabs) ? settings.navigationTabs : [],
+    moduleAccess: normalizeModuleAccess(settings.moduleAccess, settings.moduleAccess),
   });
 });
 
 router.put('/', (req, res) => {
   const current = readSettings(req.tenant.id);
-  const incomingTabs = normalizeNavigationTabs(req.body?.navigationTabs);
+  const hasNavigationTabs = Object.prototype.hasOwnProperty.call(req.body || {}, 'navigationTabs');
+  const incomingTabs = hasNavigationTabs
+    ? normalizeNavigationTabs(req.body?.navigationTabs)
+    : (Array.isArray(current.navigationTabs) ? current.navigationTabs : []);
+  const moduleAccess = normalizeModuleAccess(req.body?.moduleAccess, current.moduleAccess);
   const next = {
     ...current,
     navigationTabs: incomingTabs,
+    moduleAccess,
   };
 
   db.prepare(`
@@ -71,6 +102,7 @@ router.put('/', (req, res) => {
     ok: true,
     tenantId: req.tenant.id,
     navigationTabs: incomingTabs,
+    moduleAccess,
   });
 });
 
