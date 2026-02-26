@@ -5,94 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CMS Platform Admin</title>
     <style>
+      @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
       :root {
-        --bg: #f8fafc;
+        --sidebar-width: 286px;
+        --bg: #f3f3f5;
+        --panel: #f6f6f8;
         --card: #ffffff;
-        --ink: #0f172a;
-        --muted: #64748b;
-        --line: #e2e8f0;
-        --brand: #7f3e98;
-        --brand-soft: #f3e8ff;
+        --ink: #18181b;
+        --muted: #71717a;
+        --line: #e4e4e7;
+        --line-strong: #d4d4d8;
+        --brand: #7c3aed;
+        --brand-soft: #f2ecff;
+        --brand-line: #ddd2ff;
         --danger: #b91c1c;
+        --success: #166534;
+        --success-soft: #eefaf2;
+        --success-line: #c6ebd2;
+        --font-sans: "Manrope", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
       }
+      html, body { min-height: 100%; }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-        background: var(--bg);
+        font-family: var(--font-sans);
+        background:
+          radial-gradient(circle at 16% 0%, rgba(124, 58, 237, 0.06) 0%, transparent 32%),
+          radial-gradient(circle at 86% 2%, rgba(59, 130, 246, 0.04) 0%, transparent 28%),
+          var(--bg);
         color: var(--ink);
+        font-feature-settings: "ss01" 1;
       }
       .wrap {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 24px;
+        padding: 28px;
       }
       .platform-shell {
         display: flex;
         min-height: 100vh;
-        background: #f8fafc;
+        background: transparent;
+        align-items: flex-start;
       }
       .platform-sidebar {
-        width: 260px;
+        width: var(--sidebar-width);
         flex-shrink: 0;
         border-right: 1px solid var(--line);
-        background: #ffffff;
-        padding: 20px 14px;
+        background: rgba(248, 248, 250, 0.92);
+        padding: 14px 12px;
         display: none;
         flex-direction: column;
-        gap: 14px;
+        gap: 10px;
+        backdrop-filter: blur(8px);
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
       }
       .platform-logo {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 6px 10px 10px;
-        border-bottom: 1px solid #ede9fe;
+        padding: 10px 10px 12px;
+        border-bottom: 1px solid var(--line);
       }
       .platform-logo-mark {
-        width: 32px;
-        height: 32px;
-        border-radius: 999px;
-        background: radial-gradient(circle at 35% 35%, #d7bcff 0 18%, #7f3e98 19% 100%);
-        color: #fff;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #111827 0%, #27272a 100%);
+        color: #fafafa;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
-        font-size: 14px;
-        box-shadow: 0 4px 12px rgba(127, 62, 152, 0.18);
+        font-size: 13px;
+        box-shadow: none;
       }
       .platform-logo-text {
         line-height: 1.1;
       }
       .platform-logo-text strong {
         display: block;
-        font-size: 15px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
       }
       .platform-logo-text span {
         display: block;
         font-size: 11px;
         color: var(--muted);
+        margin-top: 2px;
       }
       .platform-nav {
         display: grid;
-        gap: 6px;
+        gap: 2px;
       }
       .platform-nav-group {
-        padding: 4px 6px 6px;
+        padding: 6px 4px 4px;
       }
       .platform-nav-group + .platform-nav-group {
-        border-top: 1px solid #f1f5f9;
-        margin-top: 2px;
-        padding-top: 10px;
+        border-top: 1px solid var(--line);
+        margin-top: 4px;
+        padding-top: 12px;
       }
       .platform-nav-group-title {
-        margin: 0 0 6px;
+        margin: 0 0 8px;
         padding: 0 8px;
         color: var(--muted);
-        font-size: 11px;
+        font-size: 10px;
+        font-family: var(--font-mono);
         text-transform: uppercase;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.14em;
       }
       .platform-nav a {
         display: block;
@@ -105,18 +131,20 @@
         transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
       }
       .platform-nav a:hover {
-        background: #faf5ff;
+        background: rgba(255, 255, 255, 0.8);
+        border-color: #efeff1;
       }
       .platform-nav a.is-active {
-        border-color: rgba(127, 62, 152, 0.2);
-        background: #f3e8ff;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        border-color: var(--brand-line);
+        background: var(--brand-soft);
+        box-shadow: none;
       }
       .platform-nav .label {
         display: block;
         font-size: 13px;
         font-weight: 700;
-        color: #1e293b;
+        color: #27272a;
+        letter-spacing: -0.01em;
       }
       .platform-nav .helper {
         display: block;
@@ -129,47 +157,137 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        background: var(--bg);
+        background: transparent;
+        min-height: 100vh;
       }
       .platform-topbar {
         border-bottom: 1px solid var(--line);
-        background: #fff;
+        background: rgba(250, 250, 251, 0.92);
         position: sticky;
         top: 0;
         z-index: 20;
+        backdrop-filter: blur(10px);
       }
       .platform-topbar-inner {
         max-width: 1280px;
         margin: 0 auto;
         padding: 16px 24px;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
-        gap: 12px;
+        gap: 14px;
+      }
+      .platform-topbar-head {
+        min-width: 0;
+        flex: 1;
+        padding-top: 2px;
       }
       .platform-topbar-title {
         margin: 0;
         font-size: 20px;
-        font-weight: 700;
-        color: var(--brand);
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--ink);
       }
       .platform-topbar-sub {
-        margin: 2px 0 0;
+        margin: 4px 0 0;
         color: var(--muted);
         font-size: 12px;
+        max-width: 74ch;
+      }
+      .platform-topbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: flex-end;
+        gap: 10px;
+        margin-top: 0;
+      }
+      .topbar-control {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+      }
+      .topbar-control-label {
+        display: block;
+        font-size: 10px;
+        line-height: 1.2;
+        color: var(--muted);
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .topbar-control select {
+        margin-top: 0;
+        min-width: 240px;
+      }
+      .auth-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 999px;
+        padding: 6px 12px 6px 6px;
+        min-height: 42px;
+        min-width: 250px;
+      }
+      .auth-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #e9d5ff 0%, #ddd6fe 100%);
+        color: #5b21b6;
+        font-weight: 800;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+      .auth-meta {
+        display: grid;
+        min-width: 0;
+        line-height: 1.15;
+      }
+      .auth-email {
+        font-size: 12px;
+        font-weight: 700;
+        color: #27272a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 290px;
+      }
+      .auth-role {
+        margin-top: 2px;
+        font-size: 10px;
+        color: var(--muted);
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .topbar-signout {
+        align-self: stretch;
+        min-height: 42px;
+        padding-inline: 14px;
       }
       .platform-content {
         max-width: 1280px;
         width: 100%;
         margin: 0 auto;
-        padding: 24px;
+        padding: 20px 24px 28px;
+        display: grid;
+        gap: 16px;
       }
       .section-heading {
         margin: 0 0 12px;
         padding: 0 2px;
-        color: #1e293b;
-        font-size: 14px;
+        color: #27272a;
+        font-size: 13px;
         font-weight: 700;
+        letter-spacing: -0.01em;
       }
       .header {
         display: flex;
@@ -178,25 +296,59 @@
         gap: 12px;
         margin-bottom: 20px;
       }
-      .title { font-size: 28px; font-weight: 800; margin: 0; }
-      .sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+      .title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
+      .sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
       .grid {
         display: grid;
-        grid-template-columns: 360px 1fr;
+        grid-template-columns: minmax(330px, 380px) minmax(0, 1fr);
         gap: 16px;
+        align-items: start;
       }
       .card {
         background: var(--card);
         border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 16px;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        border-radius: 14px;
+        padding: 15px;
+        box-shadow: 0 1px 0 rgba(24, 24, 27, 0.02), 0 10px 28px rgba(24, 24, 27, 0.02);
       }
       .card h2 {
         margin: 0 0 10px;
-        font-size: 16px;
+        font-size: 15px;
+        letter-spacing: -0.02em;
       }
-      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+      .card-intro {
+        margin: -4px 0 12px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .card-head h2 {
+        margin: 0;
+      }
+      .card-head-meta {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .card-sticky {
+        position: sticky;
+        top: 88px;
+      }
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid #f0f0f2;
+        border-radius: 12px;
+        background: #fff;
+      }
+      label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: 600; letter-spacing: 0.01em; }
       input, select, textarea, button {
         font: inherit;
       }
@@ -207,72 +359,165 @@
         border-radius: 10px;
         padding: 10px 12px;
         background: #fff;
+        color: var(--ink);
+        transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
       }
-      textarea { min-height: 80px; resize: vertical; }
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #c4b5fd;
+        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.10);
+      }
+      input:disabled, select:disabled, textarea:disabled {
+        background: #fafafa;
+        color: #71717a;
+      }
+      textarea { min-height: 80px; resize: vertical; line-height: 1.45; }
       .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
       button {
         border: 1px solid var(--line);
         background: #fff;
-        color: var(--ink);
+        color: #27272a;
         border-radius: 10px;
-        padding: 10px 12px;
+        padding: 9px 12px;
         cursor: pointer;
-        font-weight: 600;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, color 120ms ease;
+      }
+      button:hover:not(:disabled) {
+        border-color: var(--line-strong);
+        background: #fafafa;
       }
       button.primary {
         border-color: var(--brand);
         background: var(--brand);
         color: #fff;
       }
+      button.primary:hover:not(:disabled) {
+        background: #6d28d9;
+        border-color: #6d28d9;
+      }
       button.ghost-brand {
-        border-color: #d8b4fe;
+        border-color: var(--brand-line);
         background: var(--brand-soft);
-        color: #6b21a8;
+        color: #5b21b6;
       }
       button:disabled { opacity: 0.6; cursor: not-allowed; }
       .notice {
         margin: 0 0 14px;
         border-radius: 10px;
         padding: 10px 12px;
-        font-size: 13px;
+        font-size: 12px;
         border: 1px solid var(--line);
         background: #fff;
       }
       .notice.error { border-color: #fecaca; background: #fef2f2; color: var(--danger); }
-      .notice.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+      .notice.ok { border-color: var(--success-line); background: var(--success-soft); color: var(--success); }
       .pill {
         display: inline-block;
-        padding: 2px 8px;
+        padding: 3px 8px;
         border-radius: 999px;
         font-size: 11px;
         border: 1px solid var(--line);
         color: var(--muted);
+        background: #fff;
+        line-height: 1.2;
+      }
+      .pill.ok {
+        border-color: var(--success-line);
+        background: var(--success-soft);
+        color: var(--success);
       }
       table { width: 100%; border-collapse: collapse; font-size: 13px; }
-      th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
-      th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; }
+      th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #efeff1; vertical-align: top; }
+      thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
+      th {
+        color: var(--muted);
+        font-size: 10px;
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-weight: 500;
+      }
       .tenant-row { cursor: pointer; }
-      .tenant-row:hover { background: #faf5ff; }
-      .tenant-row.selected { background: #faf5ff; }
+      .tenant-row:hover { background: rgba(124, 58, 237, 0.035); }
+      .tenant-row.selected { background: rgba(124, 58, 237, 0.055); }
       .tenant-name { font-weight: 700; }
-      .tenant-slug { color: var(--muted); font-size: 12px; margin-top: 2px; }
-      .meta { color: var(--muted); font-size: 12px; }
+      .tenant-slug { color: var(--muted); font-size: 11px; margin-top: 2px; font-family: var(--font-mono); }
+      .meta { color: var(--muted); font-size: 12px; line-height: 1.45; }
       .hidden { display: none !important; }
       .login-shell {
-        max-width: 460px;
-        margin: 8vh auto 0;
+        max-width: 520px;
+        margin: 7vh auto 0;
       }
       .footer-note {
         margin-top: 10px;
         color: var(--muted);
         font-size: 12px;
+        line-height: 1.45;
+      }
+      .section-panel {
+        margin-top: 0 !important;
+      }
+      .section-panel h2 {
+        font-size: 18px;
+        margin-bottom: 6px;
+      }
+      .section-panel .meta {
+        line-height: 1.5;
+      }
+      .nested-card {
+        background: #fbfbfc;
+        border-color: #ececf0;
+      }
+      .checklist-panel {
+        background: #fff;
+      }
+      .checklist-row {
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 8px;
+        align-items: start;
+        padding: 6px 0;
+        border-top: 1px dashed #efeff2;
+      }
+      .checklist-row:first-child {
+        border-top: 0;
+        padding-top: 2px;
+      }
+      .check-indicator {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        line-height: 1;
+        background: #fff;
+      }
+      .check-indicator.ok {
+        border-color: var(--success-line);
+        color: var(--success);
+        background: var(--success-soft);
+      }
+      .check-indicator.fail {
+        border-color: #fecaca;
+        color: var(--danger);
+        background: #fef2f2;
+      }
+      .tenant-settings-grid {
+        display: grid;
+        gap: 12px;
       }
       .segmented {
         display: inline-flex;
         border: 1px solid var(--line);
-        background: #fff;
-        border-radius: 12px;
+        background: #fafafa;
+        border-radius: 10px;
         padding: 3px;
         gap: 4px;
       }
@@ -280,49 +525,70 @@
         border: 0;
         background: transparent;
         color: var(--muted);
-        border-radius: 9px;
+        border-radius: 8px;
         padding: 7px 10px;
         font-size: 12px;
         font-weight: 700;
       }
       .segmented button.is-active {
-        background: #f3e8ff;
-        color: #6b21a8;
+        background: #fff;
+        color: #3f3f46;
+        box-shadow: inset 0 0 0 1px var(--line), 0 1px 1px rgba(0, 0, 0, 0.03);
+      }
+      .segmented button:hover:not(:disabled) {
+        border-color: transparent;
+        background: rgba(255, 255, 255, 0.8);
+      }
+      .segmented button.is-active:hover:not(:disabled) {
+        background: #fff;
       }
       .section-grid {
         display: grid;
         grid-template-columns: 1.1fr 0.9fr;
-        gap: 16px;
+        gap: 14px;
       }
       .stack {
         display: grid;
-        gap: 16px;
+        gap: 14px;
       }
       .mini-table td, .mini-table th { padding: 8px 6px; font-size: 12px; }
       .mini-actions { display: flex; gap: 6px; flex-wrap: wrap; }
       .badge-tab {
         display: inline-block;
-        padding: 2px 8px;
+        padding: 3px 8px;
         border-radius: 999px;
         font-size: 11px;
         border: 1px solid var(--line);
         background: #fff;
       }
-      .badge-tab.news { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
+      .badge-tab.news { color: #b45309; background: #fff7ed; border-color: #fed7aa; }
       .badge-tab.promotions { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
       .section-anchor {
         scroll-margin-top: 84px;
       }
       code {
-        background: #f1f5f9;
+        background: #f4f4f5;
         padding: 1px 5px;
         border-radius: 6px;
+        font-family: var(--font-mono);
+        font-size: 0.92em;
+      }
+      a {
+        color: inherit;
+      }
+      a[href] {
+        text-underline-offset: 2px;
       }
       @media (max-width: 980px) {
         .grid { grid-template-columns: 1fr; }
         .section-grid { grid-template-columns: 1fr; }
         .platform-sidebar { display: none; }
         .platform-topbar-inner, .platform-content { padding-left: 16px; padding-right: 16px; }
+        .platform-topbar-actions { justify-content: stretch; width: 100%; }
+        .platform-topbar-actions > * { width: 100%; }
+        .topbar-control select, .auth-chip { min-width: 0; width: 100%; }
+        .topbar-signout { width: 100%; }
+        .card-sticky { position: static; }
       }
       @media (min-width: 981px) {
         .platform-sidebar { display: flex; }
@@ -414,26 +680,32 @@
       <div class="platform-main">
         <header class="platform-topbar">
           <div class="platform-topbar-inner">
-            <div>
+            <div class="platform-topbar-head">
               <h1 id="topbar-title" class="platform-topbar-title">Content Management System</h1>
               <p id="topbar-subtitle" class="platform-topbar-sub">Manage customer tenants, branding, and access foundations.</p>
             </div>
-            <div class="actions" style="margin-top:0;">
-              <label style="display:block; margin:0;">
-                <span style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Mode</span>
-                <div class="segmented" style="margin-top:0;">
+            <div class="platform-topbar-actions">
+              <div class="topbar-control">
+                <span class="topbar-control-label">Mode</span>
+                <div class="segmented">
                   <button id="app-mode-admin" type="button" class="is-active">Admin View</button>
                   <button id="app-mode-tenant" type="button">Tenant CMS View</button>
                 </div>
-              </label>
-              <label id="tenant-switch-wrap" class="hidden" style="display:block; margin:0; min-width:220px;">
-                <span style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Tenant workspace</span>
-                <select id="tenant-switch" style="margin-top:0;">
+              </div>
+              <label id="tenant-switch-wrap" class="topbar-control hidden" style="display:block; margin:0;">
+                <span class="topbar-control-label">Tenant workspace</span>
+                <select id="tenant-switch">
                   <option value="">Select tenant…</option>
                 </select>
               </label>
-              <span id="auth-pill" class="pill">Checking session…</span>
-              <button id="logout-btn">Sign out</button>
+              <div id="auth-pill" class="auth-chip" aria-live="polite">
+                <span id="auth-avatar" class="auth-avatar">?</span>
+                <span class="auth-meta">
+                  <span id="auth-email" class="auth-email">Checking session…</span>
+                  <span id="auth-role" class="auth-role">Session</span>
+                </span>
+              </div>
+              <button id="logout-btn" class="topbar-signout">Sign out</button>
             </div>
           </div>
         </header>
@@ -442,8 +714,13 @@
       <p id="app-notice" class="notice hidden"></p>
 
       <div id="section-tenants" class="grid section-anchor">
-        <div class="card">
-          <h2>Create Customer / Tenant</h2>
+        <div class="card card-sticky">
+          <div class="card-head">
+            <div>
+              <h2>Create Customer / Tenant</h2>
+              <p class="card-head-meta">Start onboarding with branding and routing basics. You can refine domain, content and users after creation.</p>
+            </div>
+          </div>
           <label>
             Tenant name
             <input id="create-name" type="text" placeholder="Acme Payments" />
@@ -488,8 +765,13 @@
         </div>
 
         <div class="card">
-          <h2>Customers / Tenants</h2>
-          <div style="overflow:auto;">
+          <div class="card-head">
+            <div>
+              <h2>Customers / Tenants</h2>
+              <p class="card-head-meta">Select a tenant to edit settings, provision the CMS domain, and manage tenant workspace modules.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
             <table>
               <thead>
                 <tr>
@@ -507,10 +789,10 @@
         </div>
       </div>
 
-      <div id="section-tenant-settings" class="card" style="margin-top:16px;">
+      <div id="section-tenant-settings" class="card section-panel" style="margin-top:16px;">
         <h2>Edit Selected Tenant</h2>
         <p id="selected-tenant-empty" class="meta">Select a tenant from the table above to edit branding and status.</p>
-        <div id="selected-tenant-form" class="hidden">
+        <div id="selected-tenant-form" class="hidden tenant-settings-grid">
           <div class="row">
             <label>
               Tenant name
@@ -552,7 +834,7 @@
             Support email
             <input id="edit-support-email" type="email" />
           </label>
-          <div class="card" style="padding:12px; margin:8px 0 4px;">
+          <div class="card nested-card" style="padding:12px; margin:8px 0 4px;">
             <h2 style="margin-bottom:6px;">Tenant CMS Domain Provisioning (v1)</h2>
             <p class="meta" style="margin:0 0 10px;">
               Render custom domain + customer-managed DNS instructions (Exabytes/manual mode). Media on Cloudflare R2 is separate and unaffected.
@@ -592,7 +874,7 @@
               <button id="tenant-domain-refresh-btn" type="button">Refresh Status</button>
               <button id="tenant-domain-copy-instructions-btn" type="button">Copy DNS Instructions</button>
             </div>
-            <div class="card" style="padding:10px; margin-top:10px;">
+            <div class="card checklist-panel" style="padding:10px; margin-top:10px;">
               <div style="display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:6px;">
                 <strong style="font-size:13px;">Provisioning Checklist</strong>
                 <span id="tenant-domain-check-summary" class="meta">Waiting for tenant selection</span>

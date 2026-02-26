@@ -32,6 +32,9 @@
     loginNotice: document.getElementById('login-notice'),
     appNotice: document.getElementById('app-notice'),
     authPill: document.getElementById('auth-pill'),
+    authAvatar: document.getElementById('auth-avatar'),
+    authEmail: document.getElementById('auth-email'),
+    authRole: document.getElementById('auth-role'),
     loginEmail: document.getElementById('login-email'),
     loginSecret: document.getElementById('login-secret'),
     loginModeAdminBtn: document.getElementById('login-mode-admin'),
@@ -982,31 +985,18 @@
       if (status === 'warn') return '!';
       return '…';
     };
-    const colorFor = (status) => {
-      if (status === 'pass') return '#166534';
-      if (status === 'fail') return '#b91c1c';
-      if (status === 'warn') return '#92400e';
-      return '#64748b';
-    };
-    const bgFor = (status) => {
-      if (status === 'pass') return '#f0fdf4';
-      if (status === 'fail') return '#fef2f2';
-      if (status === 'warn') return '#fffbeb';
-      return '#f8fafc';
-    };
-    const borderFor = (status) => {
-      if (status === 'pass') return '#bbf7d0';
-      if (status === 'fail') return '#fecaca';
-      if (status === 'warn') return '#fde68a';
-      return '#e2e8f0';
+    const indicatorClassFor = (status) => {
+      if (status === 'pass') return 'ok';
+      if (status === 'fail') return 'fail';
+      return '';
     };
 
     els.tenantDomainChecklist.innerHTML = checks.map((item) => `
-      <div style="display:grid; grid-template-columns:22px 1fr; gap:8px; align-items:start; padding:8px 9px; border:1px solid ${borderFor(item.status)}; border-radius:10px; background:${bgFor(item.status)};">
-        <span style="display:inline-flex; width:18px; height:18px; border-radius:999px; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:${colorFor(item.status)}; border:1px solid ${borderFor(item.status)}; background:#fff;">${iconFor(item.status)}</span>
+      <div class="checklist-row">
+        <span class="check-indicator ${indicatorClassFor(item.status)}">${iconFor(item.status)}</span>
         <div>
           <div style="font-size:12px; color:#0f172a; font-weight:600;">${escapeHtml(item.label)}</div>
-          <div style="margin-top:2px; font-size:11px; color:${colorFor(item.status)};">${escapeHtml(item.detail || '')}</div>
+          <div class="meta" style="margin-top:2px; font-size:11px;">${escapeHtml(item.detail || '')}</div>
         </div>
       </div>
     `).join('');
@@ -1263,7 +1253,16 @@
       return false;
     }
     const user = res.user || {};
-    els.authPill.textContent = `${user.email || 'Unknown'}${user.platformRole ? ` • ${user.platformRole}` : ''}`;
+    const email = user.email || 'Unknown';
+    const role = user.platformRole || 'platform user';
+    if (els.authEmail && els.authRole && els.authAvatar) {
+      els.authEmail.textContent = email;
+      els.authEmail.title = email;
+      els.authRole.textContent = role;
+      els.authAvatar.textContent = String(email).trim().charAt(0).toUpperCase() || '?';
+    } else if (els.authPill) {
+      els.authPill.textContent = `${email}${role ? ` • ${role}` : ''}`;
+    }
     showApp();
     return true;
   }
