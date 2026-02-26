@@ -3,6 +3,7 @@ import express from 'express';
 import session from 'express-session';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import SQLiteSessionStore from './session/sqliteSessionStore.js';
 import { env } from './config/env.js';
 import { db, seedPlatformDefaults } from './db.js';
 import platformTenantsRouter from './routes/platformTenants.js';
@@ -54,6 +55,7 @@ app.use(
 
 app.use(
   session({
+    store: new SQLiteSessionStore(),
     secret: env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
