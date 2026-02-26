@@ -1,6 +1,7 @@
 (function () {
   const SLOT_KEY = 'home.news-promotions';
   const PLATFORM_NAV_ACCORDION_STORAGE_KEY = 'cms-platform-admin-nav-accordion';
+  const ADMIN_NAV_STORAGE_KEY = 'cms-platform-admin-page-nav';
   const DEFAULT_TENANT_MODULE_ACCESS = Object.freeze({
     homepagePlacements: true,
     articles: true,
@@ -14,6 +15,7 @@
     uiMode: localStorage.getItem('cms-platform-ui-mode') === 'tenant' ? 'tenant' : 'admin',
     tenantWorkspaceView: localStorage.getItem('cms-platform-tenant-workspace-view') || 'articles',
     tenantSettingsTab: localStorage.getItem('cms-platform-tenant-settings-tab') || 'branding',
+    adminNav: { main: 'tenants', sub: 'tenant-directory' },
     tenants: [],
     selectedTenantId: null,
     tenantFilters: {
@@ -93,6 +95,9 @@
     topbarSubtitle: document.getElementById('topbar-subtitle'),
     tenantSwitchWrap: document.getElementById('tenant-switch-wrap'),
     tenantSwitch: document.getElementById('tenant-switch'),
+    adminSubnavShell: document.getElementById('admin-subnav-shell'),
+    adminSubnavTitle: document.getElementById('admin-subnav-title'),
+    adminSubnavList: document.getElementById('admin-subnav-list'),
     createName: document.getElementById('create-name'),
     createSlug: document.getElementById('create-slug'),
     createStatus: document.getElementById('create-status'),
@@ -256,6 +261,8 @@
     tenantPanelNavTabsList: document.getElementById('tenant-panel-nav-tabs-list'),
     tenantPanelNavTabsEditor: document.getElementById('tenant-panel-nav-tabs-editor'),
     sectionTenants: document.getElementById('section-tenants'),
+    sectionTenantCreate: document.getElementById('section-tenant-create'),
+    sectionTenantList: document.getElementById('section-tenant-list'),
     sectionTenantSettings: document.getElementById('section-tenant-settings'),
     sectionHomepageSlot: document.getElementById('section-homepage-slot'),
     sectionTenantCms: document.getElementById('section-tenant-cms'),
@@ -264,6 +271,8 @@
   const workspaceNavLinks = Array.from(document.querySelectorAll('.platform-nav a[data-workspace-view]'));
   const platformNavMenuBlocks = Array.from(document.querySelectorAll('#sidebar-platform-group [data-nav-menu]'));
   const platformNavMenuToggleButtons = Array.from(document.querySelectorAll('#sidebar-platform-group [data-nav-menu-toggle]'));
+  const platformAdminMainLinks = Array.from(document.querySelectorAll('#sidebar-platform-group [data-admin-main-link]'));
+  const adminPageSections = Array.from(document.querySelectorAll('[data-admin-page]'));
   const tenantSettingsTabButtons = Array.from(document.querySelectorAll('[data-tenant-settings-tab]'));
   const tenantSettingsTabPanels = Array.from(document.querySelectorAll('[data-tenant-settings-panel]'));
 
@@ -347,6 +356,168 @@
     if (!menu) return;
     setPlatformNavMenuOpen(menu, true);
   }
+
+  const ADMIN_NAV_MODEL = Object.freeze({
+    operations: {
+      label: 'Operations',
+      page: 'operations',
+      subitems: [
+        { id: 'storage-diagnostics', label: 'Storage Diagnostics', helper: 'DB path and disk checks', hash: '#section-storage-diagnostics', page: 'operations' },
+        { id: 'db-backups', label: 'DB Backups', helper: 'R2 snapshot history', hash: '#section-db-backups', page: 'operations' },
+      ],
+    },
+    tenants: {
+      label: 'Customers / Tenants',
+      page: 'tenants',
+      subitems: [
+        { id: 'create-tenant', label: 'Create Tenant', helper: 'New customer onboarding', hash: '#section-tenant-create', page: 'tenants' },
+        { id: 'tenant-directory', label: 'Tenant Directory', helper: 'Search and filter tenants', hash: '#section-tenant-list', page: 'tenants' },
+        { id: 'selected-tenant', label: 'Selected Tenant', helper: 'Edit active tenant settings', hash: '#section-tenant-settings', page: 'tenant-settings', tenantSettingsTab: 'branding' },
+      ],
+    },
+    integrations: {
+      label: 'Integrations & Access',
+      page: 'tenant-settings',
+      subitems: [
+        { id: 'domain-provisioning', label: 'Domain Provisioning', helper: 'Render + DNS workflow', hash: '#tenant-settings-panel-domains', page: 'tenant-settings', tenantSettingsTab: 'domains' },
+        { id: 'module-access', label: 'Module Access', helper: 'Toggle tenant-visible modules', hash: '#tenant-settings-panel-content', page: 'tenant-settings', tenantSettingsTab: 'content' },
+        { id: 'tenant-users', label: 'Tenant Users', helper: 'Provisioning and roles', hash: '#tenant-settings-panel-users', page: 'tenant-settings', tenantSettingsTab: 'users' },
+        { id: 'support-details', label: 'Support Details', helper: 'Support email and contact', hash: '#tenant-settings-panel-support', page: 'tenant-settings', tenantSettingsTab: 'support' },
+      ],
+    },
+  });
+
+  function readAdminNavState() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(ADMIN_NAV_STORAGE_KEY) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function getAdminMain(main) {
+    return Object.prototype.hasOwnProperty.call(ADMIN_NAV_MODEL, String(main || ''))
+      ? String(main)
+      : 'tenants';
+  }
+
+  function getAdminSub(main, sub) {
+    const mainKey = getAdminMain(main);
+    const items = ADMIN_NAV_MODEL[mainKey]?.subitems || [];
+    const subKey = String(sub || '');
+    return items.some((item) => item.id === subKey) ? subKey : (items[0]?.id || '');
+  }
+
+  function normalizeAdminNavState(next) {
+    const main = getAdminMain(next?.main || state.adminNav?.main);
+    const sub = getAdminSub(main, next?.sub || state.adminNav?.sub);
+    return { main, sub };
+  }
+
+  function getAdminSubItem(main, sub) {
+    const normalized = normalizeAdminNavState({ main, sub });
+    return (ADMIN_NAV_MODEL[normalized.main]?.subitems || []).find((item) => item.id === normalized.sub) || null;
+  }
+
+  function persistAdminNavState() {
+    try {
+      localStorage.setItem(ADMIN_NAV_STORAGE_KEY, JSON.stringify(normalizeAdminNavState(state.adminNav)));
+    } catch {
+      // ignore storage failures
+    }
+  }
+
+  function loadInitialAdminNavState() {
+    state.adminNav = normalizeAdminNavState(readAdminNavState());
+  }
+
+  function getAdminNavResolved() {
+    const normalized = normalizeAdminNavState(state.adminNav);
+    return { ...normalized, item: getAdminSubItem(normalized.main, normalized.sub) };
+  }
+
+  function renderAdminSubnav() {
+    if (!els.adminSubnavShell || !els.adminSubnavList || !els.adminSubnavTitle) return;
+    if (state.uiMode === 'tenant') {
+      els.adminSubnavShell.classList.add('hidden');
+      return;
+    }
+    const { main, sub } = getAdminNavResolved();
+    const group = ADMIN_NAV_MODEL[main];
+    if (!group) {
+      els.adminSubnavShell.classList.add('hidden');
+      return;
+    }
+    els.adminSubnavShell.classList.remove('hidden');
+    els.adminSubnavTitle.textContent = group.label;
+    els.adminSubnavList.innerHTML = group.subitems.map((item) => `
+      <button type="button" class="admin-subnav-item ${item.id === sub ? 'is-active' : ''}" data-admin-subnav-main="${main}" data-admin-subnav-id="${item.id}">
+        <span class="label">${escapeHtml(item.label)}</span>
+        <span class="helper">${escapeHtml(item.helper || '')}</span>
+      </button>
+    `).join('');
+  }
+
+  function applyAdminPageLayout(options) {
+    if (state.uiMode === 'tenant') {
+      if (els.adminSubnavShell) els.adminSubnavShell.classList.add('hidden');
+      adminPageSections.forEach((section) => section.classList.remove('admin-page-hidden'));
+      return;
+    }
+
+    const { main, item } = getAdminNavResolved();
+    const targetPage = item?.page || ADMIN_NAV_MODEL[main]?.page || 'tenants';
+    adminPageSections.forEach((section) => {
+      section.classList.toggle('admin-page-hidden', section.dataset.adminPage !== targetPage);
+    });
+    if (els.sectionTenants) {
+      els.sectionTenants.classList.remove('admin-subpage-create', 'admin-subpage-directory');
+    }
+    if (els.sectionTenantCreate) {
+      els.sectionTenantCreate.classList.remove('hidden');
+    }
+    if (els.sectionTenantList) {
+      els.sectionTenantList.classList.remove('hidden');
+    }
+    if (targetPage === 'tenants') {
+      if (item?.id === 'create-tenant') {
+        if (els.sectionTenantList) els.sectionTenantList.classList.add('hidden');
+        if (els.sectionTenants) els.sectionTenants.classList.add('admin-subpage-create');
+      } else if (item?.id === 'tenant-directory') {
+        if (els.sectionTenantCreate) els.sectionTenantCreate.classList.add('hidden');
+        if (els.sectionTenants) els.sectionTenants.classList.add('admin-subpage-directory');
+      }
+    }
+
+    if (item?.tenantSettingsTab) {
+      setTenantSettingsTab(item.tenantSettingsTab, { skipAdminNavSync: true });
+    }
+
+    platformAdminMainLinks.forEach((link) => {
+      link.classList.toggle('is-active', link.dataset.adminMainLink === main);
+    });
+
+    renderAdminSubnav();
+
+    if (options?.focus === false || !item?.hash) return;
+    requestAnimationFrame(() => {
+      const target = document.querySelector(item.hash);
+      if (!target || target.classList.contains('hidden')) return;
+      const topOffset = 92;
+      const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - topOffset);
+      window.scrollTo({ top, behavior: options?.behavior || 'smooth' });
+    });
+  }
+
+  function setAdminNav(next, options) {
+    state.adminNav = normalizeAdminNavState(next);
+    persistAdminNavState();
+    applyAdminPageLayout(options);
+    syncSidebarActiveLink();
+  }
+
+  loadInitialAdminNavState();
 
   function formatBytes(value) {
     const bytes = Number(value || 0);
@@ -612,12 +783,30 @@
     renderTenantFormState();
   }
 
-  function setTenantSettingsTab(tab) {
+  function setTenantSettingsTab(tab, options) {
     const next = ['branding', 'domains', 'support', 'users', 'content'].includes(tab) ? tab : 'branding';
     state.tenantSettingsTab = next;
     localStorage.setItem('cms-platform-tenant-settings-tab', next);
     tenantSettingsTabButtons.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.tenantSettingsTab === next));
     tenantSettingsTabPanels.forEach((panel) => panel.classList.toggle('hidden', panel.dataset.tenantSettingsPanel !== next));
+    if (!options?.skipAdminNavSync && state.uiMode === 'admin') {
+      if (next === 'branding') {
+        state.adminNav = normalizeAdminNavState({ main: 'tenants', sub: 'selected-tenant' });
+      } else {
+        const tabToSub = {
+          domains: 'domain-provisioning',
+          content: 'module-access',
+          users: 'tenant-users',
+          support: 'support-details',
+        };
+        const sub = tabToSub[next];
+        if (sub) state.adminNav = normalizeAdminNavState({ main: 'integrations', sub });
+      }
+      persistAdminNavState();
+      applyAdminPageLayout({ focus: false });
+      renderAdminSubnav();
+      syncSidebarActiveLink();
+    }
   }
 
   function getCurrentTenantModuleAccess() {
@@ -830,7 +1019,7 @@
 
     if (els.platformBackupList) {
       if (!payload && state.platformBackups.loading) {
-        els.platformBackupList.innerHTML = '<div class="meta">Loading backup status…</div>';
+        els.platformBackupList.innerHTML = renderLoadingRow('Loading backup status…');
       } else if (!backups.length) {
         els.platformBackupList.innerHTML = '<div class="meta">No DB backups yet. Click “Backup DB to R2” after configuring R2.</div>';
       } else {
@@ -903,6 +1092,14 @@
       .replace(/'/g, '&#039;');
   }
 
+  function renderLoadingInline(label) {
+    return `<span class="ui-loading-inline"><span class="ui-spinner sm" aria-hidden="true"></span><span>${escapeHtml(label || 'Loading…')}</span></span>`;
+  }
+
+  function renderLoadingRow(label) {
+    return `<div class="ui-loading-row"><span class="ui-spinner" aria-hidden="true"></span><span>${escapeHtml(label || 'Loading…')}</span></div>`;
+  }
+
   function setUiMode(mode) {
     state.uiMode = mode === 'tenant' ? 'tenant' : 'admin';
     localStorage.setItem('cms-platform-ui-mode', state.uiMode);
@@ -939,7 +1136,7 @@
     }
     const view = state.tenantWorkspaceView || 'articles';
     if (!isTenantMode) {
-      [els.sectionHomepageSlot, els.sectionTenantCms, els.sectionTenantSettings].forEach((el) => el && el.classList.remove('hidden'));
+      [els.sectionHomepageSlot, els.sectionTenantCms].forEach((el) => el && el.classList.add('hidden'));
       [
         els.tenantPanelLibraries,
         els.tenantPanelArticles,
@@ -955,6 +1152,7 @@
         link.classList.toggle('hidden', Boolean(accessKey));
         link.classList.toggle('is-active', false);
       });
+      applyAdminPageLayout({ focus: false });
       return;
     }
 
@@ -997,6 +1195,8 @@
 
   function applyUiMode() {
     const isTenantMode = state.uiMode === 'tenant';
+    document.body.classList.toggle('ui-mode-tenant', isTenantMode);
+    document.body.classList.toggle('ui-mode-admin', !isTenantMode);
     if (els.loginModeAdminBtn && els.loginModeTenantBtn) {
       els.loginModeAdminBtn.classList.toggle('is-active', !isTenantMode);
       els.loginModeTenantBtn.classList.toggle('is-active', isTenantMode);
@@ -1046,6 +1246,9 @@
       els.sidebarLogoSubtitle.textContent = isTenantMode ? 'Kardal-style workspace view' : 'Multi-tenant SaaS admin';
     }
     applyTenantWorkspaceView();
+    if (!isTenantMode) {
+      applyAdminPageLayout({ focus: false });
+    }
     syncSidebarActiveLink();
   }
 
@@ -1064,31 +1267,15 @@
       });
       return;
     }
-    const sections = sidebarNavLinks
-      .map((link) => {
-        if (link.classList.contains('hidden') || link.offsetParent === null) return null;
-        const href = link.getAttribute('href') || '';
-        const target = href.startsWith('#') ? document.querySelector(href) : null;
-        if (!target || target.classList.contains('hidden')) return null;
-        return target ? { link, target } : null;
-      })
-      .filter(Boolean);
-
-    if (!sections.length) return;
-
-    const markerY = window.scrollY + 120;
-    let active = sections[0];
-    sections.forEach((entry) => {
-      if (entry.target.offsetTop <= markerY) active = entry;
+    const { main, sub } = getAdminNavResolved();
+    platformAdminMainLinks.forEach((link) => {
+      link.classList.toggle('is-active', link.dataset.adminMainLink === main);
     });
-
-    if (active && active.link) {
-      expandPlatformNavMenuForLink(active.link);
+    if (els.adminSubnavList) {
+      els.adminSubnavList.querySelectorAll('[data-admin-subnav-id]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.adminSubnavId === sub && btn.dataset.adminSubnavMain === main);
+      });
     }
-
-    sections.forEach((entry) => {
-      entry.link.classList.toggle('is-active', entry === active);
-    });
   }
 
   function scrollToSectionHash(hash, behavior = 'smooth') {
@@ -2026,6 +2213,7 @@
     const email = user.email || 'Unknown';
     const role = user.platformRole || 'platform user';
     if (els.authEmail && els.authRole && els.authAvatar) {
+      if (els.authPill) els.authPill.classList.remove('is-loading');
       els.authEmail.textContent = email;
       els.authEmail.title = email;
       els.authRole.textContent = role;
@@ -2040,6 +2228,12 @@
   async function loadTenants() {
     try {
       setNotice(els.appNotice, '', '');
+      if (els.tenantListSummary) {
+        els.tenantListSummary.innerHTML = renderLoadingInline('Loading tenants…');
+      }
+      if (els.tenantTableBody) {
+        els.tenantTableBody.innerHTML = `<tr><td colspan="4">${renderLoadingRow('Loading tenants…')}</td></tr>`;
+      }
       const tenants = await api('/api/platform/tenants', { method: 'GET' });
       state.tenants = tenants;
       renderTenants();
@@ -2661,10 +2855,38 @@
         setPlatformNavMenuOpen(menu, nextOpen);
       });
     });
+    if (els.adminSubnavList) {
+      els.adminSubnavList.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-admin-subnav-id]');
+        if (!btn) return;
+        const main = btn.dataset.adminSubnavMain || state.adminNav?.main || 'tenants';
+        const sub = btn.dataset.adminSubnavId || '';
+        setAdminNav({ main, sub });
+      });
+    }
     sidebarNavLinks.forEach((link) => {
       link.addEventListener('click', (event) => {
         const hash = link.getAttribute('href') || '';
         if (!hash.startsWith('#')) return;
+        const isPlatformAdminLink = Boolean(link.closest('#sidebar-platform-group'));
+
+        if (isPlatformAdminLink && state.uiMode !== 'tenant') {
+          event.preventDefault();
+          const main = link.dataset.adminMainLink || link.closest('[data-nav-menu]')?.dataset?.navMenu || state.adminNav?.main || 'tenants';
+          const tab = link.dataset.tenantSettingsTab || '';
+          let sub = state.adminNav?.main === main ? state.adminNav?.sub : '';
+          if (main === 'integrations' && tab) {
+            const tabToSub = {
+              domains: 'domain-provisioning',
+              content: 'module-access',
+              users: 'tenant-users',
+              support: 'support-details',
+            };
+            sub = tabToSub[tab] || sub;
+          }
+          setAdminNav({ main, sub });
+          return;
+        }
         event.preventDefault();
 
         const requestedUiMode = link.dataset.uiMode || '';
@@ -2682,7 +2904,7 @@
         if (requestedTenantSettingsTab) {
           setTenantSettingsTab(requestedTenantSettingsTab);
         }
-        if (state.uiMode !== 'tenant') {
+        if (state.uiMode !== 'tenant' && !isPlatformAdminLink) {
           expandPlatformNavMenuForLink(link);
         }
 

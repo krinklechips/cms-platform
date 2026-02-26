@@ -1244,11 +1244,425 @@
           min-width: 240px;
         }
       }
+      /* Render-inspired square control pass */
+      :root {
+        --render-radius-sm: 4px;
+        --render-radius-md: 6px;
+        --render-radius-lg: 8px;
+      }
+      .platform-sidebar {
+        background: #f7f7f8;
+        border-right-color: #dfdfe3;
+        padding: 12px 10px;
+      }
+      .platform-logo {
+        border-bottom-color: #e1e1e6;
+        padding: 8px 8px 12px;
+      }
+      .platform-logo-mark {
+        width: 30px;
+        height: 30px;
+        border-radius: var(--render-radius-sm);
+        border-color: #d9d9df;
+        background: #fff;
+      }
+      .platform-nav {
+        gap: 8px;
+      }
+      .platform-nav-group {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 6px 4px;
+      }
+      .platform-nav-group + .platform-nav-group {
+        border-top: 1px solid #e4e4e8;
+        padding-top: 10px;
+      }
+      .platform-nav-group-title {
+        padding: 0 4px;
+        color: #8a8a92;
+        letter-spacing: 0.16em;
+      }
+      .platform-nav .nav-menu-head > a,
+      .platform-nav .nav-menu-toggle,
+      .platform-nav a.submenu-link,
+      .platform-nav a {
+        border-radius: var(--render-radius-md);
+      }
+      .platform-nav .nav-menu-head > a {
+        background: transparent;
+        border-color: transparent;
+        padding: 9px 10px;
+      }
+      .platform-nav .nav-menu-head > a:hover {
+        background: #f0f0f3;
+        border-color: #e2e2e7;
+      }
+      .platform-nav .nav-menu-head > a.is-active {
+        background: #efeaff;
+        border-color: #ddd3ff;
+      }
+      .platform-nav .nav-menu-toggle {
+        background: transparent;
+        border-color: transparent;
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+      }
+      .platform-nav .nav-menu-toggle:hover {
+        background: #f0f0f3;
+        border-color: #e2e2e7;
+      }
+      .platform-nav .submenu {
+        border-left: 1px solid #e6e6eb;
+        margin-top: 4px;
+        padding-left: 10px;
+        gap: 2px;
+      }
+      .platform-nav a.submenu-link {
+        border: 1px solid transparent;
+        padding: 7px 8px;
+      }
+      .platform-nav a.submenu-link:hover {
+        background: #f7f7fa;
+        border-color: #ececf1;
+      }
+      .platform-nav a.submenu-link.is-active {
+        background: #f3efff;
+        border-color: #e3dbff;
+      }
+      .platform-nav a.submenu-link::before {
+        width: 4px;
+        height: 4px;
+        left: -12px;
+      }
+      .platform-topbar {
+        background: #fafafb;
+        border-bottom-color: #dfdfe4;
+        backdrop-filter: none;
+      }
+      .platform-topbar-inner {
+        padding-top: 12px;
+        padding-bottom: 12px;
+      }
+      .platform-topbar-title {
+        font-size: 16px;
+        font-weight: 800;
+      }
+      .platform-topbar-sub {
+        font-size: 11px;
+        color: #757581;
+      }
+      .auth-chip {
+        border-radius: var(--render-radius-lg);
+        border-color: #dcdce2;
+        background: #fff;
+        min-height: 38px;
+      }
+      .auth-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+        border-radius: 999px;
+      }
+      .auth-email {
+        font-size: 11px;
+      }
+      .auth-role {
+        font-size: 9px;
+      }
+      .platform-content {
+        padding-top: 16px;
+        gap: 14px;
+      }
+      .card {
+        border-radius: var(--render-radius-lg);
+        border-color: #ddddE3;
+        box-shadow: none;
+      }
+      .nested-card,
+      .placeholder-card,
+      .subsection,
+      .expand,
+      .table-wrap {
+        border-radius: var(--render-radius-lg);
+      }
+      .card-head h2,
+      .section-panel h2 {
+        letter-spacing: -0.015em;
+      }
+      input,
+      select,
+      textarea {
+        border-radius: var(--render-radius-md);
+        border-color: #d7d7de;
+        box-shadow: none;
+        background: #fff;
+      }
+      input:hover,
+      select:hover,
+      textarea:hover {
+        border-color: #cfcfd8;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #bdbdc8;
+        box-shadow: 0 0 0 2px rgba(24, 24, 27, 0.05);
+      }
+      button {
+        border-radius: var(--render-radius-md);
+        border-color: #d6d6de;
+        background: #fff;
+        color: #22222a;
+        min-height: 36px;
+        padding: 8px 12px;
+        font-weight: 700;
+      }
+      button:hover:not(:disabled) {
+        background: #f8f8fa;
+        border-color: #cfcfd8;
+      }
+      button.primary {
+        border-color: #101014;
+        background: #101014;
+        color: #fff;
+      }
+      button.primary:hover:not(:disabled) {
+        background: #1b1b22;
+        border-color: #1b1b22;
+      }
+      button.ghost-brand {
+        background: #f4f0ff;
+        border-color: #ddd4ff;
+        color: #5b34c6;
+      }
+      .segmented {
+        border-radius: var(--render-radius-lg);
+        border-color: #dadAE1;
+        background: #f7f7f9;
+        padding: 2px;
+        gap: 2px;
+      }
+      .segmented button {
+        min-height: 32px;
+        border-radius: var(--render-radius-md);
+        padding: 6px 10px;
+        font-size: 11px;
+      }
+      .segmented button.is-active {
+        box-shadow: inset 0 0 0 1px #d9d9df;
+      }
+      .tenant-toolbar {
+        background: #fbfbfc;
+        border-color: #e4e4ea;
+        border-radius: var(--render-radius-lg);
+        padding: 8px;
+        gap: 8px;
+      }
+      .tenant-toolbar .toolbar-label {
+        color: #7c7c88;
+      }
+      .tenant-toolbar input,
+      .tenant-toolbar select {
+        margin-top: 5px;
+        min-height: 36px;
+      }
+      .tenant-toolbar .toolbar-actions button {
+        min-width: 72px;
+      }
+      .pill,
+      .badge-tab {
+        border-radius: 999px;
+        border-color: #dbdbe2;
+        background: #fff;
+      }
+      .savebar {
+        border-radius: var(--render-radius-lg);
+        border-color: #e0e0e7;
+        box-shadow: none;
+      }
+      .subtabs {
+        border-radius: var(--render-radius-lg);
+        border-color: #e4e4ea;
+        background: #fafafb;
+        backdrop-filter: none;
+      }
+      .subtabs button {
+        border-radius: var(--render-radius-md);
+        min-height: 34px;
+      }
+      .subtabs button.is-active {
+        background: #fff;
+        color: #2e2e35;
+        border-color: #d7d7de;
+      }
+      .status-row,
+      .backup-row,
+      .toggle-row {
+        border-radius: var(--render-radius-md);
+      }
+      .platform-workbench {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 224px;
+        gap: 18px;
+        align-items: start;
+      }
+      .platform-page-column {
+        min-width: 0;
+        display: grid;
+        gap: 14px;
+      }
+      .admin-subnav-shell {
+        position: sticky;
+        top: 84px;
+        border: 1px solid #e2e2e8;
+        border-radius: var(--render-radius-lg);
+        background: #fafafb;
+        padding: 10px;
+      }
+      .admin-subnav-title {
+        margin: 0 0 8px;
+        color: #767683;
+        font-size: 10px;
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
+      .admin-subnav-list {
+        display: grid;
+        gap: 4px;
+      }
+      .admin-subnav-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 1px solid transparent;
+        background: transparent;
+        border-radius: var(--render-radius-md);
+        padding: 8px 9px;
+        min-height: 0;
+      }
+      .admin-subnav-item:hover:not(:disabled) {
+        background: #f3f3f6;
+        border-color: #e6e6ed;
+      }
+      .admin-subnav-item.is-active {
+        background: #ffffff;
+        border-color: #dcdce5;
+      }
+      .admin-subnav-item .label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: #26262d;
+        line-height: 1.2;
+      }
+      .admin-subnav-item .helper {
+        display: block;
+        margin-top: 2px;
+        color: #7a7a86;
+        font-size: 10px;
+        line-height: 1.3;
+      }
+      .ui-mode-admin #sidebar-platform-group .submenu,
+      .ui-mode-admin #sidebar-platform-group .nav-menu-toggle {
+        display: none !important;
+      }
+      .ui-mode-admin #sidebar-platform-group .nav-menu-block {
+        margin-bottom: 6px;
+      }
+      .ui-mode-admin #sidebar-platform-group .nav-menu-head {
+        display: block;
+      }
+      .ui-mode-admin #sidebar-platform-group .nav-menu-head > a {
+        width: 100%;
+      }
+      .ui-mode-admin #sidebar-platform-group .nav-menu-head > a.is-active {
+        background: #ede9ff;
+        border-color: #dcd4ff;
+      }
+      .ui-mode-tenant .admin-subnav-shell {
+        display: none;
+      }
+      .admin-page-hidden {
+        display: none !important;
+      }
+      #section-tenants.admin-subpage-create {
+        grid-template-columns: minmax(330px, 520px);
+      }
+      #section-tenants.admin-subpage-directory {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .ui-loading-inline,
+      .ui-loading-row,
+      .ui-loading-center {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #686874;
+        font-size: 12px;
+      }
+      .ui-loading-row {
+        display: flex;
+        width: 100%;
+        min-height: 42px;
+        padding: 10px 12px;
+        border: 1px solid #ececf2;
+        border-radius: var(--render-radius-md);
+        background: #fff;
+      }
+      .ui-loading-center {
+        justify-content: center;
+        width: 100%;
+        min-height: 120px;
+      }
+      .ui-spinner {
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        border: 1.5px solid #cfcfd8;
+        border-top-color: #8a8a96;
+        animation: uiSpin 700ms linear infinite;
+        flex-shrink: 0;
+      }
+      .ui-spinner.sm {
+        width: 12px;
+        height: 12px;
+        border-width: 1.25px;
+      }
+      @keyframes uiSpin {
+        to { transform: rotate(360deg); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ui-spinner { animation-duration: 1.6s; }
+      }
+      .auth-chip.is-loading .auth-avatar {
+        background: #fff;
+        color: transparent;
+        border: 1px solid #dedee5;
+        position: relative;
+      }
+      .auth-chip.is-loading .auth-avatar::after {
+        content: '';
+        position: absolute;
+        inset: 5px;
+        border-radius: 999px;
+        border: 1.5px solid #d1d1da;
+        border-top-color: #7b7b86;
+        animation: uiSpin 700ms linear infinite;
+      }
+      .auth-chip.is-loading .auth-role {
+        letter-spacing: 0.04em;
+      }
       @media (max-width: 980px) {
         .grid { grid-template-columns: 1fr; }
         #section-tenants.grid { grid-template-columns: 1fr; }
         .section-grid { grid-template-columns: 1fr; }
         .ops-grid { grid-template-columns: 1fr; }
+        .platform-workbench { grid-template-columns: 1fr; }
         .tenant-toolbar { grid-template-columns: 1fr; }
         .savebar { align-items: stretch; }
         .savebar > * { width: 100%; }
@@ -1260,6 +1674,7 @@
         .topbar-signout { width: 100%; }
         .card-sticky { position: static; }
         .subtabs { position: static; }
+        .admin-subnav-shell { position: static; order: -1; }
       }
       @media (min-width: 981px) {
         .platform-sidebar { display: flex; }
@@ -1311,7 +1726,7 @@
             <p class="platform-nav-group-title">Platform</p>
             <div class="nav-menu-block" data-nav-menu="operations">
               <div class="nav-menu-head">
-                <a href="#section-platform-ops">
+                <a href="#section-platform-ops" data-admin-main-link="operations">
                   <span class="label">Operations</span>
                   <span class="helper">Storage diagnostics and backups</span>
                 </a>
@@ -1330,7 +1745,7 @@
             </div>
             <div class="nav-menu-block" data-nav-menu="tenants">
               <div class="nav-menu-head">
-                <a href="#section-tenants" class="is-active">
+                <a href="#section-tenants" class="is-active" data-admin-main-link="tenants">
                   <span class="label">Customers / Tenants</span>
                   <span class="helper">Onboarding, list and selection</span>
                 </a>
@@ -1353,7 +1768,7 @@
             </div>
             <div class="nav-menu-block" data-nav-menu="integrations">
               <div class="nav-menu-head">
-                <a href="#section-tenant-settings" data-tenant-settings-tab="domains">
+                <a href="#section-tenant-settings" data-tenant-settings-tab="domains" data-admin-main-link="integrations">
                   <span class="label">Integrations & Access</span>
                   <span class="helper">Domains, modules, tenant access</span>
                 </a>
@@ -1434,7 +1849,7 @@
                   <option value="">Select tenant…</option>
                 </select>
               </label>
-              <div id="auth-pill" class="auth-chip" aria-live="polite">
+              <div id="auth-pill" class="auth-chip is-loading" aria-live="polite">
                 <span id="auth-avatar" class="auth-avatar">?</span>
                 <span class="auth-meta">
                   <span id="auth-email" class="auth-email">Checking session…</span>
@@ -1447,9 +1862,11 @@
         </header>
 
         <main class="platform-content">
+      <div class="platform-workbench">
+      <div class="platform-page-column">
       <p id="app-notice" class="notice hidden"></p>
 
-      <section class="card section-panel section-anchor" id="section-platform-ops">
+      <section class="card section-panel section-anchor" id="section-platform-ops" data-admin-page="operations">
         <div class="card-head">
           <div>
             <h2>Platform Storage & Backups</h2>
@@ -1505,13 +1922,13 @@
             <h2 style="margin-bottom:8px;">Recent DB Backups</h2>
             <p class="meta" style="margin:0 0 10px;">Latest snapshots uploaded from the admin portal. Use this to confirm backups are succeeding after deploys.</p>
             <div id="platform-backup-list" class="backup-list">
-              <div class="meta">Loading backup status…</div>
+              <div class="ui-loading-row"><span class="ui-spinner" aria-hidden="true"></span><span>Loading backup status…</span></div>
             </div>
           </div>
         </div>
       </section>
 
-      <div id="section-tenants" class="grid section-anchor">
+      <div id="section-tenants" class="grid section-anchor" data-admin-page="tenants">
         <div id="section-tenant-create" class="card card-sticky section-anchor">
           <div class="card-head">
             <div>
@@ -1587,7 +2004,7 @@
               <button id="tenant-filter-clear-btn" type="button">Clear</button>
             </div>
           </div>
-          <p id="tenant-list-summary" class="meta tenant-summary-row">Loading tenants…</p>
+          <p id="tenant-list-summary" class="meta tenant-summary-row"><span class="ui-loading-inline"><span class="ui-spinner sm" aria-hidden="true"></span><span>Loading tenants…</span></span></p>
           <div class="table-wrap">
             <table>
               <thead>
@@ -1599,14 +2016,14 @@
                 </tr>
               </thead>
               <tbody id="tenant-table-body">
-                <tr><td colspan="4" class="meta">Loading tenants…</td></tr>
+                <tr><td colspan="4"><div class="ui-loading-row"><span class="ui-spinner" aria-hidden="true"></span><span>Loading tenants…</span></div></td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <div id="section-tenant-settings" class="card section-panel" style="margin-top:16px;">
+      <div id="section-tenant-settings" class="card section-panel" style="margin-top:16px;" data-admin-page="tenant-settings">
         <h2>Edit Selected Tenant</h2>
         <p id="selected-tenant-empty" class="meta">Select a tenant from the table above to edit branding and status.</p>
         <div id="selected-tenant-form" class="hidden tenant-settings-grid">
@@ -1867,7 +2284,7 @@
         </div>
       </div>
 
-      <div id="section-homepage-slot" class="card section-anchor" style="margin-top:16px;">
+      <div id="section-homepage-slot" class="card section-anchor" style="margin-top:16px;" data-admin-page="tenant-workspace">
         <h2>Homepage Section: News & Promotions</h2>
         <p class="sub" style="margin:0 0 12px;">MVP placement manager for slot <code>home.news-promotions</code> with <code>news</code> and <code>promotions</code> tabs.</p>
         <p id="placement-notice" class="notice hidden"></p>
@@ -1996,7 +2413,7 @@
         </div>
       </div>
 
-      <div id="section-tenant-cms" class="card section-anchor" style="margin-top:16px;">
+      <div id="section-tenant-cms" class="card section-anchor" style="margin-top:16px;" data-admin-page="tenant-workspace">
         <h2>Tenant CMS Content (Articles + Media Library)</h2>
         <p class="sub" style="margin:0 0 12px;">Bring over Kardal-style CMS functions into the SaaS platform: article metadata, SEO fields, inline article image caption, media library, and PDF uploads.</p>
         <div id="tenant-workspace-mode-pill" class="pill" style="margin-bottom:12px;">Workspace module: Articles</div>
@@ -2294,6 +2711,16 @@
             </div>
           </div>
         </div>
+      </div>
+      <aside id="admin-subnav-shell" class="admin-subnav-shell" aria-label="Section navigation">
+        <p id="admin-subnav-title" class="admin-subnav-title">Section</p>
+        <div id="admin-subnav-list" class="admin-subnav-list">
+          <button type="button" class="admin-subnav-item" disabled>
+            <span class="label">Loading navigation…</span>
+            <span class="helper">Please wait</span>
+          </button>
+        </div>
+      </aside>
       </div>
         </main>
       </div>
