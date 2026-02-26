@@ -60,6 +60,8 @@
       editingAnnualReport: null,
       navTabs: [],
       editingNavTabId: null,
+      siteNavigation: { version: 1, primary: [], cta: null },
+      siteNavSelection: { topId: null, columnId: null },
       moduleAccess: { ...DEFAULT_TENANT_MODULE_ACCESS },
       moduleAccessSnapshot: { ...DEFAULT_TENANT_MODULE_ACCESS },
     },
@@ -278,6 +280,19 @@
     navTabVisible: document.getElementById('nav-tab-visible'),
     navTabSaveBtn: document.getElementById('nav-tab-save-btn'),
     navTabDeleteBtn: document.getElementById('nav-tab-delete-btn'),
+    siteNavBuilderNotice: document.getElementById('site-nav-builder-notice'),
+    siteNavAddLinkBtn: document.getElementById('site-nav-add-link-btn'),
+    siteNavAddMegaBtn: document.getElementById('site-nav-add-mega-btn'),
+    siteNavEditCtaBtn: document.getElementById('site-nav-edit-cta-btn'),
+    siteNavClearCtaBtn: document.getElementById('site-nav-clear-cta-btn'),
+    siteNavRefreshBtn: document.getElementById('site-nav-refresh-btn'),
+    siteNavSaveBtn: document.getElementById('site-nav-save-btn'),
+    siteNavTopList: document.getElementById('site-nav-top-list'),
+    siteNavColumnsList: document.getElementById('site-nav-columns-list'),
+    siteNavSubitemsList: document.getElementById('site-nav-subitems-list'),
+    siteNavColumnAddBtn: document.getElementById('site-nav-column-add-btn'),
+    siteNavSubitemAddBtn: document.getElementById('site-nav-subitem-add-btn'),
+    siteNavCtaSummary: document.getElementById('site-nav-cta-summary'),
     tenantPanelLibraries: document.getElementById('tenant-panel-libraries'),
     tenantPanelArticles: document.getElementById('tenant-panel-articles'),
     tenantPanelAnnualList: document.getElementById('tenant-panel-annual-list'),
@@ -1402,9 +1417,591 @@
       editingAnnualReport: null,
       navTabs: [],
       editingNavTabId: null,
+      siteNavigation: { version: 1, primary: [], cta: null },
+      siteNavSelection: { topId: null, columnId: null },
       moduleAccess: { ...DEFAULT_TENANT_MODULE_ACCESS },
       moduleAccessSnapshot: { ...DEFAULT_TENANT_MODULE_ACCESS },
     };
+  }
+
+  function setSiteNavBuilderEmptyState() {
+    if (els.siteNavTopList) els.siteNavTopList.textContent = 'Select a tenant to load site navigation.';
+    if (els.siteNavColumnsList) els.siteNavColumnsList.textContent = 'Select a tenant to load site navigation.';
+    if (els.siteNavSubitemsList) els.siteNavSubitemsList.textContent = 'Select a tenant to load site navigation.';
+    if (els.siteNavCtaSummary) els.siteNavCtaSummary.textContent = 'No CTA configured.';
+    if (els.siteNavColumnAddBtn) els.siteNavColumnAddBtn.disabled = true;
+    if (els.siteNavSubitemAddBtn) els.siteNavSubitemAddBtn.disabled = true;
+  }
+
+  function deepClone(value) {
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
+  function normalizeClientSiteNavigation(input) {
+    const source = input && typeof input === 'object' ? input : {};
+    const primary = Array.isArray(source.primary) ? source.primary : [];
+    return {
+      version: Number(source.version || 1) || 1,
+      primary: primary
+        .map((item, index) => {
+          const label = String(item?.label || '').trim();
+          if (!label) return null;
+          const columns = Array.isArray(item?.columns) ? item.columns : [];
+          return {
+            id: String(item?.id || `top-${Date.now()}-${index}`),
+            label,
+            href: String(item?.href || '').trim(),
+            type: columns.length ? 'mega' : (item?.type === 'mega' ? 'mega' : 'link'),
+            description: String(item?.description || '').trim(),
+            visible: item?.visible !== false,
+            order: Number.isFinite(Number(item?.order)) ? Number(item.order) : index,
+            columns: columns
+              .map((col, colIndex) => {
+                const title = String(col?.title || '').trim();
+                const items = Array.isArray(col?.items) ? col.items : [];
+                return {
+                  id: String(col?.id || `col-${Date.now()}-${index}-${colIndex}`),
+                  title,
+                  visible: col?.visible !== false,
+                  order: Number.isFinite(Number(col?.order)) ? Number(col.order) : colIndex,
+                  items: items
+                    .map((sub, subIndex) => {
+                      const subLabel = String(sub?.label || '').trim();
+                      if (!subLabel) return null;
+                      return {
+                        id: String(sub?.id || `sub-${Date.now()}-${index}-${colIndex}-${subIndex}`),
+                        label: subLabel,
+                        href: String(sub?.href || '').trim(),
+                        description: String(sub?.description || '').trim(),
+                        visible: sub?.visible !== false,
+                        order: Number.isFinite(Number(sub?.order)) ? Number(sub.order) : subIndex,
+                      };
+                    })
+                    .filter(Boolean)
+                    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)),
+                };
+              })
+              .filter((col) => col.title || (Array.isArray(col.items) && col.items.length))
+              .sort((a, b) => a.order - b.order || String(a.title || '').localeCompare(String(b.title || ''))),
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)),
+      cta:
+        source.cta && typeof source.cta === 'object' && String(source.cta.label || '').trim()
+          ? {
+              label: String(source.cta.label || '').trim(),
+              href: String(source.cta.href || '').trim(),
+              visible: source.cta.visible !== false,
+            }
+          : null,
+    };
+  }
+
+  function getSiteNavTopItems() {
+    return Array.isArray(state.cms?.siteNavigation?.primary) ? state.cms.siteNavigation.primary : [];
+  }
+
+  function getSelectedSiteNavTopItem() {
+    const selectedId = String(state.cms?.siteNavSelection?.topId || '');
+    if (!selectedId) return null;
+    return getSiteNavTopItems().find((item) => String(item.id) === selectedId) || null;
+  }
+
+  function getSelectedSiteNavColumn() {
+    const top = getSelectedSiteNavTopItem();
+    if (!top) return null;
+    const selectedColumnId = String(state.cms?.siteNavSelection?.columnId || '');
+    if (!selectedColumnId) return null;
+    return (Array.isArray(top.columns) ? top.columns : []).find((col) => String(col.id) === selectedColumnId) || null;
+  }
+
+  function reindexOrdered(items) {
+    return (Array.isArray(items) ? items : []).map((item, index) => ({ ...item, order: index }));
+  }
+
+  function setSiteNavBuilderNotice(message, kind) {
+    if (!els.siteNavBuilderNotice) return;
+    setNotice(els.siteNavBuilderNotice, message, kind);
+  }
+
+  function ensureSiteNavSelection() {
+    const primary = getSiteNavTopItems();
+    const currentTop = getSelectedSiteNavTopItem();
+    if (!currentTop) {
+      state.cms.siteNavSelection.topId = primary[0] ? String(primary[0].id) : null;
+      state.cms.siteNavSelection.columnId = null;
+    }
+    const top = getSelectedSiteNavTopItem();
+    if (!top || top.type !== 'mega' || !Array.isArray(top.columns) || !top.columns.length) {
+      state.cms.siteNavSelection.columnId = null;
+      return;
+    }
+    const currentCol = getSelectedSiteNavColumn();
+    if (!currentCol) {
+      state.cms.siteNavSelection.columnId = String(top.columns[0].id);
+    }
+  }
+
+  function renderSiteNavigationBuilder() {
+    if (!els.siteNavTopList || !els.siteNavColumnsList || !els.siteNavSubitemsList) return;
+    ensureSiteNavSelection();
+    const nav = normalizeClientSiteNavigation(state.cms.siteNavigation);
+    state.cms.siteNavigation = nav;
+
+    const primary = nav.primary;
+    const selectedTop = getSelectedSiteNavTopItem();
+    const selectedColumn = getSelectedSiteNavColumn();
+
+    if (els.siteNavTopList) {
+      if (!primary.length) {
+        els.siteNavTopList.innerHTML = 'No top-level items yet. Add a top link or mega menu.';
+      } else {
+        els.siteNavTopList.innerHTML = primary.map((item, index) => `
+          <div class="card nested-card" style="padding:8px; margin:0 0 8px; border:${String(state.cms.siteNavSelection.topId) === String(item.id) ? '1px solid #c4b5fd' : '1px solid #e5e7eb'};">
+            <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
+              <div>
+                <div style="font-weight:700;">${escapeHtml(item.label)}</div>
+                <div class="meta">${escapeHtml(item.type === 'mega' ? 'Mega menu' : 'Link')} • ${escapeHtml(item.href || '(no href)')}</div>
+              </div>
+              <span class="pill">${item.visible === false ? 'Hidden' : 'Visible'}</span>
+            </div>
+            <div class="actions" style="margin-top:8px;">
+              <button type="button" data-site-nav-top-action="select" data-site-nav-top-id="${escapeHtml(String(item.id))}">Select</button>
+              <button type="button" data-site-nav-top-action="edit" data-site-nav-top-id="${escapeHtml(String(item.id))}">Edit</button>
+              <button type="button" data-site-nav-top-action="toggle" data-site-nav-top-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
+              <button type="button" data-site-nav-top-action="up" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+              <button type="button" data-site-nav-top-action="down" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === primary.length - 1 ? 'disabled' : ''}>↓</button>
+              <button type="button" data-site-nav-top-action="delete" data-site-nav-top-id="${escapeHtml(String(item.id))}">Delete</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    if (els.siteNavColumnsList) {
+      if (!selectedTop) {
+        els.siteNavColumnsList.innerHTML = 'Select a top-level menu item first.';
+      } else if (selectedTop.type !== 'mega') {
+        els.siteNavColumnsList.innerHTML = 'Selected top item is a simple link. Edit it and set type to mega (or add a mega menu) to manage columns.';
+      } else {
+        const columns = Array.isArray(selectedTop.columns) ? selectedTop.columns : [];
+        els.siteNavColumnsList.innerHTML = columns.length
+          ? columns.map((column, index) => `
+              <div class="card nested-card" style="padding:8px; margin:0 0 8px; border:${String(state.cms.siteNavSelection.columnId) === String(column.id) ? '1px solid #93c5fd' : '1px solid #e5e7eb'};">
+                <div style="font-weight:700;">${escapeHtml(column.title || `Column ${index + 1}`)}</div>
+                <div class="meta">${(Array.isArray(column.items) ? column.items.length : 0)} submenu items</div>
+                <div class="actions" style="margin-top:8px;">
+                  <button type="button" data-site-nav-col-action="select" data-site-nav-col-id="${escapeHtml(String(column.id))}">Select</button>
+                  <button type="button" data-site-nav-col-action="edit" data-site-nav-col-id="${escapeHtml(String(column.id))}">Edit</button>
+                  <button type="button" data-site-nav-col-action="up" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+                  <button type="button" data-site-nav-col-action="down" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === columns.length - 1 ? 'disabled' : ''}>↓</button>
+                  <button type="button" data-site-nav-col-action="delete" data-site-nav-col-id="${escapeHtml(String(column.id))}">Delete</button>
+                </div>
+              </div>
+            `).join('')
+          : 'No columns yet. Add a column for this mega menu.';
+      }
+    }
+
+    if (els.siteNavSubitemsList) {
+      if (!selectedTop || selectedTop.type !== 'mega') {
+        els.siteNavSubitemsList.innerHTML = 'Select a mega-menu item first.';
+      } else if (!selectedColumn) {
+        els.siteNavSubitemsList.innerHTML = 'Select a column to manage submenu links.';
+      } else {
+        const items = Array.isArray(selectedColumn.items) ? selectedColumn.items : [];
+        els.siteNavSubitemsList.innerHTML = items.length
+          ? items.map((item, index) => `
+              <div class="card nested-card" style="padding:8px; margin:0 0 8px;">
+                <div style="font-weight:700;">${escapeHtml(item.label)}</div>
+                <div class="meta">${escapeHtml(item.href || '(no href)')}</div>
+                <div class="actions" style="margin-top:8px;">
+                  <button type="button" data-site-nav-sub-action="edit" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Edit</button>
+                  <button type="button" data-site-nav-sub-action="toggle" data-site-nav-sub-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
+                  <button type="button" data-site-nav-sub-action="up" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+                  <button type="button" data-site-nav-sub-action="down" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === items.length - 1 ? 'disabled' : ''}>↓</button>
+                  <button type="button" data-site-nav-sub-action="delete" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Delete</button>
+                </div>
+              </div>
+            `).join('')
+          : 'No submenu links yet. Add a submenu item for the selected column.';
+      }
+    }
+
+    if (els.siteNavCtaSummary) {
+      const cta = nav.cta;
+      els.siteNavCtaSummary.textContent = cta && cta.visible !== false && cta.label
+        ? `${cta.label} → ${cta.href || '(no href)'}`
+        : 'No CTA configured.';
+    }
+
+    if (els.siteNavColumnAddBtn) {
+      els.siteNavColumnAddBtn.disabled = !(selectedTop && selectedTop.type === 'mega');
+    }
+    if (els.siteNavSubitemAddBtn) {
+      els.siteNavSubitemAddBtn.disabled = !(selectedTop && selectedTop.type === 'mega' && selectedColumn);
+    }
+  }
+
+  function mutateSiteNavigation(mutator) {
+    const next = deepClone(normalizeClientSiteNavigation(state.cms.siteNavigation));
+    mutator(next);
+    next.primary = reindexOrdered(next.primary || []);
+    (next.primary || []).forEach((item) => {
+      item.columns = reindexOrdered(item.columns || []);
+      (item.columns || []).forEach((col) => {
+        col.items = reindexOrdered(col.items || []);
+      });
+    });
+    state.cms.siteNavigation = normalizeClientSiteNavigation(next);
+    renderSiteNavigationBuilder();
+  }
+
+  function promptSiteNavItem(existing, defaults = {}) {
+    const label = window.prompt('Menu label', existing?.label || defaults.label || '');
+    if (label === null) return null;
+    const href = window.prompt('Href / path (optional for dropdown root)', existing?.href || defaults.href || '');
+    if (href === null) return null;
+    const typeInput = window.prompt('Type: link or mega', existing?.type || defaults.type || 'link');
+    if (typeInput === null) return null;
+    const type = String(typeInput).trim().toLowerCase() === 'mega' ? 'mega' : 'link';
+    return {
+      label: String(label).trim(),
+      href: String(href).trim(),
+      type,
+    };
+  }
+
+  function promptSiteNavColumn(existing) {
+    const title = window.prompt('Column title', existing?.title || '');
+    if (title === null) return null;
+    return { title: String(title).trim() };
+  }
+
+  function promptSiteNavSubItem(existing) {
+    const label = window.prompt('Submenu item label', existing?.label || '');
+    if (label === null) return null;
+    const href = window.prompt('Submenu item href / path', existing?.href || '');
+    if (href === null) return null;
+    return {
+      label: String(label).trim(),
+      href: String(href).trim(),
+      description: String(existing?.description || ''),
+    };
+  }
+
+  async function handleSaveSiteNavigation() {
+    try {
+      const res = await tenantApi('/api/tenant/settings', {
+        method: 'PUT',
+        body: JSON.stringify({ siteNavigation: state.cms.siteNavigation }),
+      });
+      state.cms.siteNavigation = normalizeClientSiteNavigation(res.siteNavigation || state.cms.siteNavigation);
+      setSiteNavBuilderNotice('Site navigation layout saved.', 'ok');
+      renderSiteNavigationBuilder();
+    } catch (err) {
+      setSiteNavBuilderNotice(err.message || 'Failed to save site navigation', 'error');
+    }
+  }
+
+  function handleAddSiteNavTop(type) {
+    const result = promptSiteNavItem(null, { type: type === 'mega' ? 'mega' : 'link' });
+    if (!result) return;
+    if (!result.label) {
+      setSiteNavBuilderNotice('Top-level menu label is required.', 'error');
+      return;
+    }
+    mutateSiteNavigation((next) => {
+      next.primary = Array.isArray(next.primary) ? next.primary : [];
+      const newItem = {
+        id: `top-${Date.now()}`,
+        label: result.label,
+        href: result.href,
+        type: result.type,
+        visible: true,
+        order: next.primary.length,
+        columns: result.type === 'mega' ? [] : [],
+      };
+      next.primary.push(newItem);
+      state.cms.siteNavSelection.topId = String(newItem.id);
+      state.cms.siteNavSelection.columnId = null;
+    });
+    setSiteNavBuilderNotice(`Added top-level ${type === 'mega' ? 'mega menu' : 'link'}: ${result.label}`, 'ok');
+  }
+
+  function handleSiteNavTopAction(action, topId) {
+    const id = String(topId || '');
+    const current = getSiteNavTopItems();
+    const index = current.findIndex((item) => String(item.id) === id);
+    if (index < 0) return;
+    const item = current[index];
+
+    if (action === 'select') {
+      state.cms.siteNavSelection.topId = id;
+      state.cms.siteNavSelection.columnId = null;
+      renderSiteNavigationBuilder();
+      return;
+    }
+    if (action === 'edit') {
+      const result = promptSiteNavItem(item, item);
+      if (!result) return;
+      if (!result.label) {
+        setSiteNavBuilderNotice('Top-level menu label is required.', 'error');
+        return;
+      }
+      mutateSiteNavigation((next) => {
+        const items = next.primary || [];
+        const idx = items.findIndex((x) => String(x.id) === id);
+        if (idx < 0) return;
+        const existing = items[idx];
+        items[idx] = {
+          ...existing,
+          label: result.label,
+          href: result.href,
+          type: result.type,
+          columns: result.type === 'mega' ? (Array.isArray(existing.columns) ? existing.columns : []) : [],
+        };
+        if (result.type !== 'mega') state.cms.siteNavSelection.columnId = null;
+      });
+      setSiteNavBuilderNotice(`Updated top-level item: ${result.label}`, 'ok');
+      return;
+    }
+    if (action === 'toggle') {
+      mutateSiteNavigation((next) => {
+        const target = (next.primary || []).find((x) => String(x.id) === id);
+        if (target) target.visible = target.visible === false;
+      });
+      setSiteNavBuilderNotice('Visibility updated.', 'ok');
+      return;
+    }
+    if (action === 'up' || action === 'down') {
+      mutateSiteNavigation((next) => {
+        const items = next.primary || [];
+        const idx = items.findIndex((x) => String(x.id) === id);
+        const swap = action === 'up' ? idx - 1 : idx + 1;
+        if (idx < 0 || swap < 0 || swap >= items.length) return;
+        [items[idx], items[swap]] = [items[swap], items[idx]];
+      });
+      return;
+    }
+    if (action === 'delete') {
+      if (!window.confirm(`Delete top-level menu "${item.label}"?`)) return;
+      mutateSiteNavigation((next) => {
+        next.primary = (next.primary || []).filter((x) => String(x.id) !== id);
+        if (String(state.cms.siteNavSelection.topId || '') === id) {
+          state.cms.siteNavSelection.topId = null;
+          state.cms.siteNavSelection.columnId = null;
+        }
+      });
+      setSiteNavBuilderNotice(`Deleted top-level item: ${item.label}`, 'ok');
+    }
+  }
+
+  function handleAddSiteNavColumn() {
+    const top = getSelectedSiteNavTopItem();
+    if (!top || top.type !== 'mega') {
+      setSiteNavBuilderNotice('Select a mega-menu top item first.', 'error');
+      return;
+    }
+    const result = promptSiteNavColumn(null);
+    if (!result) return;
+    if (!result.title) {
+      setSiteNavBuilderNotice('Column title is required.', 'error');
+      return;
+    }
+    mutateSiteNavigation((next) => {
+      const item = (next.primary || []).find((x) => String(x.id) === String(top.id));
+      if (!item) return;
+      item.type = 'mega';
+      item.columns = Array.isArray(item.columns) ? item.columns : [];
+      const col = {
+        id: `col-${Date.now()}`,
+        title: result.title,
+        visible: true,
+        order: item.columns.length,
+        items: [],
+      };
+      item.columns.push(col);
+      state.cms.siteNavSelection.columnId = String(col.id);
+    });
+    setSiteNavBuilderNotice(`Added column: ${result.title}`, 'ok');
+  }
+
+  function handleSiteNavColumnAction(action, colId) {
+    const top = getSelectedSiteNavTopItem();
+    if (!top || top.type !== 'mega') return;
+    const id = String(colId || '');
+    const columns = Array.isArray(top.columns) ? top.columns : [];
+    const index = columns.findIndex((c) => String(c.id) === id);
+    if (index < 0) return;
+    const column = columns[index];
+
+    if (action === 'select') {
+      state.cms.siteNavSelection.columnId = id;
+      renderSiteNavigationBuilder();
+      return;
+    }
+    if (action === 'edit') {
+      const result = promptSiteNavColumn(column);
+      if (!result) return;
+      if (!result.title) {
+        setSiteNavBuilderNotice('Column title is required.', 'error');
+        return;
+      }
+      mutateSiteNavigation((next) => {
+        const item = (next.primary || []).find((x) => String(x.id) === String(top.id));
+        const col = item?.columns?.find((c) => String(c.id) === id);
+        if (col) col.title = result.title;
+      });
+      setSiteNavBuilderNotice(`Updated column: ${result.title}`, 'ok');
+      return;
+    }
+    if (action === 'up' || action === 'down') {
+      mutateSiteNavigation((next) => {
+        const item = (next.primary || []).find((x) => String(x.id) === String(top.id));
+        const cols = item?.columns || [];
+        const idx = cols.findIndex((c) => String(c.id) === id);
+        const swap = action === 'up' ? idx - 1 : idx + 1;
+        if (idx < 0 || swap < 0 || swap >= cols.length) return;
+        [cols[idx], cols[swap]] = [cols[swap], cols[idx]];
+      });
+      return;
+    }
+    if (action === 'delete') {
+      if (!window.confirm(`Delete column "${column.title || 'Untitled'}"?`)) return;
+      mutateSiteNavigation((next) => {
+        const item = (next.primary || []).find((x) => String(x.id) === String(top.id));
+        if (!item) return;
+        item.columns = (item.columns || []).filter((c) => String(c.id) !== id);
+        if (String(state.cms.siteNavSelection.columnId || '') === id) state.cms.siteNavSelection.columnId = null;
+      });
+      setSiteNavBuilderNotice('Column deleted.', 'ok');
+    }
+  }
+
+  function handleAddSiteNavSubItem() {
+    const top = getSelectedSiteNavTopItem();
+    const col = getSelectedSiteNavColumn();
+    if (!top || top.type !== 'mega' || !col) {
+      setSiteNavBuilderNotice('Select a mega-menu column first.', 'error');
+      return;
+    }
+    const result = promptSiteNavSubItem(null);
+    if (!result) return;
+    if (!result.label) {
+      setSiteNavBuilderNotice('Submenu item label is required.', 'error');
+      return;
+    }
+    mutateSiteNavigation((next) => {
+      const item = (next.primary || []).find((x) => String(x.id) === String(top.id));
+      const column = item?.columns?.find((c) => String(c.id) === String(col.id));
+      if (!column) return;
+      column.items = Array.isArray(column.items) ? column.items : [];
+      column.items.push({
+        id: `sub-${Date.now()}`,
+        label: result.label,
+        href: result.href,
+        visible: true,
+        order: column.items.length,
+      });
+    });
+    setSiteNavBuilderNotice(`Added submenu item: ${result.label}`, 'ok');
+  }
+
+  function handleSiteNavSubItemAction(action, subId) {
+    const top = getSelectedSiteNavTopItem();
+    const col = getSelectedSiteNavColumn();
+    if (!top || !col) return;
+    const id = String(subId || '');
+    const items = Array.isArray(col.items) ? col.items : [];
+    const index = items.findIndex((x) => String(x.id) === id);
+    if (index < 0) return;
+    const subItem = items[index];
+
+    if (action === 'edit') {
+      const result = promptSiteNavSubItem(subItem);
+      if (!result) return;
+      if (!result.label) {
+        setSiteNavBuilderNotice('Submenu item label is required.', 'error');
+        return;
+      }
+      mutateSiteNavigation((next) => {
+        const item = (next.primary || []).find((x) => String(x.id) === String(top.id));
+        const column = item?.columns?.find((c) => String(c.id) === String(col.id));
+        const target = column?.items?.find((x) => String(x.id) === id);
+        if (target) {
+          target.label = result.label;
+          target.href = result.href;
+        }
+      });
+      setSiteNavBuilderNotice(`Updated submenu item: ${result.label}`, 'ok');
+      return;
+    }
+    if (action === 'toggle') {
+      mutateSiteNavigation((next) => {
+        const item = (next.primary || []).find((x) => String(x.id) === String(top.id));
+        const column = item?.columns?.find((c) => String(c.id) === String(col.id));
+        const target = column?.items?.find((x) => String(x.id) === id);
+        if (target) target.visible = target.visible === false;
+      });
+      setSiteNavBuilderNotice('Submenu visibility updated.', 'ok');
+      return;
+    }
+    if (action === 'up' || action === 'down') {
+      mutateSiteNavigation((next) => {
+        const item = (next.primary || []).find((x) => String(x.id) === String(top.id));
+        const column = item?.columns?.find((c) => String(c.id) === String(col.id));
+        const list = column?.items || [];
+        const idx = list.findIndex((x) => String(x.id) === id);
+        const swap = action === 'up' ? idx - 1 : idx + 1;
+        if (idx < 0 || swap < 0 || swap >= list.length) return;
+        [list[idx], list[swap]] = [list[swap], list[idx]];
+      });
+      return;
+    }
+    if (action === 'delete') {
+      if (!window.confirm(`Delete submenu item "${subItem.label}"?`)) return;
+      mutateSiteNavigation((next) => {
+        const item = (next.primary || []).find((x) => String(x.id) === String(top.id));
+        const column = item?.columns?.find((c) => String(c.id) === String(col.id));
+        if (!column) return;
+        column.items = (column.items || []).filter((x) => String(x.id) !== id);
+      });
+      setSiteNavBuilderNotice(`Deleted submenu item: ${subItem.label}`, 'ok');
+    }
+  }
+
+  function handleEditSiteNavCta() {
+    const current = state.cms.siteNavigation?.cta || {};
+    const label = window.prompt('CTA label (e.g. Contact)', current.label || '');
+    if (label === null) return;
+    const href = window.prompt('CTA href / path', current.href || '');
+    if (href === null) return;
+    if (!String(label).trim()) {
+      setSiteNavBuilderNotice('CTA label is required (or use Clear CTA).', 'error');
+      return;
+    }
+    mutateSiteNavigation((next) => {
+      next.cta = {
+        label: String(label).trim(),
+        href: String(href).trim(),
+        visible: true,
+      };
+    });
+    setSiteNavBuilderNotice('CTA updated.', 'ok');
+  }
+
+  function handleClearSiteNavCta() {
+    if (!window.confirm('Clear the site header CTA?')) return;
+    mutateSiteNavigation((next) => {
+      next.cta = null;
+    });
+    setSiteNavBuilderNotice('CTA cleared.', 'ok');
   }
 
   function tenantApi(path, options) {
@@ -1658,6 +2255,7 @@
       if (els.navTabsTableBody) {
         els.navTabsTableBody.innerHTML = '<tr><td colspan="6" class="meta">Select a tenant to load navigation tabs.</td></tr>';
       }
+      setSiteNavBuilderEmptyState();
       clearArticleEditor();
       clearNavTabEditor();
       return;
@@ -1840,6 +2438,7 @@
       populateAnnualPdfOptions(state.cms.editingAnnualReport.mediaId || null);
     }
     renderNavTabsPanel();
+    renderSiteNavigationBuilder();
     if (!state.cms.editingNavTabId) {
       clearNavTabEditor();
     }
@@ -2694,6 +3293,7 @@
       state.cms.media = Array.isArray(media) ? media : [];
       state.cms.annualReports = Array.isArray(annualReports) ? annualReports : [];
       state.cms.navTabs = Array.isArray(tenantSettings?.navigationTabs) ? tenantSettings.navigationTabs : [];
+      state.cms.siteNavigation = normalizeClientSiteNavigation(tenantSettings?.siteNavigation);
       state.cms.moduleAccess = normalizeTenantModuleAccess(tenantSettings?.moduleAccess);
       state.cms.moduleAccessSnapshot = { ...state.cms.moduleAccess };
 
@@ -2708,6 +3308,17 @@
       if (state.cms.editingNavTabId) {
         const latestTab = state.cms.navTabs.find((tab) => String(tab.id) === String(state.cms.editingNavTabId));
         state.cms.editingNavTabId = latestTab ? String(latestTab.id) : null;
+      }
+      if (state.cms.siteNavSelection?.topId) {
+        const topId = String(state.cms.siteNavSelection.topId);
+        const hasTop = (state.cms.siteNavigation?.primary || []).some((item) => String(item.id) === topId);
+        if (!hasTop) state.cms.siteNavSelection.topId = null;
+      }
+      if (state.cms.siteNavSelection?.columnId) {
+        const selectedTop = getSelectedSiteNavTopItem();
+        const colId = String(state.cms.siteNavSelection.columnId);
+        const hasCol = Boolean(selectedTop && Array.isArray(selectedTop.columns) && selectedTop.columns.some((col) => String(col.id) === colId));
+        if (!hasCol) state.cms.siteNavSelection.columnId = null;
       }
       renderTenantModuleAccessControls();
       renderCmsPanel();
@@ -2939,10 +3550,12 @@
       body: JSON.stringify({ navigationTabs: normalized }),
     });
     state.cms.navTabs = Array.isArray(res.navigationTabs) ? res.navigationTabs : normalized;
+    state.cms.siteNavigation = normalizeClientSiteNavigation(res.siteNavigation || state.cms.siteNavigation);
     state.cms.moduleAccess = normalizeTenantModuleAccess(res.moduleAccess || state.cms.moduleAccess);
     state.cms.moduleAccessSnapshot = { ...state.cms.moduleAccess };
     renderTenantModuleAccessControls();
     renderNavTabsPanel();
+    renderSiteNavigationBuilder();
     if (successMessage) setNotice(els.cmsNotice, successMessage, 'ok');
     return state.cms.navTabs;
   }
@@ -3554,6 +4167,35 @@
     els.navTabsRefreshBtn.addEventListener('click', loadTenantCmsContent);
     els.navTabSaveBtn.addEventListener('click', handleSaveNavTab);
     els.navTabDeleteBtn.addEventListener('click', handleDeleteNavTab);
+    if (els.siteNavAddLinkBtn) els.siteNavAddLinkBtn.addEventListener('click', () => handleAddSiteNavTop('link'));
+    if (els.siteNavAddMegaBtn) els.siteNavAddMegaBtn.addEventListener('click', () => handleAddSiteNavTop('mega'));
+    if (els.siteNavRefreshBtn) els.siteNavRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    if (els.siteNavSaveBtn) els.siteNavSaveBtn.addEventListener('click', handleSaveSiteNavigation);
+    if (els.siteNavEditCtaBtn) els.siteNavEditCtaBtn.addEventListener('click', handleEditSiteNavCta);
+    if (els.siteNavClearCtaBtn) els.siteNavClearCtaBtn.addEventListener('click', handleClearSiteNavCta);
+    if (els.siteNavColumnAddBtn) els.siteNavColumnAddBtn.addEventListener('click', handleAddSiteNavColumn);
+    if (els.siteNavSubitemAddBtn) els.siteNavSubitemAddBtn.addEventListener('click', handleAddSiteNavSubItem);
+    if (els.siteNavTopList) {
+      els.siteNavTopList.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-site-nav-top-action]');
+        if (!btn) return;
+        handleSiteNavTopAction(btn.getAttribute('data-site-nav-top-action') || '', btn.getAttribute('data-site-nav-top-id') || '');
+      });
+    }
+    if (els.siteNavColumnsList) {
+      els.siteNavColumnsList.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-site-nav-col-action]');
+        if (!btn) return;
+        handleSiteNavColumnAction(btn.getAttribute('data-site-nav-col-action') || '', btn.getAttribute('data-site-nav-col-id') || '');
+      });
+    }
+    if (els.siteNavSubitemsList) {
+      els.siteNavSubitemsList.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-site-nav-sub-action]');
+        if (!btn) return;
+        handleSiteNavSubItemAction(btn.getAttribute('data-site-nav-sub-action') || '', btn.getAttribute('data-site-nav-sub-id') || '');
+      });
+    }
     els.annualMediaSelect.addEventListener('change', () => {
       const selectedId = Number(els.annualMediaSelect.value);
       const selected = (Array.isArray(state.cms.media) ? state.cms.media : []).find((item) => item.id === selectedId);

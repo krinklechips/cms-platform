@@ -2989,6 +2989,57 @@
                 <button id="nav-tab-delete-btn">Delete nav tab</button>
               </div>
               <p class="footer-note">These tabs are stored per tenant and can be consumed by your customer sites for top/side navigation rendering.</p>
+
+              <div class="card nested-card" style="padding:12px; margin-top:12px;">
+                <div style="display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:8px;">
+                  <div>
+                    <h3 style="margin:0;">Site Navigation (Admin Layout Builder)</h3>
+                    <p class="meta" style="margin:4px 0 0;">Platform admin controls header/mega-menu structure and ordering. Tenants manage page content only.</p>
+                  </div>
+                  <div class="pill">Admin-only layout control</div>
+                </div>
+                <p id="site-nav-builder-notice" class="notice hidden"></p>
+
+                <div class="actions" style="margin-top:0; margin-bottom:10px;">
+                  <button id="site-nav-add-link-btn" class="ghost-brand" type="button">Add Top Link</button>
+                  <button id="site-nav-add-mega-btn" type="button">Add Mega Menu</button>
+                  <button id="site-nav-edit-cta-btn" type="button">Edit CTA (Contact)</button>
+                  <button id="site-nav-clear-cta-btn" type="button">Clear CTA</button>
+                  <button id="site-nav-refresh-btn" type="button">Reload</button>
+                  <button id="site-nav-save-btn" class="primary" type="button">Save Site Navigation</button>
+                </div>
+
+                <div class="row">
+                  <div class="card nested-card" style="padding:10px; margin:0;">
+                    <h4 style="margin:0 0 8px;">Top-level Menu</h4>
+                    <div id="site-nav-top-list" class="meta">Select a tenant to load site navigation.</div>
+                  </div>
+                  <div class="card nested-card" style="padding:10px; margin:0;">
+                    <h4 style="margin:0 0 8px;">Mega Menu Columns</h4>
+                    <div class="actions" style="margin-top:0; margin-bottom:8px;">
+                      <button id="site-nav-column-add-btn" type="button">Add Column</button>
+                    </div>
+                    <div id="site-nav-columns-list" class="meta">Select a mega-menu top item to manage columns.</div>
+                  </div>
+                </div>
+
+                <div class="card nested-card" style="padding:10px; margin-top:10px;">
+                  <h4 style="margin:0 0 8px;">Column Items / Submenu Links</h4>
+                  <div class="actions" style="margin-top:0; margin-bottom:8px;">
+                    <button id="site-nav-subitem-add-btn" type="button">Add Submenu Item</button>
+                  </div>
+                  <div id="site-nav-subitems-list" class="meta">Select a column above to manage submenu links.</div>
+                </div>
+
+                <div class="card nested-card" style="padding:10px; margin-top:10px;">
+                  <h4 style="margin:0 0 8px;">CTA Button</h4>
+                  <p id="site-nav-cta-summary" class="meta" style="margin:0;">No CTA configured.</p>
+                </div>
+
+                <p class="footer-note" style="margin-top:10px;">
+                  Ordering is controlled using Up/Down buttons. This builder stores a nested <code>siteNavigation</code> structure returned by <code>/api/public/site-navigation</code>.
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -68,11 +68,109 @@ function normalizeNavigationTabs(input) {
     .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label));
 }
 
+function normalizeSiteNavigationLink(input, { fallbackIdPrefix = 'nav-link', fallbackOrder = 0 } = {}) {
+  const label = String(input?.label || '').trim();
+  const href = String(input?.href || '').trim();
+  const visible = input?.visible !== false;
+  const order = Number.isFinite(Number(input?.order)) ? Number(input.order) : fallbackOrder;
+  if (!label) return null;
+  return {
+    id: String(input?.id || `${fallbackIdPrefix}-${Date.now()}-${fallbackOrder}`),
+    label,
+    href,
+    visible,
+    order,
+    description: String(input?.description || '').trim(),
+  };
+}
+
+function normalizeSiteNavigationColumn(input, index) {
+  const title = String(input?.title || '').trim();
+  const visible = input?.visible !== false;
+  const order = Number.isFinite(Number(input?.order)) ? Number(input.order) : index;
+  const rawItems = Array.isArray(input?.items) ? input.items : [];
+  const items = rawItems
+    .map((item, itemIndex) =>
+      normalizeSiteNavigationLink(item, {
+        fallbackIdPrefix: `nav-col-item-${index}`,
+        fallbackOrder: itemIndex,
+      }),
+    )
+    .filter(Boolean)
+    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label));
+
+  if (!title && !items.length) return null;
+  return {
+    id: String(input?.id || `nav-col-${Date.now()}-${index}`),
+    title,
+    visible,
+    order,
+    items,
+  };
+}
+
+function normalizeSiteNavigationItem(input, index) {
+  const label = String(input?.label || '').trim();
+  const href = String(input?.href || '').trim();
+  const visible = input?.visible !== false;
+  const order = Number.isFinite(Number(input?.order)) ? Number(input.order) : index;
+  const type = input?.type === 'mega' ? 'mega' : 'link';
+  if (!label) return null;
+
+  const columns = Array.isArray(input?.columns)
+    ? input.columns
+        .map((column, columnIndex) => normalizeSiteNavigationColumn(column, columnIndex))
+        .filter(Boolean)
+        .sort((a, b) => a.order - b.order || String(a.title || '').localeCompare(String(b.title || '')))
+    : [];
+
+  return {
+    id: String(input?.id || `nav-item-${Date.now()}-${index}`),
+    label,
+    href,
+    visible,
+    order,
+    type: columns.length ? 'mega' : type,
+    description: String(input?.description || '').trim(),
+    columns,
+  };
+}
+
+function normalizeSiteNavigation(input, current) {
+  const currentValue = current && typeof current === 'object' ? current : {};
+  const source = input && typeof input === 'object' ? input : currentValue;
+
+  const primary = Array.isArray(source.primary)
+    ? source.primary
+        .map((item, index) => normalizeSiteNavigationItem(item, index))
+        .filter(Boolean)
+        .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+    : [];
+
+  const cta =
+    source.cta && typeof source.cta === 'object'
+      ? {
+          label: String(source.cta.label || '').trim(),
+          href: String(source.cta.href || '').trim(),
+          visible: source.cta.visible !== false,
+        }
+      : null;
+
+  const safeCta = cta && cta.label ? cta : null;
+
+  return {
+    version: 1,
+    primary,
+    cta: safeCta,
+  };
+}
+
 router.get('/', (req, res) => {
   const settings = readSettings(req.tenant.id);
   return res.json({
     tenantId: req.tenant.id,
     navigationTabs: Array.isArray(settings.navigationTabs) ? settings.navigationTabs : [],
+    siteNavigation: normalizeSiteNavigation(settings.siteNavigation, settings.siteNavigation),
     moduleAccess: normalizeModuleAccess(settings.moduleAccess, settings.moduleAccess),
   });
 });
@@ -83,10 +181,15 @@ router.put('/', (req, res) => {
   const incomingTabs = hasNavigationTabs
     ? normalizeNavigationTabs(req.body?.navigationTabs)
     : (Array.isArray(current.navigationTabs) ? current.navigationTabs : []);
+  const hasSiteNavigation = Object.prototype.hasOwnProperty.call(req.body || {}, 'siteNavigation');
+  const siteNavigation = hasSiteNavigation
+    ? normalizeSiteNavigation(req.body?.siteNavigation, current.siteNavigation)
+    : normalizeSiteNavigation(current.siteNavigation, current.siteNavigation);
   const moduleAccess = normalizeModuleAccess(req.body?.moduleAccess, current.moduleAccess);
   const next = {
     ...current,
     navigationTabs: incomingTabs,
+    siteNavigation,
     moduleAccess,
   };
 
@@ -102,6 +205,7 @@ router.put('/', (req, res) => {
     ok: true,
     tenantId: req.tenant.id,
     navigationTabs: incomingTabs,
+    siteNavigation,
     moduleAccess,
   });
 });

@@ -27,25 +27,105 @@ function resolveTenant(req) {
 }
 
 function readNavigationTabs(tenantId) {
+  const settings = readTenantSettings(tenantId);
+  if (!Array.isArray(settings.navigationTabs)) return [];
+  return settings.navigationTabs
+    .map((tab, index) => ({
+      id: String(tab?.id || `${tenantId}-${index}`),
+      label: String(tab?.label || '').trim(),
+      href: String(tab?.href || '').trim(),
+      group: String(tab?.group || 'general').trim() || 'general',
+      visible: tab?.visible !== false,
+      order: Number.isFinite(Number(tab?.order)) ? Number(tab.order) : index,
+    }))
+    .filter((tab) => tab.visible && tab.label)
+    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label));
+}
+
+function readTenantSettings(tenantId) {
   const row = db.prepare('SELECT settings_json FROM tenant_settings WHERE tenant_id = ?').get(tenantId);
-  if (!row?.settings_json) return [];
+  if (!row?.settings_json) return {};
   try {
-    const parsed = JSON.parse(row.settings_json || '{}') || {};
-    if (!Array.isArray(parsed.navigationTabs)) return [];
-    return parsed.navigationTabs
-      .map((tab, index) => ({
-        id: String(tab?.id || `${tenantId}-${index}`),
-        label: String(tab?.label || '').trim(),
-        href: String(tab?.href || '').trim(),
-        group: String(tab?.group || 'general').trim() || 'general',
-        visible: tab?.visible !== false,
-        order: Number.isFinite(Number(tab?.order)) ? Number(tab.order) : index,
-      }))
-      .filter((tab) => tab.visible && tab.label)
-      .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label));
+    return JSON.parse(row.settings_json || '{}') || {};
   } catch {
-    return [];
+    return {};
   }
+}
+
+function normalizePublicNavLink(input, index, fallbackPrefix) {
+  const label = String(input?.label || '').trim();
+  if (!label) return null;
+  return {
+    id: String(input?.id || `${fallbackPrefix}-${index}`),
+    label,
+    href: String(input?.href || '').trim(),
+    visible: input?.visible !== false,
+    order: Number.isFinite(Number(input?.order)) ? Number(input.order) : index,
+    description: String(input?.description || '').trim() || null,
+  };
+}
+
+function readSiteNavigation(tenantId) {
+  const settings = readTenantSettings(tenantId);
+  const source = settings?.siteNavigation && typeof settings.siteNavigation === 'object'
+    ? settings.siteNavigation
+    : {};
+
+  const primary = Array.isArray(source.primary)
+    ? source.primary
+        .map((item, index) => {
+          const link = normalizePublicNavLink(item, index, `top-${tenantId}`);
+          if (!link) return null;
+          const columns = Array.isArray(item?.columns)
+            ? item.columns
+                .map((col, colIndex) => {
+                  const title = String(col?.title || '').trim();
+                  const visible = col?.visible !== false;
+                  const order = Number.isFinite(Number(col?.order)) ? Number(col.order) : colIndex;
+                  const items = Array.isArray(col?.items)
+                    ? col.items
+                        .map((subItem, itemIndex) =>
+                          normalizePublicNavLink(subItem, itemIndex, `col-${tenantId}-${index}-${colIndex}`),
+                        )
+                        .filter((subItem) => subItem && subItem.visible)
+                        .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+                    : [];
+                  if (!title && !items.length) return null;
+                  return {
+                    id: String(col?.id || `col-${tenantId}-${index}-${colIndex}`),
+                    title,
+                    visible,
+                    order,
+                    items,
+                  };
+                })
+                .filter((col) => col && col.visible)
+                .sort((a, b) => a.order - b.order || String(a.title || '').localeCompare(String(b.title || '')))
+            : [];
+
+          return {
+            ...link,
+            type: columns.length ? 'mega' : (item?.type === 'mega' ? 'mega' : 'link'),
+            columns,
+          };
+        })
+        .filter((item) => item && item.visible)
+        .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+    : [];
+
+  const cta = source?.cta && typeof source.cta === 'object' && source.cta.visible !== false && String(source.cta.label || '').trim()
+    ? {
+        label: String(source.cta.label || '').trim(),
+        href: String(source.cta.href || '').trim(),
+        visible: true,
+      }
+    : null;
+
+  return {
+    version: Number(source?.version || 1) || 1,
+    primary,
+    cta,
+  };
 }
 
 router.get('/navigation-tabs', (req, res) => {
@@ -54,6 +134,7 @@ router.get('/navigation-tabs', (req, res) => {
 
   const tenant = resolved.tenant;
   const navigationTabs = readNavigationTabs(tenant.id);
+  const siteNavigation = readSiteNavigation(tenant.id);
 
   return res.json({
     tenant: {
@@ -68,6 +149,30 @@ router.get('/navigation-tabs', (req, res) => {
       },
     },
     navigationTabs,
+    siteNavigation,
+  });
+});
+
+router.get('/site-navigation', (req, res) => {
+  const resolved = resolveTenant(req);
+  if (resolved.error) return res.status(resolved.status || 400).json({ error: resolved.error });
+
+  const tenant = resolved.tenant;
+  const siteNavigation = readSiteNavigation(tenant.id);
+
+  return res.json({
+    tenant: {
+      id: tenant.id,
+      slug: tenant.slug,
+      name: tenant.name,
+      branding: {
+        logoUrl: tenant.logo_url || null,
+        primaryColor: tenant.primary_color || null,
+        supportEmail: tenant.support_email || null,
+        publicSiteUrl: tenant.public_site_url || null,
+      },
+    },
+    siteNavigation,
   });
 });
 
