@@ -190,6 +190,49 @@
       .platform-nav a.submenu-link.is-active::before {
         background: var(--brand);
       }
+      .platform-nav .nav-menu-block {
+        display: grid;
+        gap: 0;
+        margin-bottom: 4px;
+      }
+      .platform-nav .nav-menu-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px;
+        align-items: stretch;
+      }
+      .platform-nav .nav-menu-head > a {
+        min-width: 0;
+      }
+      .platform-nav .nav-menu-toggle {
+        width: 34px;
+        min-width: 34px;
+        padding: 0;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .platform-nav .nav-menu-toggle:hover {
+        background: rgba(255, 255, 255, 0.85);
+        border-color: #efeff1;
+      }
+      .platform-nav .nav-menu-toggle::before {
+        content: '▾';
+        font-size: 11px;
+        line-height: 1;
+        transition: transform 120ms ease;
+      }
+      .platform-nav .nav-menu-block.is-collapsed .nav-menu-toggle::before {
+        transform: rotate(-90deg);
+      }
+      .platform-nav .nav-menu-block.is-collapsed .submenu {
+        display: none;
+      }
       .platform-main {
         min-width: 0;
         flex: 1;
@@ -1020,64 +1063,75 @@
         <nav class="platform-nav">
           <div id="sidebar-platform-group" class="platform-nav-group">
             <p class="platform-nav-group-title">Platform</p>
-            <a href="#section-platform-ops">
-              <span class="label">Operations</span>
-              <span class="helper">Storage diagnostics and backups</span>
-            </a>
-            <div class="submenu">
-              <a class="submenu-link" href="#section-storage-diagnostics">
-                <span class="label">Storage Diagnostics</span>
-                <span class="helper">DB path and disk checks</span>
-              </a>
-              <a class="submenu-link" href="#section-db-backups">
-                <span class="label">DB Backups</span>
-                <span class="helper">R2 snapshot history</span>
-              </a>
+            <div class="nav-menu-block" data-nav-menu="operations">
+              <div class="nav-menu-head">
+                <a href="#section-platform-ops">
+                  <span class="label">Operations</span>
+                  <span class="helper">Storage diagnostics and backups</span>
+                </a>
+                <button type="button" class="nav-menu-toggle" data-nav-menu-toggle="operations" aria-label="Toggle Operations submenu" aria-expanded="true"></button>
+              </div>
+              <div class="submenu" data-nav-menu-panel="operations">
+                <a class="submenu-link" href="#section-storage-diagnostics">
+                  <span class="label">Storage Diagnostics</span>
+                  <span class="helper">DB path and disk checks</span>
+                </a>
+                <a class="submenu-link" href="#section-db-backups">
+                  <span class="label">DB Backups</span>
+                  <span class="helper">R2 snapshot history</span>
+                </a>
+              </div>
             </div>
-            <a href="#section-tenants" class="is-active">
-              <span class="label">Customers / Tenants</span>
-              <span class="helper">Onboarding, list and selection</span>
-            </a>
-            <div class="submenu">
-              <a class="submenu-link" href="#section-tenant-create">
-                <span class="label">Create Tenant</span>
-                <span class="helper">New customer onboarding</span>
-              </a>
-              <a class="submenu-link" href="#section-tenant-list">
-                <span class="label">Tenant Directory</span>
-                <span class="helper">Search and filter tenants</span>
-              </a>
-              <a class="submenu-link" href="#section-tenant-settings">
-                <span class="label">Selected Tenant</span>
-                <span class="helper">Edit active tenant settings</span>
-              </a>
+            <div class="nav-menu-block" data-nav-menu="tenants">
+              <div class="nav-menu-head">
+                <a href="#section-tenants" class="is-active">
+                  <span class="label">Customers / Tenants</span>
+                  <span class="helper">Onboarding, list and selection</span>
+                </a>
+                <button type="button" class="nav-menu-toggle" data-nav-menu-toggle="tenants" aria-label="Toggle Customers submenu" aria-expanded="true"></button>
+              </div>
+              <div class="submenu" data-nav-menu-panel="tenants">
+                <a class="submenu-link" href="#section-tenant-create">
+                  <span class="label">Create Tenant</span>
+                  <span class="helper">New customer onboarding</span>
+                </a>
+                <a class="submenu-link" href="#section-tenant-list">
+                  <span class="label">Tenant Directory</span>
+                  <span class="helper">Search and filter tenants</span>
+                </a>
+                <a class="submenu-link" href="#section-tenant-settings">
+                  <span class="label">Selected Tenant</span>
+                  <span class="helper">Edit active tenant settings</span>
+                </a>
+              </div>
             </div>
-            <a href="#section-tenant-settings" data-tenant-settings-tab="domains">
-              <span class="label">Integrations & Access</span>
-              <span class="helper">Domains, modules, tenant access</span>
-            </a>
-            <div class="submenu">
-              <a class="submenu-link" href="#tenant-settings-panel-domains" data-tenant-settings-tab="domains">
-                <span class="label">Domain Provisioning</span>
-                <span class="helper">Render + DNS workflow</span>
-              </a>
-              <a class="submenu-link" href="#tenant-settings-panel-content" data-tenant-settings-tab="content">
-                <span class="label">Module Access</span>
-                <span class="helper">Toggle tenant-visible modules</span>
-              </a>
-              <a class="submenu-link" href="#tenant-settings-panel-users" data-tenant-settings-tab="users">
-                <span class="label">Tenant Users</span>
-                <span class="helper">Provisioning and roles</span>
-              </a>
-              <a class="submenu-link" href="#tenant-settings-panel-support" data-tenant-settings-tab="support">
-                <span class="label">Support Details</span>
-                <span class="helper">Support email and contact</span>
-              </a>
+            <div class="nav-menu-block" data-nav-menu="integrations">
+              <div class="nav-menu-head">
+                <a href="#section-tenant-settings" data-tenant-settings-tab="domains">
+                  <span class="label">Integrations & Access</span>
+                  <span class="helper">Domains, modules, tenant access</span>
+                </a>
+                <button type="button" class="nav-menu-toggle" data-nav-menu-toggle="integrations" aria-label="Toggle Integrations submenu" aria-expanded="true"></button>
+              </div>
+              <div class="submenu" data-nav-menu-panel="integrations">
+                <a class="submenu-link" href="#tenant-settings-panel-domains" data-tenant-settings-tab="domains">
+                  <span class="label">Domain Provisioning</span>
+                  <span class="helper">Render + DNS workflow</span>
+                </a>
+                <a class="submenu-link" href="#tenant-settings-panel-content" data-tenant-settings-tab="content">
+                  <span class="label">Module Access</span>
+                  <span class="helper">Toggle tenant-visible modules</span>
+                </a>
+                <a class="submenu-link" href="#tenant-settings-panel-users" data-tenant-settings-tab="users">
+                  <span class="label">Tenant Users</span>
+                  <span class="helper">Provisioning and roles</span>
+                </a>
+                <a class="submenu-link" href="#tenant-settings-panel-support" data-tenant-settings-tab="support">
+                  <span class="label">Support Details</span>
+                  <span class="helper">Support email and contact</span>
+                </a>
+              </div>
             </div>
-            <a href="#tenant-settings-panel-content" data-tenant-settings-tab="content">
-              <span class="label">Tenant Content Controls</span>
-              <span class="helper">Quick access to module toggles</span>
-            </a>
           </div>
           <div id="sidebar-tenant-group" class="platform-nav-group">
             <p class="platform-nav-group-title">Tenant Workspace</p>

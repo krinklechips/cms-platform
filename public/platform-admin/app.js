@@ -1,5 +1,6 @@
 (function () {
   const SLOT_KEY = 'home.news-promotions';
+  const PLATFORM_NAV_ACCORDION_STORAGE_KEY = 'cms-platform-admin-nav-accordion';
   const DEFAULT_TENANT_MODULE_ACCESS = Object.freeze({
     homepagePlacements: true,
     articles: true,
@@ -261,6 +262,8 @@
   };
   const sidebarNavLinks = Array.from(document.querySelectorAll('.platform-nav a[href^="#"]'));
   const workspaceNavLinks = Array.from(document.querySelectorAll('.platform-nav a[data-workspace-view]'));
+  const platformNavMenuBlocks = Array.from(document.querySelectorAll('#sidebar-platform-group [data-nav-menu]'));
+  const platformNavMenuToggleButtons = Array.from(document.querySelectorAll('#sidebar-platform-group [data-nav-menu-toggle]'));
   const tenantSettingsTabButtons = Array.from(document.querySelectorAll('[data-tenant-settings-tab]'));
   const tenantSettingsTabPanels = Array.from(document.querySelectorAll('[data-tenant-settings-panel]'));
 
@@ -293,6 +296,56 @@
     el.className = 'pill';
     if (kind === 'ok') el.classList.add('ok');
     if (kind === 'error') el.classList.add('error');
+  }
+
+  function readPlatformNavAccordionState() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(PLATFORM_NAV_ACCORDION_STORAGE_KEY) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function writePlatformNavAccordionState(next) {
+    try {
+      localStorage.setItem(PLATFORM_NAV_ACCORDION_STORAGE_KEY, JSON.stringify(next || {}));
+    } catch {
+      // ignore storage failures
+    }
+  }
+
+  function setPlatformNavMenuOpen(menuId, open, options) {
+    const menu = String(menuId || '');
+    if (!menu) return;
+    const block = platformNavMenuBlocks.find((item) => item.dataset.navMenu === menu);
+    if (!block) return;
+    const isOpen = Boolean(open);
+    block.classList.toggle('is-collapsed', !isOpen);
+    const toggle = block.querySelector(`[data-nav-menu-toggle="${menu}"]`);
+    if (toggle) toggle.setAttribute('aria-expanded', String(isOpen));
+    if (options?.persist !== false) {
+      const current = readPlatformNavAccordionState();
+      current[menu] = isOpen;
+      writePlatformNavAccordionState(current);
+    }
+  }
+
+  function applyPlatformNavAccordionState() {
+    const saved = readPlatformNavAccordionState();
+    platformNavMenuBlocks.forEach((block) => {
+      const menu = block.dataset.navMenu || '';
+      const open = Object.prototype.hasOwnProperty.call(saved, menu) ? Boolean(saved[menu]) : true;
+      setPlatformNavMenuOpen(menu, open, { persist: false });
+    });
+  }
+
+  function expandPlatformNavMenuForLink(link) {
+    if (!link) return;
+    const block = link.closest('[data-nav-menu]');
+    const menu = block?.dataset?.navMenu || '';
+    if (!menu) return;
+    setPlatformNavMenuOpen(menu, true);
   }
 
   function formatBytes(value) {
@@ -1028,6 +1081,10 @@
     sections.forEach((entry) => {
       if (entry.target.offsetTop <= markerY) active = entry;
     });
+
+    if (active && active.link) {
+      expandPlatformNavMenuForLink(active.link);
+    }
 
     sections.forEach((entry) => {
       entry.link.classList.toggle('is-active', entry === active);
@@ -2570,6 +2627,7 @@
   }
 
   function wireEvents() {
+    applyPlatformNavAccordionState();
     applyUiMode();
     setTenantSettingsTab(state.tenantSettingsTab || 'branding');
     if (els.tenantSearchInput) els.tenantSearchInput.value = state.tenantFilters.search || '';
@@ -2592,6 +2650,17 @@
         requestAnimationFrame(() => scrollToSectionHash(targetHash));
       });
     }
+    platformNavMenuToggleButtons.forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const menu = btn.dataset.navMenuToggle || '';
+        if (!menu) return;
+        const block = platformNavMenuBlocks.find((item) => item.dataset.navMenu === menu);
+        const nextOpen = block ? block.classList.contains('is-collapsed') : true;
+        setPlatformNavMenuOpen(menu, nextOpen);
+      });
+    });
     sidebarNavLinks.forEach((link) => {
       link.addEventListener('click', (event) => {
         const hash = link.getAttribute('href') || '';
@@ -2612,6 +2681,9 @@
         }
         if (requestedTenantSettingsTab) {
           setTenantSettingsTab(requestedTenantSettingsTab);
+        }
+        if (state.uiMode !== 'tenant') {
+          expandPlatformNavMenuForLink(link);
         }
 
         requestAnimationFrame(() => scrollToSectionHash(hash));
