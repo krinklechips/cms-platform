@@ -134,6 +134,52 @@
         border-color: #0f766e;
         color: #fff;
       }
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+      .field label {
+        color: #475569;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .field input {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid #dbe3ef;
+        background: #fff;
+        color: var(--ink);
+        padding: 10px 11px;
+        font: inherit;
+      }
+      .field input:focus {
+        outline: none;
+        border-color: #5eead4;
+        box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12);
+      }
+      .form-grid {
+        display: grid;
+        gap: 10px;
+      }
+      .inline-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .inline-actions button {
+        width: auto;
+      }
+      .subnotice {
+        border-radius: 10px;
+        padding: 9px 10px;
+        font-size: 12px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+      }
+      .subnotice.hidden { display: none; }
+      .subnotice.error { border-color: #fecaca; background: #fef2f2; color: var(--danger); }
+      .subnotice.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
       button:disabled { opacity: 0.65; cursor: not-allowed; }
       .main {
         min-width: 0;
@@ -349,6 +395,7 @@
           <a href="#media"><span>Media</span><small>Latest uploads</small></a>
           <a href="#annual-reports"><span>Annual Reports</span><small>Published and draft entries</small></a>
           <a href="#site-preview"><span>Site Preview Data</span><small>Nav tabs and homepage slot</small></a>
+          <a href="#account-security"><span>Account & Security</span><small>Password and session</small></a>
         </nav>
 
         <div class="actions">
@@ -462,6 +509,35 @@
               </div>
               <div class="card-body">
                 <div id="tenant-info-grid" class="mini-kv"></div>
+              </div>
+            </section>
+
+            <section class="card" id="account-security">
+              <div class="card-head">
+                <h2>Account & Security</h2>
+                <span class="subtle">Tenant self-service password</span>
+              </div>
+              <div class="card-body">
+                <div class="form-grid">
+                  <p class="subtle" style="margin:0;">Change your tenant CMS password. You must enter your current password first.</p>
+                  <div id="password-change-notice" class="subnotice hidden"></div>
+                  <div class="field">
+                    <label for="current-password">Current password</label>
+                    <input id="current-password" type="password" autocomplete="current-password" placeholder="Enter current password" />
+                  </div>
+                  <div class="field">
+                    <label for="new-password">New password</label>
+                    <input id="new-password" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" />
+                  </div>
+                  <div class="field">
+                    <label for="confirm-password">Confirm new password</label>
+                    <input id="confirm-password" type="password" autocomplete="new-password" placeholder="Re-enter new password" />
+                  </div>
+                  <div class="inline-actions">
+                    <button id="change-password-btn" class="primary" type="button">Change Password</button>
+                    <button id="clear-password-form-btn" type="button">Clear</button>
+                  </div>
+                </div>
               </div>
             </section>
           </div>

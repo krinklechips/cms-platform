@@ -3,8 +3,14 @@
     loadingView: document.getElementById('loading-view'),
     appView: document.getElementById('app-view'),
     appNotice: document.getElementById('app-notice'),
+    passwordChangeNotice: document.getElementById('password-change-notice'),
     refreshBtn: document.getElementById('refresh-btn'),
     logoutBtn: document.getElementById('logout-btn'),
+    currentPasswordInput: document.getElementById('current-password'),
+    newPasswordInput: document.getElementById('new-password'),
+    confirmPasswordInput: document.getElementById('confirm-password'),
+    changePasswordBtn: document.getElementById('change-password-btn'),
+    clearPasswordFormBtn: document.getElementById('clear-password-form-btn'),
     tenantMark: document.getElementById('tenant-mark'),
     tenantName: document.getElementById('tenant-name'),
     tenantSlug: document.getElementById('tenant-slug'),
@@ -143,6 +149,17 @@
     }
     els.appNotice.className = ('notice ' + (kind || '')).trim();
     els.appNotice.textContent = message;
+  }
+
+  function setPasswordNotice(message, kind) {
+    if (!els.passwordChangeNotice) return;
+    if (!message) {
+      els.passwordChangeNotice.className = 'subnotice hidden';
+      els.passwordChangeNotice.textContent = '';
+      return;
+    }
+    els.passwordChangeNotice.className = ('subnotice ' + (kind || '')).trim();
+    els.passwordChangeNotice.textContent = message;
   }
 
   function setLoading(loading) {
@@ -376,6 +393,12 @@
     renderTenantInfo();
   }
 
+  function clearPasswordForm() {
+    if (els.currentPasswordInput) els.currentPasswordInput.value = '';
+    if (els.newPasswordInput) els.newPasswordInput.value = '';
+    if (els.confirmPasswordInput) els.confirmPasswordInput.value = '';
+  }
+
   async function loadHostContext() {
     const ctx = await api('/api/platform/host-context', { method: 'GET' });
     state.host = ctx.host || null;
@@ -474,6 +497,47 @@
     }
   }
 
+  async function handleChangePassword() {
+    const currentPassword = String(els.currentPasswordInput?.value || '');
+    const newPassword = String(els.newPasswordInput?.value || '');
+    const confirmPassword = String(els.confirmPasswordInput?.value || '');
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordNotice('Please fill in current password, new password, and confirmation.', 'error');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordNotice('New password and confirmation do not match.', 'error');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordNotice('New password must be at least 8 characters.', 'error');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordNotice('New password must be different from your current password.', 'error');
+      return;
+    }
+
+    if (els.changePasswordBtn) els.changePasswordBtn.disabled = true;
+    setPasswordNotice('Updating password...', '');
+    try {
+      await api('/api/tenant/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+      clearPasswordForm();
+      setPasswordNotice('Password updated successfully.', 'ok');
+    } catch (err) {
+      setPasswordNotice(err.message || 'Failed to change password', 'error');
+    } finally {
+      if (els.changePasswordBtn) els.changePasswordBtn.disabled = false;
+    }
+  }
+
   function wireNavHighlight() {
     if (!els.dashboardNav) return;
     const links = Array.from(els.dashboardNav.querySelectorAll('a[href^="#"]'));
@@ -498,6 +562,23 @@
       refreshDashboard({ showLoading: false });
     });
     els.logoutBtn.addEventListener('click', handleLogout);
+    if (els.changePasswordBtn) {
+      els.changePasswordBtn.addEventListener('click', handleChangePassword);
+    }
+    if (els.clearPasswordFormBtn) {
+      els.clearPasswordFormBtn.addEventListener('click', function () {
+        clearPasswordForm();
+        setPasswordNotice('', '');
+      });
+    }
+    [els.currentPasswordInput, els.newPasswordInput, els.confirmPasswordInput].filter(Boolean).forEach((input) => {
+      input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          handleChangePassword();
+        }
+      });
+    });
     await refreshDashboard({ showLoading: true });
   }
 
