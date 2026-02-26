@@ -58,6 +58,25 @@ function tenantSessionPayload({ user, membership, tenant }) {
   };
 }
 
+function sendTenantLoginSuccess(req, res, { tenant, user, membership }) {
+  try {
+    const payload = {
+      ok: true,
+      tenant,
+      user: {
+        id: user.id,
+        email: user.email,
+        tenantRole: membership.role,
+      },
+      moduleAccess: readTenantModuleAccess(tenant.id),
+    };
+    return res.json(payload);
+  } catch (err) {
+    console.error('[tenant-auth] failed to build login response', err);
+    return res.status(500).json({ error: 'Tenant session started but response failed' });
+  }
+}
+
 router.get('/me', requireTenantHost, (req, res) => {
   const tenant = req.hostContext?.tenant;
   if (!tenant) return res.status(400).json({ error: 'Tenant host is not configured' });
@@ -120,31 +139,39 @@ router.post('/login', requireTenantHost, (req, res) => {
     if (!membership) {
       return res.status(403).json({ error: 'Tenant access denied' });
     }
+    if (!req.session) {
+      console.error('[tenant-auth] session middleware missing on tenant login');
+      return res.status(500).json({ error: 'Session is not available' });
+    }
 
-    req.session.regenerate((regenErr) => {
-      if (regenErr) {
-        console.error('[tenant-auth] failed to regenerate session', regenErr);
-        return res.status(500).json({ error: 'Failed to start tenant session' });
+    const sessionUser = tenantSessionPayload({ user, membership, tenant });
+    const saveSessionAndRespond = () => {
+      try {
+        req.session.user = sessionUser;
+      } catch (err) {
+        console.error('[tenant-auth] failed to assign tenant session user', err);
+        return res.status(500).json({ error: 'Failed to prepare tenant session' });
       }
-
-      req.session.user = tenantSessionPayload({ user, membership, tenant });
-      req.session.save((saveErr) => {
+      return req.session.save((saveErr) => {
         if (saveErr) {
           console.error('[tenant-auth] failed to save tenant session', saveErr);
           return res.status(500).json({ error: 'Failed to persist tenant session' });
         }
-        return res.json({
-          ok: true,
-          tenant,
-          user: {
-            id: user.id,
-            email: user.email,
-            tenantRole: membership.role,
-          },
-          moduleAccess: readTenantModuleAccess(tenant.id),
-        });
+        return sendTenantLoginSuccess(req, res, { tenant, user, membership });
       });
-    });
+    };
+
+    if (typeof req.session.regenerate === 'function') {
+      return req.session.regenerate((regenErr) => {
+        if (regenErr) {
+          console.error('[tenant-auth] session regenerate failed, falling back to save-in-place', regenErr);
+          return saveSessionAndRespond();
+        }
+        return saveSessionAndRespond();
+      });
+    }
+
+    return saveSessionAndRespond();
   } catch (err) {
     console.error('[tenant-auth] login error', err);
     return res.status(500).json({ error: 'Tenant login failed' });
