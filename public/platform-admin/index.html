@@ -157,6 +157,39 @@
         font-size: 11px;
         color: var(--muted);
       }
+      .platform-nav .submenu {
+        display: grid;
+        gap: 2px;
+        margin: 6px 0 8px;
+        padding-left: 8px;
+      }
+      .platform-nav a.submenu-link {
+        padding: 8px 10px;
+        border-radius: 9px;
+        position: relative;
+      }
+      .platform-nav a.submenu-link::before {
+        content: '';
+        position: absolute;
+        left: -7px;
+        top: 50%;
+        width: 4px;
+        height: 4px;
+        border-radius: 999px;
+        background: #d4d4d8;
+        transform: translateY(-50%);
+      }
+      .platform-nav a.submenu-link .label {
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .platform-nav a.submenu-link .helper {
+        font-size: 10px;
+        margin-top: 1px;
+      }
+      .platform-nav a.submenu-link.is-active::before {
+        background: var(--brand);
+      }
       .platform-main {
         min-width: 0;
         flex: 1;
@@ -987,9 +1020,63 @@
         <nav class="platform-nav">
           <div id="sidebar-platform-group" class="platform-nav-group">
             <p class="platform-nav-group-title">Platform</p>
+            <a href="#section-platform-ops">
+              <span class="label">Operations</span>
+              <span class="helper">Storage diagnostics and backups</span>
+            </a>
+            <div class="submenu">
+              <a class="submenu-link" href="#section-storage-diagnostics">
+                <span class="label">Storage Diagnostics</span>
+                <span class="helper">DB path and disk checks</span>
+              </a>
+              <a class="submenu-link" href="#section-db-backups">
+                <span class="label">DB Backups</span>
+                <span class="helper">R2 snapshot history</span>
+              </a>
+            </div>
             <a href="#section-tenants" class="is-active">
               <span class="label">Customers / Tenants</span>
-              <span class="helper">Branding & tenant setup</span>
+              <span class="helper">Onboarding, list and selection</span>
+            </a>
+            <div class="submenu">
+              <a class="submenu-link" href="#section-tenant-create">
+                <span class="label">Create Tenant</span>
+                <span class="helper">New customer onboarding</span>
+              </a>
+              <a class="submenu-link" href="#section-tenant-list">
+                <span class="label">Tenant Directory</span>
+                <span class="helper">Search and filter tenants</span>
+              </a>
+              <a class="submenu-link" href="#section-tenant-settings">
+                <span class="label">Selected Tenant</span>
+                <span class="helper">Edit active tenant settings</span>
+              </a>
+            </div>
+            <a href="#section-tenant-settings" data-tenant-settings-tab="domains">
+              <span class="label">Integrations & Access</span>
+              <span class="helper">Domains, modules, tenant access</span>
+            </a>
+            <div class="submenu">
+              <a class="submenu-link" href="#tenant-settings-panel-domains" data-tenant-settings-tab="domains">
+                <span class="label">Domain Provisioning</span>
+                <span class="helper">Render + DNS workflow</span>
+              </a>
+              <a class="submenu-link" href="#tenant-settings-panel-content" data-tenant-settings-tab="content">
+                <span class="label">Module Access</span>
+                <span class="helper">Toggle tenant-visible modules</span>
+              </a>
+              <a class="submenu-link" href="#tenant-settings-panel-users" data-tenant-settings-tab="users">
+                <span class="label">Tenant Users</span>
+                <span class="helper">Provisioning and roles</span>
+              </a>
+              <a class="submenu-link" href="#tenant-settings-panel-support" data-tenant-settings-tab="support">
+                <span class="label">Support Details</span>
+                <span class="helper">Support email and contact</span>
+              </a>
+            </div>
+            <a href="#tenant-settings-panel-content" data-tenant-settings-tab="content">
+              <span class="label">Tenant Content Controls</span>
+              <span class="helper">Quick access to module toggles</span>
             </a>
           </div>
           <div id="sidebar-tenant-group" class="platform-nav-group">
@@ -1072,7 +1159,7 @@
         <p id="platform-backup-notice" class="notice hidden"></p>
         <div class="ops-grid">
           <div class="stack">
-            <div class="card nested-card" style="padding:12px;">
+            <div id="section-storage-diagnostics" class="card nested-card section-anchor" style="padding:12px;">
               <h2 style="margin-bottom:8px;">Storage Diagnostics</h2>
               <div class="status-stack">
                 <div class="status-row">
@@ -1114,7 +1201,7 @@
               </div>
             </div>
           </div>
-          <div class="card nested-card" style="padding:12px;">
+          <div id="section-db-backups" class="card nested-card section-anchor" style="padding:12px;">
             <h2 style="margin-bottom:8px;">Recent DB Backups</h2>
             <p class="meta" style="margin:0 0 10px;">Latest snapshots uploaded from the admin portal. Use this to confirm backups are succeeding after deploys.</p>
             <div id="platform-backup-list" class="backup-list">
@@ -1125,7 +1212,7 @@
       </section>
 
       <div id="section-tenants" class="grid section-anchor">
-        <div class="card card-sticky">
+        <div id="section-tenant-create" class="card card-sticky section-anchor">
           <div class="card-head">
             <div>
               <h2>Create Customer / Tenant</h2>
@@ -1175,7 +1262,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div id="section-tenant-list" class="card section-anchor">
           <div class="card-head">
             <div>
               <h2>Customers / Tenants</h2>
@@ -1251,7 +1338,7 @@
             <button type="button" data-tenant-settings-tab="content">Content Modules</button>
           </div>
 
-          <div data-tenant-settings-panel="branding" class="tenant-settings-panel">
+          <div id="tenant-settings-panel-branding" data-tenant-settings-panel="branding" class="tenant-settings-panel section-anchor">
             <div class="subsection">
               <h3>Basic Tenant Setup</h3>
               <p class="meta">Keep the core business details here. Advanced branding and URLs can stay collapsed until needed.</p>
@@ -1297,7 +1384,7 @@
             </details>
           </div>
 
-          <div data-tenant-settings-panel="domains" class="tenant-settings-panel hidden">
+          <div id="tenant-settings-panel-domains" data-tenant-settings-panel="domains" class="tenant-settings-panel hidden section-anchor">
             <div class="subsection">
               <h3>Tenant CMS Domain</h3>
               <p class="meta">Store the tenant’s CMS hostname and manage custom domain provisioning/verification for the Render-hosted SaaS CMS.</p>
@@ -1367,7 +1454,7 @@
             </details>
           </div>
 
-          <div data-tenant-settings-panel="support" class="tenant-settings-panel hidden">
+          <div id="tenant-settings-panel-support" data-tenant-settings-panel="support" class="tenant-settings-panel hidden section-anchor">
             <div class="subsection">
               <h3>Support Contact</h3>
               <p class="meta">This email is used as the tenant-facing support contact for UI and content modules.</p>
@@ -1379,7 +1466,7 @@
             </div>
           </div>
 
-          <div data-tenant-settings-panel="users" class="tenant-settings-panel hidden">
+          <div id="tenant-settings-panel-users" data-tenant-settings-panel="users" class="tenant-settings-panel hidden section-anchor">
             <div class="placeholder-card">
               <h3>Tenant User Access</h3>
               <p class="meta" style="margin:0 0 10px;">Tenant user provisioning exists in the backend. Next UX step is a dedicated user-management table here (invite, reset password, role changes).</p>
@@ -1391,7 +1478,7 @@
             </div>
           </div>
 
-          <div data-tenant-settings-panel="content" class="tenant-settings-panel hidden">
+          <div id="tenant-settings-panel-content" data-tenant-settings-panel="content" class="tenant-settings-panel hidden section-anchor">
             <div class="subsection">
               <h3>Tenant CMS Module Access</h3>
               <p class="meta">Control what the tenant sees in the tenant dashboard/workspace. Changes are saved in tenant settings and returned by the tenant auth API.</p>

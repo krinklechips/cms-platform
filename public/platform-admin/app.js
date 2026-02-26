@@ -2600,6 +2600,7 @@
 
         const requestedUiMode = link.dataset.uiMode || '';
         const requestedWorkspaceView = link.dataset.workspaceView || '';
+        const requestedTenantSettingsTab = link.dataset.tenantSettingsTab || '';
         const isTenantWorkspaceLink = Boolean(requestedWorkspaceView);
         if (requestedUiMode === 'admin' && state.uiMode !== 'admin') {
           setUiMode('admin');
@@ -2608,6 +2609,9 @@
         }
         if (requestedWorkspaceView) {
           setTenantWorkspaceView(requestedWorkspaceView);
+        }
+        if (requestedTenantSettingsTab) {
+          setTenantSettingsTab(requestedTenantSettingsTab);
         }
 
         requestAnimationFrame(() => scrollToSectionHash(hash));
