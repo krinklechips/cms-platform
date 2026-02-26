@@ -86,11 +86,34 @@
       .replace(/'/g, '&#039;');
   }
 
+  function parseApiDate(value) {
+    if (value === null || value === undefined || value === '') return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+    if (typeof value === 'number') {
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const raw = String(value).trim();
+    if (!raw) return null;
+    const normalized = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(raw)
+      ? `${raw.replace(' ', 'T')}Z`
+      : raw;
+    const d = new Date(normalized);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
   function formatDate(value) {
     if (!value) return '-';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value);
-    return d.toLocaleString();
+    const d = parseApiDate(value);
+    if (!d) return String(value);
+    return d.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+    });
   }
 
   function formatBytes(value) {

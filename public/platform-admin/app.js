@@ -95,6 +95,8 @@
     topbarSubtitle: document.getElementById('topbar-subtitle'),
     tenantSwitchWrap: document.getElementById('tenant-switch-wrap'),
     tenantSwitch: document.getElementById('tenant-switch'),
+    platformWorkbench: document.querySelector('.platform-workbench'),
+    platformPageColumn: document.querySelector('.platform-page-column'),
     adminSubnavShell: document.getElementById('admin-subnav-shell'),
     adminSubnavTitle: document.getElementById('admin-subnav-title'),
     adminSubnavList: document.getElementById('admin-subnav-list'),
@@ -355,6 +357,34 @@
     const menu = block?.dataset?.navMenu || '';
     if (!menu) return;
     setPlatformNavMenuOpen(menu, true);
+  }
+
+  function normalizeWorkbenchLayout() {
+    const workbench = els.platformWorkbench;
+    const subnav = els.adminSubnavShell;
+    if (!workbench || !subnav) return;
+
+    let pageColumn = workbench.querySelector(':scope > .platform-page-column') || els.platformPageColumn;
+    if (!pageColumn) {
+      pageColumn = document.createElement('div');
+      pageColumn.className = 'platform-page-column';
+      workbench.prepend(pageColumn);
+    }
+
+    if (subnav.parentElement !== workbench) {
+      workbench.appendChild(subnav);
+    }
+    if (pageColumn.parentElement !== workbench) {
+      workbench.prepend(pageColumn);
+    }
+
+    const directChildren = Array.from(workbench.children);
+    directChildren.forEach((child) => {
+      if (child === pageColumn || child === subnav) return;
+      pageColumn.appendChild(child);
+    });
+
+    els.platformPageColumn = pageColumn;
   }
 
   const ADMIN_NAV_MODEL = Object.freeze({
@@ -745,7 +775,7 @@
       } else if (dirty) {
         els.tenantFormSaveFeedback.textContent = 'You have unsaved changes in this tenant profile.';
       } else if (lastSavedAt) {
-        els.tenantFormSaveFeedback.textContent = `${lastSaveMessage || 'Saved'} • ${new Date(lastSavedAt).toLocaleString()}`;
+        els.tenantFormSaveFeedback.textContent = `${lastSaveMessage || 'Saved'} • ${formatDateTime(lastSavedAt)}`;
       } else {
         els.tenantFormSaveFeedback.textContent = 'Changes save to the selected tenant only.';
       }
@@ -984,7 +1014,7 @@
       if (els.platformDbSize) {
         const parts = [];
         parts.push(formatBytes(storage.dbSize || 0));
-        if (storage.dbUpdatedAt) parts.push(`updated ${new Date(storage.dbUpdatedAt).toLocaleString()}`);
+        if (storage.dbUpdatedAt) parts.push(`updated ${formatDateTime(storage.dbUpdatedAt)}`);
         els.platformDbSize.textContent = parts.join(' • ') || '—';
       }
       if (els.platformDbJournal) {
@@ -1031,7 +1061,7 @@
             </div>
             <div class="backup-row-meta">
               ${[
-                item.createdAt ? `Created ${new Date(item.createdAt).toLocaleString()}` : null,
+                item.createdAt ? `Created ${formatDateTime(item.createdAt)}` : null,
                 item.fileSize ? formatBytes(item.fileSize) : null,
                 item.checksumSha256 ? `sha256 ${item.checksumSha256.slice(0, 12)}…` : null,
                 item.errorMessage ? `Error: ${item.errorMessage}` : null,
@@ -1271,9 +1301,28 @@
     platformAdminMainLinks.forEach((link) => {
       link.classList.toggle('is-active', link.dataset.adminMainLink === main);
     });
+    let activeSub = sub;
+    const group = ADMIN_NAV_MODEL[main];
+    const markerY = window.scrollY + 120;
+    if (group?.subitems?.length) {
+      const visibleTargets = group.subitems
+        .map((item) => {
+          const target = item.hash ? document.querySelector(item.hash) : null;
+          if (!target || target.classList.contains('hidden') || target.offsetParent === null) return null;
+          return { item, target };
+        })
+        .filter(Boolean);
+      if (visibleTargets.length) {
+        let active = visibleTargets[0];
+        visibleTargets.forEach((entry) => {
+          if (entry.target.offsetTop <= markerY) active = entry;
+        });
+        activeSub = active.item.id;
+      }
+    }
     if (els.adminSubnavList) {
       els.adminSubnavList.querySelectorAll('[data-admin-subnav-id]').forEach((btn) => {
-        btn.classList.toggle('is-active', btn.dataset.adminSubnavId === sub && btn.dataset.adminSubnavMain === main);
+        btn.classList.toggle('is-active', btn.dataset.adminSubnavId === activeSub && btn.dataset.adminSubnavMain === main);
       });
     }
   }
@@ -1335,11 +1384,34 @@
     return `${(value / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  function parseApiDate(value) {
+    if (value === null || value === undefined || value === '') return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+    if (typeof value === 'number') {
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const raw = String(value).trim();
+    if (!raw) return null;
+    const normalized = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(raw)
+      ? `${raw.replace(' ', 'T')}Z`
+      : raw;
+    const d = new Date(normalized);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
   function formatDateTime(value) {
     if (!value) return '—';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value);
-    return d.toLocaleString();
+    const d = parseApiDate(value);
+    if (!d) return String(value);
+    return d.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+    });
   }
 
   function articlePublicHref(article) {
@@ -1866,7 +1938,7 @@
         label: 'Render verification passed',
         status: status === 'verified' ? 'pass' : (status === 'failed' ? 'fail' : 'pending'),
         detail: status === 'verified'
-          ? `Verified${payload?.domain?.verifiedAt ? ` at ${new Date(payload.domain.verifiedAt).toLocaleString()}` : ''}`
+          ? `Verified${payload?.domain?.verifiedAt ? ` at ${formatDateTime(payload.domain.verifiedAt)}` : ''}`
           : status === 'failed'
             ? (payload?.domain?.lastError || 'Verification failed. Fix DNS and recheck.')
             : 'After updating DNS in Exabytes, click “Verify / Recheck”.',
@@ -1979,7 +2051,7 @@
     }
     if (els.tenantDomainLastChecked) {
       const checkedAt = payload?.domain?.lastCheckedAt;
-      els.tenantDomainLastChecked.textContent = checkedAt ? `Last checked: ${new Date(checkedAt).toLocaleString()}` : '';
+      els.tenantDomainLastChecked.textContent = checkedAt ? `Last checked: ${formatDateTime(checkedAt)}` : '';
     }
     if (els.tenantDomainInstructions) {
       els.tenantDomainInstructions.value = formatDomainInstructionsText(payload?.instructions || null);
@@ -2115,7 +2187,7 @@
       clearTenantFormValidation();
     }
     els.selectedTenantMeta.textContent =
-      `Created: ${new Date(tenant.createdAt).toLocaleString()} • Updated: ${new Date(tenant.updatedAt).toLocaleString()}`;
+      `Created: ${formatDateTime(tenant.createdAt)} • Updated: ${formatDateTime(tenant.updatedAt)}`;
     renderTenantContextHeader(tenant);
     renderTenantFormState();
     setTenantSettingsTab(state.tenantSettingsTab || 'branding');
@@ -2821,6 +2893,7 @@
   }
 
   function wireEvents() {
+    normalizeWorkbenchLayout();
     applyPlatformNavAccordionState();
     applyUiMode();
     setTenantSettingsTab(state.tenantSettingsTab || 'branding');
