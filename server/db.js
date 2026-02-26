@@ -95,6 +95,21 @@ CREATE TABLE IF NOT EXISTS tenant_domains (
   FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS platform_db_backups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  provider TEXT NOT NULL DEFAULT 'r2',
+  object_key TEXT NOT NULL,
+  file_size INTEGER NOT NULL DEFAULT 0,
+  checksum_sha256 TEXT,
+  status TEXT NOT NULL DEFAULT 'completed',
+  created_by_user_id INTEGER,
+  error_message TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME,
+  metadata_json TEXT,
+  FOREIGN KEY(created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
 CREATE TABLE IF NOT EXISTS articles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   tenant_id INTEGER NOT NULL,
@@ -249,6 +264,15 @@ ensureColumn('tenant_domains', 'render_response_json', 'ALTER TABLE tenant_domai
 ensureColumn('tenant_domains', 'last_error', 'ALTER TABLE tenant_domains ADD COLUMN last_error TEXT');
 ensureColumn('tenant_domains', 'last_checked_at', 'ALTER TABLE tenant_domains ADD COLUMN last_checked_at DATETIME');
 ensureColumn('tenant_domains', 'verified_at', 'ALTER TABLE tenant_domains ADD COLUMN verified_at DATETIME');
+ensureColumn('platform_db_backups', 'provider', "ALTER TABLE platform_db_backups ADD COLUMN provider TEXT NOT NULL DEFAULT 'r2'");
+ensureColumn('platform_db_backups', 'object_key', "ALTER TABLE platform_db_backups ADD COLUMN object_key TEXT NOT NULL DEFAULT ''");
+ensureColumn('platform_db_backups', 'file_size', 'ALTER TABLE platform_db_backups ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0');
+ensureColumn('platform_db_backups', 'checksum_sha256', 'ALTER TABLE platform_db_backups ADD COLUMN checksum_sha256 TEXT');
+ensureColumn('platform_db_backups', 'status', "ALTER TABLE platform_db_backups ADD COLUMN status TEXT NOT NULL DEFAULT 'completed'");
+ensureColumn('platform_db_backups', 'created_by_user_id', 'ALTER TABLE platform_db_backups ADD COLUMN created_by_user_id INTEGER');
+ensureColumn('platform_db_backups', 'error_message', 'ALTER TABLE platform_db_backups ADD COLUMN error_message TEXT');
+ensureColumn('platform_db_backups', 'completed_at', 'ALTER TABLE platform_db_backups ADD COLUMN completed_at DATETIME');
+ensureColumn('platform_db_backups', 'metadata_json', 'ALTER TABLE platform_db_backups ADD COLUMN metadata_json TEXT');
 
 function ensureDefaultTenantSlots(tenantId) {
   db.prepare(`
@@ -313,3 +337,4 @@ export function seedPlatformDefaults() {
 }
 
 export { ensureDefaultTenantSlots };
+export { dbFile, dbDir };

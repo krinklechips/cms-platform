@@ -429,6 +429,11 @@
         background: var(--success-soft);
         color: var(--success);
       }
+      .pill.error {
+        border-color: #fecaca;
+        background: #fef2f2;
+        color: var(--danger);
+      }
       table { width: 100%; border-collapse: collapse; font-size: 13px; }
       th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #efeff1; vertical-align: top; }
       thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
@@ -513,6 +518,90 @@
         display: grid;
         gap: 12px;
       }
+      .ops-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 14px;
+        align-items: start;
+      }
+      .status-stack {
+        display: grid;
+        gap: 8px;
+      }
+      .status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid #efeff2;
+        border-radius: 10px;
+        background: #fff;
+        padding: 9px 10px;
+      }
+      .status-row .meta {
+        margin: 0;
+        font-size: 11px;
+      }
+      .status-row-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #27272a;
+      }
+      .status-row-sub {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.35;
+      }
+      .kv-list {
+        display: grid;
+        gap: 8px;
+      }
+      .kv-item {
+        display: grid;
+        gap: 4px;
+      }
+      .kv-item .key {
+        color: var(--muted);
+        font-size: 10px;
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .kv-item .value {
+        font-size: 12px;
+        line-height: 1.45;
+        color: #27272a;
+        word-break: break-word;
+      }
+      .backup-list {
+        display: grid;
+        gap: 8px;
+      }
+      .backup-row {
+        border: 1px solid #efeff2;
+        border-radius: 10px;
+        background: #fff;
+        padding: 10px;
+      }
+      .backup-row-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .backup-row-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #27272a;
+      }
+      .backup-row-meta {
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.45;
+        word-break: break-word;
+      }
       .segmented {
         display: inline-flex;
         border: 1px solid var(--line);
@@ -582,6 +671,7 @@
       @media (max-width: 980px) {
         .grid { grid-template-columns: 1fr; }
         .section-grid { grid-template-columns: 1fr; }
+        .ops-grid { grid-template-columns: 1fr; }
         .platform-sidebar { display: none; }
         .platform-topbar-inner, .platform-content { padding-left: 16px; padding-right: 16px; }
         .platform-topbar-actions { justify-content: stretch; width: 100%; }
@@ -712,6 +802,68 @@
 
         <main class="platform-content">
       <p id="app-notice" class="notice hidden"></p>
+
+      <section class="card section-panel section-anchor" id="section-platform-ops">
+        <div class="card-head">
+          <div>
+            <h2>Platform Storage & Backups</h2>
+            <p class="card-head-meta">Verify where the live SQLite database is stored and create point-in-time backups to Cloudflare R2.</p>
+          </div>
+        </div>
+        <p id="platform-backup-notice" class="notice hidden"></p>
+        <div class="ops-grid">
+          <div class="stack">
+            <div class="card nested-card" style="padding:12px;">
+              <h2 style="margin-bottom:8px;">Storage Diagnostics</h2>
+              <div class="status-stack">
+                <div class="status-row">
+                  <div>
+                    <div class="status-row-title">Live DB on Render persistent disk</div>
+                    <div class="status-row-sub">Checks whether the resolved DB path is under <code>/var/data</code>.</div>
+                  </div>
+                  <span id="platform-storage-path-pill" class="pill">Checking…</span>
+                </div>
+                <div class="status-row">
+                  <div>
+                    <div class="status-row-title">Cloudflare R2 backup integration</div>
+                    <div class="status-row-sub">Uses your existing R2 credentials to upload DB snapshots.</div>
+                  </div>
+                  <span id="platform-backup-r2-pill" class="pill">Checking…</span>
+                </div>
+              </div>
+              <div class="kv-list" style="margin-top:10px;">
+                <div class="kv-item">
+                  <div class="key">Resolved DB Path</div>
+                  <div id="platform-db-path" class="value">—</div>
+                </div>
+                <div class="kv-item">
+                  <div class="key">DB File Size</div>
+                  <div id="platform-db-size" class="value">—</div>
+                </div>
+                <div class="kv-item">
+                  <div class="key">Journal / WAL</div>
+                  <div id="platform-db-journal" class="value">—</div>
+                </div>
+                <div class="kv-item">
+                  <div class="key">R2 Target</div>
+                  <div id="platform-backup-r2-target" class="value">—</div>
+                </div>
+              </div>
+              <div class="actions">
+                <button id="platform-backup-refresh-btn" type="button">Refresh Status</button>
+                <button id="platform-backup-run-btn" type="button" class="primary">Backup DB to R2</button>
+              </div>
+            </div>
+          </div>
+          <div class="card nested-card" style="padding:12px;">
+            <h2 style="margin-bottom:8px;">Recent DB Backups</h2>
+            <p class="meta" style="margin:0 0 10px;">Latest snapshots uploaded from the admin portal. Use this to confirm backups are succeeding after deploys.</p>
+            <div id="platform-backup-list" class="backup-list">
+              <div class="meta">Loading backup status…</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div id="section-tenants" class="grid section-anchor">
         <div class="card card-sticky">

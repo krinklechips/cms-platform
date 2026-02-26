@@ -23,6 +23,15 @@ export const env = {
   RENDER_SERVICE_ID: process.env.RENDER_SERVICE_ID || '',
   RENDER_SERVICE_CANONICAL_HOSTNAME:
     process.env.RENDER_SERVICE_CANONICAL_HOSTNAME || process.env.RENDER_EXTERNAL_HOSTNAME || '',
+  R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID || '',
+  R2_S3_ENDPOINT:
+    process.env.R2_S3_ENDPOINT ||
+    (process.env.R2_ACCOUNT_ID ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : ''),
+  R2_BUCKET_NAME: process.env.R2_BUCKET_NAME || '',
+  R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || '',
+  R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || '',
+  R2_PUBLIC_BASE_URL: process.env.R2_PUBLIC_BASE_URL || '',
+  R2_DB_BACKUP_PREFIX: process.env.R2_DB_BACKUP_PREFIX || 'cms-platform/backups/db',
   PLATFORM_OWNER_EMAIL: process.env.PLATFORM_OWNER_EMAIL || 'owner@example.com',
   SEED_TENANT: {
     slug: process.env.SEED_TENANT_SLUG || 'demo',
@@ -45,4 +54,18 @@ if (env.NODE_ENV === 'production' && !env.BOOTSTRAP_SECRET) {
 
 if (env.NODE_ENV === 'production' && (!env.RENDER_API_TOKEN || !env.RENDER_SERVICE_ID)) {
   console.warn('[platform] Render domain provisioning API is not fully configured (RENDER_API_TOKEN / RENDER_SERVICE_ID).');
+}
+
+const r2Required = [
+  env.R2_ACCOUNT_ID,
+  env.R2_BUCKET_NAME,
+  env.R2_ACCESS_KEY_ID,
+  env.R2_SECRET_ACCESS_KEY,
+];
+const hasAnyR2Config = r2Required.some(Boolean) || Boolean(env.R2_S3_ENDPOINT || env.R2_PUBLIC_BASE_URL);
+const hasFullR2Config = r2Required.every(Boolean);
+if (hasAnyR2Config && !hasFullR2Config) {
+  console.warn(
+    '[platform] Partial R2 configuration detected. Set R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY for DB backups.',
+  );
 }

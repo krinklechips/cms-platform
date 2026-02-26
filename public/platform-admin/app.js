@@ -15,6 +15,11 @@
     domainProvisioning: {
       current: null,
     },
+    platformBackups: {
+      current: null,
+      loading: false,
+      running: false,
+    },
     cms: {
       articles: [],
       media: [],
@@ -31,6 +36,16 @@
     appView: document.getElementById('app-view'),
     loginNotice: document.getElementById('login-notice'),
     appNotice: document.getElementById('app-notice'),
+    platformBackupNotice: document.getElementById('platform-backup-notice'),
+    platformStoragePathPill: document.getElementById('platform-storage-path-pill'),
+    platformBackupR2Pill: document.getElementById('platform-backup-r2-pill'),
+    platformDbPath: document.getElementById('platform-db-path'),
+    platformDbSize: document.getElementById('platform-db-size'),
+    platformDbJournal: document.getElementById('platform-db-journal'),
+    platformBackupR2Target: document.getElementById('platform-backup-r2-target'),
+    platformBackupRefreshBtn: document.getElementById('platform-backup-refresh-btn'),
+    platformBackupRunBtn: document.getElementById('platform-backup-run-btn'),
+    platformBackupList: document.getElementById('platform-backup-list'),
     authPill: document.getElementById('auth-pill'),
     authAvatar: document.getElementById('auth-avatar'),
     authEmail: document.getElementById('auth-email'),
@@ -213,6 +228,27 @@
     target.className = `notice ${kind || ''}`.trim();
   }
 
+  function setPillStatus(el, label, kind) {
+    if (!el) return;
+    el.textContent = label;
+    el.className = 'pill';
+    if (kind === 'ok') el.classList.add('ok');
+    if (kind === 'error') el.classList.add('error');
+  }
+
+  function formatBytes(value) {
+    const bytes = Number(value || 0);
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let idx = 0;
+    while (size >= 1024 && idx < units.length - 1) {
+      size /= 1024;
+      idx += 1;
+    }
+    return `${size.toFixed(size >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+  }
+
   function showLogin() {
     els.loginView.classList.remove('hidden');
     els.appView.classList.add('hidden');
@@ -223,6 +259,134 @@
     els.appView.classList.remove('hidden');
     applyUiMode();
     syncSidebarActiveLink();
+  }
+
+  function renderPlatformBackupPanel() {
+    const payload = state.platformBackups.current;
+    const storage = payload?.storage || null;
+    const r2 = payload?.r2 || null;
+    const backups = Array.isArray(payload?.backups) ? payload.backups : [];
+
+    if (els.platformBackupRefreshBtn) {
+      els.platformBackupRefreshBtn.disabled = state.platformBackups.loading || state.platformBackups.running;
+    }
+    if (els.platformBackupRunBtn) {
+      els.platformBackupRunBtn.disabled = state.platformBackups.loading || state.platformBackups.running || !r2?.configured;
+      els.platformBackupRunBtn.textContent = state.platformBackups.running ? 'Backing up…' : 'Backup DB to R2';
+    }
+
+    if (!storage) {
+      setPillStatus(els.platformStoragePathPill, 'Unknown', '');
+      if (els.platformDbPath) els.platformDbPath.textContent = '—';
+      if (els.platformDbSize) els.platformDbSize.textContent = '—';
+      if (els.platformDbJournal) els.platformDbJournal.textContent = '—';
+    } else {
+      setPillStatus(
+        els.platformStoragePathPill,
+        storage.dbOnVarData ? 'On /var/data' : 'Not on /var/data',
+        storage.dbOnVarData ? 'ok' : 'error',
+      );
+      if (els.platformDbPath) els.platformDbPath.textContent = storage.resolvedDbPath || '—';
+      if (els.platformDbSize) {
+        const parts = [];
+        parts.push(formatBytes(storage.dbSize || 0));
+        if (storage.dbUpdatedAt) parts.push(`updated ${new Date(storage.dbUpdatedAt).toLocaleString()}`);
+        els.platformDbSize.textContent = parts.join(' • ') || '—';
+      }
+      if (els.platformDbJournal) {
+        const journalParts = [];
+        if (storage.journalMode) journalParts.push(`journal: ${storage.journalMode}`);
+        if (storage.walFileExists) journalParts.push(`wal ${formatBytes(storage.walFileSize || 0)}`);
+        if (storage.shmFileExists) journalParts.push(`shm ${formatBytes(storage.shmFileSize || 0)}`);
+        els.platformDbJournal.textContent = journalParts.join(' • ') || '—';
+      }
+    }
+
+    if (!r2) {
+      setPillStatus(els.platformBackupR2Pill, 'Unknown', '');
+      if (els.platformBackupR2Target) els.platformBackupR2Target.textContent = '—';
+    } else {
+      setPillStatus(els.platformBackupR2Pill, r2.configured ? 'Configured' : 'Not configured', r2.configured ? 'ok' : 'error');
+      if (els.platformBackupR2Target) {
+        const endpointHost = (() => {
+          try {
+            return r2.endpoint ? new URL(r2.endpoint).host : '';
+          } catch {
+            return r2.endpoint || '';
+          }
+        })();
+        els.platformBackupR2Target.textContent = [
+          r2.bucketName ? `bucket: ${r2.bucketName}` : null,
+          endpointHost ? `endpoint: ${endpointHost}` : null,
+          r2.backupPrefix ? `prefix: ${r2.backupPrefix}` : null,
+        ].filter(Boolean).join(' • ') || '—';
+      }
+    }
+
+    if (els.platformBackupList) {
+      if (!payload && state.platformBackups.loading) {
+        els.platformBackupList.innerHTML = '<div class="meta">Loading backup status…</div>';
+      } else if (!backups.length) {
+        els.platformBackupList.innerHTML = '<div class="meta">No DB backups yet. Click “Backup DB to R2” after configuring R2.</div>';
+      } else {
+        els.platformBackupList.innerHTML = backups.map((item) => `
+          <div class="backup-row">
+            <div class="backup-row-head">
+              <div class="backup-row-title">${escapeHtml(item.objectKey || `Backup #${item.id}`)}</div>
+              <span class="pill ${item.status === 'completed' ? 'ok' : ''}">${escapeHtml(item.status || 'unknown')}</span>
+            </div>
+            <div class="backup-row-meta">
+              ${[
+                item.createdAt ? `Created ${new Date(item.createdAt).toLocaleString()}` : null,
+                item.fileSize ? formatBytes(item.fileSize) : null,
+                item.checksumSha256 ? `sha256 ${item.checksumSha256.slice(0, 12)}…` : null,
+                item.errorMessage ? `Error: ${item.errorMessage}` : null,
+              ].filter(Boolean).join(' • ')}
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+  }
+
+  async function loadPlatformBackups() {
+    state.platformBackups.loading = true;
+    renderPlatformBackupPanel();
+    try {
+      const payload = await api('/api/platform/backups/db', { method: 'GET' });
+      state.platformBackups.current = payload;
+      setNotice(els.platformBackupNotice, '', '');
+      renderPlatformBackupPanel();
+    } catch (err) {
+      setNotice(els.platformBackupNotice, err.message || 'Failed to load backup status', 'error');
+      renderPlatformBackupPanel();
+    } finally {
+      state.platformBackups.loading = false;
+      renderPlatformBackupPanel();
+    }
+  }
+
+  async function handleRunPlatformDbBackup() {
+    state.platformBackups.running = true;
+    setNotice(els.platformBackupNotice, 'Creating DB snapshot and uploading to R2…', 'ok');
+    renderPlatformBackupPanel();
+    try {
+      const payload = await api('/api/platform/backups/db', { method: 'POST' });
+      state.platformBackups.current = {
+        ...(state.platformBackups.current || {}),
+        ...payload,
+        backups: Array.isArray(state.platformBackups.current?.backups)
+          ? [payload.backup, ...state.platformBackups.current.backups.filter((b) => b.id !== payload.backup?.id)].slice(0, 12)
+          : (payload.backup ? [payload.backup] : []),
+      };
+      setNotice(els.platformBackupNotice, `DB backup uploaded to R2: ${payload.backup?.objectKey || 'snapshot created'}`, 'ok');
+    } catch (err) {
+      setNotice(els.platformBackupNotice, err.message || 'Failed to back up DB to R2', 'error');
+      await loadPlatformBackups();
+    } finally {
+      state.platformBackups.running = false;
+      renderPlatformBackupPanel();
+    }
   }
 
   function escapeHtml(value) {
@@ -1861,6 +2025,8 @@
     });
 
     els.logoutBtn.addEventListener('click', handleLogout);
+    if (els.platformBackupRefreshBtn) els.platformBackupRefreshBtn.addEventListener('click', loadPlatformBackups);
+    if (els.platformBackupRunBtn) els.platformBackupRunBtn.addEventListener('click', handleRunPlatformDbBackup);
     els.tenantSwitch.addEventListener('change', async () => {
       const tenantId = Number(els.tenantSwitch.value);
       if (!tenantId || tenantId === state.selectedTenantId) return;
@@ -1974,6 +2140,7 @@
     try {
       const authenticated = await loadAuth();
       if (authenticated) {
+        await loadPlatformBackups();
         await loadTenants();
         await loadHomepagePlacement();
         await loadTenantDomainProvisioning();
