@@ -856,6 +856,9 @@
         gap: 14px;
         align-items: start;
       }
+      .ops-grid.single-panel {
+        grid-template-columns: 1fr;
+      }
       .status-stack {
         display: grid;
         gap: 8px;
@@ -1657,6 +1660,43 @@
       .auth-chip.is-loading .auth-role {
         letter-spacing: 0.04em;
       }
+      /* Left accordion submenus in admin mode; hide right subnav panel */
+      .platform-workbench {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+      }
+      .platform-page-column {
+        min-height: calc(100vh - 118px);
+        align-content: start;
+      }
+      .admin-subnav-shell {
+        display: none !important;
+      }
+      .ui-mode-admin #sidebar-platform-group .submenu {
+        display: grid !important;
+      }
+      .ui-mode-admin #sidebar-platform-group .nav-menu-toggle {
+        display: inline-flex !important;
+      }
+      .ui-mode-admin #sidebar-platform-group .nav-menu-head {
+        display: grid !important;
+      }
+      .ui-mode-admin #sidebar-platform-group .nav-menu-head > a {
+        width: auto;
+      }
+      .ui-mode-admin #sidebar-platform-group .submenu .submenu-link.is-active {
+        background: #ffffff;
+        border-color: #dbdbe4;
+      }
+      .ui-mode-admin #sidebar-platform-group .nav-menu-head > a.is-active {
+        background: #f1ecff;
+        border-color: #ddd4ff;
+      }
+      [data-admin-page="operations"],
+      [data-admin-page="tenants"],
+      [data-admin-page="tenant-settings"] {
+        min-height: 520px;
+      }
       /* Top/header polish + flush logo */
       .platform-logo {
         align-items: center;
@@ -1862,11 +1902,11 @@
                 <button type="button" class="nav-menu-toggle" data-nav-menu-toggle="operations" aria-label="Toggle Operations submenu" aria-expanded="true"></button>
               </div>
               <div class="submenu" data-nav-menu-panel="operations">
-                <a class="submenu-link" href="#section-storage-diagnostics">
+                <a class="submenu-link" href="#section-storage-diagnostics" data-admin-sub-link="storage-diagnostics">
                   <span class="label">Storage Diagnostics</span>
                   <span class="helper">DB path and disk checks</span>
                 </a>
-                <a class="submenu-link" href="#section-db-backups">
+                <a class="submenu-link" href="#section-db-backups" data-admin-sub-link="db-backups">
                   <span class="label">DB Backups</span>
                   <span class="helper">R2 snapshot history</span>
                 </a>
@@ -1881,15 +1921,15 @@
                 <button type="button" class="nav-menu-toggle" data-nav-menu-toggle="tenants" aria-label="Toggle Customers submenu" aria-expanded="true"></button>
               </div>
               <div class="submenu" data-nav-menu-panel="tenants">
-                <a class="submenu-link" href="#section-tenant-create">
+                <a class="submenu-link" href="#section-tenant-create" data-admin-sub-link="create-tenant">
                   <span class="label">Create Tenant</span>
                   <span class="helper">New customer onboarding</span>
                 </a>
-                <a class="submenu-link" href="#section-tenant-list">
+                <a class="submenu-link" href="#section-tenant-list" data-admin-sub-link="tenant-directory">
                   <span class="label">Tenant Directory</span>
                   <span class="helper">Search and filter tenants</span>
                 </a>
-                <a class="submenu-link" href="#section-tenant-settings">
+                <a class="submenu-link" href="#section-tenant-settings" data-admin-sub-link="selected-tenant">
                   <span class="label">Selected Tenant</span>
                   <span class="helper">Edit active tenant settings</span>
                 </a>
@@ -1904,19 +1944,19 @@
                 <button type="button" class="nav-menu-toggle" data-nav-menu-toggle="integrations" aria-label="Toggle Integrations submenu" aria-expanded="true"></button>
               </div>
               <div class="submenu" data-nav-menu-panel="integrations">
-                <a class="submenu-link" href="#tenant-settings-panel-domains" data-tenant-settings-tab="domains">
+                <a class="submenu-link" href="#tenant-settings-panel-domains" data-tenant-settings-tab="domains" data-admin-sub-link="domain-provisioning">
                   <span class="label">Domain Provisioning</span>
                   <span class="helper">Render + DNS workflow</span>
                 </a>
-                <a class="submenu-link" href="#tenant-settings-panel-content" data-tenant-settings-tab="content">
+                <a class="submenu-link" href="#tenant-settings-panel-content" data-tenant-settings-tab="content" data-admin-sub-link="module-access">
                   <span class="label">Module Access</span>
                   <span class="helper">Toggle tenant-visible modules</span>
                 </a>
-                <a class="submenu-link" href="#tenant-settings-panel-users" data-tenant-settings-tab="users">
+                <a class="submenu-link" href="#tenant-settings-panel-users" data-tenant-settings-tab="users" data-admin-sub-link="tenant-users">
                   <span class="label">Tenant Users</span>
                   <span class="helper">Provisioning and roles</span>
                 </a>
-                <a class="submenu-link" href="#tenant-settings-panel-support" data-tenant-settings-tab="support">
+                <a class="submenu-link" href="#tenant-settings-panel-support" data-tenant-settings-tab="support" data-admin-sub-link="support-details">
                   <span class="label">Support Details</span>
                   <span class="helper">Support email and contact</span>
                 </a>
@@ -2003,7 +2043,7 @@
           </div>
         </div>
         <p id="platform-backup-notice" class="notice hidden"></p>
-        <div class="ops-grid">
+        <div id="section-platform-ops-grid" class="ops-grid">
           <div class="stack">
             <div id="section-storage-diagnostics" class="card nested-card section-anchor" style="padding:12px;">
               <h2 style="margin-bottom:8px;">Storage Diagnostics</h2>
@@ -2313,14 +2353,78 @@
           </div>
 
           <div id="tenant-settings-panel-users" data-tenant-settings-panel="users" class="tenant-settings-panel hidden section-anchor">
-            <div class="placeholder-card">
+            <div class="subsection">
               <h3>Tenant User Access</h3>
-              <p class="meta" style="margin:0 0 10px;">Tenant user provisioning exists in the backend. Next UX step is a dedicated user-management table here (invite, reset password, role changes).</p>
-              <div class="actions" style="margin-top:0;">
-                <a href="#section-tenant-settings" class="pill" data-ui-mode="admin" style="text-decoration:none;">Stay in tenant settings</a>
-                <button type="button" id="tenant-users-open-domains-btn">Review domain setup first</button>
+              <p class="meta">Create tenant users, set passwords, update roles/status, and remove tenant access from the admin CMS.</p>
+              <p id="tenant-users-notice" class="notice hidden"></p>
+              <div class="card nested-card" style="padding:12px; margin:0 0 10px;">
+                <h4 style="margin:0 0 6px;">Create / Reset Tenant User</h4>
+                <p class="meta" style="margin:0 0 10px;">If the email already exists, this updates password and tenant membership settings for the selected tenant.</p>
+                <div class="row">
+                  <label>
+                    Email
+                    <input id="tenant-user-email" type="email" placeholder="admin@client.com" />
+                  </label>
+                  <label>
+                    Password
+                    <input id="tenant-user-password" type="password" placeholder="Minimum 8 characters" />
+                  </label>
+                </div>
+                <div class="row">
+                  <label>
+                    Tenant role
+                    <select id="tenant-user-role">
+                      <option value="admin">Admin</option>
+                      <option value="editor">Editor</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                  </label>
+                  <label>
+                    User status
+                    <select id="tenant-user-status">
+                      <option value="active">Active</option>
+                      <option value="disabled">Disabled</option>
+                    </select>
+                  </label>
+                  <label>
+                    Membership status
+                    <select id="tenant-user-membership-status">
+                      <option value="active">Active</option>
+                      <option value="disabled">Disabled</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="actions" style="margin-top:6px;">
+                  <button type="button" id="tenant-user-create-btn" class="primary">Create / Update User</button>
+                  <button type="button" id="tenant-user-form-reset-btn">Clear Form</button>
+                  <button type="button" id="tenant-users-refresh-btn">Refresh Users</button>
+                  <button type="button" id="tenant-users-open-domains-btn">Review domain setup first</button>
+                </div>
               </div>
-              <p class="footer-note" style="margin-top:8px;">Current API: <code>POST /api/platform/tenant-users</code> (platform admin only)</p>
+              <div class="card nested-card" style="padding:12px; margin:0;">
+                <div style="display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:8px;">
+                  <h4 style="margin:0;">Tenant Users</h4>
+                  <span id="tenant-users-summary" class="meta">Select a tenant to load users</span>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Email</th>
+                        <th>User</th>
+                        <th>Tenant Role</th>
+                        <th>Tenant Access</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tenant-users-table-body">
+                      <tr><td colspan="6" class="meta">Select a tenant to manage users.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="footer-note" style="margin-top:8px;">Passwords are set directly in the admin portal for now. Email invites/reset flows can be added later.</p>
+              </div>
             </div>
           </div>
 

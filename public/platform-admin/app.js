@@ -9,6 +9,8 @@
     annualReports: true,
     navigationTabs: true,
   });
+  const TENANT_USER_ROLES = Object.freeze(['admin', 'editor', 'viewer']);
+  const TENANT_USER_STATUSES = Object.freeze(['active', 'disabled']);
 
   const state = {
     auth: null,
@@ -37,6 +39,13 @@
     },
     domainProvisioning: {
       current: null,
+    },
+    tenantUsers: {
+      rows: [],
+      loading: false,
+      saving: false,
+      allowedRoles: [...TENANT_USER_ROLES],
+      allowedStatuses: [...TENANT_USER_STATUSES],
     },
     platformBackups: {
       current: null,
@@ -71,6 +80,9 @@
     platformBackupRefreshBtn: document.getElementById('platform-backup-refresh-btn'),
     platformBackupRunBtn: document.getElementById('platform-backup-run-btn'),
     platformBackupList: document.getElementById('platform-backup-list'),
+    sectionPlatformOpsGrid: document.getElementById('section-platform-ops-grid'),
+    sectionStorageDiagnostics: document.getElementById('section-storage-diagnostics'),
+    sectionDbBackups: document.getElementById('section-db-backups'),
     authPill: document.getElementById('auth-pill'),
     authAvatar: document.getElementById('auth-avatar'),
     authEmail: document.getElementById('auth-email'),
@@ -130,6 +142,17 @@
     tenantFormDirtyPill: document.getElementById('tenant-form-dirty-pill'),
     tenantSettingsTabs: document.getElementById('tenant-settings-tabs'),
     tenantUsersOpenDomainsBtn: document.getElementById('tenant-users-open-domains-btn'),
+    tenantUsersNotice: document.getElementById('tenant-users-notice'),
+    tenantUserEmail: document.getElementById('tenant-user-email'),
+    tenantUserPassword: document.getElementById('tenant-user-password'),
+    tenantUserRole: document.getElementById('tenant-user-role'),
+    tenantUserStatus: document.getElementById('tenant-user-status'),
+    tenantUserMembershipStatus: document.getElementById('tenant-user-membership-status'),
+    tenantUserCreateBtn: document.getElementById('tenant-user-create-btn'),
+    tenantUserFormResetBtn: document.getElementById('tenant-user-form-reset-btn'),
+    tenantUsersRefreshBtn: document.getElementById('tenant-users-refresh-btn'),
+    tenantUsersSummary: document.getElementById('tenant-users-summary'),
+    tenantUsersTableBody: document.getElementById('tenant-users-table-body'),
     tenantModuleAccessNotice: document.getElementById('tenant-module-access-notice'),
     tenantModuleHomepagePlacements: document.getElementById('tenant-module-homepage-placements'),
     tenantModuleArticles: document.getElementById('tenant-module-articles'),
@@ -274,6 +297,7 @@
   const platformNavMenuBlocks = Array.from(document.querySelectorAll('#sidebar-platform-group [data-nav-menu]'));
   const platformNavMenuToggleButtons = Array.from(document.querySelectorAll('#sidebar-platform-group [data-nav-menu-toggle]'));
   const platformAdminMainLinks = Array.from(document.querySelectorAll('#sidebar-platform-group [data-admin-main-link]'));
+  const platformAdminSubLinks = Array.from(document.querySelectorAll('#sidebar-platform-group [data-admin-sub-link]'));
   const adminPageSections = Array.from(document.querySelectorAll('[data-admin-page]'));
   const tenantSettingsTabButtons = Array.from(document.querySelectorAll('[data-tenant-settings-tab]'));
   const tenantSettingsTabPanels = Array.from(document.querySelectorAll('[data-tenant-settings-panel]'));
@@ -519,6 +543,18 @@
         if (els.sectionTenants) els.sectionTenants.classList.add('admin-subpage-directory');
       }
     }
+    if (els.sectionStorageDiagnostics) els.sectionStorageDiagnostics.classList.remove('hidden');
+    if (els.sectionDbBackups) els.sectionDbBackups.classList.remove('hidden');
+    if (els.sectionPlatformOpsGrid) els.sectionPlatformOpsGrid.classList.remove('single-panel');
+    if (targetPage === 'operations') {
+      if (item?.id === 'storage-diagnostics') {
+        if (els.sectionDbBackups) els.sectionDbBackups.classList.add('hidden');
+        if (els.sectionPlatformOpsGrid) els.sectionPlatformOpsGrid.classList.add('single-panel');
+      } else if (item?.id === 'db-backups') {
+        if (els.sectionStorageDiagnostics) els.sectionStorageDiagnostics.classList.add('hidden');
+        if (els.sectionPlatformOpsGrid) els.sectionPlatformOpsGrid.classList.add('single-panel');
+      }
+    }
 
     if (item?.tenantSettingsTab) {
       setTenantSettingsTab(item.tenantSettingsTab, { skipAdminNavSync: true });
@@ -530,13 +566,16 @@
 
     renderAdminSubnav();
 
-    if (options?.focus === false || !item?.hash) return;
+    if (options?.focus === false) return;
     requestAnimationFrame(() => {
-      const target = document.querySelector(item.hash);
+      const pageTarget = document.querySelector(`[data-admin-page="${targetPage}"]`);
+      const target = pageTarget && !pageTarget.classList.contains('hidden')
+        ? pageTarget
+        : (item?.hash ? document.querySelector(item.hash) : null);
       if (!target || target.classList.contains('hidden')) return;
       const topOffset = 92;
       const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - topOffset);
-      window.scrollTo({ top, behavior: options?.behavior || 'smooth' });
+      window.scrollTo({ top, behavior: options?.behavior || 'auto' });
     });
   }
 
@@ -1325,6 +1364,12 @@
         btn.classList.toggle('is-active', btn.dataset.adminSubnavId === activeSub && btn.dataset.adminSubnavMain === main);
       });
     }
+    platformAdminSubLinks.forEach((link) => {
+      const menu = link.closest('[data-nav-menu]')?.dataset?.navMenu || '';
+      const subLink = link.dataset.adminSubLink || '';
+      const isActive = menu === main && subLink === activeSub;
+      link.classList.toggle('is-active', isActive);
+    });
   }
 
   function scrollToSectionHash(hash, behavior = 'smooth') {
@@ -2146,6 +2191,293 @@
     }
   }
 
+  function resetTenantUsersState() {
+    state.tenantUsers.rows = [];
+    state.tenantUsers.loading = false;
+    state.tenantUsers.saving = false;
+    renderTenantUsersPanel();
+  }
+
+  function resetTenantUserForm() {
+    if (els.tenantUserEmail) els.tenantUserEmail.value = '';
+    if (els.tenantUserPassword) els.tenantUserPassword.value = '';
+    if (els.tenantUserRole) els.tenantUserRole.value = 'admin';
+    if (els.tenantUserStatus) els.tenantUserStatus.value = 'active';
+    if (els.tenantUserMembershipStatus) els.tenantUserMembershipStatus.value = 'active';
+  }
+
+  function tenantUsersSummaryText(tenant, rows) {
+    if (!tenant) return 'Select a tenant to load users';
+    const items = Array.isArray(rows) ? rows : [];
+    if (!items.length) return 'No tenant users yet';
+    const activeMemberships = items.filter((row) => row?.membership?.status === 'active').length;
+    const disabledMemberships = items.filter((row) => row?.membership?.status !== 'active').length;
+    return `${items.length} users • ${activeMemberships} active • ${disabledMemberships} disabled`;
+  }
+
+  function renderTenantUserSelectOptions(values, currentValue) {
+    const current = String(currentValue || '');
+    return values.map((value) => `
+      <option value="${escapeHtml(value)}" ${value === current ? 'selected' : ''}>${escapeHtml(value)}</option>
+    `).join('');
+  }
+
+  function renderTenantUsersPanel() {
+    const tenant = getSelectedTenant();
+    const rows = Array.isArray(state.tenantUsers.rows) ? state.tenantUsers.rows : [];
+    const loading = Boolean(state.tenantUsers.loading);
+
+    if (els.tenantUsersSummary) {
+      els.tenantUsersSummary.innerHTML = loading
+        ? renderLoadingInline('Loading users…')
+        : escapeHtml(tenantUsersSummaryText(tenant, rows));
+    }
+
+    [
+      els.tenantUserEmail,
+      els.tenantUserPassword,
+      els.tenantUserRole,
+      els.tenantUserStatus,
+      els.tenantUserMembershipStatus,
+      els.tenantUserCreateBtn,
+      els.tenantUserFormResetBtn,
+      els.tenantUsersRefreshBtn,
+    ].filter(Boolean).forEach((el) => {
+      el.disabled = !tenant || (loading && el !== els.tenantUsersRefreshBtn);
+    });
+
+    if (!els.tenantUsersTableBody) return;
+    if (!tenant) {
+      els.tenantUsersTableBody.innerHTML = '<tr><td colspan="6" class="meta">Select a tenant to manage users.</td></tr>';
+      return;
+    }
+    if (loading) {
+      els.tenantUsersTableBody.innerHTML = `<tr><td colspan="6">${renderLoadingRow('Loading tenant users…')}</td></tr>`;
+      return;
+    }
+    if (!rows.length) {
+      els.tenantUsersTableBody.innerHTML = '<tr><td colspan="6" class="meta">No tenant users yet. Create one above to enable tenant login.</td></tr>';
+      return;
+    }
+
+    const allowedRoles = Array.isArray(state.tenantUsers.allowedRoles) && state.tenantUsers.allowedRoles.length
+      ? state.tenantUsers.allowedRoles
+      : [...TENANT_USER_ROLES];
+    const allowedStatuses = Array.isArray(state.tenantUsers.allowedStatuses) && state.tenantUsers.allowedStatuses.length
+      ? state.tenantUsers.allowedStatuses
+      : [...TENANT_USER_STATUSES];
+
+    els.tenantUsersTableBody.innerHTML = rows.map((row) => {
+      const membership = row.membership || {};
+      const userStatus = row.userStatus || 'active';
+      const membershipStatus = membership.status || 'active';
+      const updatedAt = membership.updatedAt || row.userUpdatedAt || row.userCreatedAt;
+      const flags = [
+        row.isPlatformAdmin ? '<span class="pill">platform admin</span>' : '',
+        row.hasPassword ? '<span class="pill ok">password set</span>' : '<span class="pill">no password</span>',
+      ].filter(Boolean).join(' ');
+      return `
+        <tr data-tenant-user-row data-user-id="${row.id}">
+          <td>
+            <div style="font-weight:600; color:#0f172a;">${escapeHtml(row.email || '')}</div>
+            <div class="meta" style="margin-top:4px;">${flags || '-'}</div>
+          </td>
+          <td>
+            <select data-tenant-user-field="userStatus">
+              ${renderTenantUserSelectOptions(allowedStatuses, userStatus)}
+            </select>
+          </td>
+          <td>
+            <select data-tenant-user-field="role">
+              ${renderTenantUserSelectOptions(allowedRoles, membership.role || 'admin')}
+            </select>
+          </td>
+          <td>
+            <select data-tenant-user-field="membershipStatus">
+              ${renderTenantUserSelectOptions(allowedStatuses, membershipStatus)}
+            </select>
+          </td>
+          <td class="meta">
+            ${updatedAt ? escapeHtml(formatDateTime(updatedAt)) : '-'}
+          </td>
+          <td>
+            <div class="actions" style="margin:0; gap:6px;">
+              <button type="button" data-tenant-user-action="save">Save</button>
+              <button type="button" data-tenant-user-action="password">Set Password</button>
+              <button type="button" data-tenant-user-action="remove">Remove</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function loadTenantUsers() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      resetTenantUsersState();
+      return;
+    }
+    state.tenantUsers.loading = true;
+    renderTenantUsersPanel();
+    try {
+      const data = await api(`/api/platform/tenant-users?tenantId=${tenant.id}`, { method: 'GET' });
+      state.tenantUsers.rows = Array.isArray(data?.users) ? data.users : [];
+      state.tenantUsers.allowedRoles = Array.isArray(data?.allowedRoles) && data.allowedRoles.length ? data.allowedRoles : [...TENANT_USER_ROLES];
+      state.tenantUsers.allowedStatuses = Array.isArray(data?.allowedStatuses) && data.allowedStatuses.length ? data.allowedStatuses : [...TENANT_USER_STATUSES];
+      renderTenantUsersPanel();
+    } catch (err) {
+      state.tenantUsers.rows = [];
+      renderTenantUsersPanel();
+      setNotice(els.tenantUsersNotice, err.message || 'Failed to load tenant users', 'error');
+    } finally {
+      state.tenantUsers.loading = false;
+      renderTenantUsersPanel();
+    }
+  }
+
+  async function handleCreateTenantUser() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.tenantUsersNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const email = String(els.tenantUserEmail?.value || '').trim().toLowerCase();
+    const password = String(els.tenantUserPassword?.value || '');
+    if (!email) {
+      setNotice(els.tenantUsersNotice, 'Email is required.', 'error');
+      return;
+    }
+    if (!password) {
+      setNotice(els.tenantUsersNotice, 'Password is required.', 'error');
+      return;
+    }
+    if (els.tenantUserCreateBtn) els.tenantUserCreateBtn.disabled = true;
+    try {
+      const res = await api('/api/platform/tenant-users', {
+        method: 'POST',
+        body: JSON.stringify({
+          tenantId: tenant.id,
+          email,
+          password,
+          role: els.tenantUserRole?.value || 'admin',
+          userStatus: els.tenantUserStatus?.value || 'active',
+          membershipStatus: els.tenantUserMembershipStatus?.value || 'active',
+        }),
+      });
+      resetTenantUserForm();
+      setNotice(els.tenantUsersNotice, `Tenant user saved: ${res?.user?.email || email}`, 'ok');
+      await loadTenants();
+      state.selectedTenantId = tenant.id;
+      renderTenants();
+      await loadTenantUsers();
+    } catch (err) {
+      setNotice(els.tenantUsersNotice, err.message || 'Failed to save tenant user', 'error');
+    } finally {
+      if (els.tenantUserCreateBtn) els.tenantUserCreateBtn.disabled = false;
+    }
+  }
+
+  function getTenantUserRowValues(rowEl) {
+    return {
+      userStatus: rowEl?.querySelector('[data-tenant-user-field="userStatus"]')?.value || 'active',
+      role: rowEl?.querySelector('[data-tenant-user-field="role"]')?.value || 'admin',
+      membershipStatus: rowEl?.querySelector('[data-tenant-user-field="membershipStatus"]')?.value || 'active',
+    };
+  }
+
+  async function handleSaveTenantUserRow(userId, rowEl) {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.tenantUsersNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const id = Number(userId);
+    if (!Number.isFinite(id) || id <= 0) return;
+    const values = getTenantUserRowValues(rowEl);
+    const actionButtons = Array.from(rowEl?.querySelectorAll('button') || []);
+    actionButtons.forEach((btn) => { btn.disabled = true; });
+    try {
+      const res = await api(`/api/platform/tenant-users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          tenantId: tenant.id,
+          ...values,
+        }),
+      });
+      setNotice(els.tenantUsersNotice, `Updated ${res?.user?.email || 'tenant user'}.`, 'ok');
+      await loadTenantUsers();
+      await loadTenants();
+      state.selectedTenantId = tenant.id;
+      renderTenants();
+    } catch (err) {
+      setNotice(els.tenantUsersNotice, err.message || 'Failed to update tenant user', 'error');
+    } finally {
+      actionButtons.forEach((btn) => { btn.disabled = false; });
+    }
+  }
+
+  async function handleSetTenantUserPassword(userId, rowEl) {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.tenantUsersNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const id = Number(userId);
+    if (!Number.isFinite(id) || id <= 0) return;
+    const currentEmail = rowEl?.querySelector('td')?.innerText?.split('\n')[0]?.trim() || `user #${id}`;
+    const password = window.prompt(`Set a new password for ${currentEmail}`, '');
+    if (password === null) return;
+    const nextPassword = String(password);
+    if (!nextPassword) {
+      setNotice(els.tenantUsersNotice, 'Password update cancelled (empty password).', 'error');
+      return;
+    }
+    const actionButtons = Array.from(rowEl?.querySelectorAll('button') || []);
+    actionButtons.forEach((btn) => { btn.disabled = true; });
+    try {
+      await api(`/api/platform/tenant-users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          tenantId: tenant.id,
+          password: nextPassword,
+        }),
+      });
+      setNotice(els.tenantUsersNotice, `Password updated for ${currentEmail}.`, 'ok');
+      await loadTenantUsers();
+    } catch (err) {
+      setNotice(els.tenantUsersNotice, err.message || 'Failed to update password', 'error');
+    } finally {
+      actionButtons.forEach((btn) => { btn.disabled = false; });
+    }
+  }
+
+  async function handleRemoveTenantUser(userId, rowEl) {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.tenantUsersNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const id = Number(userId);
+    if (!Number.isFinite(id) || id <= 0) return;
+    const currentEmail = rowEl?.querySelector('td')?.innerText?.split('\n')[0]?.trim() || `user #${id}`;
+    if (!window.confirm(`Remove tenant access for ${currentEmail}?`)) return;
+    const actionButtons = Array.from(rowEl?.querySelectorAll('button') || []);
+    actionButtons.forEach((btn) => { btn.disabled = true; });
+    try {
+      await api(`/api/platform/tenant-users/${id}?tenantId=${tenant.id}`, { method: 'DELETE' });
+      setNotice(els.tenantUsersNotice, `Removed tenant access for ${currentEmail}.`, 'ok');
+      await loadTenantUsers();
+      await loadTenants();
+      state.selectedTenantId = tenant.id;
+      renderTenants();
+    } catch (err) {
+      setNotice(els.tenantUsersNotice, err.message || 'Failed to remove tenant access', 'error');
+    } finally {
+      actionButtons.forEach((btn) => { btn.disabled = false; });
+    }
+  }
+
   function renderSelectedTenant() {
     const tenant = getSelectedTenant();
     if (!tenant) {
@@ -2156,6 +2488,7 @@
       setNotice(els.tenantDomainProvisionNotice, '', '');
       renderPlacementPanel();
       resetDomainProvisioningState();
+      resetTenantUsersState();
       resetTenantFormTracking();
       renderCmsPanel();
       return;
@@ -2186,12 +2519,17 @@
       }
       clearTenantFormValidation();
     }
+    if (tenantChanged) {
+      resetTenantUserForm();
+      setNotice(els.tenantUsersNotice, '', '');
+    }
     els.selectedTenantMeta.textContent =
       `Created: ${formatDateTime(tenant.createdAt)} • Updated: ${formatDateTime(tenant.updatedAt)}`;
     renderTenantContextHeader(tenant);
     renderTenantFormState();
     setTenantSettingsTab(state.tenantSettingsTab || 'branding');
     renderDomainProvisioningPanel();
+    renderTenantUsersPanel();
     renderPlacementPanel();
     renderCmsPanel();
   }
@@ -2245,6 +2583,7 @@
         renderTenants();
         await loadHomepagePlacement();
         await loadTenantDomainProvisioning();
+        await loadTenantUsers();
         await loadTenantCmsContent();
       });
     });
@@ -2710,6 +3049,7 @@
         await loadTenants();
         await loadHomepagePlacement();
         await loadTenantDomainProvisioning();
+        await loadTenantUsers();
         await loadTenantCmsContent();
       }
     } catch (err) {
@@ -2728,6 +3068,7 @@
     state.auth = null;
     resetPlacementState();
     resetDomainProvisioningState();
+    resetTenantUsersState();
     resetTenantFormTracking();
     resetCmsState();
     showLogin();
@@ -2764,6 +3105,7 @@
       renderTenants();
       await loadHomepagePlacement();
       await loadTenantDomainProvisioning();
+      await loadTenantUsers();
       await loadTenantCmsContent();
     } catch (err) {
       setNotice(els.appNotice, err.message || 'Failed to create tenant', 'error');
@@ -2804,6 +3146,7 @@
       state.selectedTenantId = updated.id;
       renderTenants();
       await loadTenantDomainProvisioning();
+      await loadTenantUsers();
     } catch (err) {
       state.tenantForm.lastSaveMessage = 'Save failed';
       renderTenantFormState();
@@ -2946,8 +3289,9 @@
         if (isPlatformAdminLink && state.uiMode !== 'tenant') {
           event.preventDefault();
           const main = link.dataset.adminMainLink || link.closest('[data-nav-menu]')?.dataset?.navMenu || state.adminNav?.main || 'tenants';
+          const requestedSubLink = link.dataset.adminSubLink || '';
           const tab = link.dataset.tenantSettingsTab || '';
-          let sub = state.adminNav?.main === main ? state.adminNav?.sub : '';
+          let sub = requestedSubLink || (state.adminNav?.main === main ? state.adminNav?.sub : '');
           if (main === 'integrations' && tab) {
             const tabToSub = {
               domains: 'domain-provisioning',
@@ -2957,7 +3301,7 @@
             };
             sub = tabToSub[tab] || sub;
           }
-          setAdminNav({ main, sub });
+          setAdminNav({ main, sub }, { focus: !requestedSubLink, behavior: 'auto' });
           return;
         }
         event.preventDefault();
@@ -3052,6 +3396,35 @@
     if (els.tenantUsersOpenDomainsBtn) {
       els.tenantUsersOpenDomainsBtn.addEventListener('click', () => setTenantSettingsTab('domains'));
     }
+    if (els.tenantUserCreateBtn) {
+      els.tenantUserCreateBtn.addEventListener('click', handleCreateTenantUser);
+    }
+    if (els.tenantUserFormResetBtn) {
+      els.tenantUserFormResetBtn.addEventListener('click', () => {
+        resetTenantUserForm();
+        setNotice(els.tenantUsersNotice, '', '');
+      });
+    }
+    if (els.tenantUsersRefreshBtn) {
+      els.tenantUsersRefreshBtn.addEventListener('click', loadTenantUsers);
+    }
+    if (els.tenantUsersTableBody) {
+      els.tenantUsersTableBody.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-tenant-user-action]');
+        if (!button) return;
+        const rowEl = button.closest('[data-tenant-user-row]');
+        const userId = rowEl?.getAttribute('data-user-id');
+        if (!userId) return;
+        const action = button.dataset.tenantUserAction || '';
+        if (action === 'save') {
+          handleSaveTenantUserRow(userId, rowEl);
+        } else if (action === 'password') {
+          handleSetTenantUserPassword(userId, rowEl);
+        } else if (action === 'remove') {
+          handleRemoveTenantUser(userId, rowEl);
+        }
+      });
+    }
     if (els.tenantContentOpenArticlesBtn) {
       els.tenantContentOpenArticlesBtn.addEventListener('click', () => {
         if (getCurrentTenantModuleAccess().articles === false) return;
@@ -3097,6 +3470,7 @@
       renderTenants();
       await loadHomepagePlacement();
       await loadTenantDomainProvisioning();
+      await loadTenantUsers();
       await loadTenantCmsContent();
     });
     els.createTenantBtn.addEventListener('click', handleCreateTenant);
@@ -3105,6 +3479,7 @@
       await loadTenants();
       await loadHomepagePlacement();
       await loadTenantDomainProvisioning();
+      await loadTenantUsers();
       await loadTenantCmsContent();
     });
     els.saveTenantBtn.addEventListener('click', handleSaveTenant);
@@ -3207,6 +3582,7 @@
         await loadTenants();
         await loadHomepagePlacement();
         await loadTenantDomainProvisioning();
+        await loadTenantUsers();
         await loadTenantCmsContent();
       } else {
         els.loginEmail.value = '';
