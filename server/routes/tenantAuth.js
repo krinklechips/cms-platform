@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '../db.js';
-import { verifyPassword } from '../auth/passwords.js';
+import { hashPassword, verifyPassword } from '../auth/passwords.js';
 import { requireTenantHost } from '../middleware/hostContext.js';
 
 const router = express.Router();
@@ -95,48 +95,110 @@ router.get('/me', requireTenantHost, (req, res) => {
 });
 
 router.post('/login', requireTenantHost, (req, res) => {
-  const tenant = req.hostContext?.tenant;
-  if (!tenant) return res.status(400).json({ error: 'Tenant host is not configured' });
+  try {
+    const tenant = req.hostContext?.tenant;
+    if (!tenant) return res.status(400).json({ error: 'Tenant host is not configured' });
 
-  const email = String(req.body?.email || '').trim().toLowerCase();
-  const password = String(req.body?.password || '');
-  if (!email || !password) {
-    return res.status(400).json({ error: 'email and password are required' });
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    if (!email || !password) {
+      return res.status(400).json({ error: 'email and password are required' });
+    }
+
+    const user = db.prepare(`
+      SELECT id, email, password_hash, status
+      FROM users
+      WHERE email = ?
+      LIMIT 1
+    `).get(email);
+
+    if (!user || user.status !== 'active' || !user.password_hash || !verifyPassword(password, user.password_hash)) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const membership = loadActiveMembership(user.id, tenant.id);
+    if (!membership) {
+      return res.status(403).json({ error: 'Tenant access denied' });
+    }
+
+    req.session.regenerate((regenErr) => {
+      if (regenErr) {
+        console.error('[tenant-auth] failed to regenerate session', regenErr);
+        return res.status(500).json({ error: 'Failed to start tenant session' });
+      }
+
+      req.session.user = tenantSessionPayload({ user, membership, tenant });
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('[tenant-auth] failed to save tenant session', saveErr);
+          return res.status(500).json({ error: 'Failed to persist tenant session' });
+        }
+        return res.json({
+          ok: true,
+          tenant,
+          user: {
+            id: user.id,
+            email: user.email,
+            tenantRole: membership.role,
+          },
+          moduleAccess: readTenantModuleAccess(tenant.id),
+        });
+      });
+    });
+  } catch (err) {
+    console.error('[tenant-auth] login error', err);
+    return res.status(500).json({ error: 'Tenant login failed' });
   }
-
-  const user = db.prepare(`
-    SELECT id, email, password_hash, status
-    FROM users
-    WHERE email = ?
-    LIMIT 1
-  `).get(email);
-
-  if (!user || user.status !== 'active' || !user.password_hash || !verifyPassword(password, user.password_hash)) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const membership = loadActiveMembership(user.id, tenant.id);
-  if (!membership) {
-    return res.status(403).json({ error: 'Tenant access denied' });
-  }
-
-  req.session.user = tenantSessionPayload({ user, membership, tenant });
-  return res.json({
-    ok: true,
-    tenant,
-    user: {
-      id: user.id,
-      email: user.email,
-      tenantRole: membership.role,
-    },
-    moduleAccess: readTenantModuleAccess(tenant.id),
-  });
 });
 
 router.post('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.json({ ok: true });
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('[tenant-auth] logout error', err);
+      return res.status(500).json({ error: 'Failed to end tenant session' });
+    }
+    return res.json({ ok: true });
   });
+});
+
+router.post('/change-password', requireTenantHost, (req, res) => {
+  try {
+    const tenant = req.hostContext?.tenant;
+    const userId = Number(req.session?.user?.id);
+    if (!tenant) return res.status(400).json({ error: 'Tenant host is not configured' });
+    if (!userId || req.session?.user?.isPlatformAdmin) {
+      return res.status(401).json({ error: 'Tenant login required' });
+    }
+
+    const membership = loadActiveMembership(userId, tenant.id);
+    if (!membership) {
+      return res.status(403).json({ error: 'Tenant access denied' });
+    }
+
+    const currentPassword = String(req.body?.currentPassword || '');
+    const newPassword = String(req.body?.newPassword || '');
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'currentPassword and newPassword are required' });
+    }
+
+    const user = db.prepare('SELECT id, email, password_hash, status FROM users WHERE id = ? LIMIT 1').get(userId);
+    if (!user || user.status !== 'active' || !user.password_hash || !verifyPassword(currentPassword, user.password_hash)) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    let passwordHash;
+    try {
+      passwordHash = hashPassword(newPassword);
+    } catch (err) {
+      return res.status(400).json({ error: err.message || 'Invalid password' });
+    }
+
+    db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(passwordHash, userId);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[tenant-auth] change-password error', err);
+    return res.status(500).json({ error: 'Failed to change password' });
+  }
 });
 
 export default router;

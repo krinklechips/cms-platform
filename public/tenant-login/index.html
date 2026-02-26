@@ -51,6 +51,44 @@
           linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.94) 100%),
           linear-gradient(135deg, #ecfeff 0%, #f0fdfa 50%, #ffffff 100%);
       }
+      .brandrow {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 8px;
+      }
+      .brandmark {
+        width: 148px;
+        height: 56px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+        overflow: visible;
+      }
+      .brandmark img {
+        width: auto;
+        height: 56px;
+        object-fit: contain;
+        object-position: left center;
+        display: block;
+        transform: scale(1.12);
+        transform-origin: left center;
+      }
+      .brandcopy {
+        min-width: 0;
+      }
+      .brandcopy strong {
+        display: block;
+        font-size: 14px;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+      }
+      .brandcopy span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+      }
       .eyebrow {
         display: inline-flex;
         align-items: center;
@@ -220,6 +258,13 @@
     <main class="shell">
       <section class="hero">
         <div class="panel intro">
+          <div class="brandrow" aria-label="Tenant CMS brand">
+            <span class="brandmark"><img src="/think.png" alt="Think CMS logo" /></span>
+            <span class="brandcopy">
+              <strong>CMS Platform</strong>
+              <span>Tenant workspace login</span>
+            </span>
+          </div>
           <div class="eyebrow">Tenant CMS Access</div>
           <h1>Secure Login for Your Workspace</h1>
           <p class="sub">

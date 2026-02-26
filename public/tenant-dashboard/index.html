@@ -52,29 +52,32 @@
       .brandrow {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
       }
       .mark {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
-        background: #ffffff;
-        border: 1px solid #dbe3ef;
+        width: 120px;
+        height: 44px;
+        border-radius: 0;
+        background: transparent;
+        border: 0;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         color: #fff;
         font-weight: 800;
-        box-shadow: 0 8px 18px rgba(15, 118, 110, 0.20);
+        box-shadow: none;
         overflow: hidden;
       }
       .mark img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        width: auto;
+        height: 44px;
+        object-fit: contain;
+        object-position: left center;
         display: block;
+        transform: scale(1.1);
+        transform-origin: left center;
       }
-      .brandbox strong { display: block; font-size: 14px; }
+      .brandbox strong { display: block; font-size: 15px; letter-spacing: -0.02em; }
       .brandbox span { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
       .pill {
         display: inline-flex;
