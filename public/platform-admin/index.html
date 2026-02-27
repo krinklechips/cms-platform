@@ -1872,6 +1872,115 @@
       .login-shell .card > p.meta {
         color: #666a78;
       }
+      /* Tenant settings clarity pass */
+      #tenant-settings-tabs.subtabs {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid #e6e6ee;
+        border-radius: 14px;
+        background: #fcfcff;
+      }
+      #tenant-settings-tabs.subtabs button {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 2px;
+        min-height: 56px;
+        border-radius: 10px;
+        border: 1px solid #e4e4eb;
+        background: #fff;
+        color: #3f3f46;
+        padding: 8px 10px;
+      }
+      #tenant-settings-tabs.subtabs button .tab-title {
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+      }
+      #tenant-settings-tabs.subtabs button .tab-sub {
+        font-size: 10px;
+        line-height: 1.2;
+        color: #7c8191;
+        font-family: var(--font-mono);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      #tenant-settings-tabs.subtabs button.is-active {
+        border-color: #c7b9ff;
+        background: #f4efff;
+        color: #4c1d95;
+        box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.12);
+      }
+      #tenant-settings-tabs.subtabs button.is-active .tab-sub {
+        color: #6d28d9;
+      }
+      .tenant-settings-panel {
+        border: 1px solid #e8e8f0;
+        border-radius: 14px;
+        background: #fcfdff;
+        padding: 12px;
+        gap: 12px;
+      }
+      .tenant-settings-panel::before {
+        content: attr(data-panel-label);
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 9px;
+        border-radius: 999px;
+        border: 1px solid #ddd7ff;
+        background: #f6f2ff;
+        color: #5b21b6;
+        font-size: 10px;
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.11em;
+      }
+      .tenant-settings-panel[data-tenant-settings-panel="domains"] {
+        border-color: #d9e4ff;
+        background: #fafdff;
+      }
+      .tenant-settings-panel[data-tenant-settings-panel="domains"]::before {
+        border-color: #cfe0ff;
+        background: #eef5ff;
+        color: #1e40af;
+      }
+      .tenant-settings-panel[data-tenant-settings-panel="support"] {
+        border-color: #dbeee3;
+        background: #fafffc;
+      }
+      .tenant-settings-panel[data-tenant-settings-panel="support"]::before {
+        border-color: #cce7d9;
+        background: #edf9f2;
+        color: #166534;
+      }
+      .tenant-settings-panel[data-tenant-settings-panel="users"] {
+        border-color: #f1e3cf;
+        background: #fffcf8;
+      }
+      .tenant-settings-panel[data-tenant-settings-panel="users"]::before {
+        border-color: #f1ddbb;
+        background: #fff3e3;
+        color: #9a3412;
+      }
+      .tenant-settings-panel[data-tenant-settings-panel="content"] {
+        border-color: #dcecf4;
+        background: #fbfeff;
+      }
+      .tenant-settings-panel[data-tenant-settings-panel="content"]::before {
+        border-color: #cfe4ef;
+        background: #edf7fb;
+        color: #0f4c81;
+      }
+      @media (max-width: 1160px) {
+        #tenant-settings-tabs.subtabs {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
       @media (max-width: 980px) {
         .grid { grid-template-columns: 1fr; }
         #section-tenants.grid { grid-template-columns: 1fr; }
@@ -1888,7 +1997,12 @@
         .topbar-control select, .auth-chip { min-width: 0; width: 100%; }
         .topbar-signout { width: 100%; }
         .card-sticky { position: static; }
-        .subtabs { position: static; }
+        #tenant-settings-tabs.subtabs {
+          grid-template-columns: 1fr 1fr;
+        }
+        #tenant-settings-tabs.subtabs button {
+          min-height: 50px;
+        }
         .admin-subnav-shell { position: static; order: -1; }
       }
       @media (max-width: 640px) {
@@ -2277,14 +2391,29 @@
           </div>
 
           <div id="tenant-settings-tabs" class="subtabs" role="tablist" aria-label="Tenant settings sections">
-            <button type="button" data-tenant-settings-tab="branding" class="is-active">Branding</button>
-            <button type="button" data-tenant-settings-tab="domains">Domains</button>
-            <button type="button" data-tenant-settings-tab="support">Support</button>
-            <button type="button" data-tenant-settings-tab="users">Users</button>
-            <button type="button" data-tenant-settings-tab="content">Content Modules</button>
+            <button type="button" data-tenant-settings-tab="branding" class="is-active">
+              <span class="tab-title">Branding</span>
+              <span class="tab-sub">Identity</span>
+            </button>
+            <button type="button" data-tenant-settings-tab="domains">
+              <span class="tab-title">Domains</span>
+              <span class="tab-sub">Routing</span>
+            </button>
+            <button type="button" data-tenant-settings-tab="support">
+              <span class="tab-title">Support</span>
+              <span class="tab-sub">Contact</span>
+            </button>
+            <button type="button" data-tenant-settings-tab="users">
+              <span class="tab-title">Users</span>
+              <span class="tab-sub">Access</span>
+            </button>
+            <button type="button" data-tenant-settings-tab="content">
+              <span class="tab-title">Content Modules</span>
+              <span class="tab-sub">Permissions</span>
+            </button>
           </div>
 
-          <div id="tenant-settings-panel-branding" data-tenant-settings-panel="branding" class="tenant-settings-panel section-anchor">
+          <div id="tenant-settings-panel-branding" data-tenant-settings-panel="branding" data-panel-label="Branding Settings" class="tenant-settings-panel section-anchor">
             <div class="subsection">
               <h3>Basic Tenant Setup</h3>
               <p class="meta">Keep the core business details here. Advanced branding and URLs can stay collapsed until needed.</p>
@@ -2330,7 +2459,7 @@
             </details>
           </div>
 
-          <div id="tenant-settings-panel-domains" data-tenant-settings-panel="domains" class="tenant-settings-panel hidden section-anchor">
+          <div id="tenant-settings-panel-domains" data-tenant-settings-panel="domains" data-panel-label="Domain Provisioning" class="tenant-settings-panel hidden section-anchor">
             <div class="subsection">
               <h3>Tenant CMS Domain</h3>
               <p class="meta">Store the tenant’s CMS hostname and manage custom domain provisioning/verification for the Render-hosted SaaS CMS.</p>
@@ -2400,7 +2529,7 @@
             </details>
           </div>
 
-          <div id="tenant-settings-panel-support" data-tenant-settings-panel="support" class="tenant-settings-panel hidden section-anchor">
+          <div id="tenant-settings-panel-support" data-tenant-settings-panel="support" data-panel-label="Support Details" class="tenant-settings-panel hidden section-anchor">
             <div class="subsection">
               <h3>Support Contact</h3>
               <p class="meta">This email is used as the tenant-facing support contact for UI and content modules.</p>
@@ -2412,7 +2541,7 @@
             </div>
           </div>
 
-          <div id="tenant-settings-panel-users" data-tenant-settings-panel="users" class="tenant-settings-panel hidden section-anchor">
+          <div id="tenant-settings-panel-users" data-tenant-settings-panel="users" data-panel-label="User Access" class="tenant-settings-panel hidden section-anchor">
             <div class="subsection">
               <h3>Tenant User Access</h3>
               <p class="meta">Create tenant users, set passwords, update roles/status, and remove tenant access from the admin CMS.</p>
@@ -2488,7 +2617,7 @@
             </div>
           </div>
 
-          <div id="tenant-settings-panel-content" data-tenant-settings-panel="content" class="tenant-settings-panel hidden section-anchor">
+          <div id="tenant-settings-panel-content" data-tenant-settings-panel="content" data-panel-label="Content & Site Controls" class="tenant-settings-panel hidden section-anchor">
             <div class="subsection">
               <h3>Tenant CMS Module Access</h3>
               <p class="meta">Control what the tenant sees in the tenant dashboard/workspace. Changes are saved in tenant settings and returned by the tenant auth API.</p>
