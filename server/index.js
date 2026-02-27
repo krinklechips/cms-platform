@@ -62,6 +62,14 @@ app.use(express.json({ limit: '2mb' }));
 app.use(
   cors((req, cb) => {
     const origin = req.headers.origin;
+    const isPublicApiRequest = req.path === '/api/public' || req.path.startsWith('/api/public/');
+
+    // Public content APIs are intentionally consumable cross-origin by tenant websites.
+    // They do not rely on session cookies.
+    if (isPublicApiRequest) {
+      return cb(null, { origin: true, credentials: false });
+    }
+
     if (!origin) {
       return cb(null, { origin: true, credentials: true });
     }
@@ -76,7 +84,9 @@ app.use(
       return cb(null, { origin: true, credentials: true });
     }
 
-    return cb(new Error(`CORS blocked for origin: ${origin}`));
+    // Do not throw a server error for blocked browser origins.
+    // Return no CORS permission and let the browser block access.
+    return cb(null, { origin: false });
   }),
 );
 
