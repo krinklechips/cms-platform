@@ -2551,6 +2551,42 @@
               </div>
               <p class="footer-note" style="margin-top:8px;">Debug note: the top-bar `Tenant CMS View` toggle is still available for super admin testing, but the left nav now respects these module toggles.</p>
             </div>
+            <div class="subsection">
+              <h3>Public Site Section Controls (Admin Only)</h3>
+              <p class="meta">Use this to control tenant CMS-driven sections that are rendered on the public website. Toggle visibility and rename section copy without changing site layout code.</p>
+              <p id="tenant-site-sections-notice" class="notice hidden"></p>
+              <div class="card nested-card" style="padding:12px; margin:0;">
+                <h4 style="margin:0 0 8px;">Home: Insights Section</h4>
+                <div class="toggle-row" style="margin-bottom:10px;">
+                  <div>
+                    <div class="toggle-row-title">Enable Insights section on public site</div>
+                    <div class="toggle-row-sub">When disabled, the section is hidden even if published articles exist.</div>
+                  </div>
+                  <label class="switch" aria-label="Enable Home Insights section">
+                    <input id="tenant-site-home-insights-enabled" type="checkbox" />
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                </div>
+                <div class="row">
+                  <label>
+                    Eyebrow
+                    <input id="tenant-site-home-insights-eyebrow" type="text" placeholder="Insights" />
+                  </label>
+                  <label>
+                    Heading
+                    <input id="tenant-site-home-insights-title" type="text" placeholder="Latest updates from your CMS-powered editorial feed." />
+                  </label>
+                </div>
+                <label>
+                  Subtitle
+                  <textarea id="tenant-site-home-insights-subtitle" placeholder="This section reads published articles from the tenant CMS while keeping layout stable in site code."></textarea>
+                </label>
+                <div class="actions">
+                  <button type="button" id="tenant-site-sections-save-btn" class="primary">Save Section Controls</button>
+                  <button type="button" id="tenant-site-sections-reset-btn">Reset</button>
+                </div>
+              </div>
+            </div>
             <div class="placeholder-card">
               <h3>Content Modules Quick Start</h3>
               <p class="meta" style="margin:0 0 10px;">Use these shortcuts after onboarding to immediately populate the tenant’s public-facing site content.</p>

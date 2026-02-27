@@ -9,6 +9,14 @@
     annualReports: true,
     navigationTabs: true,
   });
+  const DEFAULT_SITE_SECTIONS = Object.freeze({
+    homeInsights: {
+      enabled: true,
+      eyebrow: 'Insights',
+      title: 'Latest updates from your CMS-powered editorial feed.',
+      subtitle: 'This section reads published articles from the tenant CMS while keeping layout stable in site code.',
+    },
+  });
   const TENANT_USER_ROLES = Object.freeze(['admin', 'editor', 'viewer']);
   const TENANT_USER_STATUSES = Object.freeze(['active', 'disabled']);
 
@@ -62,6 +70,8 @@
       editingNavTabId: null,
       siteNavigation: { version: 1, primary: [], cta: null },
       siteNavSelection: { topId: null, columnId: null },
+      siteSections: JSON.parse(JSON.stringify(DEFAULT_SITE_SECTIONS)),
+      siteSectionsSnapshot: JSON.parse(JSON.stringify(DEFAULT_SITE_SECTIONS)),
       moduleAccess: { ...DEFAULT_TENANT_MODULE_ACCESS },
       moduleAccessSnapshot: { ...DEFAULT_TENANT_MODULE_ACCESS },
     },
@@ -163,6 +173,13 @@
     tenantModuleNavigationTabs: document.getElementById('tenant-module-navigation-tabs'),
     tenantModuleAccessSaveBtn: document.getElementById('tenant-module-access-save-btn'),
     tenantModuleAccessResetBtn: document.getElementById('tenant-module-access-reset-btn'),
+    tenantSiteSectionsNotice: document.getElementById('tenant-site-sections-notice'),
+    tenantSiteHomeInsightsEnabled: document.getElementById('tenant-site-home-insights-enabled'),
+    tenantSiteHomeInsightsEyebrow: document.getElementById('tenant-site-home-insights-eyebrow'),
+    tenantSiteHomeInsightsTitle: document.getElementById('tenant-site-home-insights-title'),
+    tenantSiteHomeInsightsSubtitle: document.getElementById('tenant-site-home-insights-subtitle'),
+    tenantSiteSectionsSaveBtn: document.getElementById('tenant-site-sections-save-btn'),
+    tenantSiteSectionsResetBtn: document.getElementById('tenant-site-sections-reset-btn'),
     tenantContentOpenArticlesBtn: document.getElementById('tenant-content-open-articles-btn'),
     tenantContentOpenLibraryBtn: document.getElementById('tenant-content-open-library-btn'),
     tenantContentOpenHomepageBtn: document.getElementById('tenant-content-open-homepage-btn'),
@@ -627,6 +644,24 @@
     };
   }
 
+  function normalizeSiteSections(input) {
+    const source = input && typeof input === 'object' ? input : {};
+    const rawHomeInsights = source.homeInsights && typeof source.homeInsights === 'object'
+      ? source.homeInsights
+      : {};
+    const fallback = DEFAULT_SITE_SECTIONS.homeInsights;
+    return {
+      homeInsights: {
+        enabled: Object.prototype.hasOwnProperty.call(rawHomeInsights, 'enabled')
+          ? Boolean(rawHomeInsights.enabled)
+          : Boolean(fallback.enabled),
+        eyebrow: String(rawHomeInsights.eyebrow || '').trim() || fallback.eyebrow,
+        title: String(rawHomeInsights.title || '').trim() || fallback.title,
+        subtitle: String(rawHomeInsights.subtitle || '').trim() || fallback.subtitle,
+      },
+    };
+  }
+
   function ensureAbsoluteUrl(url) {
     const raw = String(url || '').trim();
     if (!raw) return '';
@@ -957,6 +992,74 @@
     renderTenantModuleAccessControls();
     applyTenantWorkspaceView();
     syncSidebarActiveLink();
+  }
+
+  function siteSectionsEqual(a, b) {
+    return JSON.stringify(normalizeSiteSections(a)) === JSON.stringify(normalizeSiteSections(b));
+  }
+
+  function getCurrentSiteSections() {
+    return normalizeSiteSections(state.cms?.siteSections || DEFAULT_SITE_SECTIONS);
+  }
+
+  function renderTenantSiteSectionsControls() {
+    const tenant = getSelectedTenant();
+    const current = getCurrentSiteSections();
+    const snapshot = normalizeSiteSections(state.cms?.siteSectionsSnapshot || DEFAULT_SITE_SECTIONS);
+    const dirty = !siteSectionsEqual(current, snapshot);
+
+    if (els.tenantSiteHomeInsightsEnabled) {
+      els.tenantSiteHomeInsightsEnabled.checked = Boolean(current.homeInsights.enabled);
+      els.tenantSiteHomeInsightsEnabled.disabled = !tenant;
+    }
+    if (els.tenantSiteHomeInsightsEyebrow) {
+      els.tenantSiteHomeInsightsEyebrow.value = current.homeInsights.eyebrow || '';
+      els.tenantSiteHomeInsightsEyebrow.disabled = !tenant;
+    }
+    if (els.tenantSiteHomeInsightsTitle) {
+      els.tenantSiteHomeInsightsTitle.value = current.homeInsights.title || '';
+      els.tenantSiteHomeInsightsTitle.disabled = !tenant;
+    }
+    if (els.tenantSiteHomeInsightsSubtitle) {
+      els.tenantSiteHomeInsightsSubtitle.value = current.homeInsights.subtitle || '';
+      els.tenantSiteHomeInsightsSubtitle.disabled = !tenant;
+    }
+    if (els.tenantSiteSectionsSaveBtn) {
+      els.tenantSiteSectionsSaveBtn.disabled = !tenant || !dirty;
+      els.tenantSiteSectionsSaveBtn.textContent = dirty ? 'Save Section Controls' : 'Section Controls Saved';
+    }
+    if (els.tenantSiteSectionsResetBtn) {
+      els.tenantSiteSectionsResetBtn.disabled = !tenant || !dirty;
+    }
+
+    if (!tenant) {
+      setNotice(els.tenantSiteSectionsNotice, '', '');
+      return;
+    }
+    if (dirty) {
+      setNotice(els.tenantSiteSectionsNotice, 'Section control changes are not saved yet.', 'error');
+    } else {
+      setNotice(els.tenantSiteSectionsNotice, '', '');
+    }
+  }
+
+  function collectSiteSectionsFromControls() {
+    return normalizeSiteSections({
+      homeInsights: {
+        enabled: Boolean(els.tenantSiteHomeInsightsEnabled?.checked),
+        eyebrow: String(els.tenantSiteHomeInsightsEyebrow?.value || ''),
+        title: String(els.tenantSiteHomeInsightsTitle?.value || ''),
+        subtitle: String(els.tenantSiteHomeInsightsSubtitle?.value || ''),
+      },
+    });
+  }
+
+  function setTenantSiteSectionsLocal(nextSections, options) {
+    const normalized = normalizeSiteSections(nextSections);
+    if (!state.cms) return;
+    state.cms.siteSections = normalized;
+    if (options?.markSaved) state.cms.siteSectionsSnapshot = JSON.parse(JSON.stringify(normalized));
+    renderTenantSiteSectionsControls();
   }
 
   function renderTenantContextHeader(tenant) {
@@ -1419,6 +1522,8 @@
       editingNavTabId: null,
       siteNavigation: { version: 1, primary: [], cta: null },
       siteNavSelection: { topId: null, columnId: null },
+      siteSections: JSON.parse(JSON.stringify(DEFAULT_SITE_SECTIONS)),
+      siteSectionsSnapshot: JSON.parse(JSON.stringify(DEFAULT_SITE_SECTIONS)),
       moduleAccess: { ...DEFAULT_TENANT_MODULE_ACCESS },
       moduleAccessSnapshot: { ...DEFAULT_TENANT_MODULE_ACCESS },
     };
@@ -2246,6 +2351,7 @@
   function renderCmsPanel() {
     const tenant = getSelectedTenant();
     renderTenantModuleAccessControls();
+    renderTenantSiteSectionsControls();
     if (!tenant) {
       els.cmsContentEmpty.classList.remove('hidden');
       els.cmsContentPanel.classList.add('hidden');
@@ -3294,6 +3400,8 @@
       state.cms.annualReports = Array.isArray(annualReports) ? annualReports : [];
       state.cms.navTabs = Array.isArray(tenantSettings?.navigationTabs) ? tenantSettings.navigationTabs : [];
       state.cms.siteNavigation = normalizeClientSiteNavigation(tenantSettings?.siteNavigation);
+      state.cms.siteSections = normalizeSiteSections(tenantSettings?.siteSections);
+      state.cms.siteSectionsSnapshot = JSON.parse(JSON.stringify(state.cms.siteSections));
       state.cms.moduleAccess = normalizeTenantModuleAccess(tenantSettings?.moduleAccess);
       state.cms.moduleAccessSnapshot = { ...state.cms.moduleAccess };
 
@@ -3551,9 +3659,12 @@
     });
     state.cms.navTabs = Array.isArray(res.navigationTabs) ? res.navigationTabs : normalized;
     state.cms.siteNavigation = normalizeClientSiteNavigation(res.siteNavigation || state.cms.siteNavigation);
+    state.cms.siteSections = normalizeSiteSections(res.siteSections || state.cms.siteSections);
+    state.cms.siteSectionsSnapshot = JSON.parse(JSON.stringify(state.cms.siteSections));
     state.cms.moduleAccess = normalizeTenantModuleAccess(res.moduleAccess || state.cms.moduleAccess);
     state.cms.moduleAccessSnapshot = { ...state.cms.moduleAccess };
     renderTenantModuleAccessControls();
+    renderTenantSiteSectionsControls();
     renderNavTabsPanel();
     renderSiteNavigationBuilder();
     if (successMessage) setNotice(els.cmsNotice, successMessage, 'ok');
@@ -3574,6 +3685,7 @@
         body: JSON.stringify({ moduleAccess }),
       });
       setTenantModuleAccessLocal(res.moduleAccess || moduleAccess, { markSaved: true });
+      setTenantSiteSectionsLocal(res.siteSections || state.cms.siteSections, { markSaved: true });
       setNotice(els.tenantModuleAccessNotice, 'Tenant module access saved. Tenant view sidebar and dashboard will reflect these settings.', 'ok');
       renderCmsPanel();
     } catch (err) {
@@ -3587,6 +3699,34 @@
     const snapshot = normalizeTenantModuleAccess(state.cms?.moduleAccessSnapshot || DEFAULT_TENANT_MODULE_ACCESS);
     setTenantModuleAccessLocal(snapshot, { markSaved: false });
     setNotice(els.tenantModuleAccessNotice, 'Module access changes reset to last saved values.', 'ok');
+  }
+
+  async function handleSaveTenantSiteSections() {
+    const tenant = getSelectedTenant();
+    if (!tenant) {
+      setNotice(els.tenantSiteSectionsNotice, 'Select a tenant first.', 'error');
+      return;
+    }
+    const siteSections = collectSiteSectionsFromControls();
+    if (els.tenantSiteSectionsSaveBtn) els.tenantSiteSectionsSaveBtn.disabled = true;
+    try {
+      const res = await tenantApi('/api/tenant/settings', {
+        method: 'PUT',
+        body: JSON.stringify({ siteSections }),
+      });
+      setTenantSiteSectionsLocal(res.siteSections || siteSections, { markSaved: true });
+      setNotice(els.tenantSiteSectionsNotice, 'Public site section controls saved. Tenant public API now reflects these values.', 'ok');
+    } catch (err) {
+      setNotice(els.tenantSiteSectionsNotice, err.message || 'Failed to save section controls', 'error');
+    } finally {
+      renderTenantSiteSectionsControls();
+    }
+  }
+
+  function handleResetTenantSiteSections() {
+    const snapshot = normalizeSiteSections(state.cms?.siteSectionsSnapshot || DEFAULT_SITE_SECTIONS);
+    setTenantSiteSectionsLocal(snapshot, { markSaved: false });
+    setNotice(els.tenantSiteSectionsNotice, 'Section controls reset to last saved values.', 'ok');
   }
 
   async function handleSaveNavTab() {
@@ -3990,11 +4130,30 @@
         setTenantModuleAccessLocal(collectTenantModuleAccessFromControls(), { markSaved: false });
       });
     });
+    [
+      els.tenantSiteHomeInsightsEnabled,
+      els.tenantSiteHomeInsightsEyebrow,
+      els.tenantSiteHomeInsightsTitle,
+      els.tenantSiteHomeInsightsSubtitle,
+    ].filter(Boolean).forEach((input) => {
+      input.addEventListener('input', () => {
+        setTenantSiteSectionsLocal(collectSiteSectionsFromControls(), { markSaved: false });
+      });
+      input.addEventListener('change', () => {
+        setTenantSiteSectionsLocal(collectSiteSectionsFromControls(), { markSaved: false });
+      });
+    });
     if (els.tenantModuleAccessSaveBtn) {
       els.tenantModuleAccessSaveBtn.addEventListener('click', handleSaveTenantModuleAccess);
     }
     if (els.tenantModuleAccessResetBtn) {
       els.tenantModuleAccessResetBtn.addEventListener('click', handleResetTenantModuleAccess);
+    }
+    if (els.tenantSiteSectionsSaveBtn) {
+      els.tenantSiteSectionsSaveBtn.addEventListener('click', handleSaveTenantSiteSections);
+    }
+    if (els.tenantSiteSectionsResetBtn) {
+      els.tenantSiteSectionsResetBtn.addEventListener('click', handleResetTenantSiteSections);
     }
     if (els.tenantContextOpenDomainsTabBtn) {
       els.tenantContextOpenDomainsTabBtn.addEventListener('click', () => {

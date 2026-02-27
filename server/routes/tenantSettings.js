@@ -30,6 +30,53 @@ function defaultModuleAccess() {
   };
 }
 
+function defaultSiteSections() {
+  return {
+    homeInsights: {
+      enabled: true,
+      eyebrow: 'Insights',
+      title: 'Latest updates from your CMS-powered editorial feed.',
+      subtitle: 'This section reads published articles from the tenant CMS while keeping layout stable in site code.',
+    },
+  };
+}
+
+function normalizeSiteSectionBlock(input, current, fallback) {
+  const source = input && typeof input === 'object' ? input : {};
+  const prior = current && typeof current === 'object' ? current : {};
+  const base = fallback && typeof fallback === 'object' ? fallback : {};
+  const merged = { ...base, ...prior };
+
+  const enabled = Object.prototype.hasOwnProperty.call(source, 'enabled')
+    ? Boolean(source.enabled)
+    : Boolean(merged.enabled);
+  const eyebrow = Object.prototype.hasOwnProperty.call(source, 'eyebrow')
+    ? String(source.eyebrow || '').trim()
+    : String(merged.eyebrow || '');
+  const title = Object.prototype.hasOwnProperty.call(source, 'title')
+    ? String(source.title || '').trim()
+    : String(merged.title || '');
+  const subtitle = Object.prototype.hasOwnProperty.call(source, 'subtitle')
+    ? String(source.subtitle || '').trim()
+    : String(merged.subtitle || '');
+
+  return {
+    enabled,
+    eyebrow: eyebrow || String(base.eyebrow || ''),
+    title: title || String(base.title || ''),
+    subtitle: subtitle || String(base.subtitle || ''),
+  };
+}
+
+function normalizeSiteSections(input, current) {
+  const defaults = defaultSiteSections();
+  const source = input && typeof input === 'object' ? input : {};
+  const prior = current && typeof current === 'object' ? current : {};
+  return {
+    homeInsights: normalizeSiteSectionBlock(source.homeInsights, prior.homeInsights, defaults.homeInsights),
+  };
+}
+
 function normalizeModuleAccess(input, current) {
   const base = {
     ...defaultModuleAccess(),
@@ -171,6 +218,7 @@ router.get('/', (req, res) => {
     tenantId: req.tenant.id,
     navigationTabs: Array.isArray(settings.navigationTabs) ? settings.navigationTabs : [],
     siteNavigation: normalizeSiteNavigation(settings.siteNavigation, settings.siteNavigation),
+    siteSections: normalizeSiteSections(settings.siteSections, settings.siteSections),
     moduleAccess: normalizeModuleAccess(settings.moduleAccess, settings.moduleAccess),
   });
 });
@@ -185,11 +233,16 @@ router.put('/', (req, res) => {
   const siteNavigation = hasSiteNavigation
     ? normalizeSiteNavigation(req.body?.siteNavigation, current.siteNavigation)
     : normalizeSiteNavigation(current.siteNavigation, current.siteNavigation);
+  const hasSiteSections = Object.prototype.hasOwnProperty.call(req.body || {}, 'siteSections');
+  const siteSections = hasSiteSections
+    ? normalizeSiteSections(req.body?.siteSections, current.siteSections)
+    : normalizeSiteSections(current.siteSections, current.siteSections);
   const moduleAccess = normalizeModuleAccess(req.body?.moduleAccess, current.moduleAccess);
   const next = {
     ...current,
     navigationTabs: incomingTabs,
     siteNavigation,
+    siteSections,
     moduleAccess,
   };
 
@@ -206,6 +259,7 @@ router.put('/', (req, res) => {
     tenantId: req.tenant.id,
     navigationTabs: incomingTabs,
     siteNavigation,
+    siteSections,
     moduleAccess,
   });
 });

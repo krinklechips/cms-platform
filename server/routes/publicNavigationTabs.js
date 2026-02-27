@@ -52,6 +52,38 @@ function readTenantSettings(tenantId) {
   }
 }
 
+function defaultPublicSiteSections() {
+  return {
+    homeInsights: {
+      enabled: true,
+      eyebrow: 'Insights',
+      title: 'Latest updates from your CMS-powered editorial feed.',
+      subtitle: 'This section reads published articles from the tenant CMS while keeping layout stable in site code.',
+    },
+  };
+}
+
+function normalizePublicSiteSections(input) {
+  const defaults = defaultPublicSiteSections();
+  const source = input && typeof input === 'object' ? input : {};
+  const rawHomeInsights = source.homeInsights && typeof source.homeInsights === 'object' ? source.homeInsights : {};
+  return {
+    homeInsights: {
+      enabled: Object.prototype.hasOwnProperty.call(rawHomeInsights, 'enabled')
+        ? Boolean(rawHomeInsights.enabled)
+        : true,
+      eyebrow: String(rawHomeInsights.eyebrow || '').trim() || defaults.homeInsights.eyebrow,
+      title: String(rawHomeInsights.title || '').trim() || defaults.homeInsights.title,
+      subtitle: String(rawHomeInsights.subtitle || '').trim() || defaults.homeInsights.subtitle,
+    },
+  };
+}
+
+function readSiteSections(tenantId) {
+  const settings = readTenantSettings(tenantId);
+  return normalizePublicSiteSections(settings?.siteSections);
+}
+
 function normalizePublicNavLink(input, index, fallbackPrefix) {
   const label = String(input?.label || '').trim();
   if (!label) return null;
@@ -135,6 +167,7 @@ router.get('/navigation-tabs', (req, res) => {
   const tenant = resolved.tenant;
   const navigationTabs = readNavigationTabs(tenant.id);
   const siteNavigation = readSiteNavigation(tenant.id);
+  const siteSections = readSiteSections(tenant.id);
 
   return res.json({
     tenant: {
@@ -150,6 +183,7 @@ router.get('/navigation-tabs', (req, res) => {
     },
     navigationTabs,
     siteNavigation,
+    siteSections,
   });
 });
 
@@ -159,6 +193,7 @@ router.get('/site-navigation', (req, res) => {
 
   const tenant = resolved.tenant;
   const siteNavigation = readSiteNavigation(tenant.id);
+  const siteSections = readSiteSections(tenant.id);
 
   return res.json({
     tenant: {
@@ -173,6 +208,29 @@ router.get('/site-navigation', (req, res) => {
       },
     },
     siteNavigation,
+    siteSections,
+  });
+});
+
+router.get('/site-sections', (req, res) => {
+  const resolved = resolveTenant(req);
+  if (resolved.error) return res.status(resolved.status || 400).json({ error: resolved.error });
+
+  const tenant = resolved.tenant;
+  const siteSections = readSiteSections(tenant.id);
+  return res.json({
+    tenant: {
+      id: tenant.id,
+      slug: tenant.slug,
+      name: tenant.name,
+      branding: {
+        logoUrl: tenant.logo_url || null,
+        primaryColor: tenant.primary_color || null,
+        supportEmail: tenant.support_email || null,
+        publicSiteUrl: tenant.public_site_url || null,
+      },
+    },
+    siteSections,
   });
 });
 
