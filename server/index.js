@@ -90,6 +90,12 @@ app.use(
   }),
 );
 
+app.use(attachHostContext);
+app.use('/uploads', express.static(uploadsDir));
+app.use('/platform-admin', blockPlatformAdminOnTenantHost, express.static(path.join(publicDir, 'platform-admin')));
+app.use('/tenant-login', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-login')));
+app.use('/tenant-dashboard', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-dashboard')));
+
 app.use(
   session({
     store: new SQLiteSessionStore(),
@@ -104,8 +110,6 @@ app.use(
     },
   }),
 );
-
-app.use(attachHostContext);
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -218,10 +222,6 @@ app.use('/api/public', publicAnnualReportsRouter);
 app.use('/api/public', publicProductLinesRouter);
 app.use('/api/public', publicArticlesRouter);
 app.use('/api/public', publicNavigationTabsRouter);
-app.use('/uploads', express.static(uploadsDir));
-app.use('/platform-admin', blockPlatformAdminOnTenantHost, express.static(path.join(publicDir, 'platform-admin')));
-app.use('/tenant-login', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-login')));
-app.use('/tenant-dashboard', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-dashboard')));
 
 app.get('/', (req, res) => {
   if (req.hostContext?.isTenantHost) {

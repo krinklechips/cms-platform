@@ -11,6 +11,7 @@ const router = express.Router();
 const uploadsDir = path.isAbsolute(env.UPLOADS_DIR)
   ? env.UPLOADS_DIR
   : path.resolve(path.join(process.cwd(), env.UPLOADS_DIR));
+const resolvedUploadsDir = path.resolve(uploadsDir);
 
 router.use(requireAuth);
 router.use(requireTenantContext);
@@ -22,6 +23,49 @@ function extForMime(mime = '') {
   if (mime === 'image/gif') return '.gif';
   if (mime === 'image/webp') return '.webp';
   return '';
+}
+
+function tenantUploadsDir(tenantId) {
+  const id = Number(tenantId);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  return path.resolve(resolvedUploadsDir, `tenant-${id}`);
+}
+
+function resolvePathInsideUploads(relativePath) {
+  const raw = String(relativePath || '').replace(/\\/g, '/');
+  if (!raw) return null;
+  const normalized = path.posix.normalize(raw).replace(/^\/+/, '');
+  if (!normalized || normalized === '.' || normalized.startsWith('../') || normalized.includes('/../')) {
+    return null;
+  }
+  const targetPath = path.resolve(resolvedUploadsDir, normalized);
+  if (targetPath !== resolvedUploadsDir && !targetPath.startsWith(resolvedUploadsDir + path.sep)) {
+    return null;
+  }
+  return targetPath;
+}
+
+function extractRelativeUploadPath(fileUrl) {
+  const raw = String(fileUrl || '').trim();
+  if (!raw) return null;
+
+  const prefix = '/uploads/';
+  const safeDecode = (value) => {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return null;
+    }
+  };
+  try {
+    const parsed = new URL(raw);
+    if (!parsed.pathname.startsWith(prefix)) return null;
+    return safeDecode(parsed.pathname.slice(prefix.length));
+  } catch {
+    const idx = raw.indexOf(prefix);
+    if (idx < 0) return null;
+    return safeDecode(raw.slice(idx + prefix.length));
+  }
 }
 
 function mapMediaRow(row) {
@@ -52,9 +96,17 @@ router.get('/', (req, res) => {
 });
 
 router.post('/upload', async (req, res) => {
+  const tenantDir = tenantUploadsDir(req.tenant.id);
+  if (!tenantDir) {
+    return res.status(400).json({ error: 'Invalid tenant upload destination.' });
+  }
+
+  await fs.promises.mkdir(tenantDir, { recursive: true });
+
   const form = formidable({
     multiples: false,
     maxFileSize: 15 * 1024 * 1024,
+    uploadDir: tenantDir,
   });
 
   try {
@@ -75,11 +127,13 @@ router.post('/upload', async (req, res) => {
       return res.status(400).json({ error: 'Only JPG, PNG, GIF, WEBP, or PDF files are supported.' });
     }
 
-    await fs.promises.mkdir(uploadsDir, { recursive: true });
-    const ext = path.extname(file.originalFilename || '').toLowerCase() || extForMime(mime);
-    const tenantPrefix = `tenant-${req.tenant.id}`;
-    const filename = `${tenantPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`;
-    const targetPath = path.join(uploadsDir, filename);
+    const ext = extForMime(mime);
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`;
+    const targetPath = path.resolve(tenantDir, filename);
+    if (!targetPath.startsWith(tenantDir + path.sep)) {
+      return res.status(400).json({ error: 'Invalid upload path.' });
+    }
+
     await fs.promises.copyFile(file.filepath, targetPath);
     await fs.promises.chmod(targetPath, 0o644);
     await fs.promises.unlink(file.filepath).catch(() => {});
@@ -87,7 +141,8 @@ router.post('/upload', async (req, res) => {
     const stats = await fs.promises.stat(targetPath);
     const forwardedProto = req.headers['x-forwarded-proto'];
     const proto = Array.isArray(forwardedProto) ? forwardedProto[0] : (forwardedProto?.split(',')[0] || req.protocol);
-    const publicUrl = `${proto}://${req.get('host')}/uploads/${filename}`;
+    const relativeUploadPath = path.posix.join(`tenant-${req.tenant.id}`, filename);
+    const publicUrl = `${proto}://${req.get('host')}/uploads/${relativeUploadPath}`;
     const kind = mime.startsWith('image/') ? 'image' : (mime === 'application/pdf' ? 'document' : 'file');
 
     const info = db.prepare(
@@ -122,9 +177,9 @@ router.delete('/:id', async (req, res) => {
   db.prepare('DELETE FROM article_media WHERE tenant_id = ? AND media_id = ?').run(req.tenant.id, id);
   db.prepare('DELETE FROM media WHERE tenant_id = ? AND id = ?').run(req.tenant.id, id);
 
-  const filename = String(media.file_url || '').split('/uploads/')[1];
-  if (filename) {
-    const filePath = path.join(uploadsDir, filename);
+  const relativePath = extractRelativeUploadPath(media.file_url);
+  const filePath = relativePath ? resolvePathInsideUploads(relativePath) : null;
+  if (filePath) {
     await fs.promises.unlink(filePath).catch(() => {});
   }
 
