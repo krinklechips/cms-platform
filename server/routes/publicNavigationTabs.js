@@ -60,6 +60,7 @@ function defaultPublicSiteSections() {
   return {
     homeInsights: {
       enabled: true,
+      navbarEnabled: true,
       eyebrow: 'Insights',
       title: 'Latest updates from your CMS-powered editorial feed.',
       subtitle: 'This section reads published articles from the tenant CMS while keeping layout stable in site code.',
@@ -76,6 +77,9 @@ function normalizePublicSiteSections(input) {
       enabled: Object.prototype.hasOwnProperty.call(rawHomeInsights, 'enabled')
         ? Boolean(rawHomeInsights.enabled)
         : true,
+      navbarEnabled: Object.prototype.hasOwnProperty.call(rawHomeInsights, 'navbarEnabled')
+        ? Boolean(rawHomeInsights.navbarEnabled)
+        : Boolean(defaults.homeInsights.navbarEnabled),
       eyebrow: String(rawHomeInsights.eyebrow || '').trim() || defaults.homeInsights.eyebrow,
       title: String(rawHomeInsights.title || '').trim() || defaults.homeInsights.title,
       subtitle: String(rawHomeInsights.subtitle || '').trim() || defaults.homeInsights.subtitle,
@@ -103,7 +107,7 @@ function normalizePublicNavLink(input, index, fallbackPrefix) {
 
 function ensureInsightsNavItem(primary, siteSections, tenantId) {
   const list = Array.isArray(primary) ? [...primary] : [];
-  const enabled = Boolean(siteSections?.homeInsights?.enabled);
+  const enabled = Boolean(siteSections?.homeInsights?.enabled) && Boolean(siteSections?.homeInsights?.navbarEnabled);
   if (!enabled) return list;
 
   const hasInsights = list.some((item) => {
@@ -133,7 +137,7 @@ function ensureInsightsNavItem(primary, siteSections, tenantId) {
 
 function ensureInsightsNavigationTab(tabs, siteSections, tenantId) {
   const list = Array.isArray(tabs) ? [...tabs] : [];
-  const enabled = Boolean(siteSections?.homeInsights?.enabled);
+  const enabled = Boolean(siteSections?.homeInsights?.enabled) && Boolean(siteSections?.homeInsights?.navbarEnabled);
   if (!enabled) return list;
 
   const hasInsights = list.some((item) => {

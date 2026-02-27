@@ -1,4 +1,6 @@
 (function () {
+  const DASHBOARD_VIEW_STORAGE_KEY = 'cms-platform-tenant-dashboard-view';
+
   const els = {
     loadingView: document.getElementById('loading-view'),
     appView: document.getElementById('app-view'),
@@ -63,6 +65,9 @@
     mediaSection: document.getElementById('media'),
     annualReportsSection: document.getElementById('annual-reports'),
     sitePreviewSection: document.getElementById('site-preview'),
+    tenantInfoSection: document.getElementById('tenant-info'),
+    accountSecuritySection: document.getElementById('account-security'),
+    contentGrid: document.getElementById('content-grid'),
     tenantInfoGrid: document.getElementById('tenant-info-grid'),
     dashboardNav: document.getElementById('dashboard-nav'),
   };
@@ -90,6 +95,7 @@
       saving: false,
       deleting: false,
     },
+    dashboardView: localStorage.getItem(DASHBOARD_VIEW_STORAGE_KEY) || 'overview',
   };
 
   async function api(path, options) {
@@ -159,6 +165,42 @@
       annualReports: source.annualReports !== false,
       navigationTabs: source.navigationTabs !== false,
     };
+  }
+
+  function getViewFromHash(hashValue) {
+    const raw = String(hashValue || '').replace(/^#/, '');
+    const allowed = new Set(['overview', 'articles', 'media', 'annual-reports', 'site-preview', 'account-security']);
+    return allowed.has(raw) ? raw : null;
+  }
+
+  function getAllowedViews(access) {
+    return {
+      overview: true,
+      articles: access.articles !== false,
+      media: access.libraries !== false,
+      'annual-reports': access.annualReports !== false,
+      'site-preview': access.navigationTabs !== false || access.homepagePlacements !== false,
+      'account-security': true,
+    };
+  }
+
+  function resolveDashboardView(requested, access) {
+    const allowed = getAllowedViews(access);
+    if (requested && allowed[requested]) return requested;
+    const fallbackOrder = ['overview', 'articles', 'media', 'annual-reports', 'site-preview', 'account-security'];
+    return fallbackOrder.find((view) => allowed[view]) || 'overview';
+  }
+
+  function setDashboardView(view, options) {
+    const access = normalizeModuleAccess(state.moduleAccess);
+    const nextView = resolveDashboardView(view, access);
+    state.dashboardView = nextView;
+    localStorage.setItem(DASHBOARD_VIEW_STORAGE_KEY, nextView);
+    if (options?.updateHash !== false) {
+      const nextHash = `#${nextView}`;
+      if (window.location.hash !== nextHash) history.replaceState(null, '', nextHash);
+    }
+    applyDashboardView();
   }
 
   function setNotice(message, kind) {
@@ -270,13 +312,50 @@
     if (els.metricCardAnnual) els.metricCardAnnual.classList.toggle('hidden', access.annualReports === false);
     if (els.metricCardSlot) els.metricCardSlot.classList.toggle('hidden', access.homepagePlacements === false);
 
-    if (els.articlesSection) els.articlesSection.classList.toggle('hidden', access.articles === false);
-    if (els.mediaSection) els.mediaSection.classList.toggle('hidden', access.libraries === false);
-    if (els.annualReportsSection) els.annualReportsSection.classList.toggle('hidden', access.annualReports === false);
     if (els.sitePreviewNavTabsBlock) els.sitePreviewNavTabsBlock.classList.toggle('hidden', access.navigationTabs === false);
     if (els.sitePreviewSlotBlock) els.sitePreviewSlotBlock.classList.toggle('hidden', access.homepagePlacements === false);
-    if (els.sitePreviewSection) {
-      els.sitePreviewSection.classList.toggle('hidden', access.navigationTabs === false && access.homepagePlacements === false);
+    applyDashboardView();
+  }
+
+  function applyDashboardView() {
+    const access = normalizeModuleAccess(state.moduleAccess);
+    const activeView = resolveDashboardView(state.dashboardView, access);
+    state.dashboardView = activeView;
+    localStorage.setItem(DASHBOARD_VIEW_STORAGE_KEY, activeView);
+    const canShowSitePreview = access.navigationTabs !== false || access.homepagePlacements !== false;
+
+    const viewSections = {
+      overview: [els.articlesSection, canShowSitePreview ? els.sitePreviewSection : null, els.tenantInfoSection],
+      articles: [els.articlesSection],
+      media: [els.mediaSection],
+      'annual-reports': [els.annualReportsSection],
+      'site-preview': [canShowSitePreview ? els.sitePreviewSection : null, els.tenantInfoSection],
+      'account-security': [els.accountSecuritySection],
+    };
+    const uniqueSections = new Set();
+    Object.values(viewSections).forEach((list) => list.filter(Boolean).forEach((section) => uniqueSections.add(section)));
+    uniqueSections.forEach((section) => section.classList.add('hidden'));
+    (viewSections[activeView] || []).filter(Boolean).forEach((section) => section.classList.remove('hidden'));
+
+    if (els.metricsGrid) {
+      els.metricsGrid.classList.toggle('hidden', activeView !== 'overview');
+    }
+    if (els.contentGrid) {
+      els.contentGrid.classList.toggle('single-column', activeView !== 'overview');
+    }
+
+    if (els.dashboardNav) {
+      const links = Array.from(els.dashboardNav.querySelectorAll('a[href^="#"]'));
+      links.forEach((link) => {
+        const viewFromHref = getViewFromHash(link.getAttribute('href') || '');
+        const isActive = Boolean(viewFromHref) && viewFromHref === activeView;
+        link.classList.toggle('active', isActive);
+      });
+    }
+
+    const expectedHash = `#${activeView}`;
+    if (window.location.hash !== expectedHash) {
+      history.replaceState(null, '', expectedHash);
     }
   }
 
@@ -325,8 +404,8 @@
             '<td>' + escapeHtml(row.publishAt ? formatDate(row.publishAt) : '-') + '</td>' +
             '<td>' + escapeHtml(formatDate(row.updatedAt)) + '</td>' +
             '<td><div class="inline-actions">' +
-              '<button type="button" class="table-action-btn" data-article-action="edit" data-article-id="' + Number(row.id) + '">Edit</button>' +
-              '<button type="button" class="table-action-btn" data-article-action="delete" data-article-id="' + Number(row.id) + '">Delete</button>' +
+              '<button type="button" class="table-action-btn edit" data-article-action="edit" data-article-id="' + Number(row.id) + '">Edit</button>' +
+              '<button type="button" class="table-action-btn danger" data-article-action="delete" data-article-id="' + Number(row.id) + '">Delete</button>' +
             '</div></td>' +
           '</tr>';
         }).join('')
@@ -352,6 +431,7 @@
   }
 
   function openArticleEditor(article) {
+    setDashboardView('articles', { updateHash: true });
     state.articleEditor.open = true;
     state.articleEditor.articleId = article ? Number(article.id) : null;
     resetArticleEditorForm(article || null);
@@ -757,15 +837,15 @@
     links.forEach((link) => {
       link.addEventListener('click', function (event) {
         const href = link.getAttribute('href') || '';
-        if (!href.startsWith('#')) return;
+        const nextView = getViewFromHash(href);
+        if (!nextView) return;
         event.preventDefault();
-        const target = document.querySelector(href);
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          history.replaceState(null, '', href);
-        }
-        links.forEach((item) => item.classList.toggle('active', item === link));
+        setDashboardView(nextView, { updateHash: true });
       });
+    });
+    window.addEventListener('hashchange', function () {
+      const nextView = getViewFromHash(window.location.hash);
+      if (nextView) setDashboardView(nextView, { updateHash: false });
     });
   }
 
@@ -837,6 +917,11 @@
   async function init() {
     wireNavHighlight();
     wireArticleEditor();
+    const hashView = getViewFromHash(window.location.hash);
+    if (hashView) {
+      state.dashboardView = hashView;
+    }
+    setDashboardView(state.dashboardView, { updateHash: false });
     els.refreshBtn.addEventListener('click', function () {
       refreshDashboard({ showLoading: false });
     });

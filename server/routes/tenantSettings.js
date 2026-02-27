@@ -34,6 +34,7 @@ function defaultSiteSections() {
   return {
     homeInsights: {
       enabled: true,
+      navbarEnabled: true,
       eyebrow: 'Insights',
       title: 'Latest updates from your CMS-powered editorial feed.',
       subtitle: 'This section reads published articles from the tenant CMS while keeping layout stable in site code.',
@@ -50,6 +51,9 @@ function normalizeSiteSectionBlock(input, current, fallback) {
   const enabled = Object.prototype.hasOwnProperty.call(source, 'enabled')
     ? Boolean(source.enabled)
     : Boolean(merged.enabled);
+  const navbarEnabled = Object.prototype.hasOwnProperty.call(source, 'navbarEnabled')
+    ? Boolean(source.navbarEnabled)
+    : Boolean(Object.prototype.hasOwnProperty.call(merged, 'navbarEnabled') ? merged.navbarEnabled : base.navbarEnabled);
   const eyebrow = Object.prototype.hasOwnProperty.call(source, 'eyebrow')
     ? String(source.eyebrow || '').trim()
     : String(merged.eyebrow || '');
@@ -62,6 +66,7 @@ function normalizeSiteSectionBlock(input, current, fallback) {
 
   return {
     enabled,
+    navbarEnabled,
     eyebrow: eyebrow || String(base.eyebrow || ''),
     title: title || String(base.title || ''),
     subtitle: subtitle || String(base.subtitle || ''),

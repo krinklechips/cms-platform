@@ -12,6 +12,7 @@
   const DEFAULT_SITE_SECTIONS = Object.freeze({
     homeInsights: {
       enabled: true,
+      navbarEnabled: true,
       eyebrow: 'Insights',
       title: 'Latest updates from your CMS-powered editorial feed.',
       subtitle: 'This section reads published articles from the tenant CMS while keeping layout stable in site code.',
@@ -175,6 +176,7 @@
     tenantModuleAccessResetBtn: document.getElementById('tenant-module-access-reset-btn'),
     tenantSiteSectionsNotice: document.getElementById('tenant-site-sections-notice'),
     tenantSiteHomeInsightsEnabled: document.getElementById('tenant-site-home-insights-enabled'),
+    tenantSiteHomeInsightsNavbarEnabled: document.getElementById('tenant-site-home-insights-navbar-enabled'),
     tenantSiteHomeInsightsEyebrow: document.getElementById('tenant-site-home-insights-eyebrow'),
     tenantSiteHomeInsightsTitle: document.getElementById('tenant-site-home-insights-title'),
     tenantSiteHomeInsightsSubtitle: document.getElementById('tenant-site-home-insights-subtitle'),
@@ -655,6 +657,9 @@
         enabled: Object.prototype.hasOwnProperty.call(rawHomeInsights, 'enabled')
           ? Boolean(rawHomeInsights.enabled)
           : Boolean(fallback.enabled),
+        navbarEnabled: Object.prototype.hasOwnProperty.call(rawHomeInsights, 'navbarEnabled')
+          ? Boolean(rawHomeInsights.navbarEnabled)
+          : Boolean(fallback.navbarEnabled),
         eyebrow: String(rawHomeInsights.eyebrow || '').trim() || fallback.eyebrow,
         title: String(rawHomeInsights.title || '').trim() || fallback.title,
         subtitle: String(rawHomeInsights.subtitle || '').trim() || fallback.subtitle,
@@ -1012,6 +1017,10 @@
       els.tenantSiteHomeInsightsEnabled.checked = Boolean(current.homeInsights.enabled);
       els.tenantSiteHomeInsightsEnabled.disabled = !tenant;
     }
+    if (els.tenantSiteHomeInsightsNavbarEnabled) {
+      els.tenantSiteHomeInsightsNavbarEnabled.checked = Boolean(current.homeInsights.navbarEnabled);
+      els.tenantSiteHomeInsightsNavbarEnabled.disabled = !tenant;
+    }
     if (els.tenantSiteHomeInsightsEyebrow) {
       els.tenantSiteHomeInsightsEyebrow.value = current.homeInsights.eyebrow || '';
       els.tenantSiteHomeInsightsEyebrow.disabled = !tenant;
@@ -1047,6 +1056,7 @@
     return normalizeSiteSections({
       homeInsights: {
         enabled: Boolean(els.tenantSiteHomeInsightsEnabled?.checked),
+        navbarEnabled: Boolean(els.tenantSiteHomeInsightsNavbarEnabled?.checked),
         eyebrow: String(els.tenantSiteHomeInsightsEyebrow?.value || ''),
         title: String(els.tenantSiteHomeInsightsTitle?.value || ''),
         subtitle: String(els.tenantSiteHomeInsightsSubtitle?.value || ''),
@@ -1676,12 +1686,12 @@
               <span class="pill">${item.visible === false ? 'Hidden' : 'Visible'}</span>
             </div>
             <div class="actions" style="margin-top:8px;">
-              <button type="button" data-site-nav-top-action="select" data-site-nav-top-id="${escapeHtml(String(item.id))}">Select</button>
-              <button type="button" data-site-nav-top-action="edit" data-site-nav-top-id="${escapeHtml(String(item.id))}">Edit</button>
-              <button type="button" data-site-nav-top-action="toggle" data-site-nav-top-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
-              <button type="button" data-site-nav-top-action="up" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
-              <button type="button" data-site-nav-top-action="down" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === primary.length - 1 ? 'disabled' : ''}>↓</button>
-              <button type="button" data-site-nav-top-action="delete" data-site-nav-top-id="${escapeHtml(String(item.id))}">Delete</button>
+              <button type="button" class="btn-edit btn-equal" data-site-nav-top-action="select" data-site-nav-top-id="${escapeHtml(String(item.id))}">Select</button>
+              <button type="button" class="btn-edit btn-equal" data-site-nav-top-action="edit" data-site-nav-top-id="${escapeHtml(String(item.id))}">Edit</button>
+              <button type="button" class="btn-equal" data-site-nav-top-action="toggle" data-site-nav-top-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
+              <button type="button" class="btn-compact" data-site-nav-top-action="up" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+              <button type="button" class="btn-compact" data-site-nav-top-action="down" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === primary.length - 1 ? 'disabled' : ''}>↓</button>
+              <button type="button" class="btn-danger btn-equal" data-site-nav-top-action="delete" data-site-nav-top-id="${escapeHtml(String(item.id))}">Delete</button>
             </div>
           </div>
         `).join('');
@@ -1701,11 +1711,11 @@
                 <div style="font-weight:700;">${escapeHtml(column.title || `Column ${index + 1}`)}</div>
                 <div class="meta">${(Array.isArray(column.items) ? column.items.length : 0)} submenu items</div>
                 <div class="actions" style="margin-top:8px;">
-                  <button type="button" data-site-nav-col-action="select" data-site-nav-col-id="${escapeHtml(String(column.id))}">Select</button>
-                  <button type="button" data-site-nav-col-action="edit" data-site-nav-col-id="${escapeHtml(String(column.id))}">Edit</button>
-                  <button type="button" data-site-nav-col-action="up" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
-                  <button type="button" data-site-nav-col-action="down" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === columns.length - 1 ? 'disabled' : ''}>↓</button>
-                  <button type="button" data-site-nav-col-action="delete" data-site-nav-col-id="${escapeHtml(String(column.id))}">Delete</button>
+                  <button type="button" class="btn-edit btn-equal" data-site-nav-col-action="select" data-site-nav-col-id="${escapeHtml(String(column.id))}">Select</button>
+                  <button type="button" class="btn-edit btn-equal" data-site-nav-col-action="edit" data-site-nav-col-id="${escapeHtml(String(column.id))}">Edit</button>
+                  <button type="button" class="btn-compact" data-site-nav-col-action="up" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+                  <button type="button" class="btn-compact" data-site-nav-col-action="down" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === columns.length - 1 ? 'disabled' : ''}>↓</button>
+                  <button type="button" class="btn-danger btn-equal" data-site-nav-col-action="delete" data-site-nav-col-id="${escapeHtml(String(column.id))}">Delete</button>
                 </div>
               </div>
             `).join('')
@@ -1726,11 +1736,11 @@
                 <div style="font-weight:700;">${escapeHtml(item.label)}</div>
                 <div class="meta">${escapeHtml(item.href || '(no href)')}</div>
                 <div class="actions" style="margin-top:8px;">
-                  <button type="button" data-site-nav-sub-action="edit" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Edit</button>
-                  <button type="button" data-site-nav-sub-action="toggle" data-site-nav-sub-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
-                  <button type="button" data-site-nav-sub-action="up" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
-                  <button type="button" data-site-nav-sub-action="down" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === items.length - 1 ? 'disabled' : ''}>↓</button>
-                  <button type="button" data-site-nav-sub-action="delete" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Delete</button>
+                  <button type="button" class="btn-edit btn-equal" data-site-nav-sub-action="edit" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Edit</button>
+                  <button type="button" class="btn-equal" data-site-nav-sub-action="toggle" data-site-nav-sub-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
+                  <button type="button" class="btn-compact" data-site-nav-sub-action="up" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+                  <button type="button" class="btn-compact" data-site-nav-sub-action="down" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === items.length - 1 ? 'disabled' : ''}>↓</button>
+                  <button type="button" class="btn-danger btn-equal" data-site-nav-sub-action="delete" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Delete</button>
                 </div>
               </div>
             `).join('')
@@ -2250,7 +2260,7 @@
               <td>${tab.visible === false ? '<span class="pill">Hidden</span>' : '<span class="pill">Visible</span>'}</td>
               <td>
                 <div class="mini-actions">
-                  <button class="edit-nav-tab-btn" data-nav-tab-id="${escapeHtml(String(tab.id))}">Edit</button>
+                  <button class="edit-nav-tab-btn btn-edit" data-nav-tab-id="${escapeHtml(String(tab.id))}">Edit</button>
                 </div>
               </td>
             </tr>
@@ -2429,7 +2439,7 @@
               <td>
                 <div class="mini-actions">
                   <a href="${escapeHtml(item.fileUrl || '#')}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open</a>
-                  <button class="delete-media-btn" data-media-id="${item.id}">Delete</button>
+                  <button class="delete-media-btn btn-danger" data-media-id="${item.id}">Delete</button>
                 </div>
               </td>
             </tr>
@@ -2463,7 +2473,7 @@
               <td class="meta">${escapeHtml(formatDateTime(article.updatedAt))}</td>
               <td>
                 <div class="mini-actions">
-                  <button class="edit-article-btn" data-article-id="${article.id}">Edit</button>
+                  <button class="edit-article-btn btn-edit" data-article-id="${article.id}">Edit</button>
                   ${article.status === 'published' && articlePublicHref(article) !== '#'
                     ? `<a href="${escapeHtml(articlePublicHref(article))}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open</a>`
                     : ''}
@@ -2504,7 +2514,7 @@
               <td><span class="pill">${escapeHtml(item.status || 'published')}</span></td>
               <td>
                 <div class="mini-actions">
-                  <button class="edit-annual-btn" data-annual-id="${item.id}">Edit</button>
+                  <button class="edit-annual-btn btn-edit" data-annual-id="${item.id}">Edit</button>
                   ${item.fileUrl ? `<a href="${escapeHtml(item.fileUrl)}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">PDF</a>` : ''}
                 </div>
               </td>
@@ -3007,9 +3017,9 @@
           </td>
           <td>
             <div class="actions" style="margin:0; gap:6px;">
-              <button type="button" data-tenant-user-action="save">Save</button>
-              <button type="button" data-tenant-user-action="password">Set Password</button>
-              <button type="button" data-tenant-user-action="remove">Remove</button>
+              <button type="button" class="btn-edit btn-equal" data-tenant-user-action="save">Save</button>
+              <button type="button" class="btn-equal" data-tenant-user-action="password">Set Password</button>
+              <button type="button" class="btn-danger btn-equal" data-tenant-user-action="remove">Remove</button>
             </div>
           </td>
         </tr>
@@ -4132,6 +4142,7 @@
     });
     [
       els.tenantSiteHomeInsightsEnabled,
+      els.tenantSiteHomeInsightsNavbarEnabled,
       els.tenantSiteHomeInsightsEyebrow,
       els.tenantSiteHomeInsightsTitle,
       els.tenantSiteHomeInsightsSubtitle,

@@ -1925,6 +1925,7 @@
         background: #ffffff;
         padding: 12px;
         gap: 12px;
+        border-top-width: 3px;
       }
       .tenant-settings-panel::before {
         content: attr(data-panel-label);
@@ -1940,9 +1941,14 @@
         text-transform: uppercase;
         letter-spacing: 0.11em;
       }
+      .tenant-settings-panel[data-tenant-settings-panel="branding"] {
+        border-color: #e0e7ff;
+        border-top-color: #6366f1;
+      }
       .tenant-settings-panel[data-tenant-settings-panel="domains"] {
-        border-color: #e2e8f0;
+        border-color: #dbeafe;
         background: #ffffff;
+        border-top-color: #3b82f6;
       }
       .tenant-settings-panel[data-tenant-settings-panel="domains"]::before {
         border-color: #d8e1ec;
@@ -1950,8 +1956,9 @@
         color: #334155;
       }
       .tenant-settings-panel[data-tenant-settings-panel="support"] {
-        border-color: #e2e8f0;
+        border-color: #fef3c7;
         background: #ffffff;
+        border-top-color: #d97706;
       }
       .tenant-settings-panel[data-tenant-settings-panel="support"]::before {
         border-color: #d8e1ec;
@@ -1959,8 +1966,9 @@
         color: #334155;
       }
       .tenant-settings-panel[data-tenant-settings-panel="users"] {
-        border-color: #e2e8f0;
+        border-color: #dcfce7;
         background: #ffffff;
+        border-top-color: #16a34a;
       }
       .tenant-settings-panel[data-tenant-settings-panel="users"]::before {
         border-color: #d8e1ec;
@@ -1968,8 +1976,9 @@
         color: #334155;
       }
       .tenant-settings-panel[data-tenant-settings-panel="content"] {
-        border-color: #e2e8f0;
+        border-color: #ffe4e6;
         background: #ffffff;
+        border-top-color: #e11d48;
       }
       .tenant-settings-panel[data-tenant-settings-panel="content"]::before {
         border-color: #d8e1ec;
@@ -2022,6 +2031,39 @@
         background: #f8fafc;
         border-color: #b8c4d6;
         color: #0f172a;
+      }
+      button.edit,
+      button.btn-edit {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+      }
+      button.edit:hover:not(:disabled),
+      button.btn-edit:hover:not(:disabled) {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        color: #1e40af;
+      }
+      button.danger,
+      button.btn-danger {
+        background: #fff5f5;
+        border-color: #fecaca;
+        color: #b91c1c;
+      }
+      button.danger:hover:not(:disabled),
+      button.btn-danger:hover:not(:disabled) {
+        background: #fef2f2;
+        border-color: #fda4af;
+        color: #991b1b;
+      }
+      .actions button.btn-equal,
+      .mini-actions button.btn-equal {
+        min-width: 110px;
+      }
+      .mini-actions button.btn-compact {
+        min-width: 40px;
+        padding-left: 9px;
+        padding-right: 9px;
       }
       .card,
       .section-panel,
@@ -2780,6 +2822,16 @@
                     <span class="switch-ui" aria-hidden="true"></span>
                   </label>
                 </div>
+                <div class="toggle-row" style="margin-bottom:10px;">
+                  <div>
+                    <div class="toggle-row-title">Show Insights in navbar</div>
+                    <div class="toggle-row-sub">Controls automatic Insights item in <code>/api/public/site-navigation</code> and <code>/api/public/navigation-tabs</code>.</div>
+                  </div>
+                  <label class="switch" aria-label="Show Insights in navbar">
+                    <input id="tenant-site-home-insights-navbar-enabled" type="checkbox" />
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                </div>
                 <div class="row">
                   <label>
                     Eyebrow
@@ -3167,7 +3219,7 @@
 
               <div class="actions">
                 <button id="article-save-btn" class="primary">Save article</button>
-                <button id="article-delete-btn">Delete article</button>
+                <button id="article-delete-btn" class="btn-danger">Delete article</button>
                 <a id="article-open-link" href="#" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open posted article</a>
               </div>
             </div>
@@ -3215,7 +3267,7 @@
               </label>
               <div class="actions">
                 <button id="annual-save-btn" class="primary">Save annual report</button>
-                <button id="annual-delete-btn">Delete annual report</button>
+                <button id="annual-delete-btn" class="btn-danger">Delete annual report</button>
                 <a id="annual-open-link" href="#" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open PDF</a>
               </div>
             </div>
@@ -3247,7 +3299,7 @@
               </label>
               <div class="actions">
                 <button id="nav-tab-save-btn" class="primary">Save nav tab</button>
-                <button id="nav-tab-delete-btn">Delete nav tab</button>
+                <button id="nav-tab-delete-btn" class="btn-danger">Delete nav tab</button>
               </div>
               <p class="footer-note">These tabs are stored per tenant and can be consumed by your customer sites for top/side navigation rendering.</p>
 
