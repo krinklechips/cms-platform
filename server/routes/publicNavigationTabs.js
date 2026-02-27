@@ -97,8 +97,39 @@ function normalizePublicNavLink(input, index, fallbackPrefix) {
   };
 }
 
+function ensureInsightsNavItem(primary, siteSections, tenantId) {
+  const list = Array.isArray(primary) ? [...primary] : [];
+  const enabled = Boolean(siteSections?.homeInsights?.enabled);
+  if (!enabled) return list;
+
+  const hasInsights = list.some((item) => {
+    const label = String(item?.label || '').trim().toLowerCase();
+    const href = String(item?.href || '').trim().toLowerCase();
+    return label === 'insights' || href === '/insights' || href.endsWith('/insights');
+  });
+  if (hasInsights) return list;
+
+  const nextOrder = list.reduce((max, item) => {
+    const order = Number(item?.order);
+    return Number.isFinite(order) ? Math.max(max, order) : max;
+  }, -1) + 1;
+
+  list.push({
+    id: `auto-insights-${tenantId}`,
+    label: 'Insights',
+    href: '/insights',
+    visible: true,
+    order: nextOrder,
+    description: 'CMS-managed insights section',
+    type: 'link',
+    columns: [],
+  });
+  return list;
+}
+
 function readSiteNavigation(tenantId) {
   const settings = readTenantSettings(tenantId);
+  const siteSections = normalizePublicSiteSections(settings?.siteSections);
   const source = settings?.siteNavigation && typeof settings.siteNavigation === 'object'
     ? settings.siteNavigation
     : {};
@@ -155,7 +186,7 @@ function readSiteNavigation(tenantId) {
 
   return {
     version: Number(source?.version || 1) || 1,
-    primary,
+    primary: ensureInsightsNavItem(primary, siteSections, tenantId),
     cta,
   };
 }
