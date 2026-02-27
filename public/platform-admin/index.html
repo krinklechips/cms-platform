@@ -1981,6 +1981,68 @@
           grid-template-columns: repeat(3, minmax(0, 1fr));
         }
       }
+      /* Unified button refinement pass */
+      button {
+        min-height: 38px;
+        padding: 8px 14px;
+        border-radius: 10px;
+        border: 1px solid #d3d9e5;
+        background: #ffffff;
+        color: #1f2a3d;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+      }
+      button:hover:not(:disabled) {
+        background: #f6f9ff;
+        border-color: #c0c9d8;
+        color: #152238;
+      }
+      button:focus-visible {
+        outline: 2px solid #c7b9ff;
+        outline-offset: 1px;
+      }
+      button.primary {
+        background: linear-gradient(180deg, #6d4ae6 0%, #5b34c6 100%);
+        border-color: #5230b8;
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(91, 52, 198, 0.18);
+      }
+      button.primary:hover:not(:disabled) {
+        background: linear-gradient(180deg, #633fdd 0%, #4f2bb8 100%);
+        border-color: #4726a7;
+        color: #ffffff;
+      }
+      button.ghost-brand {
+        background: #f3efff;
+        border-color: #d7cbff;
+        color: #4c2ab0;
+      }
+      button.ghost-brand:hover:not(:disabled) {
+        background: #ede6ff;
+        border-color: #c8b9ff;
+        color: #4525a0;
+      }
+      .topbar-signout {
+        min-height: 40px;
+        border-radius: 10px;
+        background: #ffffff;
+        border-color: #d8deea;
+        color: #1b2436;
+      }
+      .topbar-signout:hover:not(:disabled) {
+        background: #f8fbff;
+        border-color: #c5cedf;
+      }
+      .mini-actions button,
+      .savebar button,
+      .actions button {
+        min-height: 38px;
+      }
+      .segmented button {
+        min-height: 32px;
+        border-radius: 8px;
+      }
       @media (max-width: 980px) {
         .grid { grid-template-columns: 1fr; }
         #section-tenants.grid { grid-template-columns: 1fr; }
