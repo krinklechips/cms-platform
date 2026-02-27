@@ -67,7 +67,7 @@ app.use(
     // Public content APIs are intentionally consumable cross-origin by tenant websites.
     // They do not rely on session cookies.
     if (isPublicApiRequest) {
-      return cb(null, { origin: true, credentials: false });
+      return cb(null, { origin: true, credentials: true });
     }
 
     if (!origin) {
