@@ -28,8 +28,9 @@ function resolveTenant(req) {
 
 function readNavigationTabs(tenantId) {
   const settings = readTenantSettings(tenantId);
-  if (!Array.isArray(settings.navigationTabs)) return [];
-  return settings.navigationTabs
+  const siteSections = normalizePublicSiteSections(settings?.siteSections);
+  const tabs = Array.isArray(settings.navigationTabs)
+    ? settings.navigationTabs
     .map((tab, index) => ({
       id: String(tab?.id || `${tenantId}-${index}`),
       label: String(tab?.label || '').trim(),
@@ -39,7 +40,10 @@ function readNavigationTabs(tenantId) {
       order: Number.isFinite(Number(tab?.order)) ? Number(tab.order) : index,
     }))
     .filter((tab) => tab.visible && tab.label)
-    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label));
+    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+    : [];
+
+  return ensureInsightsNavigationTab(tabs, siteSections, tenantId);
 }
 
 function readTenantSettings(tenantId) {
@@ -123,6 +127,35 @@ function ensureInsightsNavItem(primary, siteSections, tenantId) {
     description: 'CMS-managed insights section',
     type: 'link',
     columns: [],
+  });
+  return list;
+}
+
+function ensureInsightsNavigationTab(tabs, siteSections, tenantId) {
+  const list = Array.isArray(tabs) ? [...tabs] : [];
+  const enabled = Boolean(siteSections?.homeInsights?.enabled);
+  if (!enabled) return list;
+
+  const hasInsights = list.some((item) => {
+    const label = String(item?.label || '').trim().toLowerCase();
+    const href = String(item?.href || '').trim().toLowerCase();
+    return label === 'insights' || href === '/insights' || href.endsWith('/insights');
+  });
+  if (hasInsights) return list;
+
+  const nextOrder = list.reduce((max, item) => {
+    const order = Number(item?.order);
+    return Number.isFinite(order) ? Math.max(max, order) : max;
+  }, -1) + 1;
+
+  list.push({
+    id: `auto-insights-tab-${tenantId}`,
+    label: 'Insights',
+    href: '/insights',
+    group: 'general',
+    visible: true,
+    order: nextOrder,
+    description: 'CMS-managed insights section',
   });
   return list;
 }
