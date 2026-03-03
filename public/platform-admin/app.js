@@ -394,29 +394,47 @@
     }
   }
 
+  function snapshotPlatformNavAccordionState() {
+    const next = {};
+    platformNavMenuBlocks.forEach((block) => {
+      const menu = block.dataset.navMenu || '';
+      if (!menu) return;
+      next[menu] = !block.classList.contains('is-collapsed');
+    });
+    return next;
+  }
+
   function setPlatformNavMenuOpen(menuId, open, options) {
     const menu = String(menuId || '');
     if (!menu) return;
-    const block = platformNavMenuBlocks.find((item) => item.dataset.navMenu === menu);
-    if (!block) return;
     const isOpen = Boolean(open);
-    block.classList.toggle('is-collapsed', !isOpen);
-    const toggle = block.querySelector(`[data-nav-menu-toggle="${menu}"]`);
-    if (toggle) toggle.setAttribute('aria-expanded', String(isOpen));
+    const closeOthers = Boolean(options?.closeOthers && isOpen);
+    platformNavMenuBlocks.forEach((block) => {
+      const blockMenu = block.dataset.navMenu || '';
+      if (!blockMenu) return;
+      const shouldOpen = blockMenu === menu ? isOpen : !closeOthers && !block.classList.contains('is-collapsed');
+      block.classList.toggle('is-collapsed', !shouldOpen);
+      const toggle = block.querySelector(`[data-nav-menu-toggle="${blockMenu}"]`);
+      if (toggle) toggle.setAttribute('aria-expanded', String(shouldOpen));
+    });
     if (options?.persist !== false) {
-      const current = readPlatformNavAccordionState();
-      current[menu] = isOpen;
-      writePlatformNavAccordionState(current);
+      writePlatformNavAccordionState(snapshotPlatformNavAccordionState());
     }
   }
 
   function applyPlatformNavAccordionState() {
     const saved = readPlatformNavAccordionState();
-    platformNavMenuBlocks.forEach((block) => {
-      const menu = block.dataset.navMenu || '';
-      const open = Object.prototype.hasOwnProperty.call(saved, menu) ? Boolean(saved[menu]) : true;
-      setPlatformNavMenuOpen(menu, open, { persist: false });
-    });
+    const normalized = normalizeAdminNavState(state.adminNav);
+    const hasSaved = Object.keys(saved).length > 0;
+    let openMenu = normalized.main;
+    if (hasSaved) {
+      const explicitOpen = platformNavMenuBlocks.find((block) => {
+        const menu = block.dataset.navMenu || '';
+        return menu && saved[menu] === true;
+      });
+      if (explicitOpen?.dataset?.navMenu) openMenu = explicitOpen.dataset.navMenu;
+    }
+    setPlatformNavMenuOpen(openMenu, true, { persist: false, closeOthers: true });
   }
 
   function expandPlatformNavMenuForLink(link) {
@@ -424,7 +442,7 @@
     const block = link.closest('[data-nav-menu]');
     const menu = block?.dataset?.navMenu || '';
     if (!menu) return;
-    setPlatformNavMenuOpen(menu, true);
+    setPlatformNavMenuOpen(menu, true, { closeOthers: true });
   }
 
   function normalizeWorkbenchLayout() {
@@ -607,6 +625,7 @@
     platformAdminMainLinks.forEach((link) => {
       link.classList.toggle('is-active', link.dataset.adminMainLink === main);
     });
+    setPlatformNavMenuOpen(main, true, { persist: true, closeOthers: true });
 
     renderAdminSubnav();
 
@@ -925,13 +944,18 @@
     const lastSaveMessage = state.tenantForm.lastSaveMessage;
     if (els.tenantFormDirtyPill) {
       const showDirty = Boolean(tenant && dirty && !saving);
-      els.tenantFormDirtyPill.className = 'pill';
+      els.tenantFormDirtyPill.className = 'tenant-state-indicator';
       els.tenantFormDirtyPill.textContent = 'Unsaved changes';
       els.tenantFormDirtyPill.classList.toggle('hidden', !showDirty);
     }
     if (els.saveTenantBtn) {
       els.saveTenantBtn.disabled = !tenant || !dirty || saving;
-      els.saveTenantBtn.textContent = saving ? 'Saving…' : 'Save changes';
+      els.saveTenantBtn.classList.toggle('is-loading', saving);
+      if (saving) {
+        els.saveTenantBtn.innerHTML = '<span class="ui-spinner sm" aria-hidden="true"></span><span>Saving…</span>';
+      } else {
+        els.saveTenantBtn.textContent = 'Save changes';
+      }
     }
     if (els.discardTenantBtn) {
       els.discardTenantBtn.disabled = !tenant || !dirty || saving;
@@ -946,11 +970,11 @@
     if (els.tenantFormSaveFeedback) {
       els.tenantFormSaveFeedback.classList.remove('is-saved', 'is-fadeout');
       if (!tenant) {
-        els.tenantFormSaveFeedback.textContent = 'Select a tenant to begin editing.';
+        els.tenantFormSaveFeedback.textContent = '';
       } else if (saving) {
         els.tenantFormSaveFeedback.textContent = 'Saving tenant changes…';
       } else if (dirty) {
-        els.tenantFormSaveFeedback.textContent = 'You have unsaved changes in this tenant profile.';
+        els.tenantFormSaveFeedback.textContent = '';
       } else if (lastSavedAt) {
         const elapsed = Date.now() - new Date(lastSavedAt).getTime();
         if (elapsed < 6000) {
@@ -960,10 +984,10 @@
             renderTenantFormState();
           }, 6100 - elapsed);
         } else {
-          els.tenantFormSaveFeedback.textContent = `Last saved ${formatDateTime(lastSavedAt)}`;
+          els.tenantFormSaveFeedback.textContent = '';
         }
       } else {
-        els.tenantFormSaveFeedback.textContent = 'All changes are up to date.';
+        els.tenantFormSaveFeedback.textContent = '';
       }
     }
   }
@@ -4162,8 +4186,12 @@
         const menu = btn.dataset.navMenuToggle || '';
         if (!menu) return;
         const block = platformNavMenuBlocks.find((item) => item.dataset.navMenu === menu);
-        const nextOpen = block ? block.classList.contains('is-collapsed') : true;
-        setPlatformNavMenuOpen(menu, nextOpen);
+        const isCollapsed = block ? block.classList.contains('is-collapsed') : true;
+        if (isCollapsed) {
+          setPlatformNavMenuOpen(menu, true, { closeOthers: true });
+        } else {
+          setPlatformNavMenuOpen(menu, false, { closeOthers: false });
+        }
       });
     });
     if (els.adminSubnavList) {
