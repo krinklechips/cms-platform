@@ -119,6 +119,7 @@
     tenantExitAdminLink: document.getElementById('tenant-exit-admin-link'),
     sidebarLogoTitle: document.getElementById('sidebar-logo-title'),
     sidebarLogoSubtitle: document.getElementById('sidebar-logo-subtitle'),
+    platformNavSearchInput: document.getElementById('platform-nav-search-input'),
     topbarTitle: document.getElementById('topbar-title'),
     topbarSubtitle: document.getElementById('topbar-subtitle'),
     tenantSwitchWrap: document.getElementById('tenant-switch-wrap'),
@@ -345,6 +346,7 @@
   const adminPageSections = Array.from(document.querySelectorAll('[data-admin-page]'));
   const tenantSettingsTabButtons = Array.from(document.querySelectorAll('#tenant-settings-tabs [data-tenant-settings-tab]'));
   const tenantSettingsTabPanels = Array.from(document.querySelectorAll('[data-tenant-settings-panel]'));
+  const platformNavGroups = Array.from(document.querySelectorAll('.platform-nav-group'));
 
   async function api(path, options) {
     const res = await fetch(path, {
@@ -375,6 +377,59 @@
     el.className = 'pill';
     if (kind === 'ok') el.classList.add('ok');
     if (kind === 'error') el.classList.add('error');
+  }
+
+  function resetPlatformNavSearch() {
+    platformNavGroups.forEach((group) => {
+      group.classList.remove('is-search-hidden');
+      group.querySelectorAll('.is-search-hidden').forEach((node) => node.classList.remove('is-search-hidden'));
+    });
+    applyPlatformNavAccordionState();
+    syncSidebarActiveLink();
+  }
+
+  function applyPlatformNavSearch(query) {
+    const term = String(query || '').trim().toLowerCase();
+    if (!term) {
+      resetPlatformNavSearch();
+      return;
+    }
+
+    platformNavGroups.forEach((group) => {
+      let visibleCount = 0;
+
+      group.querySelectorAll(':scope > .nav-menu-block').forEach((block) => {
+        const headLink = block.querySelector(':scope > .nav-menu-head > a');
+        const submenuLinks = Array.from(block.querySelectorAll(':scope > .submenu .submenu-link'));
+        const headText = String(headLink?.textContent || '').toLowerCase();
+        const headMatches = headText.includes(term);
+        let hasMatchingSub = false;
+
+        submenuLinks.forEach((link) => {
+          const matches = headMatches || String(link.textContent || '').toLowerCase().includes(term);
+          link.classList.toggle('is-search-hidden', !matches);
+          if (matches) hasMatchingSub = true;
+        });
+
+        const showBlock = headMatches || hasMatchingSub;
+        block.classList.toggle('is-search-hidden', !showBlock);
+        if (showBlock) {
+          visibleCount += 1;
+          const menu = block.dataset.navMenu || '';
+          if (menu) setPlatformNavMenuOpen(menu, true, { persist: false, closeOthers: false });
+        }
+      });
+
+      group.querySelectorAll(':scope > a').forEach((link) => {
+        const show = String(link.textContent || '').toLowerCase().includes(term);
+        link.classList.toggle('is-search-hidden', !show);
+        if (show) visibleCount += 1;
+      });
+
+      const title = group.querySelector(':scope > .platform-nav-group-title');
+      if (title) title.classList.toggle('is-search-hidden', visibleCount === 0);
+      group.classList.toggle('is-search-hidden', visibleCount === 0);
+    });
   }
 
   function readPlatformNavAccordionState() {
@@ -625,7 +680,8 @@
     platformAdminMainLinks.forEach((link) => {
       link.classList.toggle('is-active', link.dataset.adminMainLink === main);
     });
-    setPlatformNavMenuOpen(main, true, { persist: true, closeOthers: true });
+    const isSearchingNav = Boolean((els.platformNavSearchInput?.value || '').trim());
+    setPlatformNavMenuOpen(main, true, { persist: true, closeOthers: !isSearchingNav });
 
     renderAdminSubnav();
 
@@ -4157,6 +4213,14 @@
   function wireEvents() {
     normalizeWorkbenchLayout();
     applyPlatformNavAccordionState();
+    if (els.platformNavSearchInput) {
+      els.platformNavSearchInput.addEventListener('input', () => {
+        applyPlatformNavSearch(els.platformNavSearchInput.value || '');
+      });
+      els.platformNavSearchInput.addEventListener('search', () => {
+        applyPlatformNavSearch(els.platformNavSearchInput.value || '');
+      });
+    }
     applyUiMode();
     setTenantSettingsTab(state.tenantSettingsTab || 'branding');
     if (els.tenantSearchInput) els.tenantSearchInput.value = state.tenantFilters.search || '';

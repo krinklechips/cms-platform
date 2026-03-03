@@ -2184,6 +2184,170 @@
         border-color: #e9ecf5;
         box-shadow: inset 2px 0 0 #6b7280;
       }
+      .platform-sidebar {
+        background: #f5f6fa;
+        border-right-color: #e2e6f0;
+        padding: 0;
+        gap: 0;
+      }
+      .platform-logo {
+        padding: 16px 14px 14px;
+        border-bottom: 1px solid #e2e6f0;
+        background: #f7f8fc;
+      }
+      .platform-nav {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        gap: 0;
+      }
+      .platform-nav-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 10px 12px 8px;
+        padding: 0 10px;
+        min-height: 38px;
+        border-radius: 10px;
+        border: 1px solid #e1e5ef;
+        background: #eef1f7;
+      }
+      .platform-nav-search-icon {
+        color: #7a8090;
+        font-size: 14px;
+        line-height: 1;
+      }
+      .platform-nav-search input {
+        margin: 0;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        height: 26px;
+        box-shadow: none;
+        border-radius: 0;
+        color: #374151;
+        font-size: 13px;
+      }
+      .platform-nav-search input:focus {
+        border: 0;
+        box-shadow: none;
+      }
+      .platform-nav-scroll {
+        min-height: 0;
+        overflow-y: auto;
+        padding: 2px 8px 12px;
+        scrollbar-width: thin;
+      }
+      .platform-nav-scroll::-webkit-scrollbar {
+        width: 8px;
+      }
+      .platform-nav-scroll::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: #d4d9e7;
+      }
+      .platform-nav .platform-nav-group {
+        padding: 8px 4px 2px;
+      }
+      .platform-nav .platform-nav-group + .platform-nav-group {
+        border-top: 1px solid #e4e8f1;
+        margin-top: 8px;
+        padding-top: 12px;
+      }
+      .platform-nav .platform-nav-group-title {
+        margin: 0 0 8px;
+        padding: 0 8px;
+        color: #4c1d95;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+      }
+      .platform-nav .nav-menu-head > a,
+      .platform-nav a.submenu-link,
+      .platform-nav .platform-nav-group > a {
+        border: 1px solid transparent;
+        background: transparent;
+      }
+      .platform-nav .nav-menu-head > a {
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      .platform-nav .nav-menu-head > a .label {
+        font-size: 16px;
+        font-weight: 700;
+        color: #202431;
+      }
+      .platform-nav .nav-menu-head > a .helper {
+        margin-top: 2px;
+        font-size: 12px;
+        color: #6b7280;
+      }
+      .platform-nav .nav-menu-head > a:hover {
+        background: #eef1f8;
+        border-color: #e2e7f3;
+      }
+      .platform-nav .nav-menu-head > a.is-active {
+        background: #eee9fc;
+        border-color: #d8ccff;
+        box-shadow: inset 2px 0 0 #6d28d9;
+      }
+      .platform-nav .nav-menu-toggle {
+        width: 28px;
+        min-width: 28px;
+        border-radius: 8px;
+      }
+      .platform-nav .nav-menu-toggle::before {
+        font-size: 10px;
+      }
+      .platform-nav .submenu {
+        margin: 4px 0 8px 12px;
+        padding: 2px 0 2px 12px;
+        border-left: 1px solid #e0e5ef;
+      }
+      .platform-nav a.submenu-link {
+        padding: 7px 8px 7px 10px;
+        border-radius: 9px;
+      }
+      .platform-nav a.submenu-link::before {
+        display: none;
+      }
+      .platform-nav a.submenu-link .label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #202737;
+      }
+      .platform-nav a.submenu-link .helper {
+        font-size: 11px;
+        color: #8b91a2;
+      }
+      .platform-nav a.submenu-link:hover {
+        background: #eef2f8;
+        border-color: #dce3f1;
+      }
+      .platform-nav a.submenu-link.is-active {
+        background: #ffffff;
+        border-color: #d6dced;
+        box-shadow: inset 2px 0 0 #6d28d9;
+      }
+      .platform-nav .platform-nav-group > a {
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      .platform-nav .platform-nav-group > a .label {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1f2937;
+      }
+      .platform-nav .platform-nav-group > a .helper {
+        font-size: 12px;
+        color: #6b7280;
+      }
+      .platform-nav .platform-nav-group > a:hover {
+        background: #eef1f8;
+        border-color: #e2e7f3;
+      }
+      .platform-nav .is-search-hidden {
+        display: none !important;
+      }
 
       button {
         min-height: 38px;
@@ -2668,6 +2832,11 @@
           </div>
         </div>
         <nav class="platform-nav">
+          <label class="platform-nav-search" for="platform-nav-search-input">
+            <span class="platform-nav-search-icon" aria-hidden="true">⌕</span>
+            <input id="platform-nav-search-input" type="search" placeholder="Search modules..." autocomplete="off" />
+          </label>
+          <div class="platform-nav-scroll">
           <div id="sidebar-platform-group" class="platform-nav-group">
             <p class="platform-nav-group-title">Platform</p>
             <div class="nav-menu-block" data-nav-menu="operations">
@@ -2770,6 +2939,7 @@
               <span class="label">Navigation Tabs</span>
               <span class="helper">Customer nav bar items</span>
             </a>
+          </div>
           </div>
         </nav>
       </aside>
