@@ -13,6 +13,7 @@
     homeInsights: {
       enabled: true,
       navbarEnabled: true,
+      navbarOrder: 3,
       eyebrow: 'Insights',
       title: 'Latest updates from your CMS-powered editorial feed.',
       subtitle: 'This section reads published articles from the tenant CMS while keeping layout stable in site code.',
@@ -37,8 +38,10 @@
       loadedTenantId: null,
       snapshot: null,
       dirty: false,
+      isSaving: false,
       lastSavedAt: null,
       lastSaveMessage: '',
+      saveHintTimeout: null,
       validationErrors: {},
     },
     placement: {
@@ -143,6 +146,7 @@
     selectedTenantEmpty: document.getElementById('selected-tenant-empty'),
     selectedTenantForm: document.getElementById('selected-tenant-form'),
     selectedTenantMeta: document.getElementById('selected-tenant-meta'),
+    tenantBreadcrumbCurrent: document.getElementById('tenant-breadcrumb-current'),
     tenantContextHeader: document.getElementById('tenant-context-header'),
     tenantContextName: document.getElementById('tenant-context-name'),
     tenantContextSub: document.getElementById('tenant-context-sub'),
@@ -177,6 +181,7 @@
     tenantSiteSectionsNotice: document.getElementById('tenant-site-sections-notice'),
     tenantSiteHomeInsightsEnabled: document.getElementById('tenant-site-home-insights-enabled'),
     tenantSiteHomeInsightsNavbarEnabled: document.getElementById('tenant-site-home-insights-navbar-enabled'),
+    tenantSiteHomeInsightsNavbarOrder: document.getElementById('tenant-site-home-insights-navbar-order'),
     tenantSiteHomeInsightsEyebrow: document.getElementById('tenant-site-home-insights-eyebrow'),
     tenantSiteHomeInsightsTitle: document.getElementById('tenant-site-home-insights-title'),
     tenantSiteHomeInsightsSubtitle: document.getElementById('tenant-site-home-insights-subtitle'),
@@ -189,6 +194,9 @@
     editStatus: document.getElementById('edit-status'),
     editSlug: document.getElementById('edit-slug'),
     editPrimaryColor: document.getElementById('edit-primary-color'),
+    editPrimaryColorPicker: document.getElementById('edit-primary-color-picker'),
+    editPrimaryColorSwatch: document.getElementById('edit-primary-color-swatch'),
+    editPrimaryColorPresets: Array.from(document.querySelectorAll('[data-color-preset]')),
     editPrimaryColorHelp: document.getElementById('edit-primary-color-help'),
     editLogoUrl: document.getElementById('edit-logo-url'),
     editPublicSiteUrl: document.getElementById('edit-public-site-url'),
@@ -213,9 +221,9 @@
     tenantDomainLastError: document.getElementById('tenant-domain-last-error'),
     tenantDomainInstructions: document.getElementById('tenant-domain-instructions'),
     saveTenantBtn: document.getElementById('save-tenant-btn'),
+    discardTenantBtn: document.getElementById('discard-tenant-btn'),
     reloadSelectedBtn: document.getElementById('reload-selected-btn'),
     tenantFormValidationSummary: document.getElementById('tenant-form-validation-summary'),
-    tenantFormSaveStatePill: document.getElementById('tenant-form-save-state-pill'),
     tenantFormSaveFeedback: document.getElementById('tenant-form-save-feedback'),
     placementNotice: document.getElementById('placement-notice'),
     placementEmpty: document.getElementById('placement-empty'),
@@ -333,7 +341,7 @@
   const platformAdminMainLinks = Array.from(document.querySelectorAll('#sidebar-platform-group [data-admin-main-link]'));
   const platformAdminSubLinks = Array.from(document.querySelectorAll('#sidebar-platform-group [data-admin-sub-link]'));
   const adminPageSections = Array.from(document.querySelectorAll('[data-admin-page]'));
-  const tenantSettingsTabButtons = Array.from(document.querySelectorAll('[data-tenant-settings-tab]'));
+  const tenantSettingsTabButtons = Array.from(document.querySelectorAll('#tenant-settings-tabs [data-tenant-settings-tab]'));
   const tenantSettingsTabPanels = Array.from(document.querySelectorAll('[data-tenant-settings-panel]'));
 
   async function api(path, options) {
@@ -660,6 +668,13 @@
         navbarEnabled: Object.prototype.hasOwnProperty.call(rawHomeInsights, 'navbarEnabled')
           ? Boolean(rawHomeInsights.navbarEnabled)
           : Boolean(fallback.navbarEnabled),
+        navbarOrder: (() => {
+          const value = Object.prototype.hasOwnProperty.call(rawHomeInsights, 'navbarOrder')
+            ? Number(rawHomeInsights.navbarOrder)
+            : Number(fallback.navbarOrder);
+          if (!Number.isFinite(value) || value < 0) return Number(fallback.navbarOrder) || 3;
+          return Math.floor(value);
+        })(),
         eyebrow: String(rawHomeInsights.eyebrow || '').trim() || fallback.eyebrow,
         title: String(rawHomeInsights.title || '').trim() || fallback.title,
         subtitle: String(rawHomeInsights.subtitle || '').trim() || fallback.subtitle,
@@ -759,6 +774,40 @@
     };
   }
 
+  function normalizeHexColor(value) {
+    return String(value || '').trim().toUpperCase();
+  }
+
+  function isHexColor(value) {
+    return /^#([0-9A-F]{3}|[0-9A-F]{6})$/i.test(String(value || '').trim());
+  }
+
+  function toSixDigitHex(value) {
+    const normalized = normalizeHexColor(value);
+    if (!isHexColor(normalized)) return null;
+    if (normalized.length === 4) {
+      return `#${normalized[1]}${normalized[1]}${normalized[2]}${normalized[2]}${normalized[3]}${normalized[3]}`;
+    }
+    return normalized;
+  }
+
+  function syncPrimaryColorControls() {
+    const raw = normalizeHexColor(els.editPrimaryColor?.value || '');
+    const validColor = toSixDigitHex(raw);
+    if (els.editPrimaryColorSwatch) {
+      if (validColor) {
+        els.editPrimaryColorSwatch.style.background = validColor;
+        els.editPrimaryColorSwatch.style.borderColor = 'rgba(17, 24, 39, 0.2)';
+      } else {
+        els.editPrimaryColorSwatch.style.background = 'repeating-conic-gradient(#f2f4f7 0% 25%, #ffffff 0% 50%) 50% / 12px 12px';
+        els.editPrimaryColorSwatch.style.borderColor = '#d0d5dd';
+      }
+    }
+    if (els.editPrimaryColorPicker && validColor) {
+      els.editPrimaryColorPicker.value = validColor.toLowerCase();
+    }
+  }
+
   function snapshotsEqual(a, b) {
     return JSON.stringify(a || null) === JSON.stringify(b || null);
   }
@@ -851,27 +900,50 @@
   function renderTenantFormState() {
     const tenant = getSelectedTenant();
     const dirty = Boolean(state.tenantForm.dirty);
+    const saving = Boolean(state.tenantForm.isSaving);
     const lastSavedAt = state.tenantForm.lastSavedAt;
     const lastSaveMessage = state.tenantForm.lastSaveMessage;
-    if (els.tenantFormSaveStatePill) {
-      els.tenantFormSaveStatePill.className = 'pill';
-      els.tenantFormSaveStatePill.textContent = !tenant ? 'No tenant selected' : (dirty ? 'Unsaved changes' : 'Saved');
-      if (!dirty && tenant) els.tenantFormSaveStatePill.classList.add('ok');
-    }
     if (els.tenantFormDirtyPill) {
+      const showDirty = Boolean(tenant && dirty && !saving);
       els.tenantFormDirtyPill.className = 'pill';
-      els.tenantFormDirtyPill.textContent = !tenant ? 'Select tenant' : (dirty ? 'Unsaved changes' : 'No changes');
-      if (!dirty && tenant) els.tenantFormDirtyPill.classList.add('ok');
+      els.tenantFormDirtyPill.textContent = 'Unsaved changes';
+      els.tenantFormDirtyPill.classList.toggle('hidden', !showDirty);
+    }
+    if (els.saveTenantBtn) {
+      els.saveTenantBtn.disabled = !tenant || !dirty || saving;
+      els.saveTenantBtn.textContent = saving ? 'Saving…' : 'Save changes';
+    }
+    if (els.discardTenantBtn) {
+      els.discardTenantBtn.disabled = !tenant || !dirty || saving;
+    }
+    if (els.reloadSelectedBtn) {
+      els.reloadSelectedBtn.disabled = !tenant || saving;
+    }
+    if (state.tenantForm.saveHintTimeout) {
+      clearTimeout(state.tenantForm.saveHintTimeout);
+      state.tenantForm.saveHintTimeout = null;
     }
     if (els.tenantFormSaveFeedback) {
+      els.tenantFormSaveFeedback.classList.remove('is-saved', 'is-fadeout');
       if (!tenant) {
         els.tenantFormSaveFeedback.textContent = 'Select a tenant to begin editing.';
+      } else if (saving) {
+        els.tenantFormSaveFeedback.textContent = 'Saving tenant changes…';
       } else if (dirty) {
         els.tenantFormSaveFeedback.textContent = 'You have unsaved changes in this tenant profile.';
       } else if (lastSavedAt) {
-        els.tenantFormSaveFeedback.textContent = `${lastSaveMessage || 'Saved'} • ${formatDateTime(lastSavedAt)}`;
+        const elapsed = Date.now() - new Date(lastSavedAt).getTime();
+        if (elapsed < 6000) {
+          els.tenantFormSaveFeedback.textContent = lastSaveMessage || 'Saved';
+          els.tenantFormSaveFeedback.classList.add('is-saved', 'is-fadeout');
+          state.tenantForm.saveHintTimeout = setTimeout(() => {
+            renderTenantFormState();
+          }, 6100 - elapsed);
+        } else {
+          els.tenantFormSaveFeedback.textContent = `Last saved ${formatDateTime(lastSavedAt)}`;
+        }
       } else {
-        els.tenantFormSaveFeedback.textContent = 'Changes save to the selected tenant only.';
+        els.tenantFormSaveFeedback.textContent = 'All changes are up to date.';
       }
     }
   }
@@ -891,15 +963,21 @@
   function markTenantFormPristine(message) {
     state.tenantForm.snapshot = getTenantFormSnapshot();
     state.tenantForm.dirty = false;
+    state.tenantForm.isSaving = false;
     state.tenantForm.lastSavedAt = new Date().toISOString();
     state.tenantForm.lastSaveMessage = message || 'Saved';
     renderTenantFormState();
   }
 
   function resetTenantFormTracking() {
+    if (state.tenantForm.saveHintTimeout) {
+      clearTimeout(state.tenantForm.saveHintTimeout);
+      state.tenantForm.saveHintTimeout = null;
+    }
     state.tenantForm.loadedTenantId = null;
     state.tenantForm.snapshot = null;
     state.tenantForm.dirty = false;
+    state.tenantForm.isSaving = false;
     state.tenantForm.lastSavedAt = null;
     state.tenantForm.lastSaveMessage = '';
     state.tenantForm.validationErrors = {};
@@ -1021,6 +1099,11 @@
       els.tenantSiteHomeInsightsNavbarEnabled.checked = Boolean(current.homeInsights.navbarEnabled);
       els.tenantSiteHomeInsightsNavbarEnabled.disabled = !tenant;
     }
+    if (els.tenantSiteHomeInsightsNavbarOrder) {
+      const value = Number(current.homeInsights.navbarOrder);
+      els.tenantSiteHomeInsightsNavbarOrder.value = String(Number.isFinite(value) && value >= 0 ? Math.floor(value) : 3);
+      els.tenantSiteHomeInsightsNavbarOrder.disabled = !tenant;
+    }
     if (els.tenantSiteHomeInsightsEyebrow) {
       els.tenantSiteHomeInsightsEyebrow.value = current.homeInsights.eyebrow || '';
       els.tenantSiteHomeInsightsEyebrow.disabled = !tenant;
@@ -1057,6 +1140,9 @@
       homeInsights: {
         enabled: Boolean(els.tenantSiteHomeInsightsEnabled?.checked),
         navbarEnabled: Boolean(els.tenantSiteHomeInsightsNavbarEnabled?.checked),
+        navbarOrder: Number.isFinite(Number(els.tenantSiteHomeInsightsNavbarOrder?.value))
+          ? Math.max(0, Math.floor(Number(els.tenantSiteHomeInsightsNavbarOrder.value)))
+          : 3,
         eyebrow: String(els.tenantSiteHomeInsightsEyebrow?.value || ''),
         title: String(els.tenantSiteHomeInsightsTitle?.value || ''),
         subtitle: String(els.tenantSiteHomeInsightsSubtitle?.value || ''),
@@ -1076,6 +1162,7 @@
     if (!els.tenantContextHeader) return;
     if (!tenant) {
       els.tenantContextHeader.classList.add('hidden');
+      if (els.tenantBreadcrumbCurrent) els.tenantBreadcrumbCurrent.textContent = 'Selected Tenant';
       return;
     }
     els.tenantContextHeader.classList.remove('hidden');
@@ -1084,8 +1171,9 @@
     const draftCmsDomain = (els.editCmsDomain?.value || '').trim() || tenant.branding?.cmsDomain || '';
     const draftPublicSiteUrl = (els.editPublicSiteUrl?.value || '').trim() || tenant.branding?.publicSiteUrl || '';
     if (els.tenantContextName) els.tenantContextName.textContent = draftName;
+    if (els.tenantBreadcrumbCurrent) els.tenantBreadcrumbCurrent.textContent = draftName;
     if (els.tenantContextSub) {
-      els.tenantContextSub.textContent = `Slug: ${tenant.slug || '-'} • Manage onboarding, domain, and content modules for this customer workspace.`;
+      els.tenantContextSub.textContent = `Slug: ${tenant.slug || '-'} • Environment: Production`;
     }
     setPillStatus(els.tenantContextStatusPill, `Status: ${draftStatus}`, draftStatus === 'active' ? 'ok' : '');
     const domainStatus = inferTenantDomainState({ ...tenant, branding: { ...(tenant.branding || {}), cmsDomain: draftCmsDomain } });
@@ -1129,6 +1217,9 @@
         if (key) delete state.tenantForm.validationErrors[key];
       }
       clearTenantFieldErrorByInputId(inputId);
+      if (inputId === 'edit-primary-color' || inputId === 'edit-primary-color-picker') {
+        syncPrimaryColorControls();
+      }
     }
     refreshTenantFormDirtyState();
     renderTenantContextHeader(getSelectedTenant());
@@ -3234,6 +3325,7 @@
       }
       clearTenantFormValidation();
     }
+    syncPrimaryColorControls();
     if (tenantChanged) {
       resetTenantUserForm();
       setNotice(els.tenantUsersNotice, '', '');
@@ -3885,7 +3977,7 @@
       renderTenantFormState();
       return;
     }
-    els.saveTenantBtn.disabled = true;
+    state.tenantForm.isSaving = true;
     state.tenantForm.lastSaveMessage = 'Saving…';
     renderTenantFormState();
     try {
@@ -3915,9 +4007,29 @@
       renderTenantFormState();
       setNotice(els.appNotice, err.message || 'Failed to save tenant', 'error');
     } finally {
-      els.saveTenantBtn.disabled = false;
+      state.tenantForm.isSaving = false;
       renderTenantFormState();
     }
+  }
+
+  function handleDiscardTenantChanges() {
+    const tenant = getSelectedTenant();
+    if (!tenant || !state.tenantForm.snapshot) return;
+    const snapshot = state.tenantForm.snapshot;
+    if (els.editName) els.editName.value = snapshot.name || '';
+    if (els.editStatus) els.editStatus.value = snapshot.status || 'active';
+    if (els.editPrimaryColor) els.editPrimaryColor.value = snapshot.primaryColor || '';
+    if (els.editLogoUrl) els.editLogoUrl.value = snapshot.logoUrl || '';
+    if (els.editPublicSiteUrl) els.editPublicSiteUrl.value = snapshot.publicSiteUrl || '';
+    if (els.editCmsDomain) els.editCmsDomain.value = snapshot.cmsDomain || '';
+    if (els.editSupportEmail) els.editSupportEmail.value = snapshot.supportEmail || '';
+    syncPrimaryColorControls();
+    clearTenantFormValidation();
+    state.tenantForm.dirty = false;
+    state.tenantForm.lastSaveMessage = 'Changes discarded';
+    state.tenantForm.lastSavedAt = null;
+    renderTenantFormState();
+    renderTenantContextHeader(getSelectedTenant());
   }
 
   async function handleCreateContentItem() {
@@ -4143,6 +4255,7 @@
     [
       els.tenantSiteHomeInsightsEnabled,
       els.tenantSiteHomeInsightsNavbarEnabled,
+      els.tenantSiteHomeInsightsNavbarOrder,
       els.tenantSiteHomeInsightsEyebrow,
       els.tenantSiteHomeInsightsTitle,
       els.tenantSiteHomeInsightsSubtitle,
@@ -4244,6 +4357,26 @@
       field.addEventListener('input', handleTenantFormChanged);
       field.addEventListener('change', handleTenantFormChanged);
     });
+    if (els.editPrimaryColorPicker && els.editPrimaryColor) {
+      els.editPrimaryColorPicker.addEventListener('input', () => {
+        els.editPrimaryColor.value = normalizeHexColor(els.editPrimaryColorPicker.value);
+        handleTenantFormChanged({ target: els.editPrimaryColor });
+      });
+      els.editPrimaryColorPicker.addEventListener('change', () => {
+        els.editPrimaryColor.value = normalizeHexColor(els.editPrimaryColorPicker.value);
+        handleTenantFormChanged({ target: els.editPrimaryColor });
+      });
+    }
+    if (Array.isArray(els.editPrimaryColorPresets)) {
+      els.editPrimaryColorPresets.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const value = normalizeHexColor(btn.dataset.colorPreset || '');
+          if (!value || !els.editPrimaryColor) return;
+          els.editPrimaryColor.value = value;
+          handleTenantFormChanged({ target: els.editPrimaryColor });
+        });
+      });
+    }
     if (els.platformBackupRefreshBtn) els.platformBackupRefreshBtn.addEventListener('click', loadPlatformBackups);
     if (els.platformBackupRunBtn) els.platformBackupRunBtn.addEventListener('click', handleRunPlatformDbBackup);
     els.tenantSwitch.addEventListener('change', async () => {
@@ -4266,6 +4399,9 @@
       await loadTenantCmsContent();
     });
     els.saveTenantBtn.addEventListener('click', handleSaveTenant);
+    if (els.discardTenantBtn) {
+      els.discardTenantBtn.addEventListener('click', handleDiscardTenantChanges);
+    }
     if (els.tenantDomainProvisionBtn) els.tenantDomainProvisionBtn.addEventListener('click', handleProvisionTenantDomain);
     if (els.tenantDomainVerifyBtn) els.tenantDomainVerifyBtn.addEventListener('click', handleVerifyTenantDomain);
     if (els.tenantDomainRefreshBtn) els.tenantDomainRefreshBtn.addEventListener('click', loadTenantDomainProvisioning);

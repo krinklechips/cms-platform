@@ -2143,6 +2143,403 @@
       @media (min-width: 981px) {
         .platform-sidebar { display: flex; }
       }
+      /* Premium SaaS polish: tenant editor + sidebar */
+      :root {
+        --ui-primary: #1f2937;
+        --ui-primary-hover: #111827;
+        --ui-border-soft: #e6e8ef;
+        --ui-border-mid: #d8dce8;
+        --ui-surface-soft: #fafbfe;
+        --ui-text-muted: #667085;
+      }
+      .platform-nav a.is-active {
+        background: #f7f8fc;
+        border-color: transparent;
+        box-shadow: inset 2px 0 0 #5b6075;
+      }
+      .platform-nav .nav-menu-head > a.is-active {
+        background: #f7f8fc;
+        border-color: transparent;
+      }
+      .platform-nav .submenu {
+        border-left: 1px solid #e6e8ef;
+        padding-left: 12px;
+      }
+      .platform-nav a.submenu-link {
+        padding: 6px 8px 6px 12px;
+      }
+      .platform-nav a.submenu-link .label {
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .platform-nav a.submenu-link .helper {
+        font-size: 10px;
+        color: #868b9a;
+      }
+      .platform-nav a.submenu-link.is-active {
+        background: #f8f9fe;
+        border-color: #e9ecf5;
+        box-shadow: inset 2px 0 0 #6b7280;
+      }
+
+      button {
+        min-height: 38px;
+        border-radius: 10px;
+        border: 1px solid var(--ui-border-mid);
+        background: #fff;
+        color: #1f2937;
+        font-weight: 700;
+      }
+      button.primary {
+        border-color: var(--ui-primary);
+        background: var(--ui-primary);
+        color: #fff;
+        box-shadow: 0 1px 0 rgba(16, 24, 40, 0.18);
+      }
+      button.primary:hover:not(:disabled) {
+        border-color: var(--ui-primary-hover);
+        background: var(--ui-primary-hover);
+        color: #fff;
+      }
+      button:hover:not(:disabled) {
+        border-color: #c8cede;
+        background: #f9fafc;
+      }
+      button.danger,
+      button.btn-danger,
+      #section-tenant-settings .danger {
+        border-color: #fecdd3;
+        background: #fff5f5;
+        color: #b42318;
+      }
+      button.danger:hover:not(:disabled),
+      button.btn-danger:hover:not(:disabled),
+      #section-tenant-settings .danger:hover:not(:disabled) {
+        border-color: #fda4af;
+        background: #ffeceb;
+      }
+      button.edit,
+      button.btn-edit {
+        border-color: #c7d7fe;
+        background: #eef4ff;
+        color: #1d4ed8;
+      }
+      button.edit:hover:not(:disabled),
+      button.btn-edit:hover:not(:disabled) {
+        border-color: #93c5fd;
+        background: #e4eeff;
+      }
+
+      #section-tenant-settings {
+        padding: 22px;
+      }
+      #section-tenant-settings .tenant-breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 16px;
+        font-size: 12px;
+        color: var(--ui-text-muted);
+      }
+      #section-tenant-settings .tenant-breadcrumbs a {
+        color: #475467;
+        text-decoration: none;
+      }
+      #section-tenant-settings .tenant-breadcrumbs a:hover {
+        color: #1d2939;
+        text-decoration: underline;
+      }
+      #section-tenant-settings .tenant-breadcrumb-current {
+        color: #101828;
+        font-weight: 600;
+      }
+
+      #section-tenant-settings .tenant-settings-grid {
+        gap: 18px;
+      }
+      #section-tenant-settings .tenant-context {
+        position: sticky;
+        top: 82px;
+        z-index: 11;
+        border: 1px solid var(--ui-border-mid);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(5px);
+        padding: 14px 16px;
+        box-shadow: 0 8px 20px rgba(16, 24, 40, 0.05);
+      }
+      #section-tenant-settings .tenant-context-main {
+        display: grid;
+        gap: 12px;
+      }
+      #section-tenant-settings .tenant-context-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: start;
+      }
+      #section-tenant-settings .tenant-context-title {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        font-weight: 800;
+      }
+      #section-tenant-settings .tenant-context-sub {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: #667085;
+      }
+      #section-tenant-settings .tenant-context-pills {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      #section-tenant-settings .tenant-header-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      #section-tenant-settings .tenant-save-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 38px;
+      }
+      #section-tenant-settings .tenant-save-state .meta {
+        font-size: 12px;
+        color: #667085;
+      }
+      #section-tenant-settings #tenant-form-save-feedback.is-saved {
+        color: #067647;
+      }
+      #section-tenant-settings #tenant-form-save-feedback.is-fadeout {
+        animation: tenantSavedFade 4.2s ease forwards;
+      }
+      @keyframes tenantSavedFade {
+        0% { opacity: 1; }
+        68% { opacity: 1; }
+        100% { opacity: 0.45; }
+      }
+      #section-tenant-settings #tenant-form-dirty-pill {
+        border-color: #fcd34d;
+        background: #fffbeb;
+        color: #92400e;
+      }
+      #section-tenant-settings .tenant-primary-actions {
+        margin-left: auto;
+      }
+      #section-tenant-settings .tenant-primary-actions button {
+        min-width: 116px;
+      }
+      #section-tenant-settings .tenant-quick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        border-top: 1px solid var(--ui-border-soft);
+        padding-top: 10px;
+      }
+      #section-tenant-settings .tenant-quick-actions .pill {
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 9px;
+      }
+
+      #section-tenant-settings #tenant-settings-tabs.subtabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: flex-end;
+        padding: 0 2px;
+        border: 0;
+        border-bottom: 1px solid var(--ui-border-soft);
+        border-radius: 0;
+        background: transparent;
+        position: relative;
+        top: auto;
+        z-index: 1;
+      }
+      #section-tenant-settings #tenant-settings-tabs.subtabs button {
+        border: 0;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        background: transparent;
+        color: #667085;
+        box-shadow: none;
+        padding: 11px 0 10px;
+        min-height: 0;
+        min-width: 0;
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 1.2;
+        transition: color 180ms ease, border-color 180ms ease;
+      }
+      #section-tenant-settings #tenant-settings-tabs.subtabs button .tab-title {
+        font-size: inherit;
+        font-weight: inherit;
+      }
+      #section-tenant-settings #tenant-settings-tabs.subtabs button .tab-sub {
+        display: none;
+      }
+      #section-tenant-settings #tenant-settings-tabs.subtabs button.is-active {
+        color: #111827;
+        border-color: #111827;
+        background: transparent;
+      }
+      #section-tenant-settings #tenant-settings-tabs.subtabs button:hover:not(.is-active):not(:disabled) {
+        color: #344054;
+        background: transparent;
+      }
+
+      #section-tenant-settings .tenant-settings-panel {
+        border: 1px solid var(--ui-border-mid);
+        border-radius: 14px;
+        background: #fff;
+        padding: 18px;
+        gap: 16px;
+      }
+      #section-tenant-settings .tenant-settings-panel::before {
+        display: none;
+      }
+      #section-tenant-settings .subsection {
+        border: 1px solid var(--ui-border-soft);
+        border-radius: 12px;
+        background: var(--ui-surface-soft);
+        padding: 16px;
+      }
+      #section-tenant-settings .subsection h3 {
+        margin: 0 0 8px;
+        font-size: 17px;
+        font-weight: 700;
+      }
+      #section-tenant-settings .subsection .meta {
+        margin: 0 0 14px;
+        color: #667085;
+      }
+      #section-tenant-settings .row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+      #section-tenant-settings label {
+        margin-bottom: 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: #475467;
+      }
+      #section-tenant-settings input,
+      #section-tenant-settings select,
+      #section-tenant-settings textarea {
+        margin-top: 8px;
+      }
+      #section-tenant-settings .expand {
+        border: 1px solid var(--ui-border-soft);
+        border-radius: 12px;
+        background: #fff;
+      }
+      #section-tenant-settings .expand > summary {
+        font-size: 14px;
+        font-weight: 700;
+        color: #344054;
+      }
+      #section-tenant-settings .expand-body {
+        border-top: 1px solid var(--ui-border-soft);
+      }
+
+      #section-tenant-settings .color-field {
+        display: grid;
+        gap: 8px;
+      }
+      #section-tenant-settings .color-input-row {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) 48px;
+        gap: 8px;
+        align-items: center;
+      }
+      #section-tenant-settings .color-swatch {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid #d0d5dd;
+        background: repeating-conic-gradient(#f2f4f7 0% 25%, #ffffff 0% 50%) 50% / 12px 12px;
+      }
+      #section-tenant-settings #edit-primary-color-picker {
+        margin-top: 0;
+        padding: 2px;
+        width: 48px;
+        height: 36px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      #section-tenant-settings .color-presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      #section-tenant-settings .color-preset {
+        min-height: 30px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #344054;
+        background: #fff;
+        border-color: #d7dce8;
+      }
+      #section-tenant-settings .color-preset .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        display: inline-block;
+        margin-right: 6px;
+        border: 1px solid rgba(17, 24, 39, 0.2);
+        vertical-align: -1px;
+      }
+
+      #section-tenant-settings #tenant-form-validation-summary {
+        margin: 0;
+      }
+      #section-tenant-settings #selected-tenant-meta {
+        margin-top: 2px;
+        font-size: 12px;
+      }
+
+      @media (max-width: 1280px) {
+        #section-tenant-settings .tenant-context-head {
+          grid-template-columns: 1fr;
+        }
+        #section-tenant-settings .tenant-header-actions {
+          align-items: flex-start;
+        }
+        #section-tenant-settings .tenant-primary-actions {
+          margin-left: 0;
+        }
+      }
+      @media (max-width: 980px) {
+        #section-tenant-settings {
+          padding: 16px;
+        }
+        #section-tenant-settings .tenant-context {
+          position: static;
+          top: auto;
+        }
+        #section-tenant-settings .row {
+          grid-template-columns: 1fr;
+        }
+        #section-tenant-settings #tenant-settings-tabs.subtabs {
+          gap: 14px;
+        }
+        #section-tenant-settings .tenant-primary-actions {
+          width: 100%;
+        }
+        #section-tenant-settings .tenant-primary-actions button {
+          flex: 1;
+        }
+      }
     </style>
   </head>
   <body>
@@ -2493,19 +2890,37 @@
       </div>
 
       <div id="section-tenant-settings" class="card section-panel" style="margin-top:16px;" data-admin-page="tenant-settings">
-        <h2>Edit Selected Tenant</h2>
+        <nav class="tenant-breadcrumbs" aria-label="Breadcrumb">
+          <a href="#section-platform-ops">Platform</a>
+          <span aria-hidden="true">/</span>
+          <a href="#section-tenants">Customers / Tenants</a>
+          <span aria-hidden="true">/</span>
+          <span id="tenant-breadcrumb-current" class="tenant-breadcrumb-current">Selected Tenant</span>
+        </nav>
         <p id="selected-tenant-empty" class="meta">Select a tenant from the table above to edit branding and status.</p>
         <div id="selected-tenant-form" class="hidden tenant-settings-grid">
           <div id="tenant-context-header" class="tenant-context hidden">
-            <div class="tenant-context-head">
-              <div>
-                <h3 id="tenant-context-name" class="tenant-context-title">Select a tenant</h3>
-                <p id="tenant-context-sub" class="tenant-context-sub">Choose a customer from the list to start editing settings and content modules.</p>
+            <div class="tenant-context-main">
+              <div class="tenant-context-head">
+                <div>
+                  <h2 id="tenant-context-name" class="tenant-context-title">Select a tenant</h2>
+                  <p id="tenant-context-sub" class="tenant-context-sub">Choose a customer from the list to start editing settings and content modules.</p>
+                </div>
+                <div class="tenant-context-pills">
+                  <span id="tenant-context-status-pill" class="pill">Status</span>
+                  <span id="tenant-context-domain-pill" class="pill">Domain</span>
+                </div>
               </div>
-              <div class="tenant-context-pills">
-                <span id="tenant-context-status-pill" class="pill">Status</span>
-                <span id="tenant-context-domain-pill" class="pill">Domain</span>
-                <span id="tenant-form-dirty-pill" class="pill">No changes</span>
+              <div class="tenant-header-actions">
+                <div class="tenant-save-state">
+                  <span id="tenant-form-dirty-pill" class="pill hidden">Unsaved changes</span>
+                  <span id="tenant-form-save-feedback" class="meta">Select a tenant to begin editing.</span>
+                </div>
+                <div class="actions tenant-primary-actions" style="margin-top:0;">
+                  <button id="save-tenant-btn" class="primary">Save changes</button>
+                  <button id="discard-tenant-btn" type="button">Discard</button>
+                  <button id="reload-selected-btn" type="button">Reload</button>
+                </div>
               </div>
             </div>
             <div class="tenant-quick-actions">
@@ -2519,23 +2934,18 @@
           <div id="tenant-settings-tabs" class="subtabs" role="tablist" aria-label="Tenant settings sections">
             <button type="button" data-tenant-settings-tab="branding" class="is-active">
               <span class="tab-title">Branding</span>
-              <span class="tab-sub">Identity</span>
             </button>
             <button type="button" data-tenant-settings-tab="domains">
               <span class="tab-title">Domains</span>
-              <span class="tab-sub">Routing</span>
             </button>
             <button type="button" data-tenant-settings-tab="support">
               <span class="tab-title">Support</span>
-              <span class="tab-sub">Contact</span>
             </button>
             <button type="button" data-tenant-settings-tab="users">
               <span class="tab-title">Users</span>
-              <span class="tab-sub">Access</span>
             </button>
             <button type="button" data-tenant-settings-tab="content">
               <span class="tab-title">Content Modules</span>
-              <span class="tab-sub">Permissions</span>
             </button>
           </div>
 
@@ -2564,7 +2974,20 @@
                 </label>
                 <label>
                   Primary color
-                  <input id="edit-primary-color" type="text" />
+                  <div class="color-field">
+                    <div class="color-input-row">
+                      <span id="edit-primary-color-swatch" class="color-swatch" aria-hidden="true"></span>
+                      <input id="edit-primary-color" type="text" placeholder="#2563EB" />
+                      <input id="edit-primary-color-picker" type="color" value="#2563eb" aria-label="Pick primary color" />
+                    </div>
+                    <div class="color-presets">
+                      <button type="button" class="color-preset" data-color-preset="#2563EB"><span class="dot" style="background:#2563EB;"></span>#2563EB</button>
+                      <button type="button" class="color-preset" data-color-preset="#0F766E"><span class="dot" style="background:#0F766E;"></span>#0F766E</button>
+                      <button type="button" class="color-preset" data-color-preset="#7C3AED"><span class="dot" style="background:#7C3AED;"></span>#7C3AED</button>
+                      <button type="button" class="color-preset" data-color-preset="#0EA5E9"><span class="dot" style="background:#0EA5E9;"></span>#0EA5E9</button>
+                      <button type="button" class="color-preset" data-color-preset="#111827"><span class="dot" style="background:#111827;"></span>#111827</button>
+                    </div>
+                  </div>
                   <span id="edit-primary-color-help" class="field-help hidden"></span>
                 </label>
               </div>
@@ -2832,6 +3255,11 @@
                     <span class="switch-ui" aria-hidden="true"></span>
                   </label>
                 </div>
+                <label>
+                  Navbar order
+                  <input id="tenant-site-home-insights-navbar-order" type="number" min="0" step="1" placeholder="3" />
+                  <span class="meta">Set position in header menu (example: 3 places Insights after Company in a 0..n order).</span>
+                </label>
                 <div class="row">
                   <label>
                     Eyebrow
@@ -2864,16 +3292,6 @@
           </div>
 
           <div id="tenant-form-validation-summary" class="notice hidden"></div>
-          <div class="actions savebar">
-            <div class="savebar-meta">
-              <span id="tenant-form-save-state-pill" class="pill">No changes</span>
-              <span id="tenant-form-save-feedback" class="meta">Select a tenant to begin editing.</span>
-            </div>
-            <div class="actions" style="margin-top:0;">
-            <button id="save-tenant-btn" class="primary">Save tenant</button>
-            <button id="reload-selected-btn">Reload list</button>
-            </div>
-          </div>
           <p id="selected-tenant-meta" class="footer-note"></p>
         </div>
       </div>

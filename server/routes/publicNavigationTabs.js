@@ -61,6 +61,7 @@ function defaultPublicSiteSections() {
     homeInsights: {
       enabled: true,
       navbarEnabled: true,
+      navbarOrder: 3,
       eyebrow: 'Insights',
       title: 'Latest updates from your CMS-powered editorial feed.',
       subtitle: 'This section reads published articles from the tenant CMS while keeping layout stable in site code.',
@@ -80,6 +81,13 @@ function normalizePublicSiteSections(input) {
       navbarEnabled: Object.prototype.hasOwnProperty.call(rawHomeInsights, 'navbarEnabled')
         ? Boolean(rawHomeInsights.navbarEnabled)
         : Boolean(defaults.homeInsights.navbarEnabled),
+      navbarOrder: (() => {
+        const value = Object.prototype.hasOwnProperty.call(rawHomeInsights, 'navbarOrder')
+          ? Number(rawHomeInsights.navbarOrder)
+          : Number(defaults.homeInsights.navbarOrder);
+        if (!Number.isFinite(value) || value < 0) return Number(defaults.homeInsights.navbarOrder) || 3;
+        return Math.floor(value);
+      })(),
       eyebrow: String(rawHomeInsights.eyebrow || '').trim() || defaults.homeInsights.eyebrow,
       title: String(rawHomeInsights.title || '').trim() || defaults.homeInsights.title,
       subtitle: String(rawHomeInsights.subtitle || '').trim() || defaults.homeInsights.subtitle,
@@ -108,7 +116,13 @@ function normalizePublicNavLink(input, index, fallbackPrefix) {
 function ensureInsightsNavItem(primary, siteSections, tenantId) {
   const list = Array.isArray(primary) ? [...primary] : [];
   const enabled = Boolean(siteSections?.homeInsights?.enabled) && Boolean(siteSections?.homeInsights?.navbarEnabled);
-  if (!enabled) return list;
+  if (!enabled) {
+    return list.filter((item) => {
+      const label = String(item?.label || '').trim().toLowerCase();
+      const href = String(item?.href || '').trim().toLowerCase();
+      return !(label === 'insights' || href === '/insights' || href.endsWith('/insights'));
+    });
+  }
 
   const hasInsights = list.some((item) => {
     const label = String(item?.label || '').trim().toLowerCase();
@@ -121,13 +135,17 @@ function ensureInsightsNavItem(primary, siteSections, tenantId) {
     const order = Number(item?.order);
     return Number.isFinite(order) ? Math.max(max, order) : max;
   }, -1) + 1;
+  const configuredOrder = Number(siteSections?.homeInsights?.navbarOrder);
+  const targetOrder = Number.isFinite(configuredOrder) && configuredOrder >= 0
+    ? Math.floor(configuredOrder)
+    : nextOrder;
 
   list.push({
     id: `auto-insights-${tenantId}`,
     label: 'Insights',
     href: '/insights',
     visible: true,
-    order: nextOrder,
+    order: targetOrder,
     description: 'CMS-managed insights section',
     type: 'link',
     columns: [],
@@ -138,7 +156,13 @@ function ensureInsightsNavItem(primary, siteSections, tenantId) {
 function ensureInsightsNavigationTab(tabs, siteSections, tenantId) {
   const list = Array.isArray(tabs) ? [...tabs] : [];
   const enabled = Boolean(siteSections?.homeInsights?.enabled) && Boolean(siteSections?.homeInsights?.navbarEnabled);
-  if (!enabled) return list;
+  if (!enabled) {
+    return list.filter((item) => {
+      const label = String(item?.label || '').trim().toLowerCase();
+      const href = String(item?.href || '').trim().toLowerCase();
+      return !(label === 'insights' || href === '/insights' || href.endsWith('/insights'));
+    });
+  }
 
   const hasInsights = list.some((item) => {
     const label = String(item?.label || '').trim().toLowerCase();
@@ -151,6 +175,10 @@ function ensureInsightsNavigationTab(tabs, siteSections, tenantId) {
     const order = Number(item?.order);
     return Number.isFinite(order) ? Math.max(max, order) : max;
   }, -1) + 1;
+  const configuredOrder = Number(siteSections?.homeInsights?.navbarOrder);
+  const targetOrder = Number.isFinite(configuredOrder) && configuredOrder >= 0
+    ? Math.floor(configuredOrder)
+    : nextOrder;
 
   list.push({
     id: `auto-insights-tab-${tenantId}`,
@@ -158,7 +186,7 @@ function ensureInsightsNavigationTab(tabs, siteSections, tenantId) {
     href: '/insights',
     group: 'general',
     visible: true,
-    order: nextOrder,
+    order: targetOrder,
     description: 'CMS-managed insights section',
   });
   return list;

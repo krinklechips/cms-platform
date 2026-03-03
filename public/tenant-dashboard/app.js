@@ -425,7 +425,7 @@
     if (els.tenantArticleIdInput) els.tenantArticleIdInput.value = item ? String(item.id) : '';
     if (els.tenantArticleTitleInput) els.tenantArticleTitleInput.value = item?.title || '';
     if (els.tenantArticleStatusInput) els.tenantArticleStatusInput.value = item?.status === 'published' ? 'published' : 'draft';
-    if (els.tenantArticleCategoryInput) els.tenantArticleCategoryInput.value = item?.category || 'newsroom';
+    if (els.tenantArticleCategoryInput) els.tenantArticleCategoryInput.value = item?.category || 'insights';
     if (els.tenantArticleSummaryInput) els.tenantArticleSummaryInput.value = item?.summary || '';
     if (els.tenantArticleBodyInput) els.tenantArticleBodyInput.value = item?.body || '';
   }
@@ -500,7 +500,7 @@
     const status = String(els.tenantArticleStatusInput?.value || 'draft').trim().toLowerCase() === 'published'
       ? 'published'
       : 'draft';
-    const category = String(els.tenantArticleCategoryInput?.value || 'newsroom').trim() || 'newsroom';
+    const category = String(els.tenantArticleCategoryInput?.value || 'insights').trim() || 'insights';
     const summary = String(els.tenantArticleSummaryInput?.value || '');
     const body = String(els.tenantArticleBodyInput?.value || '');
     if (!title) {
