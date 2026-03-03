@@ -335,6 +335,8 @@
     sectionTenantCms: document.getElementById('section-tenant-cms'),
   };
   const sidebarNavLinks = Array.from(document.querySelectorAll('.platform-nav a[href^="#"]'));
+  const cmsHashNavLinks = Array.from(document.querySelectorAll('a[href^="#"]'));
+  const nonSidebarCmsHashLinks = cmsHashNavLinks.filter((link) => !link.closest('.platform-nav'));
   const workspaceNavLinks = Array.from(document.querySelectorAll('.platform-nav a[data-workspace-view]'));
   const platformNavMenuBlocks = Array.from(document.querySelectorAll('#sidebar-platform-group [data-nav-menu]'));
   const platformNavMenuToggleButtons = Array.from(document.querySelectorAll('#sidebar-platform-group [data-nav-menu-toggle]'));
@@ -626,6 +628,24 @@
     persistAdminNavState();
     applyAdminPageLayout(options);
     syncSidebarActiveLink();
+  }
+
+  function navigateAdminRoute(main, requestedSub, tab, options) {
+    const resolvedMain = main || state.adminNav?.main || 'tenants';
+    let resolvedSub = requestedSub || (state.adminNav?.main === resolvedMain ? state.adminNav?.sub : '');
+    if (resolvedMain === 'integrations' && tab) {
+      const tabToSub = {
+        domains: 'domain-provisioning',
+        content: 'module-access',
+        users: 'tenant-users',
+        support: 'support-details',
+      };
+      resolvedSub = tabToSub[tab] || resolvedSub;
+    }
+    setAdminNav(
+      { main: resolvedMain, sub: resolvedSub },
+      { focus: options?.focus ?? !requestedSub, behavior: options?.behavior || 'auto' },
+    );
   }
 
   loadInitialAdminNavState();
@@ -4160,23 +4180,13 @@
         const hash = link.getAttribute('href') || '';
         if (!hash.startsWith('#')) return;
         const isPlatformAdminLink = Boolean(link.closest('#sidebar-platform-group'));
-
-        if (isPlatformAdminLink && state.uiMode !== 'tenant') {
+        const requestedMain = link.dataset.adminMainLink || '';
+        if (requestedMain && state.uiMode !== 'tenant') {
           event.preventDefault();
-          const main = link.dataset.adminMainLink || link.closest('[data-nav-menu]')?.dataset?.navMenu || state.adminNav?.main || 'tenants';
-          const requestedSubLink = link.dataset.adminSubLink || '';
-          const tab = link.dataset.tenantSettingsTab || '';
-          let sub = requestedSubLink || (state.adminNav?.main === main ? state.adminNav?.sub : '');
-          if (main === 'integrations' && tab) {
-            const tabToSub = {
-              domains: 'domain-provisioning',
-              content: 'module-access',
-              users: 'tenant-users',
-              support: 'support-details',
-            };
-            sub = tabToSub[tab] || sub;
-          }
-          setAdminNav({ main, sub }, { focus: !requestedSubLink, behavior: 'auto' });
+          navigateAdminRoute(requestedMain, link.dataset.adminSubLink || '', link.dataset.tenantSettingsTab || '', {
+            focus: !link.dataset.adminSubLink,
+            behavior: 'auto',
+          });
           return;
         }
         event.preventDefault();
@@ -4201,6 +4211,29 @@
         }
 
         requestAnimationFrame(() => scrollToSectionHash(hash));
+      });
+    });
+    nonSidebarCmsHashLinks.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        const hash = link.getAttribute('href') || '';
+        if (!hash.startsWith('#')) return;
+        const requestedMain = link.dataset.adminMainLink || '';
+        if (requestedMain) {
+          event.preventDefault();
+          if (state.uiMode !== 'admin') setUiMode('admin');
+          navigateAdminRoute(requestedMain, link.dataset.adminSubLink || '', link.dataset.tenantSettingsTab || '', {
+            focus: true,
+            behavior: 'smooth',
+          });
+          return;
+        }
+        const requestedWorkspaceView = link.dataset.workspaceView || '';
+        if (requestedWorkspaceView) {
+          event.preventDefault();
+          if (state.uiMode !== 'tenant') setUiMode('tenant');
+          setTenantWorkspaceView(requestedWorkspaceView);
+          requestAnimationFrame(() => scrollToSectionHash(hash));
+        }
       });
     });
     window.addEventListener('scroll', syncSidebarActiveLink, { passive: true });
