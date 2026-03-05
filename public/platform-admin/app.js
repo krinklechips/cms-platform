@@ -4272,11 +4272,13 @@
         const hash = link.getAttribute('href') || '';
         if (!hash.startsWith('#')) return;
         const isPlatformAdminLink = Boolean(link.closest('#sidebar-platform-group'));
-        const requestedMain = link.dataset.adminMainLink || '';
+        const requestedSub = link.dataset.adminSubLink || '';
+        const requestedMain = link.dataset.adminMainLink
+          || (isPlatformAdminLink ? (link.closest('[data-nav-menu]')?.dataset?.navMenu || '') : '');
         if (requestedMain && state.uiMode !== 'tenant') {
           event.preventDefault();
-          navigateAdminRoute(requestedMain, link.dataset.adminSubLink || '', link.dataset.tenantSettingsTab || '', {
-            focus: !link.dataset.adminSubLink,
+          navigateAdminRoute(requestedMain, requestedSub, link.dataset.tenantSettingsTab || '', {
+            focus: !requestedSub,
             behavior: 'auto',
           });
           return;

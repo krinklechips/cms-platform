@@ -2257,8 +2257,8 @@
         margin: 0 0 8px;
         padding: 0 8px;
         color: #4c1d95;
-        font-size: 12px;
-        letter-spacing: 0.08em;
+        font-size: 11px;
+        letter-spacing: 0.12em;
         font-weight: 700;
       }
       .platform-nav .nav-menu-head > a,
@@ -2272,13 +2272,13 @@
         border-radius: 10px;
       }
       .platform-nav .nav-menu-head > a .label {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 700;
         color: #202431;
       }
       .platform-nav .nav-menu-head > a .helper {
         margin-top: 2px;
-        font-size: 12px;
+        font-size: 11px;
         color: #6b7280;
       }
       .platform-nav .nav-menu-head > a:hover {
@@ -2286,17 +2286,22 @@
         border-color: #e2e7f3;
       }
       .platform-nav .nav-menu-head > a.is-active {
-        background: #eee9fc;
-        border-color: #d8ccff;
-        box-shadow: inset 2px 0 0 #6d28d9;
+        background: #f3f0ff;
+        border-color: #dfd4ff;
+        box-shadow: inset 3px 0 0 #6d28d9;
       }
       .platform-nav .nav-menu-toggle {
-        width: 28px;
-        min-width: 28px;
-        border-radius: 8px;
+        width: 26px;
+        min-width: 26px;
+        border-radius: 7px;
+        color: #7b8091;
       }
       .platform-nav .nav-menu-toggle::before {
         font-size: 10px;
+      }
+      .platform-nav .nav-menu-toggle:hover {
+        background: #edf1f8;
+        border-color: #d9dfec;
       }
       .platform-nav .submenu {
         margin: 4px 0 8px 12px;
@@ -2317,7 +2322,7 @@
       }
       .platform-nav a.submenu-link .helper {
         font-size: 11px;
-        color: #8b91a2;
+        color: #8990a2;
       }
       .platform-nav a.submenu-link:hover {
         background: #eef2f8;
@@ -2326,7 +2331,7 @@
       .platform-nav a.submenu-link.is-active {
         background: #ffffff;
         border-color: #d6dced;
-        box-shadow: inset 2px 0 0 #6d28d9;
+        box-shadow: inset 3px 0 0 #6d28d9;
       }
       .platform-nav .platform-nav-group > a {
         padding: 8px 10px;
@@ -2782,6 +2787,144 @@
         }
         #section-tenant-settings #tenant-settings-tabs.subtabs {
           gap: 14px;
+        }
+      }
+
+      /* Final shell polish: larger stacked logo + consistent topbar controls */
+      .platform-sidebar {
+        width: 308px;
+      }
+      .platform-logo {
+        display: grid;
+        grid-template-columns: 1fr;
+        justify-items: start;
+        align-items: start;
+        gap: 10px;
+        padding: 16px 14px 12px;
+      }
+      .platform-logo-mark {
+        width: 154px;
+        height: 70px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
+      }
+      .platform-logo-mark img {
+        width: auto;
+        height: 70px;
+        max-width: 100%;
+        object-fit: contain;
+        object-position: left center;
+        transform: none;
+      }
+      .platform-logo-text {
+        display: grid;
+        gap: 3px;
+        line-height: 1.1;
+      }
+      .platform-logo-text strong {
+        font-size: 22px;
+        font-weight: 750;
+        letter-spacing: -0.03em;
+      }
+      .platform-logo-text span {
+        margin-top: 0;
+        font-size: 13px;
+        color: #6b7280;
+      }
+      .platform-topbar-inner {
+        align-items: center;
+        gap: 16px;
+      }
+      .platform-topbar-actions {
+        align-items: center;
+        gap: 10px;
+      }
+      .platform-topbar .topbar-control {
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        gap: 0;
+      }
+      .platform-topbar .topbar-control-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .platform-topbar .segmented {
+        min-height: 46px;
+        border-radius: 12px;
+        border-color: #d8deea;
+        background: #fff;
+        padding: 4px;
+      }
+      .platform-topbar .segmented button {
+        min-height: 36px;
+        min-width: 104px;
+        border-radius: 9px;
+        padding: 0 12px;
+      }
+      .platform-topbar .segmented button.is-active {
+        box-shadow: inset 0 0 0 1px #cfd6e3;
+      }
+      .platform-topbar .topbar-control select,
+      .platform-topbar .auth-chip,
+      .platform-topbar .topbar-signout {
+        min-height: 46px;
+        border-radius: 12px;
+      }
+      .platform-topbar .topbar-control select {
+        min-width: 248px;
+        margin-top: 0;
+        padding: 0 12px;
+        border-color: #d8deea;
+        background: #fff;
+      }
+      .platform-topbar .auth-chip {
+        min-width: 284px;
+        padding: 8px 12px 8px 8px;
+        border-color: #d8deea;
+        background: #fff;
+      }
+      .platform-topbar .topbar-signout {
+        min-width: 130px;
+        padding: 0 16px;
+        border-color: #d8deea;
+        background: #fff;
+      }
+      .platform-topbar .topbar-signout:hover:not(:disabled) {
+        border-color: #c7d2e4;
+        background: #f8fbff;
+      }
+      @media (max-width: 980px) {
+        .platform-sidebar {
+          width: var(--sidebar-width);
+        }
+        .platform-logo {
+          gap: 8px;
+          padding: 14px 12px 10px;
+        }
+        .platform-logo-mark {
+          width: 128px;
+          height: 56px;
+        }
+        .platform-logo-mark img {
+          height: 56px;
+        }
+        .platform-logo-text strong {
+          font-size: 18px;
+        }
+        .platform-logo-text span {
+          font-size: 12px;
         }
       }
     </style>
