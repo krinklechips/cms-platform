@@ -9,21 +9,21 @@ export const ADMIN_NAV_MODEL = Object.freeze({
   },
   tenants: {
     label: 'Customers / Tenants',
-    page: 'tenants',
+    page: 'tenant-directory',
     subitems: [
-      { id: 'create-tenant', label: 'Create Tenant', helper: 'New customer onboarding', hash: '#section-tenant-create', page: 'tenants' },
-      { id: 'tenant-directory', label: 'Tenant Directory', helper: 'Search and filter tenants', hash: '#section-tenant-list', page: 'tenants' },
-      { id: 'selected-tenant', label: 'Selected Tenant', helper: 'Edit active tenant settings', hash: '#section-tenant-settings', page: 'tenant-settings', tenantSettingsTab: 'branding' },
+      { id: 'create-tenant', label: 'Create Tenant', helper: 'New customer onboarding', hash: '#section-tenant-create', page: 'create-tenant' },
+      { id: 'tenant-directory', label: 'Tenant Directory', helper: 'Search and filter tenants', hash: '#section-tenant-list', page: 'tenant-directory' },
+      { id: 'selected-tenant', label: 'Selected Tenant', helper: 'Edit active tenant settings', hash: '#tenant-settings-panel-branding', page: 'selected-tenant', tenantSettingsTab: 'branding' },
     ],
   },
   integrations: {
     label: 'Integrations & Access',
-    page: 'tenant-settings',
+    page: 'domain-provisioning',
     subitems: [
-      { id: 'domain-provisioning', label: 'Domain Provisioning', helper: 'Render + DNS workflow', hash: '#tenant-settings-panel-domains', page: 'tenant-settings', tenantSettingsTab: 'domains' },
-      { id: 'module-access', label: 'Module Access', helper: 'Toggle tenant-visible modules', hash: '#tenant-settings-panel-content', page: 'tenant-settings', tenantSettingsTab: 'content' },
-      { id: 'tenant-users', label: 'Tenant Users', helper: 'Provisioning and roles', hash: '#tenant-settings-panel-users', page: 'tenant-settings', tenantSettingsTab: 'users' },
-      { id: 'support-details', label: 'Support Details', helper: 'Support email and contact', hash: '#tenant-settings-panel-support', page: 'tenant-settings', tenantSettingsTab: 'support' },
+      { id: 'domain-provisioning', label: 'Domain Provisioning', helper: 'Render + DNS workflow', hash: '#tenant-settings-panel-domains', page: 'domain-provisioning', tenantSettingsTab: 'domains' },
+      { id: 'module-access', label: 'Module Access', helper: 'Toggle tenant-visible modules', hash: '#tenant-settings-panel-content', page: 'module-access', tenantSettingsTab: 'content' },
+      { id: 'tenant-users', label: 'Tenant Users', helper: 'Provisioning and roles', hash: '#tenant-settings-panel-users', page: 'tenant-users', tenantSettingsTab: 'users' },
+      { id: 'support-details', label: 'Support Details', helper: 'Support email and contact', hash: '#tenant-settings-panel-support', page: 'support-details', tenantSettingsTab: 'support' },
     ],
   },
 });

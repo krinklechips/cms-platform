@@ -539,21 +539,21 @@
     },
     tenants: {
       label: 'Customers / Tenants',
-      page: 'tenants',
+      page: 'tenant-directory',
       subitems: [
-        { id: 'create-tenant', label: 'Create Tenant', helper: 'New customer onboarding', hash: '#section-tenant-create', page: 'tenants' },
-        { id: 'tenant-directory', label: 'Tenant Directory', helper: 'Search and filter tenants', hash: '#section-tenant-list', page: 'tenants' },
-        { id: 'selected-tenant', label: 'Selected Tenant', helper: 'Edit active tenant settings', hash: '#section-tenant-settings', page: 'tenant-settings', tenantSettingsTab: 'branding' },
+        { id: 'create-tenant', label: 'Create Tenant', helper: 'New customer onboarding', hash: '#section-tenant-create', page: 'create-tenant' },
+        { id: 'tenant-directory', label: 'Tenant Directory', helper: 'Search and filter tenants', hash: '#section-tenant-list', page: 'tenant-directory' },
+        { id: 'selected-tenant', label: 'Selected Tenant', helper: 'Edit active tenant settings', hash: '#tenant-settings-panel-branding', page: 'selected-tenant', tenantSettingsTab: 'branding' },
       ],
     },
     integrations: {
       label: 'Integrations & Access',
-      page: 'tenant-settings',
+      page: 'domain-provisioning',
       subitems: [
-        { id: 'domain-provisioning', label: 'Domain Provisioning', helper: 'Render + DNS workflow', hash: '#tenant-settings-panel-domains', page: 'tenant-settings', tenantSettingsTab: 'domains' },
-        { id: 'module-access', label: 'Module Access', helper: 'Toggle tenant-visible modules', hash: '#tenant-settings-panel-content', page: 'tenant-settings', tenantSettingsTab: 'content' },
-        { id: 'tenant-users', label: 'Tenant Users', helper: 'Provisioning and roles', hash: '#tenant-settings-panel-users', page: 'tenant-settings', tenantSettingsTab: 'users' },
-        { id: 'support-details', label: 'Support Details', helper: 'Support email and contact', hash: '#tenant-settings-panel-support', page: 'tenant-settings', tenantSettingsTab: 'support' },
+        { id: 'domain-provisioning', label: 'Domain Provisioning', helper: 'Render + DNS workflow', hash: '#tenant-settings-panel-domains', page: 'domain-provisioning', tenantSettingsTab: 'domains' },
+        { id: 'module-access', label: 'Module Access', helper: 'Toggle tenant-visible modules', hash: '#tenant-settings-panel-content', page: 'module-access', tenantSettingsTab: 'content' },
+        { id: 'tenant-users', label: 'Tenant Users', helper: 'Provisioning and roles', hash: '#tenant-settings-panel-users', page: 'tenant-users', tenantSettingsTab: 'users' },
+        { id: 'support-details', label: 'Support Details', helper: 'Support email and contact', hash: '#tenant-settings-panel-support', page: 'support-details', tenantSettingsTab: 'support' },
       ],
     },
   });
@@ -631,6 +631,14 @@
   }
 
   function applyAdminPageLayout(options) {
+    const tenantDirectoryPages = new Set(['create-tenant', 'tenant-directory']);
+    const tenantSettingsPages = new Set([
+      'selected-tenant',
+      'domain-provisioning',
+      'support-details',
+      'tenant-users',
+      'module-access',
+    ]);
     if (state.uiMode === 'tenant') {
       if (els.adminSubnavShell) els.adminSubnavShell.classList.add('hidden');
       adminPageSections.forEach((section) => section.classList.remove('admin-page-hidden'));
@@ -638,27 +646,18 @@
     }
 
     const { main, item } = getAdminNavResolved();
-    const targetPage = item?.page || ADMIN_NAV_MODEL[main]?.page || 'tenants';
+    const targetPage = item?.page || ADMIN_NAV_MODEL[main]?.page || 'tenant-directory';
     adminPageSections.forEach((section) => {
       section.classList.toggle('admin-page-hidden', section.dataset.adminPage !== targetPage);
     });
     if (els.sectionTenants) {
       els.sectionTenants.classList.remove('admin-subpage-create', 'admin-subpage-directory');
+      els.sectionTenants.classList.toggle('hidden', !tenantDirectoryPages.has(targetPage));
+      if (targetPage === 'create-tenant') els.sectionTenants.classList.add('admin-subpage-create');
+      if (targetPage === 'tenant-directory') els.sectionTenants.classList.add('admin-subpage-directory');
     }
-    if (els.sectionTenantCreate) {
-      els.sectionTenantCreate.classList.remove('hidden');
-    }
-    if (els.sectionTenantList) {
-      els.sectionTenantList.classList.remove('hidden');
-    }
-    if (targetPage === 'tenants') {
-      if (item?.id === 'create-tenant') {
-        if (els.sectionTenantList) els.sectionTenantList.classList.add('hidden');
-        if (els.sectionTenants) els.sectionTenants.classList.add('admin-subpage-create');
-      } else if (item?.id === 'tenant-directory') {
-        if (els.sectionTenantCreate) els.sectionTenantCreate.classList.add('hidden');
-        if (els.sectionTenants) els.sectionTenants.classList.add('admin-subpage-directory');
-      }
+    if (els.sectionTenantSettings) {
+      els.sectionTenantSettings.classList.toggle('hidden', !tenantSettingsPages.has(targetPage));
     }
     if (els.sectionStorageDiagnostics) els.sectionStorageDiagnostics.classList.remove('hidden');
     if (els.sectionDbBackups) els.sectionDbBackups.classList.remove('hidden');
@@ -3434,7 +3433,7 @@
       `Created: ${formatDateTime(tenant.createdAt)} • Updated: ${formatDateTime(tenant.updatedAt)}`;
     renderTenantContextHeader(tenant);
     renderTenantFormState();
-    setTenantSettingsTab(state.tenantSettingsTab || 'branding');
+    setTenantSettingsTab(state.tenantSettingsTab || 'branding', { skipAdminNavSync: true });
     renderDomainProvisioningPanel();
     renderTenantUsersPanel();
     renderPlacementPanel();
@@ -3492,6 +3491,9 @@
         await loadTenantDomainProvisioning();
         await loadTenantUsers();
         await loadTenantCmsContent();
+        if (state.uiMode === 'admin') {
+          navigateAdminRoute('tenants', 'selected-tenant', 'branding', { focus: true, behavior: 'auto' });
+        }
       });
     });
 
@@ -4222,7 +4224,7 @@
       });
     }
     applyUiMode();
-    setTenantSettingsTab(state.tenantSettingsTab || 'branding');
+    setTenantSettingsTab(state.tenantSettingsTab || 'branding', { skipAdminNavSync: true });
     if (els.tenantSearchInput) els.tenantSearchInput.value = state.tenantFilters.search || '';
     if (els.tenantStatusFilter) els.tenantStatusFilter.value = state.tenantFilters.status || 'all';
     renderTenantFormState();

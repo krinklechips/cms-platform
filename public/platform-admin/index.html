@@ -4043,7 +4043,7 @@
                   <span class="label">Tenant Directory</span>
                   <span class="helper">Search and filter tenants</span>
                 </a>
-                <a class="submenu-link" href="#section-tenant-settings" data-admin-sub-link="selected-tenant">
+                <a class="submenu-link" href="#tenant-settings-panel-branding" data-admin-sub-link="selected-tenant">
                   <span class="label">Selected Tenant</span>
                   <span class="helper">Edit active tenant settings</span>
                 </a>
@@ -4051,7 +4051,7 @@
             </div>
             <div class="nav-menu-block" data-nav-menu="integrations">
               <div class="nav-menu-head">
-                <a href="#section-tenant-settings" data-tenant-settings-tab="domains" data-admin-main-link="integrations">
+                <a href="#tenant-settings-panel-domains" data-tenant-settings-tab="domains" data-admin-main-link="integrations">
                   <span class="label">Integrations & Access</span>
                   <span class="helper">Domains, modules, tenant access</span>
                 </a>
@@ -4212,8 +4212,8 @@
         </div>
       </section>
 
-      <div id="section-tenants" class="grid section-anchor" data-admin-page="tenants">
-        <div id="section-tenant-create" class="card card-sticky section-anchor">
+      <div id="section-tenants" class="grid section-anchor">
+        <div id="section-tenant-create" class="card card-sticky section-anchor" data-admin-page="create-tenant">
           <div class="card-head">
             <div>
               <h2>Create Customer / Tenant</h2>
@@ -4263,7 +4263,7 @@
           </div>
         </div>
 
-        <div id="section-tenant-list" class="card section-anchor">
+        <div id="section-tenant-list" class="card section-anchor" data-admin-page="tenant-directory">
           <div class="card-head">
             <div>
               <h2>Customers / Tenants</h2>
@@ -4307,7 +4307,7 @@
         </div>
       </div>
 
-      <div id="section-tenant-settings" class="card section-panel" style="margin-top:16px;" data-admin-page="tenant-settings">
+      <div id="section-tenant-settings" class="card section-panel" style="margin-top:16px;">
         <nav class="tenant-breadcrumbs" aria-label="Breadcrumb">
           <a href="#section-platform-ops" data-admin-main-link="operations" data-admin-sub-link="storage-diagnostics">Platform</a>
           <span aria-hidden="true">/</span>
@@ -4363,7 +4363,7 @@
             </button>
           </div>
 
-          <div id="tenant-settings-panel-branding" data-tenant-settings-panel="branding" data-panel-label="Branding Settings" class="tenant-settings-panel section-anchor">
+          <div id="tenant-settings-panel-branding" data-tenant-settings-panel="branding" data-panel-label="Branding Settings" class="tenant-settings-panel section-anchor" data-admin-page="selected-tenant">
             <div class="subsection">
               <h3>Basic Tenant Setup</h3>
               <p class="meta">Keep the core business details here. Advanced branding and URLs can stay collapsed until needed.</p>
@@ -4422,7 +4422,7 @@
             </details>
           </div>
 
-          <div id="tenant-settings-panel-domains" data-tenant-settings-panel="domains" data-panel-label="Domain Provisioning" class="tenant-settings-panel hidden section-anchor">
+          <div id="tenant-settings-panel-domains" data-tenant-settings-panel="domains" data-panel-label="Domain Provisioning" class="tenant-settings-panel hidden section-anchor" data-admin-page="domain-provisioning">
             <div class="subsection">
               <h3>Tenant CMS Domain</h3>
               <p class="meta">Store the tenant’s CMS hostname and manage custom domain provisioning/verification for the Render-hosted SaaS CMS.</p>
@@ -4492,7 +4492,7 @@
             </details>
           </div>
 
-          <div id="tenant-settings-panel-support" data-tenant-settings-panel="support" data-panel-label="Support Details" class="tenant-settings-panel hidden section-anchor">
+          <div id="tenant-settings-panel-support" data-tenant-settings-panel="support" data-panel-label="Support Details" class="tenant-settings-panel hidden section-anchor" data-admin-page="support-details">
             <div class="subsection">
               <h3>Support Contact</h3>
               <p class="meta">This email is used as the tenant-facing support contact for UI and content modules.</p>
@@ -4504,7 +4504,7 @@
             </div>
           </div>
 
-          <div id="tenant-settings-panel-users" data-tenant-settings-panel="users" data-panel-label="User Access" class="tenant-settings-panel hidden section-anchor">
+          <div id="tenant-settings-panel-users" data-tenant-settings-panel="users" data-panel-label="User Access" class="tenant-settings-panel hidden section-anchor" data-admin-page="tenant-users">
             <div class="subsection">
               <h3>Tenant User Access</h3>
               <p class="meta">Create tenant users, set passwords, update roles/status, and remove tenant access from the admin CMS.</p>
@@ -4580,7 +4580,7 @@
             </div>
           </div>
 
-          <div id="tenant-settings-panel-content" data-tenant-settings-panel="content" data-panel-label="Content & Site Controls" class="tenant-settings-panel hidden section-anchor">
+          <div id="tenant-settings-panel-content" data-tenant-settings-panel="content" data-panel-label="Content & Site Controls" class="tenant-settings-panel hidden section-anchor" data-admin-page="module-access">
             <div class="subsection">
               <h3>Tenant CMS Module Access</h3>
               <p class="meta">Control what the tenant sees in the tenant dashboard/workspace. Changes are saved in tenant settings and returned by the tenant auth API.</p>
