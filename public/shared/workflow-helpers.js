@@ -63,6 +63,28 @@ export function getAdminPageForState(next, model = ADMIN_NAV_MODEL, currentState
     || 'tenants';
 }
 
+export function normalizeAdminAccordionState(input, model = ADMIN_NAV_MODEL) {
+  const source = input && typeof input === 'object' ? input : {};
+  return Object.keys(model).reduce((acc, key) => {
+    acc[key] = source[key] === true;
+    return acc;
+  }, {});
+}
+
+export function getAdminSidebarState(navState, accordionState, model = ADMIN_NAV_MODEL, currentState = null) {
+  const normalizedNav = normalizeAdminNavState(navState, model, currentState);
+  const normalizedAccordion = normalizeAdminAccordionState(accordionState, model);
+  return Object.entries(model).map(([key, group]) => ({
+    key,
+    active: key === normalizedNav.main,
+    open: normalizedAccordion[key] || key === normalizedNav.main,
+    subitems: (group.subitems || []).map((item) => ({
+      id: item.id,
+      active: key === normalizedNav.main && item.id === normalizedNav.sub,
+    })),
+  }));
+}
+
 export function normalizeTenantModuleAccess(input) {
   const source = input && typeof input === 'object' ? input : {};
   return {

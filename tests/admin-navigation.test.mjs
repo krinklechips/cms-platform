@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import {
   ADMIN_NAV_MODEL,
   flattenAdminSubitems,
+  getAdminSidebarState,
   getAdminPageForState,
+  normalizeAdminAccordionState,
   normalizeAdminNavState,
 } from '../public/shared/workflow-helpers.js';
 
@@ -43,4 +45,38 @@ test('tenant admin workflow subitems resolve to dedicated page keys', () => {
     const resolvedPage = getAdminPageForState({ main, sub }, ADMIN_NAV_MODEL);
     assert.equal(resolvedPage, page, `${sub} should resolve to ${page}`);
   });
+});
+
+test('sidebar state keeps groups explicit and active state singular', () => {
+  const snapshot = getAdminSidebarState(
+    { main: 'integrations', sub: 'tenant-users' },
+    { operations: false, tenants: true, integrations: true },
+    ADMIN_NAV_MODEL,
+  );
+
+  assert.deepEqual(
+    snapshot.map((group) => group.key),
+    ['operations', 'tenants', 'integrations'],
+  );
+  assert.equal(snapshot.filter((group) => group.active).length, 1);
+  assert.equal(
+    snapshot.flatMap((group) => group.subitems).filter((item) => item.active).length,
+    1,
+  );
+});
+
+test('accordion open state does not force inactive groups to appear active', () => {
+  const accordion = normalizeAdminAccordionState({ tenants: true, integrations: true }, ADMIN_NAV_MODEL);
+  const snapshot = getAdminSidebarState(
+    { main: 'tenants', sub: 'tenant-directory' },
+    accordion,
+    ADMIN_NAV_MODEL,
+  );
+
+  const tenants = snapshot.find((group) => group.key === 'tenants');
+  const integrations = snapshot.find((group) => group.key === 'integrations');
+  assert.equal(tenants?.active, true);
+  assert.equal(tenants?.open, true);
+  assert.equal(integrations?.active, false);
+  assert.equal(integrations?.open, true);
 });

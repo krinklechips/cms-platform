@@ -1658,34 +1658,15 @@
     platformAdminMainLinks.forEach((link) => {
       link.classList.toggle('is-active', link.dataset.adminMainLink === main);
     });
-    let activeSub = sub;
-    const group = ADMIN_NAV_MODEL[main];
-    const markerY = window.scrollY + 120;
-    if (group?.subitems?.length) {
-      const visibleTargets = group.subitems
-        .map((item) => {
-          const target = item.hash ? document.querySelector(item.hash) : null;
-          if (!target || target.classList.contains('hidden') || target.offsetParent === null) return null;
-          return { item, target };
-        })
-        .filter(Boolean);
-      if (visibleTargets.length) {
-        let active = visibleTargets[0];
-        visibleTargets.forEach((entry) => {
-          if (entry.target.offsetTop <= markerY) active = entry;
-        });
-        activeSub = active.item.id;
-      }
-    }
     if (els.adminSubnavList) {
       els.adminSubnavList.querySelectorAll('[data-admin-subnav-id]').forEach((btn) => {
-        btn.classList.toggle('is-active', btn.dataset.adminSubnavId === activeSub && btn.dataset.adminSubnavMain === main);
+        btn.classList.toggle('is-active', btn.dataset.adminSubnavId === sub && btn.dataset.adminSubnavMain === main);
       });
     }
     platformAdminSubLinks.forEach((link) => {
       const menu = link.closest('[data-nav-menu]')?.dataset?.navMenu || '';
       const subLink = link.dataset.adminSubLink || '';
-      const isActive = menu === main && subLink === activeSub;
+      const isActive = menu === main && subLink === sub;
       link.classList.toggle('is-active', isActive);
     });
   }
