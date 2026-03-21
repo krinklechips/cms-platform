@@ -3987,6 +3987,598 @@
       @media (min-width: 981px) {
         .platform-sidebar { display: flex !important; }
       }
+
+      /* STRIPE / FIGMA-STYLE ADMIN SHELL REFRESH */
+      :root {
+        --stripe-bg: #f5f7fb;
+        --stripe-panel: #ffffff;
+        --stripe-border: #e5e9f2;
+        --stripe-border-strong: #d6deea;
+        --stripe-muted: #667085;
+        --stripe-muted-2: #98a2b3;
+        --stripe-text: #111827;
+        --stripe-title: #0f172a;
+        --stripe-blue: #335cff;
+        --stripe-blue-hover: #2948cc;
+        --stripe-blue-soft: #eef3ff;
+        --stripe-blue-line: #cdd8ff;
+        --stripe-success-soft: #ecfdf3;
+        --stripe-success-line: #b7efcc;
+        --stripe-success-text: #15803d;
+      }
+
+      body {
+        background: linear-gradient(180deg, #fafcff 0%, var(--stripe-bg) 100%) !important;
+        color: var(--stripe-text) !important;
+      }
+
+      .platform-shell {
+        background: transparent !important;
+      }
+
+      .platform-sidebar {
+        width: 272px !important;
+        min-width: 272px !important;
+        padding: 18px 14px 24px !important;
+        background: #fcfdff !important;
+        border-right: 1px solid var(--stripe-border) !important;
+        gap: 14px !important;
+      }
+
+      .platform-logo {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding: 2px 4px 14px !important;
+        border-bottom: 1px solid var(--stripe-border) !important;
+      }
+
+      .platform-logo-mark {
+        width: 156px !important;
+        height: 56px !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+      }
+
+      .platform-logo-mark img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+        object-position: left center !important;
+        transform: scale(1.18) translateX(-4px) !important;
+        transform-origin: left center !important;
+      }
+
+      .platform-logo-text {
+        display: grid !important;
+        gap: 2px !important;
+      }
+
+      .platform-logo-text strong {
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.02em !important;
+        color: var(--stripe-title) !important;
+      }
+
+      .platform-logo-text span {
+        font-size: 12px !important;
+        line-height: 1.45 !important;
+        color: var(--stripe-muted) !important;
+      }
+
+      .platform-nav {
+        gap: 12px !important;
+      }
+
+      .platform-nav-search {
+        border: 1px solid var(--stripe-border) !important;
+        background: #f9fbff !important;
+        border-radius: 10px !important;
+        min-height: 42px !important;
+        padding: 0 12px !important;
+        box-shadow: none !important;
+      }
+
+      .platform-nav-search input {
+        font-size: 14px !important;
+        color: #334155 !important;
+      }
+
+      .platform-nav-group {
+        padding: 0 !important;
+      }
+
+      .platform-nav-group + .platform-nav-group {
+        margin-top: 2px !important;
+        padding-top: 14px !important;
+        border-top: 1px solid transparent !important;
+      }
+
+      .platform-nav-group-title {
+        padding: 0 !important;
+        margin: 0 0 8px !important;
+        color: #7a8699 !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.14em !important;
+      }
+
+      .platform-nav .nav-menu-block {
+        margin-bottom: 6px !important;
+      }
+
+      .platform-nav .nav-menu-head {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) 22px !important;
+        gap: 10px !important;
+        align-items: center !important;
+      }
+
+      .platform-nav .nav-menu-head > a {
+        padding: 10px 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        position: relative !important;
+        box-shadow: none !important;
+      }
+
+      .platform-nav .nav-menu-head > a::before {
+        content: '' !important;
+        position: absolute !important;
+        left: -8px !important;
+        top: 8px !important;
+        bottom: 8px !important;
+        width: 2px !important;
+        border-radius: 999px !important;
+        background: transparent !important;
+      }
+
+      .platform-nav .nav-menu-head > a:hover {
+        border: 0 !important;
+        background: transparent !important;
+      }
+
+      .platform-nav .nav-menu-head > a.is-active {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+      }
+
+      .platform-nav .nav-menu-head > a.is-active::before {
+        background: var(--stripe-blue) !important;
+      }
+
+      .platform-nav .nav-menu-head > a.is-active .label {
+        color: var(--stripe-title) !important;
+      }
+
+      .platform-nav .nav-menu-head > a .helper {
+        color: var(--stripe-muted) !important;
+      }
+
+      .platform-nav .nav-icon {
+        color: #94a3b8 !important;
+        width: 16px !important;
+        height: 16px !important;
+        margin-top: 3px !important;
+      }
+
+      .platform-nav .nav-menu-head > a.is-active .nav-icon {
+        color: var(--stripe-blue) !important;
+      }
+
+      .platform-nav .label {
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        color: #1f2937 !important;
+      }
+
+      .platform-nav .helper {
+        margin-top: 1px !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+        color: var(--stripe-muted) !important;
+      }
+
+      .platform-nav .nav-menu-toggle {
+        width: 22px !important;
+        min-width: 22px !important;
+        height: 22px !important;
+        border: 0 !important;
+        background: transparent !important;
+        border-radius: 999px !important;
+        color: #94a3b8 !important;
+      }
+
+      .platform-nav .nav-menu-toggle:hover {
+        border: 0 !important;
+        background: #eef2f7 !important;
+        color: #64748b !important;
+      }
+
+      .platform-nav .submenu {
+        margin: 0 0 8px 12px !important;
+        padding: 0 0 0 16px !important;
+        gap: 4px !important;
+        border-left: 1px solid #e7edf4 !important;
+      }
+
+      .platform-nav a.submenu-link {
+        padding: 8px 10px !important;
+        border: 1px solid transparent !important;
+        border-radius: 10px !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      .platform-nav a.submenu-link::before {
+        display: none !important;
+      }
+
+      .platform-nav a.submenu-link .label {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: #334155 !important;
+      }
+
+      .platform-nav a.submenu-link .helper {
+        font-size: 11px !important;
+        color: #98a2b3 !important;
+      }
+
+      .platform-nav a.submenu-link:hover {
+        background: #f8fbff !important;
+        border-color: transparent !important;
+      }
+
+      .platform-nav a.submenu-link.is-active {
+        background: var(--stripe-blue-soft) !important;
+        border-color: transparent !important;
+        box-shadow: inset 2px 0 0 var(--stripe-blue) !important;
+      }
+
+      .platform-nav a.submenu-link.is-active .label {
+        color: var(--stripe-title) !important;
+      }
+
+      #sidebar-tenant-group a {
+        display: block !important;
+        padding: 9px 10px !important;
+        border-radius: 10px !important;
+        border: 1px solid transparent !important;
+        color: inherit !important;
+        text-decoration: none !important;
+      }
+
+      #sidebar-tenant-group a:hover {
+        background: #f8fbff !important;
+      }
+
+      #sidebar-tenant-group a.is-active {
+        background: var(--stripe-blue-soft) !important;
+        box-shadow: inset 2px 0 0 var(--stripe-blue) !important;
+      }
+
+      .platform-main {
+        background: transparent !important;
+      }
+
+      .platform-topbar {
+        background: rgba(255, 255, 255, 0.94) !important;
+        border-bottom: 1px solid var(--stripe-border) !important;
+        backdrop-filter: blur(10px) !important;
+      }
+
+      .platform-topbar-inner {
+        padding: 16px 28px !important;
+        gap: 16px !important;
+      }
+
+      .platform-topbar-title {
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.02em !important;
+        color: var(--stripe-title) !important;
+      }
+
+      .platform-topbar-sub {
+        margin-top: 2px !important;
+        font-size: 12px !important;
+        color: var(--stripe-muted) !important;
+      }
+
+      .platform-topbar-actions {
+        gap: 12px !important;
+      }
+
+      .platform-topbar .segmented,
+      .platform-topbar .topbar-control select,
+      .platform-topbar .auth-chip,
+      .platform-topbar .topbar-signout {
+        min-height: 40px !important;
+        height: 40px !important;
+        border-radius: 10px !important;
+      }
+
+      .platform-topbar .segmented {
+        padding: 4px !important;
+        background: #f3f6fb !important;
+        border-color: var(--stripe-border) !important;
+      }
+
+      .platform-topbar .segmented button {
+        min-height: 30px !important;
+        min-width: 112px !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+      }
+
+      .platform-topbar .segmented button.is-active {
+        background: #ffffff !important;
+        box-shadow: inset 0 0 0 1px var(--stripe-border), 0 1px 1px rgba(15, 23, 42, 0.04) !important;
+      }
+
+      .platform-topbar .topbar-control select,
+      .platform-topbar .auth-chip {
+        border-color: var(--stripe-border) !important;
+        background: #ffffff !important;
+      }
+
+      .platform-topbar .auth-chip {
+        padding: 6px 12px 6px 8px !important;
+        min-width: 260px !important;
+      }
+
+      .platform-topbar .topbar-signout {
+        min-width: 116px !important;
+        border-color: var(--stripe-border) !important;
+        background: #ffffff !important;
+        color: var(--stripe-title) !important;
+        font-weight: 600 !important;
+        gap: 8px !important;
+      }
+
+      .platform-topbar .topbar-signout svg {
+        width: 16px !important;
+        height: 16px !important;
+        stroke: currentColor !important;
+      }
+
+      .platform-content {
+        padding: 20px 28px 34px !important;
+      }
+
+      .platform-page-column {
+        gap: 22px !important;
+      }
+
+      .card,
+      .section-panel {
+        border-color: var(--stripe-border) !important;
+        border-radius: 16px !important;
+        padding: 22px !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+      }
+
+      .card-head h2,
+      .section-panel h2 {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+      }
+
+      .card-head-meta {
+        color: var(--stripe-muted) !important;
+      }
+
+      #section-tenant-settings {
+        border-radius: 18px !important;
+        border-color: var(--stripe-border) !important;
+        padding: 22px 24px !important;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04) !important;
+      }
+
+      #section-tenant-settings .tenant-breadcrumbs {
+        margin-bottom: 18px !important;
+        font-size: 13px !important;
+        color: var(--stripe-muted) !important;
+      }
+
+      #section-tenant-settings .tenant-context {
+        border: 0 !important;
+        background: transparent !important;
+        padding: 0 0 16px !important;
+        border-bottom: 1px solid var(--stripe-border) !important;
+        margin-bottom: 12px !important;
+      }
+
+      #section-tenant-settings .tenant-context-row {
+        align-items: center !important;
+      }
+
+      #section-tenant-settings .tenant-context-row-main {
+        gap: 16px !important;
+        margin-bottom: 14px !important;
+      }
+
+      #section-tenant-settings .tenant-context-title {
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.03em !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+      }
+
+      #section-tenant-settings .tenant-context-sub {
+        font-size: 14px !important;
+        color: var(--stripe-muted) !important;
+      }
+
+      #section-tenant-settings .tenant-header-actions {
+        gap: 10px !important;
+      }
+
+      #section-tenant-settings .tenant-primary-actions {
+        gap: 8px !important;
+      }
+
+      #section-tenant-settings .tenant-primary-actions button,
+      #section-tenant-settings .tenant-quick-actions a {
+        min-height: 40px !important;
+        height: 40px !important;
+        border-radius: 10px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+      }
+
+      #section-tenant-settings #save-tenant-btn {
+        background: var(--stripe-blue) !important;
+        border-color: var(--stripe-blue) !important;
+      }
+
+      #section-tenant-settings #save-tenant-btn:hover:not(:disabled) {
+        background: var(--stripe-blue-hover) !important;
+        border-color: var(--stripe-blue-hover) !important;
+      }
+
+      #section-tenant-settings .tenant-quick-actions {
+        gap: 8px !important;
+      }
+
+      #section-tenant-settings .tenant-quick-actions a {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 16px !important;
+        border: 1px solid var(--stripe-border) !important;
+        background: #ffffff !important;
+        color: #334155 !important;
+        text-decoration: none !important;
+      }
+
+      #section-tenant-settings #tenant-settings-tabs.subtabs {
+        gap: 18px !important;
+        margin-bottom: 14px !important;
+      }
+
+      #section-tenant-settings #tenant-settings-tabs.subtabs button {
+        font-size: 14px !important;
+        padding: 10px 0 !important;
+        color: #6b7280 !important;
+      }
+
+      #section-tenant-settings #tenant-settings-tabs.subtabs button.is-active {
+        color: var(--stripe-title) !important;
+        border-bottom-color: var(--stripe-title) !important;
+      }
+
+      #section-tenant-settings .tenant-settings-panel {
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        padding: 0 !important;
+      }
+
+      #section-tenant-settings .subsection {
+        border-color: var(--stripe-border) !important;
+        background: #fbfcff !important;
+        border-radius: 16px !important;
+        padding: 18px !important;
+      }
+
+      #section-tenant-settings .subsection h3 {
+        font-size: 17px !important;
+        font-weight: 700 !important;
+      }
+
+      #section-tenant-settings .row {
+        gap: 20px !important;
+      }
+
+      #section-tenant-settings label {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: #334155 !important;
+      }
+
+      #section-tenant-settings input,
+      #section-tenant-settings select,
+      #section-tenant-settings textarea {
+        min-height: 48px !important;
+        margin-top: 8px !important;
+        border-color: var(--stripe-border-strong) !important;
+        border-radius: 10px !important;
+        padding: 12px 14px !important;
+        font-size: 14px !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+      }
+
+      #section-tenant-settings textarea {
+        min-height: 140px !important;
+      }
+
+      #section-tenant-settings .color-input-row {
+        gap: 10px !important;
+      }
+
+      #section-tenant-settings .color-swatch {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 10px !important;
+        border-color: var(--stripe-border) !important;
+      }
+
+      #section-tenant-settings .color-preset {
+        min-height: 38px !important;
+        border-radius: 10px !important;
+        padding: 0 12px !important;
+        background: #ffffff !important;
+        border-color: var(--stripe-border) !important;
+      }
+
+      #section-tenant-settings .expand {
+        border-radius: 14px !important;
+        border-color: var(--stripe-border) !important;
+        background: #ffffff !important;
+      }
+
+      #section-tenant-settings .expand > summary {
+        padding: 18px 20px !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+      }
+
+      #section-tenant-settings #selected-tenant-meta {
+        margin-top: 16px !important;
+        font-size: 13px !important;
+        color: var(--stripe-muted) !important;
+      }
+
+      @media (max-width: 1280px) {
+        .platform-sidebar {
+          width: 248px !important;
+          min-width: 248px !important;
+        }
+
+        .platform-logo-mark {
+          width: 144px !important;
+          height: 50px !important;
+        }
+
+        .platform-topbar-inner,
+        .platform-content {
+          padding-left: 24px !important;
+          padding-right: 24px !important;
+        }
+      }
     </style>
   </head>
   <body>
@@ -4096,12 +4688,26 @@
                   </span>
                 </a>
                 <a class="submenu-link" href="#section-tenant-list" data-admin-sub-link="tenant-directory">
-                  <span class="label">Tenant Directory</span>
-                  <span class="helper">Search and filter tenants</span>
+                  <span class="nav-link-row">
+                    <span class="nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 20 20"><path d="M4.5 5.5h11"></path><path d="M4.5 10h11"></path><path d="M4.5 14.5h7"></path></svg>
+                    </span>
+                    <span class="nav-copy">
+                      <span class="label">Tenant Directory</span>
+                      <span class="helper">Search and filter tenants</span>
+                    </span>
+                  </span>
                 </a>
                 <a class="submenu-link" href="#tenant-settings-panel-branding" data-admin-sub-link="selected-tenant">
-                  <span class="label">Selected Tenant</span>
-                  <span class="helper">Edit active tenant settings</span>
+                  <span class="nav-link-row">
+                    <span class="nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 20 20"><rect x="4.5" y="4.5" width="11" height="11" rx="2"></rect><path d="M8 8h4"></path><path d="M8 11h4"></path></svg>
+                    </span>
+                    <span class="nav-copy">
+                      <span class="label">Selected Tenant</span>
+                      <span class="helper">Edit active tenant settings</span>
+                    </span>
+                  </span>
                 </a>
               </div>
             </div>
@@ -4122,20 +4728,48 @@
               </div>
               <div class="submenu" data-nav-menu-panel="integrations">
                 <a class="submenu-link" href="#tenant-settings-panel-domains" data-tenant-settings-tab="domains" data-admin-sub-link="domain-provisioning">
-                  <span class="label">Domain Provisioning</span>
-                  <span class="helper">Render + DNS workflow</span>
+                  <span class="nav-link-row">
+                    <span class="nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 20 20"><path d="M3.5 10a6.5 6.5 0 1 0 13 0"></path><path d="M10 3.5c2.2 1.8 3.3 4 3.3 6.5S12.2 14.7 10 16.5c-2.2-1.8-3.3-4-3.3-6.5S7.8 5.3 10 3.5Z"></path></svg>
+                    </span>
+                    <span class="nav-copy">
+                      <span class="label">Domain Provisioning</span>
+                      <span class="helper">Render + DNS workflow</span>
+                    </span>
+                  </span>
                 </a>
                 <a class="submenu-link" href="#tenant-settings-panel-content" data-tenant-settings-tab="content" data-admin-sub-link="module-access">
-                  <span class="label">Module Access</span>
-                  <span class="helper">Toggle tenant-visible modules</span>
+                  <span class="nav-link-row">
+                    <span class="nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 20 20"><rect x="3.5" y="4" width="5.5" height="5.5" rx="1.5"></rect><rect x="11" y="4" width="5.5" height="5.5" rx="1.5"></rect><rect x="3.5" y="10.5" width="5.5" height="5.5" rx="1.5"></rect><rect x="11" y="10.5" width="5.5" height="5.5" rx="1.5"></rect></svg>
+                    </span>
+                    <span class="nav-copy">
+                      <span class="label">Module Access</span>
+                      <span class="helper">Toggle tenant-visible modules</span>
+                    </span>
+                  </span>
                 </a>
                 <a class="submenu-link" href="#tenant-settings-panel-users" data-tenant-settings-tab="users" data-admin-sub-link="tenant-users">
-                  <span class="label">Tenant Users</span>
-                  <span class="helper">Provisioning and roles</span>
+                  <span class="nav-link-row">
+                    <span class="nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 20 20"><path d="M6.75 10a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Z"></path><path d="M13.5 11.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"></path><path d="M3.5 16c.8-1.8 2.1-2.7 3.9-2.7S10.5 14.2 11.3 16"></path><path d="M11.6 15.7c.5-1.1 1.4-1.7 2.8-1.7 1.1 0 1.9.34 2.6 1.05"></path></svg>
+                    </span>
+                    <span class="nav-copy">
+                      <span class="label">Tenant Users</span>
+                      <span class="helper">Provisioning and roles</span>
+                    </span>
+                  </span>
                 </a>
                 <a class="submenu-link" href="#tenant-settings-panel-support" data-tenant-settings-tab="support" data-admin-sub-link="support-details">
-                  <span class="label">Support Details</span>
-                  <span class="helper">Support email and contact</span>
+                  <span class="nav-link-row">
+                    <span class="nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 20 20"><path d="M5 14.5h4l3.5 2v-2H15a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2Z"></path></svg>
+                    </span>
+                    <span class="nav-copy">
+                      <span class="label">Support Details</span>
+                      <span class="helper">Support email and contact</span>
+                    </span>
+                  </span>
                 </a>
               </div>
             </div>
@@ -4203,7 +4837,14 @@
                   <span id="auth-role" class="auth-role">Session</span>
                 </span>
               </div>
-              <button id="logout-btn" class="topbar-signout">Sign out</button>
+              <button id="logout-btn" class="topbar-signout">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M12.5 5.5H15a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 15 14.5h-2.5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M8.5 6.5 12 10l-3.5 3.5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M12 10H3.5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                <span>Sign out</span>
+              </button>
             </div>
           </div>
         </header>
