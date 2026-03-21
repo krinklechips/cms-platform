@@ -506,6 +506,392 @@
         background: #0b5f59;
         border-color: #0b5f59;
       }
+      /* TENANT SHELL REFRESH */
+      :root {
+        --tenant-shell-bg: #f5f7fb;
+        --tenant-shell-panel: #ffffff;
+        --tenant-shell-border: #e4e9f2;
+        --tenant-shell-border-strong: #d5deea;
+        --tenant-shell-muted: #667085;
+        --tenant-shell-title: #0f172a;
+        --tenant-accent: #0f766e;
+        --tenant-accent-hover: #0b5f59;
+        --tenant-accent-soft: #edf8f6;
+        --tenant-accent-line: #bfe3db;
+        --tenant-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        --tenant-shadow-lg: 0 12px 30px rgba(15, 23, 42, 0.04);
+      }
+
+      body {
+        background: linear-gradient(180deg, #fafcff 0%, var(--tenant-shell-bg) 100%);
+      }
+
+      .app-shell {
+        grid-template-columns: 272px 1fr;
+      }
+
+      .sidebar {
+        border-right: 1px solid var(--tenant-shell-border);
+        background: #fcfdff;
+        backdrop-filter: blur(8px);
+        padding: 18px 14px 22px;
+        gap: 14px;
+      }
+
+      .brandbox {
+        padding: 4px 4px 14px;
+        border-bottom: 1px solid var(--tenant-shell-border);
+      }
+
+      .brandrow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .mark {
+        width: 68px;
+        height: 68px;
+      }
+
+      .mark img {
+        width: 100%;
+        height: 100%;
+        transform: none;
+      }
+
+      .brandbox strong {
+        font-size: 15px;
+        letter-spacing: -0.02em;
+        color: var(--tenant-shell-title);
+      }
+
+      .brandbox span {
+        font-size: 12px;
+        line-height: 1.35;
+        color: var(--tenant-shell-muted);
+      }
+
+      .pill {
+        margin-top: 12px;
+        padding: 6px 10px;
+        border-color: var(--tenant-shell-border-strong);
+        background: #fff;
+        color: #475467;
+      }
+
+      .nav {
+        border: 0;
+        border-radius: 0;
+        padding: 2px 0;
+        background: transparent;
+        display: grid;
+        gap: 4px;
+      }
+
+      .nav a {
+        padding: 9px 10px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        font-size: 13px;
+        box-shadow: none;
+      }
+
+      .nav a:hover {
+        background: #f8fbff;
+      }
+
+      .nav a.active {
+        background: var(--tenant-accent-soft);
+        border-color: transparent;
+        color: #0f5a54;
+        font-weight: 700;
+        box-shadow: inset 2px 0 0 var(--tenant-accent);
+      }
+
+      .nav-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .nav-icon {
+        width: 16px;
+        height: 16px;
+        color: #98a2b3;
+        flex: 0 0 auto;
+        margin-top: 2px;
+      }
+
+      .nav-icon svg {
+        width: 100%;
+        height: 100%;
+        stroke: currentColor;
+      }
+
+      .nav a.active .nav-icon {
+        color: var(--tenant-accent);
+      }
+
+      .nav-copy {
+        display: grid;
+        gap: 2px;
+      }
+
+      .nav-copy > span {
+        display: block;
+        font-size: 14px;
+        font-weight: 650;
+        color: #1f2937;
+      }
+
+      .nav small {
+        margin-top: 0;
+        color: var(--tenant-shell-muted);
+        font-size: 11px;
+        line-height: 1.35;
+      }
+
+      .sidebar .actions {
+        gap: 8px;
+        padding-top: 8px;
+      }
+
+      button, .btn {
+        min-height: 40px;
+        border-radius: 10px;
+        border: 1px solid var(--tenant-shell-border-strong);
+        padding: 9px 13px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      button:hover, .btn:hover {
+        background: #f7f9fc;
+        border-color: #c4cedc;
+      }
+
+      button.primary {
+        background: var(--tenant-accent);
+        border-color: var(--tenant-accent);
+        color: #fff;
+        box-shadow: 0 8px 18px rgba(15, 118, 110, 0.18);
+      }
+
+      button.primary:hover {
+        background: var(--tenant-accent-hover);
+        border-color: var(--tenant-accent-hover);
+      }
+
+      button.secondary-accent {
+        color: var(--tenant-accent);
+        border-color: var(--tenant-accent-line);
+        background: #fff;
+      }
+
+      button.secondary-accent:hover {
+        background: #f4fbf9;
+      }
+
+      button.edit,
+      .table-action-btn.edit {
+        color: #155eef;
+        border-color: #c7d7fe;
+        background: #f6f9ff;
+      }
+
+      button.danger,
+      .table-action-btn.danger {
+        color: #c01048;
+        border-color: #fbcfe8;
+        background: #fff7fb;
+      }
+
+      .table-action-btn {
+        min-width: 82px;
+        min-height: 38px;
+        border-radius: 10px;
+        padding: 7px 12px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .main {
+        min-width: 0;
+        padding: 18px 22px 28px;
+      }
+
+      .topbar {
+        margin-bottom: 12px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid var(--tenant-shell-border);
+        border-radius: 16px;
+        padding: 16px 18px;
+        box-shadow: var(--tenant-shadow);
+        align-items: center;
+      }
+
+      .topbar h1 {
+        font-size: 18px;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        color: var(--tenant-shell-title);
+      }
+
+      .topbar p {
+        margin: 4px 0 0;
+        color: var(--tenant-shell-muted);
+        font-size: 12px;
+        line-height: 1.55;
+        max-width: 70ch;
+      }
+
+      .session-chip {
+        border: 1px solid var(--tenant-accent-line);
+        background: var(--tenant-accent-soft);
+        color: #0f5a54;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .notice {
+        border-radius: 12px;
+        padding: 11px 13px;
+        border-color: var(--tenant-shell-border);
+      }
+
+      .metrics {
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .metric {
+        border: 1px solid var(--tenant-shell-border);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: var(--tenant-shadow);
+      }
+
+      .metric .label {
+        color: #7b8798;
+        font-size: 10px;
+        letter-spacing: 0.16em;
+      }
+
+      .metric .value {
+        margin-top: 8px;
+        font-size: 18px;
+      }
+
+      .metric .hint {
+        margin-top: 4px;
+        font-size: 12px;
+      }
+
+      .grid,
+      .stack {
+        gap: 10px;
+      }
+
+      .card {
+        border: 1px solid var(--tenant-shell-border);
+        border-radius: 16px;
+        box-shadow: var(--tenant-shadow);
+      }
+
+      .card-head {
+        padding: 13px 16px;
+        border-bottom: 1px solid #edf1f6;
+      }
+
+      .card-head h2 {
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .card-body {
+        padding: 16px;
+      }
+
+      .empty {
+        border-color: #dbe4ef;
+        border-radius: 14px;
+        padding: 14px 15px;
+        background: #fafcff;
+      }
+
+      th, td {
+        padding: 12px 8px;
+      }
+
+      .editor-panel {
+        margin-top: 14px;
+        border: 1px solid var(--tenant-shell-border);
+        border-radius: 16px;
+        background: #fbfcff;
+        padding: 14px;
+        gap: 14px;
+      }
+
+      .editor-head h3 {
+        font-size: 15px;
+      }
+
+      .field label {
+        color: #667085;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+      }
+
+      .field input,
+      .field select,
+      .field textarea {
+        border-color: var(--tenant-shell-border-strong);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 14px;
+        background: #fff;
+      }
+
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: #7dd3c8;
+        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+      }
+
+      .subnotice {
+        border-radius: 10px;
+      }
+
+      .tabs-wrap,
+      .slot-grid,
+      .mini-kv {
+        gap: 10px;
+      }
+
+      .tab-item,
+      .slot-tab {
+        border-color: var(--tenant-shell-border);
+        border-radius: 14px;
+      }
+
+      .slot-tab-head {
+        background: #f8fbff;
+      }
+
+      #tenant-article-new-btn {
+        padding: 9px 14px;
+      }
+
+      #refresh-btn,
+      #logout-btn,
+      .sidebar .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
       @media (max-width: 1120px) {
         .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .grid { grid-template-columns: 1fr; }
@@ -517,7 +903,7 @@
           position: static;
           height: auto;
           border-right: 0;
-          border-bottom: 1px solid var(--sidebar-line);
+          border-bottom: 1px solid var(--tenant-shell-border);
           gap: 10px;
         }
         .main { padding-top: 16px; }
@@ -537,7 +923,7 @@
       <aside class="sidebar">
         <div class="brandbox">
           <div class="brandrow">
-            <div class="mark" id="tenant-mark"><img src="./think.png" alt="Tenant CMS logo" /></div>
+            <div class="mark" id="tenant-mark"><img src="../ep.svg" alt="EP Tenant CMS logo" /></div>
             <div>
               <strong id="tenant-name">Tenant CMS</strong>
               <span id="tenant-slug">Workspace dashboard</span>
@@ -547,18 +933,87 @@
         </div>
 
         <nav class="nav" id="dashboard-nav">
-          <a href="#overview" class="active"><span>Overview</span><small>Metrics and session</small></a>
-          <a href="#articles"><span>Articles</span><small>Recent content items</small></a>
-          <a href="#media"><span>Media</span><small>Latest uploads</small></a>
-          <a href="#annual-reports"><span>Annual Reports</span><small>Published and draft entries</small></a>
-          <a href="#site-preview"><span>Site Preview Data</span><small>Nav tabs and homepage slot</small></a>
-          <a href="#account-security"><span>Account & Security</span><small>Password and session</small></a>
+          <a href="#overview" class="active">
+            <span class="nav-row">
+              <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M4 10.5 10 5l6 5.5v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M8 16.5v-4h4v4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <span class="nav-copy"><span>Overview</span><small>Metrics and session</small></span>
+            </span>
+          </a>
+          <a href="#articles">
+            <span class="nav-row">
+              <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M5 4.5h7l3 3v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z" stroke-width="1.5" stroke-linejoin="round"></path>
+                  <path d="M12 4.5v3h3" stroke-width="1.5" stroke-linejoin="round"></path>
+                  <path d="M7 11h6M7 14h4" stroke-width="1.5" stroke-linecap="round"></path>
+                </svg>
+              </span>
+              <span class="nav-copy"><span>Articles</span><small>Recent content items</small></span>
+            </span>
+          </a>
+          <a href="#media">
+            <span class="nav-row">
+              <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <rect x="4" y="4.5" width="12" height="11" rx="2" stroke-width="1.5"></rect>
+                  <circle cx="8" cy="8.5" r="1.25" stroke-width="1.5"></circle>
+                  <path d="m6.5 13 2.5-2.5 2 2 2.5-2.5 1.5 1.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <span class="nav-copy"><span>Media</span><small>Latest uploads</small></span>
+            </span>
+          </a>
+          <a href="#annual-reports">
+            <span class="nav-row">
+              <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M6 3.5v2M14 3.5v2M4.5 7.5h11" stroke-width="1.5" stroke-linecap="round"></path>
+                  <rect x="4.5" y="5.5" width="11" height="10" rx="2" stroke-width="1.5"></rect>
+                  <path d="M8 10.5h4M8 13h2.5" stroke-width="1.5" stroke-linecap="round"></path>
+                </svg>
+              </span>
+              <span class="nav-copy"><span>Annual Reports</span><small>Published and draft entries</small></span>
+            </span>
+          </a>
+          <a href="#site-preview">
+            <span class="nav-row">
+              <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M3.5 6.5h13M6.5 3.5v3M13.5 3.5v3" stroke-width="1.5" stroke-linecap="round"></path>
+                  <rect x="3.5" y="5.5" width="13" height="10.5" rx="2" stroke-width="1.5"></rect>
+                  <path d="M7 10h6M7 13h4" stroke-width="1.5" stroke-linecap="round"></path>
+                </svg>
+              </span>
+              <span class="nav-copy"><span>Site Preview Data</span><small>Nav tabs and homepage slot</small></span>
+            </span>
+          </a>
+          <a href="#account-security">
+            <span class="nav-row">
+              <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M10 3.5 15 5.5v4.5c0 3-1.8 5.2-5 6.5-3.2-1.3-5-3.5-5-6.5V5.5l5-2Z" stroke-width="1.5" stroke-linejoin="round"></path>
+                  <path d="M8.5 9.5a1.5 1.5 0 1 1 3 0c0 .7-.5 1.1-.9 1.4-.3.2-.6.5-.6.9v.2" stroke-width="1.5" stroke-linecap="round"></path>
+                  <circle cx="10" cy="14" r=".6" fill="currentColor" stroke="none"></circle>
+                </svg>
+              </span>
+              <span class="nav-copy"><span>Account & Security</span><small>Password and session</small></span>
+            </span>
+          </a>
         </nav>
 
         <div class="actions">
-          <button id="refresh-btn" class="primary" type="button">Refresh Dashboard</button>
-          <button id="logout-btn" type="button">Sign Out</button>
-          <a class="btn" href="/tenant-login">Open Login Page</a>
+          <button id="refresh-btn" class="primary" type="button">
+            <span aria-hidden="true">↻</span><span>Refresh Dashboard</span>
+          </button>
+          <button id="logout-btn" type="button">
+            <span aria-hidden="true">⇢</span><span>Sign Out</span>
+          </button>
+          <a class="btn" href="/tenant-login"><span aria-hidden="true">↗</span><span>Open Login Page</span></a>
         </div>
       </aside>
 
