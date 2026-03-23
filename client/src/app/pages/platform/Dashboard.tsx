@@ -19,11 +19,12 @@ interface Tenant {
 }
 
 export function Dashboard() {
-  const { data: tenants = [], isLoading } = useQuery({
+  const { data: rawTenants, isLoading } = useQuery({
     queryKey: ['platform', 'tenants'],
     queryFn: () => api<Tenant[]>('/api/platform/tenants'),
   })
 
+  const tenants = Array.isArray(rawTenants) ? rawTenants : []
   const totalTenants = tenants.length
   const activeTenants = tenants.filter((t) => t.status === 'active').length
 
@@ -195,7 +196,7 @@ export function Dashboard() {
                             {tenant.slug && (
                               <span className="font-mono text-gray-400">{tenant.slug}</span>
                             )}
-                            {created && (
+                            {created && !isNaN(new Date(created).getTime()) && (
                               <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
                                 {formatDistanceToNow(new Date(created), { addSuffix: true })}

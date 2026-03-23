@@ -172,7 +172,9 @@ export function TenantOverview() {
                       </p>
                       <p className="text-xs text-gray-500">
                         {article.category && `${article.category} · `}
-                        {formatDistanceToNow(new Date(article.updated_at), { addSuffix: true })}
+                        {article.updated_at && !isNaN(new Date(article.updated_at).getTime())
+                          ? formatDistanceToNow(new Date(article.updated_at), { addSuffix: true })
+                          : 'Recently'}
                       </p>
                     </div>
                     <Badge

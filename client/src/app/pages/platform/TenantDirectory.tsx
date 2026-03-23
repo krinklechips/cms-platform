@@ -36,10 +36,11 @@ const statusColors: Record<string, string> = {
 export function TenantDirectory() {
   const [search, setSearch] = useState('')
 
-  const { data: tenants = [], isLoading } = useQuery({
+  const { data: rawTenants, isLoading } = useQuery({
     queryKey: ['platform', 'tenants'],
     queryFn: () => api<Tenant[]>('/api/platform/tenants'),
   })
+  const tenants = Array.isArray(rawTenants) ? rawTenants : []
 
   const filtered = tenants.filter(
     (t) =>
