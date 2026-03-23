@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: cms-platform
+    runtime: node
+    region: singapore
+    plan: starter
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PLATFORM_DB_PATH
+        sync: false
+      - key: PLATFORM_UPLOADS_DIR
+        sync: false
+      - key: PLATFORM_SESSION_SECRET
+        sync: false
+      - key: PLATFORM_BOOTSTRAP_SECRET
+        sync: false
+      - key: PLATFORM_OWNER_EMAIL
+        sync: false
+      - key: PLATFORM_CORS_ORIGIN
+        sync: false
