@@ -25,6 +25,8 @@ import tenantAuthRouter from './routes/tenantAuth.js';
 import platformAuthRouter from './routes/platformAuth.js';
 import tenantSeoRouter from './routes/tenantSeo.js';
 import publicSeoRouter from './routes/publicSeo.js';
+import tenantPagesRouter from './routes/tenantPages.js';
+import publicPagesRouter from './routes/publicPages.js';
 import {
   attachHostContext,
   blockTenantLoginOnPlatformHost,
@@ -215,6 +217,8 @@ app.use('/api/tenant/annual-reports', tenantAnnualReportsRouter);
 app.use('/api/tenant/product-lines', tenantProductLinesRouter);
 app.use('/api/tenant/settings', tenantSettingsRouter);
 app.use('/api/tenant/seo', tenantSeoRouter);
+app.use('/api/tenant/pages', tenantPagesRouter);
+app.use('/api/public', publicPagesRouter);
 app.use('/api/public', publicSlotsRouter);
 app.use('/api/public', publicAnnualReportsRouter);
 app.use('/api/public', publicProductLinesRouter);

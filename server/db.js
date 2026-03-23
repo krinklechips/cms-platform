@@ -301,6 +301,37 @@ CREATE TABLE IF NOT EXISTS seo_keyword_tracking (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS pages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+  slug TEXT NOT NULL,
+  title TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft',
+  template TEXT DEFAULT 'default',
+  parent_id INTEGER REFERENCES pages(id) ON DELETE SET NULL,
+  sort_order INTEGER DEFAULT 0,
+  show_in_nav INTEGER DEFAULT 1,
+  nav_label TEXT,
+  nav_parent_id INTEGER REFERENCES pages(id) ON DELETE SET NULL,
+  seo_title TEXT,
+  seo_description TEXT,
+  seo_image TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, slug)
+);
+
+CREATE TABLE IF NOT EXISTS page_blocks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  page_id INTEGER NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+  tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+  block_type TEXT NOT NULL DEFAULT 'text',
+  block_data TEXT NOT NULL DEFAULT '{}',
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
 `);
 
 function ensureColumn(table, column, ddl) {

@@ -13,6 +13,9 @@ import { SeoDashboard } from '@/app/pages/tenant/SeoDashboard'
 import { KeywordTracking } from '@/app/pages/tenant/KeywordTracking'
 import { RedirectManager } from '@/app/pages/tenant/RedirectManager'
 import { SeoAudit } from '@/app/pages/tenant/SeoAudit'
+import { PagesList } from '@/app/pages/tenant/PagesList'
+import { PageEditor } from '@/app/pages/tenant/PageEditor'
+import { NavigationEditor } from '@/app/pages/tenant/NavigationEditor'
 
 export const tenantRouter = createBrowserRouter(
   [
@@ -28,6 +31,10 @@ export const tenantRouter = createBrowserRouter(
         { path: 'articles', element: <ArticlesList /> },
         { path: 'articles/new', element: <ArticleEditor /> },
         { path: 'articles/:id', element: <ArticleEditor /> },
+        { path: 'pages', element: <PagesList /> },
+        { path: 'pages/new', element: <PageEditor /> },
+        { path: 'pages/:id', element: <PageEditor /> },
+        { path: 'navigation', element: <NavigationEditor /> },
         { path: 'media', element: <MediaLibrary /> },
         { path: 'annual-reports', element: <AnnualReports /> },
         { path: 'preview', element: <SitePreview /> },

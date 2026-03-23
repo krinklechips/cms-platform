@@ -9,6 +9,8 @@ import {
   Shield,
   LogOut,
   ChevronDown,
+  Files,
+  Menu,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/app/components/ui/utils'
@@ -26,6 +28,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Overview', to: '/', icon: LayoutDashboard },
   { label: 'Articles', to: '/articles', icon: FileText, moduleKey: 'articles' },
+  { label: 'Pages', to: '/pages', icon: Files },
   { label: 'Media', to: '/media', icon: Image },
   { label: 'Annual Reports', to: '/annual-reports', icon: FileBarChart, moduleKey: 'annualReports' },
   {
@@ -40,6 +43,7 @@ const navItems: NavItem[] = [
       { label: 'Audit', to: '/seo/audit' },
     ],
   },
+  { label: 'Navigation', to: '/navigation', icon: Menu },
   { label: 'Site Preview', to: '/preview', icon: Eye },
 ]
 
@@ -103,7 +107,7 @@ export function TenantSidebar() {
         <div className="space-y-1">
           {filteredItems
             .filter((item) =>
-              ['/articles', '/media', '/annual-reports'].includes(item.to),
+              ['/articles', '/pages', '/media', '/annual-reports'].includes(item.to),
             )
             .map((item) => (
               <NavLink
@@ -185,7 +189,7 @@ export function TenantSidebar() {
         </p>
         <div className="space-y-1">
           {filteredItems
-            .filter((item) => item.to === '/preview')
+            .filter((item) => ['/navigation', '/preview'].includes(item.to))
             .map((item) => (
               <NavLink
                 key={item.to}
