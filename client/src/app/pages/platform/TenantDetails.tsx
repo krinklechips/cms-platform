@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api, tenantApi } from '@/lib/api'
 import { queryClient } from '@/lib/query-client'
-import { PlatformHeader } from '@/app/components/platform/PlatformHeader'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -118,9 +118,9 @@ export function TenantDetails() {
 
   if (isLoading || !tenant) {
     return (
-      <div className="flex h-full flex-col">
-        <PlatformHeader title="Tenant Settings" />
-        <div className="flex flex-1 items-center justify-center">
+      <div>
+        <PageHeader title="Tenant Settings" breadcrumbs={[{label:'Dashboard', href:'/'}, {label:'Tenants', href:'/tenants'}, {label:'Loading...'}]} />
+        <div className="flex items-center justify-center py-20">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#7c3aed]" />
         </div>
       </div>
@@ -128,19 +128,12 @@ export function TenantDetails() {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <PlatformHeader title="Tenant Settings" subtitle={tenant.name} />
-
-      {/* Breadcrumb */}
-      <div className="border-b border-gray-200 bg-white px-8 py-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Link to="/tenants" className="hover:text-gray-900">
-            Tenants
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="font-medium text-gray-900">{tenant.name}</span>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        title={tenant.name}
+        subtitle={`Slug: ${tenant.slug}${tenant.branding?.cmsDomain ? ` · CMS: ${tenant.branding.cmsDomain}` : ''}`}
+        breadcrumbs={[{label:'Dashboard', href:'/'}, {label:'Tenants', href:'/tenants'}, {label: tenant.name}]}
+      />
 
       {/* Page header */}
       <div className="border-b border-gray-200 bg-white px-8 py-6">

@@ -53,6 +53,27 @@ router.get('/', (req, res) => {
   res.json(rows.map(mapTenant));
 });
 
+router.get('/:id', (req, res) => {
+  const row = db.prepare(`
+    SELECT
+      t.*,
+      b.logo_url, b.primary_color, b.support_email, b.public_site_url, b.cms_domain,
+      td.status AS domain_status,
+      td.verified_at AS domain_verified_at,
+      (SELECT COUNT(*) FROM articles a WHERE a.tenant_id = t.id) AS article_count,
+      (SELECT COUNT(*) FROM content_items ci WHERE ci.tenant_id = t.id) AS content_item_count,
+      (SELECT COUNT(*) FROM media m WHERE m.tenant_id = t.id) AS media_count,
+      (SELECT COUNT(*) FROM tenant_memberships tm WHERE tm.tenant_id = t.id AND tm.status = 'active') AS user_count
+    FROM tenants t
+    LEFT JOIN tenant_branding b ON b.tenant_id = t.id
+    LEFT JOIN tenant_domains td ON td.tenant_id = t.id
+    WHERE t.id = ?
+  `).get(req.params.id);
+
+  if (!row) return res.status(404).json({ error: 'Tenant not found' });
+  res.json(mapTenant(row));
+});
+
 router.post('/', (req, res) => {
   const {
     slug,
