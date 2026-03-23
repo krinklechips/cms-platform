@@ -95,6 +95,8 @@ app.use(
 
 app.use(attachHostContext);
 app.use('/uploads', express.static(uploadsDir));
+// Serve Vite-built assets (JS, CSS, images) from public/assets/
+app.use('/assets', express.static(path.join(publicDir, 'assets')));
 app.use('/platform-admin', blockPlatformAdminOnTenantHost, express.static(path.join(publicDir, 'platform-admin')));
 app.use('/tenant-login', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-login')));
 app.use('/tenant-dashboard', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-dashboard')));
