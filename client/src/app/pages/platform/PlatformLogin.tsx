@@ -59,8 +59,8 @@ export function PlatformLogin() {
         <div className="mb-8 flex justify-center">
           <img
             src="/ep.svg"
-            alt="Think logo"
-            className="h-16 object-contain"
+            alt="EP CMS logo"
+            className="h-24 w-auto object-contain"
           />
         </div>
 

@@ -27,11 +27,11 @@ export function PlatformSidebar() {
   return (
     <aside className="flex h-screen w-[240px] max-w-full shrink-0 flex-col border-r border-[#d2d8e0] bg-[#f3f4f6] text-[#3e4a5d]">
       {/* Logo */}
-      <div className="border-b border-[#d2d8e0] px-4 py-2 overflow-hidden">
+      <div className="border-b border-[#d2d8e0] px-4 py-6">
         <img
           src="/ep.svg"
-          alt="Think logo"
-          className="w-full h-16 object-cover object-[50%_40%]"
+          alt="EP CMS logo"
+          className="h-20 w-auto mx-auto"
         />
       </div>
 
