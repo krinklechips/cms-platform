@@ -40,6 +40,13 @@ import {
   Globe,
   CheckCircle2,
   AlertCircle,
+  FileText,
+  Files,
+  Image,
+  Search,
+  BarChart3,
+  Menu,
+  Layout,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -83,6 +90,11 @@ interface ModuleSettings {
   libraries?: boolean
   annualReports?: boolean
   navigationTabs?: boolean
+  homepagePlacements?: boolean
+  pages?: boolean
+  seo?: boolean
+  mediaLibrary?: boolean
+  navigation?: boolean
 }
 
 /* ------------------------------------------------------------------ */
@@ -752,21 +764,19 @@ function DomainsTab({ tenant }: { tenant: Tenant }) {
 /* ================================================================== */
 
 function ModulesTab({ tenantId }: { tenantId: number }) {
-  const [modules, setModules] = useState<ModuleSettings>({
-    articles: true,
-    libraries: false,
-    annualReports: false,
-    navigationTabs: true,
-  })
+  const [modules, setModules] = useState<ModuleSettings>({})
+  const [savedSnapshot, setSavedSnapshot] = useState<string>('')
 
   const { isLoading } = useQuery({
     queryKey: ['tenant', 'settings', tenantId],
     queryFn: async () => {
-      const data = await tenantApi<{ modules?: ModuleSettings }>(
+      const data = await tenantApi<{ moduleAccess?: ModuleSettings }>(
         tenantId,
         '/api/tenant/settings',
       )
-      if (data.modules) setModules(data.modules)
+      const ma = data.moduleAccess ?? {}
+      setModules(ma)
+      setSavedSnapshot(JSON.stringify(ma))
       return data
     },
   })
@@ -775,36 +785,68 @@ function ModulesTab({ tenantId }: { tenantId: number }) {
     mutationFn: () =>
       tenantApi(tenantId, '/api/tenant/settings', {
         method: 'PUT',
-        body: { modules },
+        body: { moduleAccess: modules },
       }),
-    onSuccess: () => toast.success('Module settings saved'),
+    onSuccess: () => {
+      setSavedSnapshot(JSON.stringify(modules))
+      toast.success('Module settings saved')
+    },
     onError: () => toast.error('Failed to save module settings'),
   })
 
+  const isDirty = JSON.stringify(modules) !== savedSnapshot
+
   const toggleModule = (key: keyof ModuleSettings) => {
-    setModules((prev) => ({ ...prev, [key]: !prev[key] }))
+    setModules((prev) => ({ ...prev, [key]: prev[key] === false ? true : prev[key] ? false : true }))
   }
 
-  const moduleList: { key: keyof ModuleSettings; label: string; description: string }[] = [
+  const moduleList: {
+    key: keyof ModuleSettings
+    label: string
+    description: string
+    icon: React.ComponentType<{ className?: string }>
+  }[] = [
     {
       key: 'articles',
       label: 'Articles',
-      description: 'Blog posts, news articles, and content publishing',
+      description: 'Blog posts and news content',
+      icon: FileText,
     },
     {
-      key: 'libraries',
-      label: 'Libraries',
-      description: 'Document and file libraries for resources',
+      key: 'pages',
+      label: 'Pages',
+      description: 'Custom website pages with block editor',
+      icon: Files,
+    },
+    {
+      key: 'mediaLibrary',
+      label: 'Media Library',
+      description: 'File uploads and media management',
+      icon: Image,
+    },
+    {
+      key: 'seo',
+      label: 'SEO Suite',
+      description: 'SEO tools, audits, and keyword tracking',
+      icon: Search,
     },
     {
       key: 'annualReports',
       label: 'Annual Reports',
-      description: 'Yearly financial and activity reports',
+      description: 'Annual report management',
+      icon: BarChart3,
     },
     {
-      key: 'navigationTabs',
-      label: 'Navigation Tabs',
-      description: 'Custom navigation tab management',
+      key: 'navigation',
+      label: 'Navigation',
+      description: 'Custom site navigation editor',
+      icon: Menu,
+    },
+    {
+      key: 'homepagePlacements',
+      label: 'Homepage Placements',
+      description: 'Content slot management',
+      icon: Layout,
     },
   ]
 
@@ -812,10 +854,10 @@ function ModulesTab({ tenantId }: { tenantId: number }) {
     <div className="max-w-4xl">
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <h3 className="mb-1 text-lg font-semibold text-gray-900">
-          Content Modules
+          Module Access
         </h3>
         <p className="mb-6 text-sm text-gray-600">
-          Enable or disable features for this tenant
+          Control which features this tenant can access
         </p>
 
         {isLoading ? (
@@ -823,39 +865,49 @@ function ModulesTab({ tenantId }: { tenantId: number }) {
             Loading...
           </div>
         ) : (
-          <div className="space-y-4">
-            {moduleList.map((mod) => (
-              <div
-                key={mod.key}
-                className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {mod.label}
-                  </p>
-                  <p className="text-xs text-gray-500">{mod.description}</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {moduleList.map((mod) => {
+              const Icon = mod.icon
+              const checked = modules[mod.key] !== false
+              return (
+                <div
+                  key={mod.key}
+                  className="flex items-start gap-4 rounded-lg border border-gray-100 bg-gray-50 px-4 py-4"
+                >
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7c3aed]/10">
+                    <Icon className="h-4.5 w-4.5 text-[#7c3aed]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">
+                      {mod.label}
+                    </p>
+                    <p className="text-xs text-gray-500">{mod.description}</p>
+                  </div>
+                  <Switch
+                    checked={checked}
+                    onCheckedChange={() => toggleModule(mod.key)}
+                    className="shrink-0"
+                  />
                 </div>
-                <Switch
-                  checked={!!modules[mod.key]}
-                  onCheckedChange={() => toggleModule(mod.key)}
-                />
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
-        <div className="mt-6 border-t border-gray-200 pt-6">
-          <Button
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-            className="bg-[#7c3aed] hover:bg-[#6d28d9]"
-          >
-            {saveMutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            Save Module Settings
-          </Button>
-        </div>
+        {isDirty && (
+          <div className="mt-6 border-t border-gray-200 pt-6">
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending}
+              className="bg-[#7c3aed] hover:bg-[#6d28d9]"
+            >
+              {saveMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Save Module Settings
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

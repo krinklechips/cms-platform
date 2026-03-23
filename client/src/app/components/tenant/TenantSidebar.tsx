@@ -28,13 +28,14 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Overview', to: '/', icon: LayoutDashboard },
   { label: 'Articles', to: '/articles', icon: FileText, moduleKey: 'articles' },
-  { label: 'Pages', to: '/pages', icon: Files },
-  { label: 'Media', to: '/media', icon: Image },
+  { label: 'Pages', to: '/pages', icon: Files, moduleKey: 'pages' },
+  { label: 'Media', to: '/media', icon: Image, moduleKey: 'mediaLibrary' },
   { label: 'Annual Reports', to: '/annual-reports', icon: FileBarChart, moduleKey: 'annualReports' },
   {
     label: 'SEO',
     to: '/seo',
     icon: Search,
+    moduleKey: 'seo',
     children: [
       { label: 'Dashboard', to: '/seo' },
       { label: 'Pages', to: '/seo/pages' },
@@ -43,7 +44,7 @@ const navItems: NavItem[] = [
       { label: 'Audit', to: '/seo/audit' },
     ],
   },
-  { label: 'Navigation', to: '/navigation', icon: Menu },
+  { label: 'Navigation', to: '/navigation', icon: Menu, moduleKey: 'navigation' },
   { label: 'Site Preview', to: '/preview', icon: Eye },
 ]
 
@@ -53,7 +54,7 @@ export function TenantSidebar() {
 
   const filteredItems = navItems.filter((item) => {
     if (!item.moduleKey) return true
-    return moduleAccess[item.moduleKey]
+    return moduleAccess[item.moduleKey] !== false
   })
 
   return (

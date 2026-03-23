@@ -27,6 +27,10 @@ function defaultModuleAccess() {
     libraries: true,
     annualReports: true,
     navigationTabs: true,
+    pages: true,
+    seo: true,
+    mediaLibrary: true,
+    navigation: true,
   };
 }
 
