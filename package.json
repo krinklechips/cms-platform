@@ -8,7 +8,7 @@
     "dev:client": "cd client && npx vite --port 5173",
     "dev": "npx concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "start": "node server/index.js",
-    "build:client": "cd client && npm install && npx vite build",
+    "build:client": "cd client && npm install --include=dev && npx vite build",
     "build": "npm run build:client",
     "check": "node --check server/index.js",
     "test": "node --test"
