@@ -22,6 +22,9 @@ import tenantSettingsRouter from './routes/tenantSettings.js';
 import publicArticlesRouter from './routes/publicArticles.js';
 import publicNavigationTabsRouter from './routes/publicNavigationTabs.js';
 import tenantAuthRouter from './routes/tenantAuth.js';
+import platformAuthRouter from './routes/platformAuth.js';
+import tenantSeoRouter from './routes/tenantSeo.js';
+import publicSeoRouter from './routes/publicSeo.js';
 import {
   attachHostContext,
   blockTenantLoginOnPlatformHost,
@@ -194,17 +197,8 @@ app.post('/api/platform/auth/bootstrap-login', requirePlatformHost, (req, res) =
   return res.json({ ok: true, user: req.session.user });
 });
 
-app.get('/api/platform/auth/me', (req, res) => {
-  const user = req.session?.user;
-  if (!user) return res.json({ authenticated: false });
-  return res.json({ authenticated: true, user });
-});
-
-app.post('/api/platform/auth/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.json({ ok: true });
-  });
-});
+// Platform auth routes (real password login + bootstrap fallback)
+app.use('/api/platform/auth', platformAuthRouter);
 
 app.use('/api/tenant/auth', tenantAuthRouter);
 app.use('/api/platform/tenants', platformTenantsRouter);
@@ -217,11 +211,21 @@ app.use('/api/tenant/media', tenantMediaRouter);
 app.use('/api/tenant/annual-reports', tenantAnnualReportsRouter);
 app.use('/api/tenant/product-lines', tenantProductLinesRouter);
 app.use('/api/tenant/settings', tenantSettingsRouter);
+app.use('/api/tenant/seo', tenantSeoRouter);
 app.use('/api/public', publicSlotsRouter);
 app.use('/api/public', publicAnnualReportsRouter);
 app.use('/api/public', publicProductLinesRouter);
 app.use('/api/public', publicArticlesRouter);
 app.use('/api/public', publicNavigationTabsRouter);
+app.use('/api/public', publicSeoRouter);
+
+// SPA fallback routes — serve index.html for client-side routing
+app.get('/platform-admin/*', blockPlatformAdminOnTenantHost, (req, res) => {
+  res.sendFile(path.join(publicDir, 'platform-admin', 'index.html'));
+});
+app.get('/tenant-dashboard/*', blockTenantLoginOnPlatformHost, (req, res) => {
+  res.sendFile(path.join(publicDir, 'tenant-dashboard', 'index.html'));
+});
 
 app.get('/', (req, res) => {
   if (req.hostContext?.isTenantHost) {

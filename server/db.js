@@ -250,6 +250,57 @@ CREATE TABLE IF NOT EXISTS slot_items (
   FOREIGN KEY(slot_id) REFERENCES page_slots(id) ON DELETE CASCADE,
   FOREIGN KEY(content_item_id) REFERENCES content_items(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS seo_redirects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  source_path TEXT NOT NULL,
+  target_url TEXT NOT NULL,
+  status_code INTEGER NOT NULL DEFAULT 301,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  hits INTEGER NOT NULL DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, source_path),
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS seo_page_meta (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  page_path TEXT NOT NULL,
+  title TEXT,
+  description TEXT,
+  og_title TEXT,
+  og_description TEXT,
+  og_image TEXT,
+  twitter_card TEXT DEFAULT 'summary_large_image',
+  twitter_title TEXT,
+  twitter_description TEXT,
+  twitter_image TEXT,
+  canonical_url TEXT,
+  noindex INTEGER NOT NULL DEFAULT 0,
+  nofollow INTEGER NOT NULL DEFAULT 0,
+  json_ld_type TEXT,
+  json_ld_json TEXT,
+  keywords TEXT,
+  seo_score INTEGER,
+  last_audited_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, page_path),
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS seo_keyword_tracking (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  page_path TEXT NOT NULL,
+  keyword TEXT NOT NULL,
+  is_primary INTEGER NOT NULL DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
 `);
 
 function ensureColumn(table, column, ddl) {

@@ -120,7 +120,7 @@ export function requireTenantHost(req, res, next) {
 
 export function blockPlatformAdminOnTenantHost(req, res, next) {
   if (!req.hostContext?.isTenantHost) return next();
-  return res.redirect('/tenant-login');
+  return res.redirect('/tenant-dashboard/login');
 }
 
 export function blockTenantLoginOnPlatformHost(req, res, next) {
