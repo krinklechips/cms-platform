@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Plus, Search, Trash2, Pencil } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -77,19 +78,17 @@ export function ArticlesList() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900">Articles</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage your published and draft content.
-          </p>
-        </div>
-        <Button onClick={() => navigate('/articles/new')} size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          New Article
-        </Button>
-      </div>
+      <PageHeader
+        title="Articles"
+        subtitle="Manage your published content"
+        breadcrumbs={[{label:'Overview', href:'/'}, {label:'Articles'}]}
+        actions={
+          <Button onClick={() => navigate('/articles/new')} size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            New Article
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className="flex items-center gap-3">

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import {
   Plus,
   Pencil,
@@ -11,6 +12,9 @@ import {
   Search,
   FileText,
   X,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -392,6 +396,100 @@ function KeywordTags({ value, onChange }: { value: string; onChange: (v: string)
   )
 }
 
+/* ------------------------------------------------------------------ */
+/*  JSON-LD Templates                                                   */
+/* ------------------------------------------------------------------ */
+
+const JSON_LD_TEMPLATES: Record<string, object> = {
+  Article: {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "",
+    "description": "",
+    "author": { "@type": "Person", "name": "" },
+    "datePublished": "",
+    "image": "",
+  },
+  Organization: {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "",
+    "url": "",
+    "logo": "",
+    "contactPoint": { "@type": "ContactPoint", "telephone": "", "contactType": "customer service" },
+  },
+  FAQ: {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Question 1?", "acceptedAnswer": { "@type": "Answer", "text": "Answer 1" } },
+    ],
+  },
+  Product: {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "",
+    "description": "",
+    "brand": { "@type": "Brand", "name": "" },
+    "offers": { "@type": "Offer", "price": "", "priceCurrency": "USD" },
+  },
+  LocalBusiness: {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "",
+    "address": { "@type": "PostalAddress", "streetAddress": "", "addressLocality": "", "addressCountry": "" },
+    "telephone": "",
+    "openingHours": "",
+  },
+}
+
+/* ------------------------------------------------------------------ */
+/*  SEO Checklist                                                       */
+/* ------------------------------------------------------------------ */
+
+function SeoChecklist({ form }: { form: PageForm }) {
+  const checks = [
+    { label: 'Title present', pass: form.title.length > 0 },
+    { label: 'Title under 60 chars', pass: form.title.length > 0 && form.title.length <= 60 },
+    { label: 'Description present', pass: form.description.length > 0 },
+    { label: 'Description 50-160 chars', pass: form.description.length >= 50 && form.description.length <= 160 },
+    { label: 'OG image set', pass: form.og_image.length > 0 },
+    { label: 'Canonical URL set', pass: form.canonical_url.length > 0 },
+  ]
+
+  const passed = checks.filter((c) => c.pass).length
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium text-gray-500 flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5" />
+            SEO Checklist
+          </span>
+          <span className={`text-xs font-semibold ${passed === checks.length ? 'text-green-600' : 'text-gray-500'}`}>
+            {passed}/{checks.length}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2">
+          {checks.map((item) => (
+            <li key={item.label} className="flex items-center gap-2 text-sm">
+              {item.pass ? (
+                <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+              ) : (
+                <XCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+              )}
+              <span className={item.pass ? 'text-gray-700' : 'text-gray-500'}>{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  )
+}
+
 /* ================================================================== */
 /*  Main Component                                                     */
 /* ================================================================== */
@@ -669,18 +767,38 @@ export function SeoEditor() {
             <h3 className="text-sm font-medium text-gray-700">Structured Data (JSON-LD)</h3>
             <div className="space-y-1.5">
               <Label>Type</Label>
-              <Select value={form.json_ld_type} onValueChange={(v) => updateField('json_ld_type', v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="WebPage">WebPage</SelectItem>
-                  <SelectItem value="Article">Article</SelectItem>
-                  <SelectItem value="Organization">Organization</SelectItem>
-                  <SelectItem value="Product">Product</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={form.json_ld_type} onValueChange={(v) => updateField('json_ld_type', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WebPage">WebPage</SelectItem>
+                    <SelectItem value="Article">Article</SelectItem>
+                    <SelectItem value="Organization">Organization</SelectItem>
+                    <SelectItem value="FAQ">FAQ</SelectItem>
+                    <SelectItem value="Product">Product</SelectItem>
+                    <SelectItem value="LocalBusiness">LocalBusiness</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  disabled={!JSON_LD_TEMPLATES[form.json_ld_type]}
+                  onClick={() => {
+                    const tpl = JSON_LD_TEMPLATES[form.json_ld_type]
+                    if (tpl) {
+                      updateField('json_ld_json', JSON.stringify(tpl, null, 2))
+                    }
+                  }}
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  Load Template
+                </Button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>JSON-LD</Label>
@@ -688,7 +806,7 @@ export function SeoEditor() {
                 value={form.json_ld_json}
                 onChange={(e) => updateField('json_ld_json', e.target.value)}
                 placeholder='{"@context":"https://schema.org", ...}'
-                rows={5}
+                rows={8}
                 className="font-mono text-sm"
               />
             </div>
@@ -709,8 +827,9 @@ export function SeoEditor() {
             </div>
           </div>
 
-          {/* Right column — Previews */}
+          {/* Right column — Previews & Checklist */}
           <div className="space-y-4">
+            <SeoChecklist form={form} />
             <GooglePreview
               title={form.title}
               url={form.canonical_url || form.page_path}
@@ -739,16 +858,17 @@ export function SeoEditor() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900">SEO Editor</h1>
-          <p className="text-sm text-gray-500">Manage page meta tags, social previews, and structured data.</p>
-        </div>
-        <Button onClick={() => setAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Page
-        </Button>
-      </div>
+      <PageHeader
+        title="Page SEO Editor"
+        subtitle="Manage meta tags, Open Graph, and structured data"
+        breadcrumbs={[{label:'Overview', href:'/'}, {label:'SEO', href:'/seo'}, {label:'Pages'}]}
+        actions={
+          <Button onClick={() => setAddDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Page
+          </Button>
+        }
+      />
 
       {pagesLoading ? (
         <div className="text-sm text-gray-500">Loading pages...</div>

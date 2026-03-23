@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Plus, Pencil, Trash2, ArrowRightLeft, ExternalLink } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -157,30 +158,30 @@ export function RedirectManager() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900">Redirect Manager</h1>
-          <p className="text-sm text-gray-500">Manage URL redirects for your site.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Badge variant="secondary">{redirects.length} total</Badge>
-            <Badge variant="outline" className="border-green-200 text-green-700">
-              {activeCount} active
-            </Badge>
+      <PageHeader
+        title="Redirects"
+        subtitle="Manage URL redirects"
+        breadcrumbs={[{label:'Overview', href:'/'}, {label:'SEO', href:'/seo'}, {label:'Redirects'}]}
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Badge variant="secondary">{redirects.length} total</Badge>
+              <Badge variant="outline" className="border-green-200 text-green-700">
+                {activeCount} active
+              </Badge>
+            </div>
+            <Button
+              onClick={() => {
+                setForm(emptyForm)
+                setAddOpen(true)
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Redirect
+            </Button>
           </div>
-          <Button
-            onClick={() => {
-              setForm(emptyForm)
-              setAddOpen(true)
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Redirect
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Table */}
       {isLoading ? (

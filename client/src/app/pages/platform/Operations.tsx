@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { queryClient } from '@/lib/query-client'
-import { PlatformHeader } from '@/app/components/platform/PlatformHeader'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import { Database, HardDrive, Archive, Loader2, CheckCircle2 } from 'lucide-react'
@@ -32,10 +32,13 @@ export function Operations() {
 
   return (
     <div className="flex h-full flex-col">
-      <PlatformHeader
-        title="Operations"
-        subtitle="Storage diagnostics and backups"
-      />
+      <div className="bg-white border-b border-gray-200 px-8 pt-6">
+        <PageHeader
+          title="Operations"
+          subtitle="Storage diagnostics and backups"
+          breadcrumbs={[{label:'Dashboard', href:'/'}, {label:'Operations'}]}
+        />
+      </div>
 
       <div className="flex-1 overflow-auto bg-gray-50 p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

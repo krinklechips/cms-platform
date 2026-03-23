@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { PlatformHeader } from '@/app/components/platform/PlatformHeader'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Badge } from '@/app/components/ui/badge'
@@ -49,10 +49,21 @@ export function TenantDirectory() {
 
   return (
     <div className="flex h-full flex-col">
-      <PlatformHeader
-        title="Tenant Directory"
-        subtitle="Manage all customer tenants"
-      />
+      <div className="bg-white border-b border-gray-200 px-8 pt-6">
+        <PageHeader
+          title="Tenant Directory"
+          subtitle="Manage all customer tenants"
+          breadcrumbs={[{label:'Dashboard', href:'/'}, {label:'Tenants'}]}
+          actions={
+            <Button asChild className="gap-2 bg-[#7c3aed] hover:bg-[#6d28d9]">
+              <Link to="/tenants/create">
+                <Plus className="h-4 w-4" />
+                Create Tenant
+              </Link>
+            </Button>
+          }
+        />
+      </div>
 
       <div className="flex-1 overflow-auto bg-gray-50 p-8">
         {/* Toolbar */}
@@ -66,12 +77,6 @@ export function TenantDirectory() {
               className="pl-9"
             />
           </div>
-          <Button asChild className="gap-2 bg-[#7c3aed] hover:bg-[#6d28d9]">
-            <Link to="/tenants/create">
-              <Plus className="h-4 w-4" />
-              Create Tenant
-            </Link>
-          </Button>
         </div>
 
         {/* Table */}

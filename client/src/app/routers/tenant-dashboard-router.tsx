@@ -9,6 +9,8 @@ import { AnnualReports } from '@/app/pages/tenant/AnnualReports'
 import { SitePreview } from '@/app/pages/tenant/SitePreview'
 import { AccountSecurity } from '@/app/pages/tenant/AccountSecurity'
 import { SeoEditor } from '@/app/pages/tenant/SeoEditor'
+import { SeoDashboard } from '@/app/pages/tenant/SeoDashboard'
+import { KeywordTracking } from '@/app/pages/tenant/KeywordTracking'
 import { RedirectManager } from '@/app/pages/tenant/RedirectManager'
 import { SeoAudit } from '@/app/pages/tenant/SeoAudit'
 
@@ -30,7 +32,9 @@ export const tenantRouter = createBrowserRouter(
         { path: 'annual-reports', element: <AnnualReports /> },
         { path: 'preview', element: <SitePreview /> },
         { path: 'account', element: <AccountSecurity /> },
-        { path: 'seo', element: <SeoEditor /> },
+        { path: 'seo', element: <SeoDashboard /> },
+        { path: 'seo/pages', element: <SeoEditor /> },
+        { path: 'seo/keywords', element: <KeywordTracking /> },
         { path: 'seo/redirects', element: <RedirectManager /> },
         { path: 'seo/audit', element: <SeoAudit /> },
       ],

@@ -1,4 +1,4 @@
-import { PlatformHeader } from '@/app/components/platform/PlatformHeader'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Badge } from '@/app/components/ui/badge'
 import { Globe, HardDrive, Shield, CheckCircle2, AlertCircle } from 'lucide-react'
 
@@ -60,10 +60,13 @@ function IntegrationCard({
 export function Integrations() {
   return (
     <div className="flex h-full flex-col">
-      <PlatformHeader
-        title="Integrations"
-        subtitle="External service connections"
-      />
+      <div className="bg-white border-b border-gray-200 px-8 pt-6">
+        <PageHeader
+          title="Integrations & Access"
+          subtitle="Connected services and modules"
+          breadcrumbs={[{label:'Dashboard', href:'/'}, {label:'Integrations'}]}
+        />
+      </div>
 
       <div className="flex-1 overflow-auto bg-gray-50 p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

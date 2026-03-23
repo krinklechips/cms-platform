@@ -33,7 +33,9 @@ const navItems: NavItem[] = [
     to: '/seo',
     icon: Search,
     children: [
-      { label: 'Editor', to: '/seo' },
+      { label: 'Dashboard', to: '/seo' },
+      { label: 'Pages', to: '/seo/pages' },
+      { label: 'Keywords', to: '/seo/keywords' },
       { label: 'Redirects', to: '/seo/redirects' },
       { label: 'Audit', to: '/seo/audit' },
     ],
@@ -51,7 +53,7 @@ export function TenantSidebar() {
   })
 
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-gray-200 bg-gray-50">
+    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-gray-50">
       {/* Branding */}
       <div className="flex h-16 items-center gap-3 px-5">
         {tenant?.branding.logo_url ? (
@@ -70,10 +72,65 @@ export function TenantSidebar() {
       <Separator />
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {filteredItems.map((item) => {
-          if (item.children) {
-            return (
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        {/* Overview */}
+        <div className="space-y-1">
+          {filteredItems
+            .filter((item) => item.to === '/')
+            .map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
+                    'hover:bg-[#eaeff8]',
+                    isActive && 'bg-[#e8edf5] text-gray-900',
+                  )
+                }
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                {item.label}
+              </NavLink>
+            ))}
+        </div>
+
+        {/* CONTENT section */}
+        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+          Content
+        </p>
+        <div className="space-y-1">
+          {filteredItems
+            .filter((item) =>
+              ['/articles', '/media', '/annual-reports'].includes(item.to),
+            )
+            .map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
+                    'hover:bg-[#eaeff8]',
+                    isActive && 'bg-[#e8edf5] text-gray-900',
+                  )
+                }
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                {item.label}
+              </NavLink>
+            ))}
+        </div>
+
+        {/* SEO & MARKETING section */}
+        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+          SEO & Marketing
+        </p>
+        <div className="space-y-1">
+          {filteredItems
+            .filter((item) => item.children)
+            .map((item) => (
               <div key={item.label}>
                 <button
                   onClick={() => setSeoOpen(!seoOpen)}
@@ -93,9 +150,14 @@ export function TenantSidebar() {
                   />
                 </button>
 
-                {seoOpen && (
+                <div
+                  className={cn(
+                    'transition-all duration-200 overflow-hidden',
+                    seoOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0',
+                  )}
+                >
                   <div className="ml-7 mt-1 space-y-0.5">
-                    {item.children.map((child) => (
+                    {item.children!.map((child) => (
                       <NavLink
                         key={child.to}
                         to={child.to}
@@ -112,29 +174,35 @@ export function TenantSidebar() {
                       </NavLink>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
-            )
-          }
+            ))}
+        </div>
 
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
-                  'hover:bg-[#eaeff8]',
-                  isActive && 'bg-[#e8edf5] text-gray-900',
-                )
-              }
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </NavLink>
-          )
-        })}
+        {/* SITE section */}
+        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+          Site
+        </p>
+        <div className="space-y-1">
+          {filteredItems
+            .filter((item) => item.to === '/preview')
+            .map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
+                    'hover:bg-[#eaeff8]',
+                    isActive && 'bg-[#e8edf5] text-gray-900',
+                  )
+                }
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                {item.label}
+              </NavLink>
+            ))}
+        </div>
       </nav>
 
       {/* Bottom section */}

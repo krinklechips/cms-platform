@@ -155,10 +155,51 @@ router.delete('/redirects/:id', (req, res) => {
 router.get('/keywords', (req, res) => {
   const tenantId = req.tenant.id;
   const rows = db.prepare(`
-    SELECT page_path, keyword, is_primary, created_at
+    SELECT id, page_path, keyword, is_primary, created_at
     FROM seo_keyword_tracking WHERE tenant_id = ? ORDER BY page_path, is_primary DESC
   `).all(tenantId);
   res.json({ keywords: rows });
+});
+
+router.post('/keywords', (req, res) => {
+  const tenantId = req.tenant.id;
+  const { pagePath, keyword, isPrimary } = req.body;
+
+  if (!pagePath || !keyword) {
+    return res.status(400).json({ error: 'pagePath and keyword are required' });
+  }
+
+  const normalizedPath = '/' + pagePath.replace(/^\/+/, '');
+
+  try {
+    const result = db.prepare(`
+      INSERT INTO seo_keyword_tracking (tenant_id, page_path, keyword, is_primary)
+      VALUES (?, ?, ?, ?)
+    `).run(tenantId, normalizedPath, keyword.trim(), isPrimary ? 1 : 0);
+
+    const created = db.prepare('SELECT * FROM seo_keyword_tracking WHERE id = ?').get(result.lastInsertRowid);
+    res.json({ ok: true, keyword: created });
+  } catch (err) {
+    if (err.message.includes('UNIQUE')) {
+      return res.status(409).json({ error: 'This keyword is already tracked for this page' });
+    }
+    throw err;
+  }
+});
+
+router.delete('/keywords/:id', (req, res) => {
+  const tenantId = req.tenant.id;
+  const { id } = req.params;
+
+  const result = db.prepare(
+    'DELETE FROM seo_keyword_tracking WHERE id = ? AND tenant_id = ?'
+  ).run(id, tenantId);
+
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Keyword not found' });
+  }
+
+  res.json({ ok: true });
 });
 
 // ── SEO Audit ───────────────────────────────────────────────────────

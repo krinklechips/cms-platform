@@ -19,12 +19,14 @@ export function TenantLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-gray-50">
       <TenantSidebar />
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">
-          <Outlet />
+          <div className="mx-auto max-w-6xl px-6 lg:px-8 py-6">
+            <Outlet />
+          </div>
         </main>
 
         <footer className="shrink-0 border-t border-gray-100 px-6 py-3">

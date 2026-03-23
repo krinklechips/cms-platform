@@ -21,8 +21,10 @@ export function PlatformLayout() {
   return (
     <div className="flex h-screen bg-gray-50">
       <PlatformSidebar />
-      <main className="flex-1 overflow-auto">
-        <Outlet />
+      <main className="flex-1 overflow-auto bg-gray-50">
+        <div className="mx-auto max-w-6xl px-6 lg:px-8 py-6">
+          <Outlet />
+        </div>
       </main>
       <Toaster position="bottom-right" richColors />
     </div>

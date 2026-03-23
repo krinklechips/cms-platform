@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { queryClient } from '@/lib/query-client'
-import { PlatformHeader } from '@/app/components/platform/PlatformHeader'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/app/components/ui/select'
-import { ChevronRight, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface TenantPayload {
@@ -101,20 +101,12 @@ export function CreateTenant() {
 
   return (
     <div className="flex h-full flex-col">
-      <PlatformHeader
-        title="Create Tenant"
-        subtitle="Onboard a new customer tenant"
-      />
-
-      {/* Breadcrumb */}
-      <div className="border-b border-gray-200 bg-white px-8 py-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Link to="/tenants" className="hover:text-gray-900">
-            Tenants
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="font-medium text-gray-900">Create Tenant</span>
-        </div>
+      <div className="bg-white border-b border-gray-200 px-8 pt-6">
+        <PageHeader
+          title="Create Tenant"
+          subtitle="Set up a new customer tenant"
+          breadcrumbs={[{label:'Dashboard', href:'/'}, {label:'Tenants', href:'/tenants'}, {label:'Create'}]}
+        />
       </div>
 
       <div className="flex-1 overflow-auto bg-gray-50 p-8">

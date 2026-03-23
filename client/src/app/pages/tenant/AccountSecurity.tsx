@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { api } from '@/lib/api'
 import { useTenantAuth } from '@/lib/tenant-context'
 import { toast } from 'sonner'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -55,12 +56,11 @@ export function AccountSecurity() {
 
   return (
     <div className="p-6 lg:p-8 space-y-8 max-w-2xl">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900">Account Security</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Manage your account details and password.
-        </p>
-      </div>
+      <PageHeader
+        title="Account Security"
+        subtitle="Manage your password"
+        breadcrumbs={[{label:'Overview', href:'/'}, {label:'Account'}]}
+      />
 
       {/* User info */}
       <Card className="border-gray-200">

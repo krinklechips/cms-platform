@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import {
   Search,
+  LayoutDashboard,
   Database,
   Users,
   Settings,
@@ -63,7 +64,7 @@ export function PlatformSidebar() {
                 : 'text-[#425066] hover:bg-[#f0f2f8] hover:text-[#2f3c52]'
             }`}
           >
-            <Database className="h-4 w-4 shrink-0 text-current" />
+            <LayoutDashboard className="h-4 w-4 shrink-0 text-current" />
             <span className="text-[13px] font-semibold tracking-[-0.01em]">
               Dashboard
             </span>
@@ -121,7 +122,7 @@ export function PlatformSidebar() {
                   to="/tenants/create"
                   className={`flex items-center gap-2 rounded-[8px] px-2.5 py-1.5 text-[12px] font-medium tracking-[-0.01em] transition-all ${
                     isActive('/tenants/create')
-                      ? 'bg-[#e8edf5] text-[#1e293b] shadow-[inset_3px_0_0_#7c3aed]'
+                      ? 'bg-[#dfe6f2] text-[#1e293b]'
                       : 'text-[#465368] hover:bg-[#eaeff8] hover:text-[#2e3b50]'
                   }`}
                 >
@@ -132,7 +133,7 @@ export function PlatformSidebar() {
                   to="/tenants"
                   className={`block rounded-[8px] px-2.5 py-1.5 text-[12px] font-medium tracking-[-0.01em] transition-all ${
                     isExact('/tenants')
-                      ? 'bg-[#e8edf5] text-[#1e293b] shadow-[inset_3px_0_0_#7c3aed]'
+                      ? 'bg-[#dfe6f2] text-[#1e293b]'
                       : 'text-[#465368] hover:bg-[#eaeff8] hover:text-[#2e3b50]'
                   }`}
                 >

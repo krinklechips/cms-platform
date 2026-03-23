@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { ArrowLeft, ChevronDown, ChevronUp, Globe, Facebook } from 'lucide-react'
+import { GooglePreview } from '@/app/components/shared/seo/GooglePreview'
+import { CharBadge } from '@/app/components/shared/seo/CharBadge'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -74,6 +76,7 @@ export function ArticleEditor() {
   const slug = watch('slug')
   const status = watch('status')
   const coverImage = watch('cover_image_url')
+  const summary = watch('summary')
   const seoTitle = watch('seo_title')
   const seoDescription = watch('seo_description')
   const seoImage = watch('seo_image_url')
@@ -261,9 +264,7 @@ export function ArticleEditor() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="seo_title">SEO Title</Label>
-                      <span className={`text-xs ${seoTitleDisplay.length > 60 ? 'text-red-500' : 'text-gray-400'}`}>
-                        {seoTitleDisplay.length}/60
-                      </span>
+                      <CharBadge count={seoTitleDisplay.length} max={60} label="Title" />
                     </div>
                     <Input
                       id="seo_title"
@@ -275,9 +276,7 @@ export function ArticleEditor() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="seo_description">SEO Description</Label>
-                      <span className={`text-xs ${seoDescDisplay.length > 155 ? 'text-red-500' : 'text-gray-400'}`}>
-                        {seoDescDisplay.length}/155
-                      </span>
+                      <CharBadge count={seoDescDisplay.length} max={155} label="Desc" />
                     </div>
                     <Textarea
                       id="seo_description"
@@ -318,24 +317,12 @@ export function ArticleEditor() {
 
                   <Separator />
 
-                  {/* Google preview */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-                      <Globe className="h-3.5 w-3.5" />
-                      Google Preview
-                    </div>
-                    <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-1">
-                      <p className="truncate text-sm text-blue-700">
-                        {seoTitleDisplay || 'Page Title'}
-                      </p>
-                      <p className="truncate text-xs text-emerald-700">
-                        example.com/{slug || 'page-slug'}
-                      </p>
-                      <p className="line-clamp-2 text-xs text-gray-500">
-                        {seoDescDisplay || 'No meta description set.'}
-                      </p>
-                    </div>
-                  </div>
+                  {/* Google SERP preview */}
+                  <GooglePreview
+                    title={seoTitleDisplay}
+                    url={`example.com/${slug || 'page-slug'}`}
+                    description={seoDescDisplay || summary || ''}
+                  />
 
                   {/* Facebook OG preview */}
                   <div className="space-y-2">

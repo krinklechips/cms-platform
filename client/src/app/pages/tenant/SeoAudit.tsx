@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { api } from '@/lib/api'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import {
   RefreshCw,
   AlertTriangle,
@@ -141,7 +142,11 @@ export function SeoAudit() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <h1 className="text-lg font-semibold text-gray-900">SEO Audit</h1>
+        <PageHeader
+          title="SEO Audit"
+          subtitle="Check your site's SEO health"
+          breadcrumbs={[{label:'Overview', href:'/'}, {label:'SEO', href:'/seo'}, {label:'Audit'}]}
+        />
         <p className="mt-2 text-sm text-gray-500">Running audit...</p>
       </div>
     )
@@ -165,17 +170,17 @@ export function SeoAudit() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900">SEO Audit</h1>
-          <p className="text-sm text-gray-500">Automated SEO scoring and recommendations for your site.</p>
-        </div>
-        <Button onClick={runAudit} disabled={isFetching} variant="outline">
-          <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-          {isFetching ? 'Running...' : 'Run Audit'}
-        </Button>
-      </div>
+      <PageHeader
+        title="SEO Audit"
+        subtitle="Check your site's SEO health"
+        breadcrumbs={[{label:'Overview', href:'/'}, {label:'SEO', href:'/seo'}, {label:'Audit'}]}
+        actions={
+          <Button onClick={runAudit} disabled={isFetching} variant="outline">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Running...' : 'Run Audit'}
+          </Button>
+        }
+      />
 
       {/* Score + Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
