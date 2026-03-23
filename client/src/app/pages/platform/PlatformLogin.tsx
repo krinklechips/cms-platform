@@ -26,7 +26,7 @@ export function PlatformLogin() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/platform-admin/" replace />
+    return <Navigate to="/" replace />
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,7 +40,7 @@ export function PlatformLogin() {
       } else {
         await login(email, password)
       }
-      navigate('/platform-admin/', { replace: true })
+      navigate('/', { replace: true })
     } catch (err: unknown) {
       const message =
         err && typeof err === 'object' && 'message' in err
@@ -58,7 +58,7 @@ export function PlatformLogin() {
         {/* Logo */}
         <div className="mb-8 flex justify-center">
           <img
-            src="/think.png"
+            src="/ep.svg"
             alt="Think logo"
             className="h-16 object-contain"
           />

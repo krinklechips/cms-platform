@@ -29,7 +29,7 @@ export function PlatformSidebar() {
       {/* Logo */}
       <div className="border-b border-[#d2d8e0] px-4 py-2 overflow-hidden">
         <img
-          src="/think.png"
+          src="/ep.svg"
           alt="Think logo"
           className="w-full h-16 object-cover object-[50%_40%]"
         />

@@ -15,7 +15,7 @@ export function PlatformLayout() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/platform-admin/login" replace />
+    return <Navigate to="/login" replace />
   }
 
   return (
