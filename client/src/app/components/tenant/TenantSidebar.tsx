@@ -12,6 +12,10 @@ import {
   Files,
   Menu,
   Users,
+  MessageSquare,
+  Briefcase,
+  MapPin,
+  Star,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/app/components/ui/utils'
@@ -46,6 +50,10 @@ const navItems: NavItem[] = [
     ],
   },
   { label: 'Team Members', to: '/team', icon: Users },
+  { label: 'Testimonials', to: '/testimonials', icon: MessageSquare },
+  { label: 'Services & Pricing', to: '/services', icon: Briefcase },
+  { label: 'Featured Products', to: '/featured-products', icon: Star },
+  { label: 'Contact Info', to: '/contact', icon: MapPin },
   { label: 'Navigation', to: '/navigation', icon: Menu, moduleKey: 'navigation' },
   { label: 'Site Preview', to: '/preview', icon: Eye },
 ]
@@ -137,6 +145,33 @@ export function TenantSidebar() {
         <div className="space-y-1">
           {filteredItems
             .filter((item) => ['/team'].includes(item.to))
+            .map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
+                    'hover:bg-[#eaeff8]',
+                    isActive && 'bg-[#e8edf5] text-gray-900',
+                  )
+                }
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                {item.label}
+              </NavLink>
+            ))}
+        </div>
+
+        {/* MARKETING section */}
+        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+          Marketing
+        </p>
+        <div className="space-y-1">
+          {filteredItems
+            .filter((item) =>
+              ['/testimonials', '/services', '/contact', '/featured-products'].includes(item.to),
+            )
             .map((item) => (
               <NavLink
                 key={item.to}

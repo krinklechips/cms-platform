@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api, tenantApi } from '@/lib/api'
 import { queryClient } from '@/lib/query-client'
-import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -33,7 +32,6 @@ import {
   TableRow,
 } from '@/app/components/ui/table'
 import {
-  ChevronRight,
   ExternalLink,
   Loader2,
   Plus,
@@ -48,6 +46,9 @@ import {
   Menu,
   Layout,
   Users,
+  Palette,
+  Settings2,
+  Package,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -110,7 +111,7 @@ const statusColors: Record<string, string> = {
 }
 
 const tabTriggerClass =
-  'data-[state=active]:border-b-2 data-[state=active]:border-[#7c3aed] rounded-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 pt-3 data-[state=active]:text-[#7c3aed]'
+  'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 data-[state=active]:bg-[#7c3aed]/10 data-[state=active]:text-[#7c3aed] data-[state=active]:shadow-none'
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
@@ -131,58 +132,51 @@ export function TenantDetails() {
 
   if (isLoading || !tenant) {
     return (
-      <div>
-        <PageHeader title="Tenant Settings" breadcrumbs={[{label:'Dashboard', href:'/'}, {label:'Tenants', href:'/tenants'}, {label:'Loading...'}]} />
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#7c3aed]" />
-        </div>
+      <div className="flex items-center justify-center py-40">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#7c3aed]" />
       </div>
     )
   }
 
   return (
-    <div>
-      <PageHeader
-        title={tenant.name}
-        subtitle={`Slug: ${tenant.slug}${tenant.branding?.cmsDomain ? ` · CMS: ${tenant.branding.cmsDomain}` : ''}`}
-        breadcrumbs={[{label:'Dashboard', href:'/'}, {label:'Tenants', href:'/tenants'}, {label: tenant.name}]}
-      />
-
-      {/* Page header */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header card */}
       <div className="border-b border-gray-200 bg-white px-8 py-6">
+        {/* Breadcrumb */}
+        <nav className="mb-4 flex items-center gap-1.5 text-xs text-gray-400">
+          <Link to="/" className="hover:text-gray-600">Dashboard</Link>
+          <span>/</span>
+          <Link to="/tenants" className="hover:text-gray-600">Tenants</Link>
+          <span>/</span>
+          <span className="text-gray-700">{tenant.name}</span>
+        </nav>
+
         <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {tenant.name}
-              </h2>
-              <Badge
-                className={
-                  statusColors[tenant.status] ?? 'bg-gray-100 text-gray-600'
-                }
-              >
-                {tenant.status}
-              </Badge>
+          {/* Tenant identity */}
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#7c3aed]/10 text-lg font-bold text-[#7c3aed]">
+              {tenant.name.charAt(0).toUpperCase()}
             </div>
-            <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-              <span>Slug: {tenant.slug}</span>
-              {tenant.cmsDomain && (
-                <>
-                  <span className="text-gray-300">|</span>
-                  <span>CMS: {tenant.cmsDomain}</span>
-                </>
-              )}
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl font-bold text-gray-900">{tenant.name}</h1>
+                <Badge className={statusColors[tenant.status] ?? 'bg-gray-100 text-gray-600'}>
+                  {tenant.status}
+                </Badge>
+              </div>
+              <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
+                <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-mono text-gray-600">{tenant.slug}</code>
+                {tenant.cmsDomain && <span className="text-gray-300">·</span>}
+                {tenant.cmsDomain && <span>{tenant.cmsDomain}</span>}
+              </div>
             </div>
           </div>
 
+          {/* Actions */}
           <div className="flex items-center gap-2">
             {tenant.cmsDomain && (
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <a
-                  href={`https://${tenant.cmsDomain}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a href={`https://${tenant.cmsDomain}/tenant-dashboard`} target="_blank" rel="noreferrer">
                   <ExternalLink className="h-3.5 w-3.5" />
                   Open CMS
                 </a>
@@ -190,11 +184,7 @@ export function TenantDetails() {
             )}
             {tenant.publicSiteUrl && (
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <a
-                  href={tenant.publicSiteUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a href={tenant.publicSiteUrl} target="_blank" rel="noreferrer">
                   <ExternalLink className="h-3.5 w-3.5" />
                   Public Site
                 </a>
@@ -205,45 +195,49 @@ export function TenantDetails() {
       </div>
 
       {/* Tabs */}
-      <div className="flex-1 overflow-auto bg-gray-50">
-        <Tabs defaultValue="branding" className="w-full">
-          <div className="border-b border-gray-200 bg-white px-8">
-            <TabsList className="h-auto gap-6 border-b-0 bg-transparent p-0">
-              <TabsTrigger value="branding" className={tabTriggerClass}>
-                Branding
-              </TabsTrigger>
-              <TabsTrigger value="users" className={tabTriggerClass}>
-                Users
-              </TabsTrigger>
-              <TabsTrigger value="domains" className={tabTriggerClass}>
-                Domains
-              </TabsTrigger>
-              <TabsTrigger value="modules" className={tabTriggerClass}>
-                Modules
-              </TabsTrigger>
-              <TabsTrigger value="content" className={tabTriggerClass}>
-                Content
-              </TabsTrigger>
-            </TabsList>
-          </div>
+      <Tabs defaultValue="branding" className="w-full">
+        {/* Tab bar */}
+        <div className="border-b border-gray-200 bg-white px-6">
+          <TabsList className="h-12 gap-1 bg-transparent p-1">
+            <TabsTrigger value="branding" className={tabTriggerClass}>
+              <Palette className="h-3.5 w-3.5" />
+              Branding
+            </TabsTrigger>
+            <TabsTrigger value="users" className={tabTriggerClass}>
+              <Users className="h-3.5 w-3.5" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="domains" className={tabTriggerClass}>
+              <Globe className="h-3.5 w-3.5" />
+              Domains
+            </TabsTrigger>
+            <TabsTrigger value="modules" className={tabTriggerClass}>
+              <Settings2 className="h-3.5 w-3.5" />
+              Modules
+            </TabsTrigger>
+            <TabsTrigger value="content" className={tabTriggerClass}>
+              <Package className="h-3.5 w-3.5" />
+              Content
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-          <TabsContent value="branding" className="mt-0 p-8">
-            <BrandingTab tenant={tenant} />
-          </TabsContent>
-          <TabsContent value="users" className="mt-0 p-8">
-            <UsersTab tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="domains" className="mt-0 p-8">
-            <DomainsTab tenant={tenant} />
-          </TabsContent>
-          <TabsContent value="modules" className="mt-0 p-8">
-            <ModulesTab tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="content" className="mt-0 p-8">
-            <ContentTab tenant={tenant} />
-          </TabsContent>
-        </Tabs>
-      </div>
+        <TabsContent value="branding" className="mt-0 p-8">
+          <BrandingTab tenant={tenant} />
+        </TabsContent>
+        <TabsContent value="users" className="mt-0 p-8">
+          <UsersTab tenantId={tenant.id} />
+        </TabsContent>
+        <TabsContent value="domains" className="mt-0 p-8">
+          <DomainsTab tenant={tenant} />
+        </TabsContent>
+        <TabsContent value="modules" className="mt-0 p-8">
+          <ModulesTab tenantId={tenant.id} />
+        </TabsContent>
+        <TabsContent value="content" className="mt-0 p-8">
+          <ContentTab tenant={tenant} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

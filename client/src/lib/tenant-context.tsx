@@ -62,17 +62,21 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
         user?: TenantUser
         tenant?: Tenant
         moduleAccess?: Record<string, boolean>
+        mustChangePassword?: boolean
       }>('/api/tenant/auth/me')
 
       if (res.authenticated && res.user) {
         setUser(res.user)
         if (res.tenant) setTenant(res.tenant)
         if (res.moduleAccess) setModuleAccess(res.moduleAccess)
+        setMustChangePassword(res.mustChangePassword === true)
       } else {
         setUser(null)
+        setMustChangePassword(false)
       }
     } catch {
       setUser(null)
+      setMustChangePassword(false)
     } finally {
       setIsLoading(false)
     }

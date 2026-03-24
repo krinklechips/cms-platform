@@ -102,6 +102,8 @@ router.get('/me', requireTenantHost, (req, res) => {
     });
   }
 
+  const fullUser = db.prepare('SELECT must_change_password FROM users WHERE id = ? LIMIT 1').get(user.id);
+
   return res.json({
     authenticated: true,
     tenant,
@@ -111,6 +113,7 @@ router.get('/me', requireTenantHost, (req, res) => {
       tenantRole: membership.role,
     },
     moduleAccess: readTenantModuleAccess(tenant.id),
+    mustChangePassword: fullUser?.must_change_password === 1,
   });
 });
 

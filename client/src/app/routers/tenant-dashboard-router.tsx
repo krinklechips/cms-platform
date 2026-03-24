@@ -18,6 +18,10 @@ import { PagesList } from '@/app/pages/tenant/PagesList'
 import { PageEditor } from '@/app/pages/tenant/PageEditor'
 import { NavigationEditor } from '@/app/pages/tenant/NavigationEditor'
 import { TeamMembers } from '@/app/pages/tenant/TeamMembers'
+import { Testimonials } from '@/app/pages/tenant/Testimonials'
+import { Services } from '@/app/pages/tenant/Services'
+import { ContactSettings } from '@/app/pages/tenant/ContactSettings'
+import { FeaturedProducts } from '@/app/pages/tenant/FeaturedProducts'
 
 export const tenantRouter = createBrowserRouter(
   [
@@ -51,6 +55,10 @@ export const tenantRouter = createBrowserRouter(
         { path: 'seo/redirects', element: <RedirectManager /> },
         { path: 'seo/audit', element: <SeoAudit /> },
         { path: 'team', element: <TeamMembers /> },
+        { path: 'testimonials', element: <Testimonials /> },
+        { path: 'services', element: <Services /> },
+        { path: 'contact', element: <ContactSettings /> },
+        { path: 'featured-products', element: <FeaturedProducts /> },
       ],
     },
   ],
