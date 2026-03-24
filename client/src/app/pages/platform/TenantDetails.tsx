@@ -464,7 +464,8 @@ function UsersTab({ tenantId }: { tenantId: number }) {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['platform', 'tenant-users', tenantId],
     queryFn: () =>
-      api<TenantUser[]>(`/api/platform/tenant-users?tenantId=${tenantId}`),
+      api<{ users: TenantUser[] }>(`/api/platform/tenant-users?tenantId=${tenantId}`)
+        .then((r) => (Array.isArray(r.users) ? r.users : [])),
   })
 
   const createUserMutation = useMutation({

@@ -133,6 +133,7 @@ router.post('/', (req, res) => {
     seoTitle = null,
     seoDescription = null,
     seoImage = null,
+    blocks = null,
   } = req.body ?? {};
 
   if (!String(title || '').trim()) {
@@ -170,12 +171,33 @@ router.post('/', (req, res) => {
       now,
     );
 
+    const newPageId = info.lastInsertRowid;
+
+    if (Array.isArray(blocks) && blocks.length > 0) {
+      const insertBlock = db.prepare(`
+        INSERT INTO page_blocks (page_id, tenant_id, block_type, block_data, sort_order, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      const syncTx = db.transaction(() => {
+        blocks.forEach((b, index) => {
+          const bType = String(b.blockType || b.type || 'text').trim() || 'text';
+          const bData = typeof b.blockData !== 'undefined' ? b.blockData : (b.data || {});
+          const bDataStr = typeof bData === 'string' ? bData : JSON.stringify(bData);
+          insertBlock.run(newPageId, req.tenant.id, bType, bDataStr, index, now, now);
+        });
+      });
+      syncTx();
+    }
+
     const row = db.prepare(`
       SELECT p.*, (SELECT COUNT(*) FROM page_blocks pb WHERE pb.page_id = p.id) AS block_count
       FROM pages p
       WHERE p.tenant_id = ? AND p.id = ?
-    `).get(req.tenant.id, info.lastInsertRowid);
-    return res.status(201).json(mapPage(row));
+    `).get(req.tenant.id, newPageId);
+    const created = mapPage(row);
+    const savedBlocks = db.prepare('SELECT * FROM page_blocks WHERE page_id = ? AND tenant_id = ? ORDER BY sort_order ASC').all(newPageId, req.tenant.id);
+    created.blocks = savedBlocks.map(mapBlock);
+    return res.status(201).json(created);
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       return res.status(409).json({ error: 'Slug already exists for this tenant' });
@@ -228,12 +250,32 @@ router.put('/:id', (req, res) => {
       id,
     );
 
+    if (Array.isArray(req.body.blocks)) {
+      const insertBlock = db.prepare(`
+        INSERT INTO page_blocks (page_id, tenant_id, block_type, block_data, sort_order, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      const syncTx = db.transaction(() => {
+        db.prepare('DELETE FROM page_blocks WHERE page_id = ? AND tenant_id = ?').run(id, req.tenant.id);
+        req.body.blocks.forEach((b, index) => {
+          const bType = String(b.blockType || b.type || 'text').trim() || 'text';
+          const bData = typeof b.blockData !== 'undefined' ? b.blockData : (b.data || {});
+          const bDataStr = typeof bData === 'string' ? bData : JSON.stringify(bData);
+          insertBlock.run(id, req.tenant.id, bType, bDataStr, index, now, now);
+        });
+      });
+      syncTx();
+    }
+
     const row = db.prepare(`
       SELECT p.*, (SELECT COUNT(*) FROM page_blocks pb WHERE pb.page_id = p.id) AS block_count
       FROM pages p
       WHERE p.tenant_id = ? AND p.id = ?
     `).get(req.tenant.id, id);
-    return res.json(mapPage(row));
+    const updated = mapPage(row);
+    const savedBlocks = db.prepare('SELECT * FROM page_blocks WHERE page_id = ? AND tenant_id = ? ORDER BY sort_order ASC').all(id, req.tenant.id);
+    updated.blocks = savedBlocks.map(mapBlock);
+    return res.json(updated);
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       return res.status(409).json({ error: 'Slug already exists for this tenant' });

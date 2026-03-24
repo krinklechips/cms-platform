@@ -98,17 +98,17 @@ interface PageRecord {
   title: string
   slug: string
   status: string
-  parent_id: number | null
+  parentId: number | null
   template: string
-  show_in_nav: number
-  nav_label: string
-  nav_parent_id: number | null
-  sort_order: number
-  seo_title: string
-  seo_description: string
-  seo_image_url: string
-  blocks: Block[]
-  updated_at: string
+  showInNav: boolean
+  navLabel: string
+  navParentId: number | null
+  sortOrder: number
+  seoTitle: string
+  seoDescription: string
+  seoImage: string
+  blocks: Array<{ id: number; blockType: string; blockData: BlockData; sortOrder: number }>
+  updatedAt: string
 }
 
 interface PageListItem {
@@ -491,16 +491,22 @@ export function PageEditor() {
         title: page.title || '',
         slug: page.slug || '',
         status: page.status || 'draft',
-        parent_id: page.parent_id,
+        parent_id: page.parentId ?? null,
         template: page.template || 'default',
-        show_in_nav: !!page.show_in_nav,
-        nav_label: page.nav_label || '',
-        nav_parent_id: page.nav_parent_id,
-        sort_order: page.sort_order || 0,
-        seo_title: page.seo_title || '',
-        seo_description: page.seo_description || '',
-        seo_image_url: page.seo_image_url || '',
-        blocks: page.blocks || [],
+        show_in_nav: Boolean(page.showInNav),
+        nav_label: page.navLabel || '',
+        nav_parent_id: page.navParentId ?? null,
+        sort_order: page.sortOrder || 0,
+        seo_title: page.seoTitle || '',
+        seo_description: page.seoDescription || '',
+        seo_image_url: page.seoImage || '',
+        blocks: Array.isArray(page.blocks)
+          ? page.blocks.map((b) => ({
+              id: String(b.id),
+              type: (b.blockType as BlockType) || 'text',
+              data: b.blockData || {},
+            }))
+          : [],
       })
     }
   }, [page])
@@ -509,8 +515,19 @@ export function PageEditor() {
   const saveMutation = useMutation({
     mutationFn: (data: PageFormData) => {
       const payload = {
-        ...data,
-        show_in_nav: data.show_in_nav ? 1 : 0,
+        title: data.title,
+        slug: data.slug,
+        status: data.status,
+        parentId: data.parent_id,
+        template: data.template,
+        showInNav: data.show_in_nav,
+        navLabel: data.nav_label,
+        navParentId: data.nav_parent_id,
+        sortOrder: data.sort_order,
+        seoTitle: data.seo_title,
+        seoDescription: data.seo_description,
+        seoImage: data.seo_image_url,
+        blocks: data.blocks.map((b) => ({ blockType: b.type, blockData: b.data })),
       }
       if (isEdit) {
         return api(`/api/tenant/pages/${id}`, { method: 'PUT', body: payload })

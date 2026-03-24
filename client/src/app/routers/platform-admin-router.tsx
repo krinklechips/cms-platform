@@ -11,6 +11,7 @@ import { TenantArticlesAdmin } from '@/app/pages/platform/content/TenantArticles
 import { TenantArticleEditor } from '@/app/pages/platform/content/TenantArticleEditor'
 import { TenantPagesAdmin } from '@/app/pages/platform/content/TenantPagesAdmin'
 import { TenantTeamAdmin } from '@/app/pages/platform/content/TenantTeamAdmin'
+import { TenantPageEditor } from '@/app/pages/platform/content/TenantPageEditor'
 
 export const platformRouter = createBrowserRouter(
   [
@@ -30,6 +31,8 @@ export const platformRouter = createBrowserRouter(
         { path: 'tenants/:tenantId/content/articles/new', element: <TenantArticleEditor /> },
         { path: 'tenants/:tenantId/content/articles/:articleId', element: <TenantArticleEditor /> },
         { path: 'tenants/:tenantId/content/pages', element: <TenantPagesAdmin /> },
+        { path: 'tenants/:tenantId/content/pages/new', element: <TenantPageEditor /> },
+        { path: 'tenants/:tenantId/content/pages/:pageId', element: <TenantPageEditor /> },
         { path: 'tenants/:tenantId/content/team', element: <TenantTeamAdmin /> },
         { path: 'operations', element: <Operations /> },
         { path: 'integrations', element: <Integrations /> },

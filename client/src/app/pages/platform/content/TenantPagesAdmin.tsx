@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api, tenantApi } from '@/lib/api'
 import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Badge } from '@/app/components/ui/badge'
+import { Button } from '@/app/components/ui/button'
 import {
   Table,
   TableBody,
@@ -11,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/app/components/ui/table'
-import { Pencil } from 'lucide-react'
+import { Pencil, Plus } from 'lucide-react'
 
 interface Tenant {
   id: number
@@ -58,12 +59,20 @@ export function TenantPagesAdmin() {
           { label: tenantName, href: `/tenants/${tenantId}` },
           { label: 'Pages' },
         ]}
+        actions={
+          <Button size="sm" asChild>
+            <Link to={`/tenants/${tenantId}/content/pages/new`}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              New Page
+            </Link>
+          </Button>
+        }
       />
 
       {isLoading ? (
         <div className="py-12 text-center text-sm text-gray-500">Loading...</div>
       ) : pages.length === 0 ? (
-        <div className="py-12 text-center text-sm text-gray-500">No pages found.</div>
+        <div className="py-12 text-center text-sm text-gray-500">No pages yet. Click "New Page" to create the first one.</div>
       ) : (
         <div className="rounded-lg border border-gray-200">
           <Table>
@@ -103,7 +112,7 @@ export function TenantPagesAdmin() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Link
-                        to={`/tenants/${tenantId}/content/pages`}
+                        to={`/tenants/${tenantId}/content/pages/${page.id}`}
                         className="inline-flex items-center gap-1 rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                       >
                         <Pencil className="h-3.5 w-3.5" />

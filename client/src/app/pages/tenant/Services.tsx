@@ -224,11 +224,7 @@ export function Services() {
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
           <Briefcase className="mb-3 h-10 w-10 text-gray-300" />
           <p className="text-sm font-medium text-gray-600">No services yet</p>
-          <p className="mt-1 text-xs text-gray-400">Add your first service to get started</p>
-          <Button onClick={openAdd} size="sm" className="mt-4">
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add Service
-          </Button>
+          <p className="mt-1 text-xs text-gray-400">Use the button above to add your first service.</p>
         </div>
       ) : (
         <div className="rounded-lg border border-gray-200">

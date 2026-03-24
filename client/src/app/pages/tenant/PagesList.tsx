@@ -39,10 +39,10 @@ interface Page {
   title: string
   slug: string
   status: string
-  parent_id: number | null
-  show_in_nav: number
-  sort_order: number
-  updated_at: string
+  parentId: number | null
+  showInNav: boolean
+  sortOrder: number
+  updatedAt: string
 }
 
 export function PagesList() {
@@ -77,7 +77,7 @@ export function PagesList() {
     const childrenMap = new Map<number | null, Page[]>()
 
     for (const page of items) {
-      const parentId = page.parent_id ?? null
+      const parentId = page.parentId ?? null
       if (!childrenMap.has(parentId)) {
         childrenMap.set(parentId, [])
       }
@@ -87,7 +87,7 @@ export function PagesList() {
     function addChildren(parentId: number | null, depth: number) {
       const children = childrenMap.get(parentId) || []
       children
-        .sort((a, b) => a.sort_order - b.sort_order)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
         .forEach((child) => {
           result.push({ ...child, depth })
           addChildren(child.id, depth + 1)
@@ -182,12 +182,6 @@ export function PagesList() {
               ? 'Try adjusting your search or filters.'
               : 'Get started by creating your first page.'}
           </p>
-          {!search && statusFilter === 'all' && (
-            <Button onClick={() => navigate('/pages/new')} size="sm" className="mt-4">
-              <Plus className="mr-1.5 h-4 w-4" />
-              Create Page
-            </Button>
-          )}
         </div>
       ) : (
         <div className="rounded-lg border border-gray-200">
@@ -228,14 +222,14 @@ export function PagesList() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {page.show_in_nav ? (
+                    {page.showInNav ? (
                       <Eye className="h-4 w-4 text-emerald-500" />
                     ) : (
                       <EyeOff className="h-4 w-4 text-gray-300" />
                     )}
                   </TableCell>
                   <TableCell className="text-gray-500 text-sm">
-                    {new Date(page.updated_at).toLocaleDateString()}
+                    {page.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : '--'}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
