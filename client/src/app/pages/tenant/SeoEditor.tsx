@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { cn } from '@/app/components/ui/utils'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
@@ -15,6 +16,7 @@ import {
   CheckCircle2,
   XCircle,
   Sparkles,
+  ChevronDown,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -583,6 +585,12 @@ export function SeoEditor() {
     return 'example.com'
   }
 
+  /* ---- Accordion section state ----------------------------------- */
+  const [ogOpen, setOgOpen] = useState(false)
+  const [twitterOpen, setTwitterOpen] = useState(false)
+  const [indexingOpen, setIndexingOpen] = useState(false)
+  const [jsonLdOpen, setJsonLdOpen] = useState(false)
+
   /* ---- Edit View ------------------------------------------------- */
 
   if (editingPath !== null) {
@@ -601,10 +609,7 @@ export function SeoEditor() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => {
-              setEditingPath(null)
-              setIsNew(false)
-            }}
+            onClick={() => { setEditingPath(null); setIsNew(false) }}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -618,209 +623,217 @@ export function SeoEditor() {
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Left column — Form */}
-          <div className="space-y-5">
-            {/* Page Path */}
-            <div className="space-y-1.5">
-              <Label>Page Path</Label>
-              {isNew ? (
-                <Input
-                  value={form.page_path}
-                  onChange={(e) => updateField('page_path', e.target.value)}
-                  placeholder="/about"
-                />
-              ) : (
-                <Input value={form.page_path} disabled className="bg-gray-50" />
+          <div className="space-y-4">
+
+            {/* ── Core fields ───────────────────────────────────────── */}
+            <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100">
+              <div className="px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Page</p>
+              </div>
+              <div className="px-4 py-4 space-y-4">
+                {/* Page Path */}
+                <div className="space-y-1.5">
+                  <Label>Page Path</Label>
+                  {isNew ? (
+                    <Input value={form.page_path} onChange={(e) => updateField('page_path', e.target.value)} placeholder="/about" />
+                  ) : (
+                    <Input value={form.page_path} disabled className="bg-gray-50 text-gray-500" />
+                  )}
+                </div>
+                {/* Title */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label>Title</Label>
+                    <CharBadge count={form.title.length} green={60} yellow={60} />
+                  </div>
+                  <Input value={form.title} onChange={(e) => updateField('title', e.target.value)} placeholder="Page Title" />
+                </div>
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label>Meta Description</Label>
+                    <CharBadge count={form.description.length} green={155} yellow={155} />
+                  </div>
+                  <Textarea value={form.description} onChange={(e) => updateField('description', e.target.value)} placeholder="A concise summary of the page content..." rows={3} />
+                </div>
+                {/* Keywords */}
+                <div className="space-y-1.5">
+                  <Label>Keywords</Label>
+                  <KeywordTags value={form.keywords} onChange={(v) => updateField('keywords', v)} />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Open Graph ────────────────────────────────────────── */}
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setOgOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">Open Graph</span>
+                  <span className="text-xs text-gray-400">(Facebook, LinkedIn)</span>
+                </div>
+                <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', ogOpen && 'rotate-180')} />
+              </button>
+              {ogOpen && (
+                <div className="px-4 pb-4 pt-1 space-y-4 border-t border-gray-100">
+                  <div className="space-y-1.5">
+                    <Label>OG Title</Label>
+                    <Input value={form.og_title} onChange={(e) => updateField('og_title', e.target.value)} placeholder="Defaults to page title" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>OG Description</Label>
+                    <Textarea value={form.og_description} onChange={(e) => updateField('og_description', e.target.value)} placeholder="Defaults to meta description" rows={2} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>OG Image URL</Label>
+                    <Input value={form.og_image} onChange={(e) => updateField('og_image', e.target.value)} placeholder="https://example.com/image.jpg" />
+                  </div>
+                </div>
               )}
             </div>
 
-            {/* Title */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>Title</Label>
-                <CharBadge count={form.title.length} green={60} yellow={60} />
-              </div>
-              <Input
-                value={form.title}
-                onChange={(e) => updateField('title', e.target.value)}
-                placeholder="Page Title"
-              />
+            {/* ── Twitter / X ───────────────────────────────────────── */}
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setTwitterOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-700">Twitter / X Card</span>
+                </div>
+                <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', twitterOpen && 'rotate-180')} />
+              </button>
+              {twitterOpen && (
+                <div className="px-4 pb-4 pt-1 space-y-4 border-t border-gray-100">
+                  <div className="space-y-1.5">
+                    <Label>Card Type</Label>
+                    <Select value={form.twitter_card} onValueChange={(v) => updateField('twitter_card', v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="summary">Summary</SelectItem>
+                        <SelectItem value="summary_large_image">Summary Large Image</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Twitter Title</Label>
+                    <Input value={form.twitter_title} onChange={(e) => updateField('twitter_title', e.target.value)} placeholder="Defaults to OG title" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Twitter Description</Label>
+                    <Textarea value={form.twitter_description} onChange={(e) => updateField('twitter_description', e.target.value)} placeholder="Defaults to OG description" rows={2} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Twitter Image URL</Label>
+                    <Input value={form.twitter_image} onChange={(e) => updateField('twitter_image', e.target.value)} placeholder="Defaults to OG image" />
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Description */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>Meta Description</Label>
-                <CharBadge count={form.description.length} green={155} yellow={155} />
-              </div>
-              <Textarea
-                value={form.description}
-                onChange={(e) => updateField('description', e.target.value)}
-                placeholder="A concise summary of the page content..."
-                rows={3}
-              />
+            {/* ── Indexing ──────────────────────────────────────────── */}
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIndexingOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">Indexing &amp; Canonical</span>
+                </div>
+                <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', indexingOpen && 'rotate-180')} />
+              </button>
+              {indexingOpen && (
+                <div className="px-4 pb-4 pt-1 space-y-4 border-t border-gray-100">
+                  <div className="space-y-1.5">
+                    <Label>Canonical URL</Label>
+                    <Input value={form.canonical_url} onChange={(e) => updateField('canonical_url', e.target.value)} placeholder="https://example.com/page" />
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <Switch checked={form.noindex} onCheckedChange={(v) => updateField('noindex', v)} />
+                      <Label className="text-sm">Noindex</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={form.nofollow} onCheckedChange={(v) => updateField('nofollow', v)} />
+                      <Label className="text-sm">Nofollow</Label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <Separator />
-
-            {/* OG fields */}
-            <h3 className="text-sm font-medium text-gray-700">Open Graph</h3>
-            <div className="space-y-1.5">
-              <Label>OG Title</Label>
-              <Input
-                value={form.og_title}
-                onChange={(e) => updateField('og_title', e.target.value)}
-                placeholder="Defaults to page title"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>OG Description</Label>
-              <Textarea
-                value={form.og_description}
-                onChange={(e) => updateField('og_description', e.target.value)}
-                placeholder="Defaults to meta description"
-                rows={2}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>OG Image URL</Label>
-              <Input
-                value={form.og_image}
-                onChange={(e) => updateField('og_image', e.target.value)}
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-
-            <Separator />
-
-            {/* Twitter fields */}
-            <h3 className="text-sm font-medium text-gray-700">Twitter / X Card</h3>
-            <div className="space-y-1.5">
-              <Label>Card Type</Label>
-              <Select value={form.twitter_card} onValueChange={(v) => updateField('twitter_card', v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="summary">Summary</SelectItem>
-                  <SelectItem value="summary_large_image">Summary Large Image</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Twitter Title</Label>
-              <Input
-                value={form.twitter_title}
-                onChange={(e) => updateField('twitter_title', e.target.value)}
-                placeholder="Defaults to OG title"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Twitter Description</Label>
-              <Textarea
-                value={form.twitter_description}
-                onChange={(e) => updateField('twitter_description', e.target.value)}
-                placeholder="Defaults to OG description"
-                rows={2}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Twitter Image URL</Label>
-              <Input
-                value={form.twitter_image}
-                onChange={(e) => updateField('twitter_image', e.target.value)}
-                placeholder="Defaults to OG image"
-              />
-            </div>
-
-            <Separator />
-
-            {/* Canonical & robots */}
-            <h3 className="text-sm font-medium text-gray-700">Indexing</h3>
-            <div className="space-y-1.5">
-              <Label>Canonical URL</Label>
-              <Input
-                value={form.canonical_url}
-                onChange={(e) => updateField('canonical_url', e.target.value)}
-                placeholder="https://example.com/page"
-              />
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={form.noindex}
-                  onCheckedChange={(v) => updateField('noindex', v)}
-                />
-                <Label className="text-sm">Noindex</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={form.nofollow}
-                  onCheckedChange={(v) => updateField('nofollow', v)}
-                />
-                <Label className="text-sm">Nofollow</Label>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* JSON-LD */}
-            <h3 className="text-sm font-medium text-gray-700">Structured Data (JSON-LD)</h3>
-            <div className="space-y-1.5">
-              <Label>Type</Label>
-              <div className="flex gap-2">
-                <Select value={form.json_ld_type} onValueChange={(v) => updateField('json_ld_type', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="WebPage">WebPage</SelectItem>
-                    <SelectItem value="Article">Article</SelectItem>
-                    <SelectItem value="Organization">Organization</SelectItem>
-                    <SelectItem value="FAQ">FAQ</SelectItem>
-                    <SelectItem value="Product">Product</SelectItem>
-                    <SelectItem value="LocalBusiness">LocalBusiness</SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
-                  disabled={!JSON_LD_TEMPLATES[form.json_ld_type]}
-                  onClick={() => {
-                    const tpl = JSON_LD_TEMPLATES[form.json_ld_type]
-                    if (tpl) {
-                      updateField('json_ld_json', JSON.stringify(tpl, null, 2))
-                    }
-                  }}
-                >
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  Load Template
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>JSON-LD</Label>
-              <Textarea
-                value={form.json_ld_json}
-                onChange={(e) => updateField('json_ld_json', e.target.value)}
-                placeholder='{"@context":"https://schema.org", ...}'
-                rows={8}
-                className="font-mono text-sm"
-              />
-            </div>
-
-            <Separator />
-
-            {/* Keywords */}
-            <div className="space-y-1.5">
-              <Label>Keywords</Label>
-              <KeywordTags value={form.keywords} onChange={(v) => updateField('keywords', v)} />
+            {/* ── Structured Data ───────────────────────────────────── */}
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setJsonLdOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">Structured Data (JSON-LD)</span>
+                </div>
+                <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', jsonLdOpen && 'rotate-180')} />
+              </button>
+              {jsonLdOpen && (
+                <div className="px-4 pb-4 pt-1 space-y-4 border-t border-gray-100">
+                  <div className="space-y-1.5">
+                    <Label>Type</Label>
+                    <div className="flex gap-2">
+                      <Select value={form.json_ld_type} onValueChange={(v) => updateField('json_ld_type', v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="WebPage">WebPage</SelectItem>
+                          <SelectItem value="Article">Article</SelectItem>
+                          <SelectItem value="Organization">Organization</SelectItem>
+                          <SelectItem value="FAQ">FAQ</SelectItem>
+                          <SelectItem value="Product">Product</SelectItem>
+                          <SelectItem value="LocalBusiness">LocalBusiness</SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        disabled={!JSON_LD_TEMPLATES[form.json_ld_type]}
+                        onClick={() => {
+                          const tpl = JSON_LD_TEMPLATES[form.json_ld_type]
+                          if (tpl) updateField('json_ld_json', JSON.stringify(tpl, null, 2))
+                        }}
+                      >
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                        Load Template
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>JSON-LD</Label>
+                    <Textarea
+                      value={form.json_ld_json}
+                      onChange={(e) => updateField('json_ld_json', e.target.value)}
+                      placeholder='{"@context":"https://schema.org", ...}'
+                      rows={8}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Save */}
-            <div className="pt-2">
+            <div className="pt-1">
               <Button onClick={() => saveMutation.mutate(form)} disabled={saveMutation.isPending}>
                 {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
@@ -830,24 +843,9 @@ export function SeoEditor() {
           {/* Right column — Previews & Checklist */}
           <div className="space-y-4">
             <SeoChecklist form={form} />
-            <GooglePreview
-              title={form.title}
-              url={form.canonical_url || form.page_path}
-              description={form.description}
-            />
-            <FacebookPreview
-              title={ogTitle}
-              description={ogDesc}
-              image={ogImage}
-              domain={domain}
-            />
-            <TwitterPreview
-              title={twTitle}
-              description={twDesc}
-              image={twImage}
-              domain={domain}
-              cardType={form.twitter_card}
-            />
+            <GooglePreview title={form.title} url={form.canonical_url || form.page_path} description={form.description} />
+            {ogOpen && <FacebookPreview title={ogTitle} description={ogDesc} image={ogImage} domain={domain} />}
+            {twitterOpen && <TwitterPreview title={twTitle} description={twDesc} image={twImage} domain={domain} cardType={form.twitter_card} />}
           </div>
         </div>
       </div>
