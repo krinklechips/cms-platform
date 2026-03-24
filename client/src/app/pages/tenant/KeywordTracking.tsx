@@ -152,8 +152,8 @@ export function KeywordTracking() {
         title="Keyword Tracking"
         subtitle="Track primary and secondary keywords assigned to each page."
         breadcrumbs={[
-          { label: 'Dashboard', href: '../..' },
-          { label: 'SEO Suite', href: '..' },
+          { label: 'Overview', href: '/' },
+          { label: 'SEO', href: '/seo' },
           { label: 'Keywords' },
         ]}
         actions={

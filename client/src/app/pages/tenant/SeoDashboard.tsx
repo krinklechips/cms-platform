@@ -210,8 +210,8 @@ export function SeoDashboard() {
         title="SEO Suite"
         subtitle="Monitor, optimize, and manage your site's search engine presence."
         breadcrumbs={[
-          { label: 'Dashboard', href: '..' },
-          { label: 'SEO Suite' },
+          { label: 'Overview', href: '/' },
+          { label: 'SEO' },
         ]}
       />
 

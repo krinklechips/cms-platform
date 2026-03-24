@@ -1,5 +1,7 @@
 import { useTenantAuth } from '@/lib/tenant-context'
 import { ExternalLink } from 'lucide-react'
+import { PageHeader } from '@/app/components/shared/PageHeader'
+import { Button } from '@/app/components/ui/button'
 
 export function SitePreview() {
   const { tenant } = useTenantAuth()
@@ -7,25 +9,22 @@ export function SitePreview() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900">Site Preview</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Preview your public website.
-          </p>
-        </div>
-        {siteUrl && (
-          <a
-            href={siteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-          >
-            Open in new tab
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        )}
+      <div className="px-6 pt-6">
+        <PageHeader
+          title="Site Preview"
+          subtitle="Preview your public website"
+          breadcrumbs={[{ label: 'Overview', href: '/' }, { label: 'Site Preview' }]}
+          actions={
+            siteUrl ? (
+              <Button variant="outline" size="sm" asChild>
+                <a href={siteUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                  Open in new tab
+                </a>
+              </Button>
+            ) : undefined
+          }
+        />
       </div>
 
       {/* iframe or placeholder */}

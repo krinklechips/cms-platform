@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
-import { ArrowLeft, ChevronDown, ChevronUp, Globe, Facebook } from 'lucide-react'
+import { ChevronDown, ChevronUp, Globe, Facebook, Save } from 'lucide-react'
+import { PageHeader } from '@/app/components/shared/PageHeader'
 import { GooglePreview } from '@/app/components/shared/seo/GooglePreview'
 import { CharBadge } from '@/app/components/shared/seo/CharBadge'
 import { Button } from '@/app/components/ui/button'
@@ -156,20 +157,27 @@ export function ArticleEditor() {
 
   return (
     <div className="p-6 lg:p-8">
-      {/* Header */}
-      <div className="mb-6 flex items-center gap-3">
-        <button
-          onClick={() => navigate('/articles')}
-          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <h1 className="text-lg font-semibold text-gray-900">
-          {isEdit ? 'Edit Article' : 'New Article'}
-        </h1>
-      </div>
+      <PageHeader
+        title={isEdit ? (title || 'Edit Article') : 'New Article'}
+        breadcrumbs={[
+          { label: 'Overview', href: '/' },
+          { label: 'Articles', href: '/articles' },
+          { label: isEdit ? (title || 'Edit Article') : 'New Article' },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onClick={() => navigate('/articles')}>
+              Cancel
+            </Button>
+            <Button type="submit" form="article-form" disabled={saveMutation.isPending}>
+              <Save className="mr-1.5 h-4 w-4" />
+              {saveMutation.isPending ? 'Saving...' : isEdit ? 'Update' : 'Publish'}
+            </Button>
+          </div>
+        }
+      />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form id="article-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Main fields */}
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-5">
