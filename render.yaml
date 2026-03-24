@@ -1,4 +1,5 @@
 services:
+  # ── CMS Platform (Express + SQLite) ─────────────────────────────────────────
   - type: web
     name: cms-platform
     runtime: node
@@ -8,13 +9,17 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
+    disk:
+      name: cms-data
+      mountPath: /data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: PLATFORM_DB_PATH
-        sync: false
+        value: /data/platform.db
       - key: PLATFORM_UPLOADS_DIR
-        sync: false
+        value: /data/uploads
       - key: PLATFORM_SESSION_SECRET
         sync: false
       - key: PLATFORM_BOOTSTRAP_SECRET
@@ -22,4 +27,29 @@ services:
       - key: PLATFORM_OWNER_EMAIL
         sync: false
       - key: PLATFORM_CORS_ORIGIN
+        sync: false
+
+  # ── SerpBear (keyword rank tracker) ─────────────────────────────────────────
+  - type: web
+    name: serpbear
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerfilePath: # leave blank — uses Docker Hub image
+    image:
+      url: docker.io/towfiqi/serpbear
+    disk:
+      name: serpbear-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: USER_NAME
+        sync: false
+      - key: PASSWORD
+        sync: false
+      - key: SECRET
+        sync: false
+      - key: APIKEY
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
         sync: false
