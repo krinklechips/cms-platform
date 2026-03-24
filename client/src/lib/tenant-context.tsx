@@ -29,8 +29,10 @@ interface TenantAuthState {
   moduleAccess: Record<string, boolean>
   isAuthenticated: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
+  mustChangePassword: boolean
+  login: (email: string, password: string) => Promise<boolean>
   logout: () => Promise<void>
+  clearMustChangePassword: () => void
 }
 
 const TenantAuthContext = createContext<TenantAuthState | null>(null)
@@ -40,6 +42,7 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<TenantUser | null>(null)
   const [moduleAccess, setModuleAccess] = useState<Record<string, boolean>>({})
   const [isLoading, setIsLoading] = useState(true)
+  const [mustChangePassword, setMustChangePassword] = useState(false)
 
   const loadHostContext = useCallback(async () => {
     try {
@@ -93,12 +96,13 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
     }
   }, [tenant])
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     const res = await api<{
       ok: boolean
       user: TenantUser
       tenant: Tenant
       moduleAccess: Record<string, boolean>
+      mustChangePassword?: boolean
     }>('/api/tenant/auth/login', {
       method: 'POST',
       body: { email, password },
@@ -106,16 +110,22 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user)
     setTenant(res.tenant)
     setModuleAccess(res.moduleAccess)
+    const needsChange = res.mustChangePassword === true
+    setMustChangePassword(needsChange)
+    return needsChange
   }
 
   const logout = async () => {
     await api('/api/tenant/auth/logout', { method: 'POST' })
     setUser(null)
+    setMustChangePassword(false)
   }
+
+  const clearMustChangePassword = () => setMustChangePassword(false)
 
   return (
     <TenantAuthContext.Provider
-      value={{ tenant, user, moduleAccess, isAuthenticated: !!user, isLoading, login, logout }}
+      value={{ tenant, user, moduleAccess, isAuthenticated: !!user, isLoading, mustChangePassword, login, logout, clearMustChangePassword }}
     >
       {children}
     </TenantAuthContext.Provider>

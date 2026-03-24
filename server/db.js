@@ -377,6 +377,7 @@ ensureColumn('platform_db_backups', 'created_by_user_id', 'ALTER TABLE platform_
 ensureColumn('platform_db_backups', 'error_message', 'ALTER TABLE platform_db_backups ADD COLUMN error_message TEXT');
 ensureColumn('platform_db_backups', 'completed_at', 'ALTER TABLE platform_db_backups ADD COLUMN completed_at DATETIME');
 ensureColumn('platform_db_backups', 'metadata_json', 'ALTER TABLE platform_db_backups ADD COLUMN metadata_json TEXT');
+ensureColumn('users', 'must_change_password', 'ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0');
 
 function ensureDefaultTenantSlots(tenantId) {
   db.prepare(`

@@ -6,7 +6,7 @@ import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 
 export function TenantLogin() {
-  const { tenant, isAuthenticated, isLoading, login } = useTenantAuth()
+  const { tenant, isAuthenticated, isLoading, login, mustChangePassword } = useTenantAuth()
   const navigate = useNavigate()
 
   const [email, setEmail] = useState('')
@@ -23,6 +23,9 @@ export function TenantLogin() {
   }
 
   if (isAuthenticated) {
+    if (mustChangePassword) {
+      return <Navigate to="/change-password" replace />
+    }
     return <Navigate to="/" replace />
   }
 
@@ -31,8 +34,8 @@ export function TenantLogin() {
     setError('')
     setSubmitting(true)
     try {
-      await login(email, password)
-      navigate('/', { replace: true })
+      const needsChange = await login(email, password)
+      navigate(needsChange ? '/change-password' : '/', { replace: true })
     } catch (err: unknown) {
       const message = err && typeof err === 'object' && 'message' in err
         ? (err as { message: string }).message

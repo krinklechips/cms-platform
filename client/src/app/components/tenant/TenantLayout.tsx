@@ -4,7 +4,7 @@ import { useTenantAuth } from '@/lib/tenant-context'
 import { TenantSidebar } from './TenantSidebar'
 
 export function TenantLayout() {
-  const { isAuthenticated, isLoading } = useTenantAuth()
+  const { isAuthenticated, isLoading, mustChangePassword } = useTenantAuth()
 
   if (isLoading) {
     return (
@@ -16,6 +16,10 @@ export function TenantLayout() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  if (mustChangePassword) {
+    return <Navigate to="/change-password" replace />
   }
 
   return (

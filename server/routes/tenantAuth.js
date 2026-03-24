@@ -69,6 +69,7 @@ function sendTenantLoginSuccess(req, res, { tenant, user, membership }) {
         tenantRole: membership.role,
       },
       moduleAccess: readTenantModuleAccess(tenant.id),
+      mustChangePassword: user.must_change_password === 1,
     };
     return res.json(payload);
   } catch (err) {
@@ -125,7 +126,7 @@ router.post('/login', requireTenantHost, (req, res) => {
     }
 
     const user = db.prepare(`
-      SELECT id, email, password_hash, status
+      SELECT id, email, password_hash, status, must_change_password
       FROM users
       WHERE email = ?
       LIMIT 1
@@ -220,11 +221,54 @@ router.post('/change-password', requireTenantHost, (req, res) => {
       return res.status(400).json({ error: err.message || 'Invalid password' });
     }
 
-    db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(passwordHash, userId);
+    db.prepare('UPDATE users SET password_hash = ?, must_change_password = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(passwordHash, userId);
     return res.json({ ok: true });
   } catch (err) {
     console.error('[tenant-auth] change-password error', err);
     return res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// Force change password — no current password required, only works when must_change_password = 1
+router.post('/force-change-password', requireTenantHost, (req, res) => {
+  try {
+    const tenant = req.hostContext?.tenant;
+    const userId = Number(req.session?.user?.id);
+    if (!tenant) return res.status(400).json({ error: 'Tenant host is not configured' });
+    if (!userId || req.session?.user?.isPlatformAdmin) {
+      return res.status(401).json({ error: 'Tenant login required' });
+    }
+
+    const user = db.prepare('SELECT id, status, must_change_password FROM users WHERE id = ? LIMIT 1').get(userId);
+    if (!user || user.status !== 'active') {
+      return res.status(401).json({ error: 'Account not found or inactive' });
+    }
+    if (user.must_change_password !== 1) {
+      return res.status(403).json({ error: 'Password change not required' });
+    }
+
+    const membership = loadActiveMembership(userId, tenant.id);
+    if (!membership) {
+      return res.status(403).json({ error: 'Tenant access denied' });
+    }
+
+    const newPassword = String(req.body?.newPassword || '');
+    if (!newPassword) {
+      return res.status(400).json({ error: 'newPassword is required' });
+    }
+
+    let passwordHash;
+    try {
+      passwordHash = hashPassword(newPassword);
+    } catch (err) {
+      return res.status(400).json({ error: err.message || 'Invalid password' });
+    }
+
+    db.prepare('UPDATE users SET password_hash = ?, must_change_password = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(passwordHash, userId);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[tenant-auth] force-change-password error', err);
+    return res.status(500).json({ error: 'Failed to set password' });
   }
 });
 

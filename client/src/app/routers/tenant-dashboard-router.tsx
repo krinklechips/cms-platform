@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 import { TenantLayout } from '@/app/components/tenant/TenantLayout'
 import { TenantLogin } from '@/app/pages/tenant/TenantLogin'
+import { ForceChangePassword } from '@/app/pages/tenant/ForceChangePassword'
 import { TenantOverview } from '@/app/pages/tenant/TenantOverview'
 import { ArticlesList } from '@/app/pages/tenant/ArticlesList'
 import { ArticleEditor } from '@/app/pages/tenant/ArticleEditor'
@@ -22,6 +23,10 @@ export const tenantRouter = createBrowserRouter(
     {
       path: '/login',
       element: <TenantLogin />,
+    },
+    {
+      path: '/change-password',
+      element: <ForceChangePassword />,
     },
     {
       path: '/',

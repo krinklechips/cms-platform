@@ -135,11 +135,12 @@ router.post('/', (req, res) => {
   }
 
   db.prepare(`
-    INSERT INTO users (email, password_hash, status, updated_at)
-    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO users (email, password_hash, status, must_change_password, updated_at)
+    VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP)
     ON CONFLICT(email) DO UPDATE SET
       password_hash = excluded.password_hash,
       status = excluded.status,
+      must_change_password = 1,
       updated_at = CURRENT_TIMESTAMP
   `).run(email, passwordHash, userStatus);
 
