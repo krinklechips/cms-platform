@@ -10,6 +10,7 @@ import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { Textarea } from '@/app/components/ui/textarea'
+import { RichTextEditor } from '@/app/components/shared/RichTextEditor'
 import { Switch } from '@/app/components/ui/switch'
 import { Separator } from '@/app/components/ui/separator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
@@ -34,11 +35,14 @@ import {
   MousePointerClick,
   Code,
   Save,
+  GalleryHorizontal,
+  Quote,
+  DollarSign,
 } from 'lucide-react'
 
 // ---------- Types ----------
 
-type BlockType = 'text' | 'image' | 'hero' | 'cta' | 'html'
+type BlockType = 'text' | 'image' | 'hero' | 'cta' | 'html' | 'carousel' | 'testimonials_block' | 'pricing_block'
 
 interface BlockData {
   // text
@@ -57,6 +61,14 @@ interface BlockData {
   buttonUrl?: string
   // html
   html?: string
+  // carousel
+  slides?: { image: string; title: string; subtitle: string; ctaText: string; ctaUrl: string }[]
+  // testimonials_block
+  testimonialsTitle?: string
+  testimonialsLimit?: number
+  // pricing_block
+  pricingTitle?: string
+  pricingCategory?: string
 }
 
 interface Block {
@@ -123,6 +135,9 @@ const BLOCK_TYPE_META: Record<BlockType, { label: string; icon: React.ComponentT
   hero: { label: 'Hero Section', icon: Sparkles },
   cta: { label: 'Call to Action', icon: MousePointerClick },
   html: { label: 'HTML', icon: Code },
+  carousel: { label: 'Carousel', icon: GalleryHorizontal },
+  testimonials_block: { label: 'Testimonials', icon: Quote },
+  pricing_block: { label: 'Pricing / Services', icon: DollarSign },
 }
 
 // ---------- Block Renderers ----------
@@ -131,11 +146,10 @@ function TextBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: Bl
   return (
     <div className="space-y-2">
       <Label>Content</Label>
-      <Textarea
+      <RichTextEditor
         value={data.content || ''}
-        onChange={(e) => onChange({ ...data, content: e.target.value })}
+        onChange={(html) => onChange({ ...data, content: html })}
         placeholder="Write your content here..."
-        rows={6}
       />
     </div>
   )
@@ -259,12 +273,163 @@ function HtmlBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: Bl
   )
 }
 
+function CarouselBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  const slides = data.slides || []
+
+  function updateSlide(index: number, field: string, value: string) {
+    const updated = slides.map((s, i) =>
+      i === index ? { ...s, [field]: value } : s,
+    )
+    onChange({ ...data, slides: updated })
+  }
+
+  function addSlide() {
+    onChange({
+      ...data,
+      slides: [...slides, { image: '', title: '', subtitle: '', ctaText: '', ctaUrl: '' }],
+    })
+  }
+
+  function removeSlide(index: number) {
+    onChange({ ...data, slides: slides.filter((_, i) => i !== index) })
+  }
+
+  return (
+    <div className="space-y-4">
+      {slides.map((slide, index) => (
+        <div key={index} className="rounded-lg border border-gray-200 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Slide {index + 1}</span>
+            <button
+              type="button"
+              onClick={() => removeSlide(index)}
+              className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+              title="Delete slide"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            <Label>Image URL</Label>
+            <Input
+              value={slide.image}
+              onChange={(e) => updateSlide(index, 'image', e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Title</Label>
+            <Input
+              value={slide.title}
+              onChange={(e) => updateSlide(index, 'title', e.target.value)}
+              placeholder="Slide heading"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Subtitle</Label>
+            <Input
+              value={slide.subtitle}
+              onChange={(e) => updateSlide(index, 'subtitle', e.target.value)}
+              placeholder="Supporting text"
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>CTA Text</Label>
+              <Input
+                value={slide.ctaText}
+                onChange={(e) => updateSlide(index, 'ctaText', e.target.value)}
+                placeholder="Learn More"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>CTA URL</Label>
+              <Input
+                value={slide.ctaUrl}
+                onChange={(e) => updateSlide(index, 'ctaUrl', e.target.value)}
+                placeholder="/contact"
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addSlide}
+        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-3 text-sm text-gray-500 hover:border-gray-300 hover:text-gray-700"
+      >
+        <Plus className="h-4 w-4" />
+        Add Slide
+      </button>
+    </div>
+  )
+}
+
+function TestimonialsBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Section Title</Label>
+        <Input
+          value={data.testimonialsTitle ?? 'What Our Clients Say'}
+          onChange={(e) => onChange({ ...data, testimonialsTitle: e.target.value })}
+          placeholder="What Our Clients Say"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Number of testimonials to show</Label>
+        <Select
+          value={String(data.testimonialsLimit ?? 3)}
+          onValueChange={(v) => onChange({ ...data, testimonialsLimit: Number(v) })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="3">3</SelectItem>
+            <SelectItem value="6">6</SelectItem>
+            <SelectItem value="9">9</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <p className="text-xs text-gray-400">Displays featured testimonials from your Testimonials content.</p>
+    </div>
+  )
+}
+
+function PricingBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Section Title</Label>
+        <Input
+          value={data.pricingTitle ?? 'Our Services'}
+          onChange={(e) => onChange({ ...data, pricingTitle: e.target.value })}
+          placeholder="Our Services"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Category Filter</Label>
+        <Input
+          value={data.pricingCategory || ''}
+          onChange={(e) => onChange({ ...data, pricingCategory: e.target.value })}
+          placeholder="Filter by category (leave blank for all)"
+        />
+      </div>
+      <p className="text-xs text-gray-400">Displays published services from your Services &amp; Pricing content.</p>
+    </div>
+  )
+}
+
 const BLOCK_EDITORS: Record<BlockType, React.ComponentType<{ data: BlockData; onChange: (d: BlockData) => void }>> = {
   text: TextBlockEditor,
   image: ImageBlockEditor,
   hero: HeroBlockEditor,
   cta: CtaBlockEditor,
   html: HtmlBlockEditor,
+  carousel: CarouselBlockEditor,
+  testimonials_block: TestimonialsBlockEditor,
+  pricing_block: PricingBlockEditor,
 }
 
 // ---------- Main Component ----------

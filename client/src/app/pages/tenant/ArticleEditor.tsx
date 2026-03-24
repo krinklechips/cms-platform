@@ -11,6 +11,7 @@ import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { Textarea } from '@/app/components/ui/textarea'
+import { RichTextEditor } from '@/app/components/shared/RichTextEditor'
 import { Switch } from '@/app/components/ui/switch'
 import { Separator } from '@/app/components/ui/separator'
 import {
@@ -212,13 +213,12 @@ export function ArticleEditor() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="body">Body</Label>
-              <Textarea
-                id="body"
-                {...register('body')}
+              <Label>Article Body</Label>
+              <RichTextEditor
+                value={watch('body')}
+                onChange={(html) => setValue('body', html)}
                 placeholder="Article content..."
-                rows={16}
-                className="font-mono text-sm"
+                minHeight="400px"
               />
             </div>
           </div>
