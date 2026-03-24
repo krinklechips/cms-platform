@@ -17,6 +17,7 @@ import { SeoAudit } from '@/app/pages/tenant/SeoAudit'
 import { PagesList } from '@/app/pages/tenant/PagesList'
 import { PageEditor } from '@/app/pages/tenant/PageEditor'
 import { NavigationEditor } from '@/app/pages/tenant/NavigationEditor'
+import { TeamMembers } from '@/app/pages/tenant/TeamMembers'
 
 export const tenantRouter = createBrowserRouter(
   [
@@ -49,6 +50,7 @@ export const tenantRouter = createBrowserRouter(
         { path: 'seo/keywords', element: <KeywordTracking /> },
         { path: 'seo/redirects', element: <RedirectManager /> },
         { path: 'seo/audit', element: <SeoAudit /> },
+        { path: 'team', element: <TeamMembers /> },
       ],
     },
   ],

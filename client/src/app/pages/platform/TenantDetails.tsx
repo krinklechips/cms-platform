@@ -47,6 +47,7 @@ import {
   BarChart3,
   Menu,
   Layout,
+  Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -918,28 +919,120 @@ function ModulesTab({ tenantId }: { tenantId: number }) {
 /* ================================================================== */
 
 function ContentTab({ tenant }: { tenant: Tenant }) {
+  const tenantId = tenant.id
+
+  const { data: articles = [] } = useQuery<unknown[]>({
+    queryKey: ['platform', 'content-count', tenantId, 'articles'],
+    queryFn: () => tenantApi(tenantId, '/api/tenant/articles'),
+  })
+
+  const { data: pages = [] } = useQuery<unknown[]>({
+    queryKey: ['platform', 'content-count', tenantId, 'pages'],
+    queryFn: () => tenantApi(tenantId, '/api/tenant/pages'),
+  })
+
+  const { data: teamMembers = [] } = useQuery<unknown[]>({
+    queryKey: ['platform', 'content-count', tenantId, 'team'],
+    queryFn: () => tenantApi(tenantId, '/api/tenant/team-members'),
+  })
+
   return (
-    <div className="max-w-4xl">
-      <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Tenant Content Management
-        </h3>
-        <p className="mt-2 text-sm text-gray-500">
-          Manage content directly in the tenant workspace
-        </p>
-        {tenant.cmsDomain && (
-          <Button variant="outline" className="mt-4 gap-2" asChild>
+    <div className="max-w-4xl space-y-6">
+      {/* Stat cards */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+              <FileText className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{Array.isArray(articles) ? articles.length : 0}</p>
+              <p className="text-xs text-gray-500">Articles</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <Button size="sm" variant="outline" className="w-full" asChild>
+              <Link to={`/tenants/${tenantId}/content/articles`}>Manage Articles</Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
+              <Files className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{Array.isArray(pages) ? pages.length : 0}</p>
+              <p className="text-xs text-gray-500">Pages</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <Button size="sm" variant="outline" className="w-full" asChild>
+              <Link to={`/tenants/${tenantId}/content/pages`}>Manage Pages</Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
+              <Users className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{Array.isArray(teamMembers) ? teamMembers.length : 0}</p>
+              <p className="text-xs text-gray-500">Team Members</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <Button size="sm" variant="outline" className="w-full" asChild>
+              <Link to={`/tenants/${tenantId}/content/team`}>Manage Team</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Add */}
+      <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick Add</h3>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" asChild>
+            <Link to={`/tenants/${tenantId}/content/articles/new`}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              New Article
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to={`/tenants/${tenantId}/content/pages`}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              New Page
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to={`/tenants/${tenantId}/content/team`}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              New Team Member
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* External link fallback */}
+      {tenant.cmsDomain && (
+        <div className="rounded-xl border border-gray-200 bg-white p-5 text-center">
+          <p className="text-sm text-gray-500 mb-3">Or manage content directly in the tenant workspace</p>
+          <Button variant="outline" className="gap-2" asChild>
             <a
               href={`https://${tenant.cmsDomain}/tenant-dashboard`}
               target="_blank"
               rel="noreferrer"
             >
               <ExternalLink className="h-4 w-4" />
-              Manage content in tenant workspace
+              Open Tenant Workspace
             </a>
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
