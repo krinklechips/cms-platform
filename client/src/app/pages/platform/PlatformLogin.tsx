@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react'
 
 export function PlatformLogin() {
   const navigate = useNavigate()
-  const { isAuthenticated, isLoading, login, bootstrapLogin } = useAuth()
+  const { isAuthenticated, isLoading, mustChangePassword, login, bootstrapLogin } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [secret, setSecret] = useState('')
@@ -25,6 +25,10 @@ export function PlatformLogin() {
     )
   }
 
+  if (mustChangePassword) {
+    return <Navigate to="/change-password" replace />
+  }
+
   if (isAuthenticated) {
     return <Navigate to="/" replace />
   }
@@ -37,10 +41,11 @@ export function PlatformLogin() {
     try {
       if (isDev) {
         await bootstrapLogin(email, secret || 'dev')
+        navigate('/', { replace: true })
       } else {
         await login(email, password)
+        // Navigation is handled by the mustChangePassword / isAuthenticated redirects above
       }
-      navigate('/', { replace: true })
     } catch (err: unknown) {
       const message =
         err && typeof err === 'object' && 'message' in err

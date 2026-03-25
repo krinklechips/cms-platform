@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 import { PlatformLayout } from '@/app/components/platform/PlatformLayout'
 import { PlatformLogin } from '@/app/pages/platform/PlatformLogin'
+import { PlatformChangePassword } from '@/app/pages/platform/PlatformChangePassword'
 import { Dashboard } from '@/app/pages/platform/Dashboard'
 import { TenantDirectory } from '@/app/pages/platform/TenantDirectory'
 import { CreateTenant } from '@/app/pages/platform/CreateTenant'
@@ -18,6 +19,10 @@ export const platformRouter = createBrowserRouter(
     {
       path: '/login',
       element: <PlatformLogin />,
+    },
+    {
+      path: '/change-password',
+      element: <PlatformChangePassword />,
     },
     {
       path: '/',

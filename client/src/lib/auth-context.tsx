@@ -12,9 +12,11 @@ interface AuthState {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
+  mustChangePassword: boolean
   login: (email: string, password: string) => Promise<void>
   bootstrapLogin: (email: string, secret: string) => Promise<void>
   logout: () => Promise<void>
+  clearMustChangePassword: () => void
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -22,6 +24,7 @@ const AuthContext = createContext<AuthState | null>(null)
 export function PlatformAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [mustChangePassword, setMustChangePassword] = useState(false)
 
   const checkAuth = useCallback(async () => {
     try {
@@ -49,11 +52,12 @@ export function PlatformAuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string) => {
-    const res = await api<{ ok: boolean; user: User }>('/api/platform/auth/login', {
+    const res = await api<{ ok: boolean; user: User; mustChangePassword?: boolean }>('/api/platform/auth/login', {
       method: 'POST',
       body: { email, password },
     })
     setUser(res.user)
+    setMustChangePassword(res.mustChangePassword ?? false)
   }
 
   const bootstrapLogin = async (email: string, secret: string) => {
@@ -63,6 +67,8 @@ export function PlatformAuthProvider({ children }: { children: ReactNode }) {
     })
     setUser(res.user)
   }
+
+  const clearMustChangePassword = () => setMustChangePassword(false)
 
   const logout = async () => {
     await api('/api/platform/auth/logout', { method: 'POST' })
@@ -75,9 +81,11 @@ export function PlatformAuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
+        mustChangePassword,
         login,
         bootstrapLogin,
         logout,
+        clearMustChangePassword,
       }}
     >
       {children}

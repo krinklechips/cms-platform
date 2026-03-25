@@ -14,7 +14,7 @@ router.post('/login', requirePlatformHost, (req, res) => {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
-  const user = db.prepare('SELECT id, email, password_hash FROM users WHERE email = ?').get(email);
+  const user = db.prepare('SELECT id, email, password_hash, must_change_password FROM users WHERE email = ?').get(email);
   if (!user) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
@@ -39,7 +39,11 @@ router.post('/login', requirePlatformHost, (req, res) => {
     isPlatformAdmin: true,
     platformRole: platformAdmin.role,
   };
-  return res.json({ ok: true, user: req.session.user });
+  return res.json({
+    ok: true,
+    user: req.session.user,
+    mustChangePassword: user.must_change_password === 1,
+  });
 });
 
 // One-time password setup (requires bootstrap secret)
@@ -73,6 +77,27 @@ router.post('/set-password', requirePlatformHost, (req, res) => {
     const hash = hashPassword(newPassword);
     db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(hash, user.id);
     return res.json({ ok: true, message: 'Password set successfully' });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+// Change password (used when must_change_password = 1 or for regular password updates)
+router.post('/change-password', (req, res) => {
+  const userId = req.session?.user?.id;
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  const newPassword = String(req.body?.newPassword || '');
+  if (!newPassword || newPassword.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  }
+
+  try {
+    const hash = hashPassword(newPassword);
+    db.prepare(
+      'UPDATE users SET password_hash = ?, must_change_password = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).run(hash, userId);
+    return res.json({ ok: true });
   } catch (err) {
     return res.status(400).json({ error: err.message });
   }
