@@ -2,10 +2,10 @@ import { Router } from 'express';
 import dns from 'dns/promises';
 import { db } from '../db.js';
 import { requirePlatformHost } from '../middleware/hostContext.js';
-import { requirePlatformSession } from '../middleware/requirePlatformSession.js';
+import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 
 const router = Router();
-router.use(requirePlatformHost, requirePlatformSession);
+router.use(requirePlatformHost, requirePlatformAdmin);
 
 const STEPS = [
   { key: 'tenant_created',       label: 'Tenant Created',          description: 'Tenant account has been created in the platform.' },
