@@ -11,6 +11,7 @@ import platformPlacementsRouter from './routes/platformPlacements.js';
 import platformTenantDomainsRouter from './routes/platformTenantDomains.js';
 import platformTenantUsersRouter from './routes/platformTenantUsers.js';
 import platformBackupsRouter from './routes/platformBackups.js';
+import platformOnboardingRouter from './routes/platformOnboarding.js';
 import tenantArticlesRouter from './routes/tenantArticles.js';
 import tenantMediaRouter from './routes/tenantMedia.js';
 import publicSlotsRouter from './routes/publicSlots.js';
@@ -34,6 +35,9 @@ import publicTestimonialsRouter from './routes/publicTestimonials.js';
 import tenantServicesRouter from './routes/tenantServices.js';
 import publicServicesRouter from './routes/publicServices.js';
 import tenantContactSettingsRouter from './routes/tenantContactSettings.js';
+import tenantIntegrationsRouter from './routes/tenantIntegrations.js';
+import tenantLighthouseRouter from './routes/tenantLighthouse.js';
+import tenantSerpbearRouter from './routes/tenantSerpbear.js';
 import {
   attachHostContext,
   blockTenantLoginOnPlatformHost,
@@ -218,6 +222,7 @@ app.use('/api/platform/tenants/:tenantId/domain', platformTenantDomainsRouter);
 app.use('/api/platform/placements', platformPlacementsRouter);
 app.use('/api/platform/tenant-users', platformTenantUsersRouter);
 app.use('/api/platform/backups', platformBackupsRouter);
+app.use('/api/platform', platformOnboardingRouter);
 app.use('/api/tenant/articles', tenantArticlesRouter);
 app.use('/api/tenant/media', tenantMediaRouter);
 app.use('/api/tenant/annual-reports', tenantAnnualReportsRouter);
@@ -229,6 +234,9 @@ app.use('/api/tenant/team-members', tenantTeamMembersRouter);
 app.use('/api/tenant/testimonials', tenantTestimonialsRouter);
 app.use('/api/tenant/services', tenantServicesRouter);
 app.use('/api/tenant/contact', tenantContactSettingsRouter);
+app.use('/api/tenant/integrations', tenantIntegrationsRouter);
+app.use('/api/tenant/lighthouse', tenantLighthouseRouter);
+app.use('/api/tenant/serpbear', tenantSerpbearRouter);
 app.use('/api/public', publicPagesRouter);
 app.use('/api/public', publicTeamMembersRouter);
 app.use('/api/public', publicTestimonialsRouter);

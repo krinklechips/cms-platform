@@ -49,8 +49,10 @@ import {
   Palette,
   Settings2,
   Package,
+  ListChecks,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { TenantOnboarding } from './TenantOnboarding'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -219,6 +221,10 @@ export function TenantDetails() {
               <Package className="h-3.5 w-3.5" />
               Content
             </TabsTrigger>
+            <TabsTrigger value="onboarding" className={tabTriggerClass}>
+              <ListChecks className="h-3.5 w-3.5" />
+              Onboarding
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -236,6 +242,9 @@ export function TenantDetails() {
         </TabsContent>
         <TabsContent value="content" className="mt-0 p-8">
           <ContentTab tenant={tenant} />
+        </TabsContent>
+        <TabsContent value="onboarding" className="mt-0 p-8">
+          <TenantOnboarding tenantId={tenant.id} cmsDomain={tenant.cmsDomain} />
         </TabsContent>
       </Tabs>
     </div>

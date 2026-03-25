@@ -302,6 +302,20 @@ CREATE TABLE IF NOT EXISTS seo_keyword_tracking (
   FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS lighthouse_audits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  url TEXT NOT NULL,
+  strategy TEXT NOT NULL DEFAULT 'mobile',
+  performance_score INTEGER,
+  accessibility_score INTEGER,
+  best_practices_score INTEGER,
+  seo_score INTEGER,
+  result_json TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS pages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   tenant_id INTEGER NOT NULL REFERENCES tenants(id),
@@ -428,6 +442,23 @@ ensureColumn('platform_db_backups', 'error_message', 'ALTER TABLE platform_db_ba
 ensureColumn('platform_db_backups', 'completed_at', 'ALTER TABLE platform_db_backups ADD COLUMN completed_at DATETIME');
 ensureColumn('platform_db_backups', 'metadata_json', 'ALTER TABLE platform_db_backups ADD COLUMN metadata_json TEXT');
 ensureColumn('users', 'must_change_password', 'ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0');
+ensureColumn('users', 'last_login_at', 'ALTER TABLE users ADD COLUMN last_login_at DATETIME');
+
+// Tenant onboarding — manual overrides & notes per step
+db.exec(`
+CREATE TABLE IF NOT EXISTS tenant_onboarding (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id INTEGER NOT NULL,
+  step TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  notes TEXT,
+  completed_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, step),
+  FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+`);
 
 function ensureDefaultTenantSlots(tenantId) {
   db.prepare(`

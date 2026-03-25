@@ -148,6 +148,7 @@ router.post('/login', requireTenantHost, (req, res) => {
       return res.status(500).json({ error: 'Session is not available' });
     }
 
+    db.prepare('UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
     const sessionUser = tenantSessionPayload({ user, membership, tenant });
     const saveSessionAndRespond = () => {
       try {

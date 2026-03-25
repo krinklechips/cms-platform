@@ -26,11 +26,38 @@ interface Tenant {
   createdAt?: string
 }
 
+interface OnboardingSummary {
+  progress: { completed: number; total: number }
+}
+
 const statusColors: Record<string, string> = {
   active: 'bg-green-100 text-green-700 hover:bg-green-100',
   pending: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100',
   inactive: 'bg-gray-100 text-gray-600 hover:bg-gray-100',
   suspended: 'bg-red-100 text-red-700 hover:bg-red-100',
+}
+
+function OnboardingProgress({ tenantId }: { tenantId: number }) {
+  const { data } = useQuery<OnboardingSummary>({
+    queryKey: ['platform', 'onboarding', tenantId],
+    queryFn: () => api(`/api/platform/tenants/${tenantId}/onboarding`).then((r: any) => r),
+    staleTime: 60_000,
+  })
+
+  const { completed = 0, total = 10 } = data?.progress || {}
+  const pct = total ? Math.round((completed / total) * 100) : 0
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="h-1.5 w-20 rounded-full bg-gray-100">
+        <div
+          className={`h-1.5 rounded-full transition-all ${pct === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-xs text-gray-500">{completed}/{total}</span>
+    </div>
+  )
 }
 
 export function TenantDirectory() {
@@ -89,21 +116,20 @@ export function TenantDirectory() {
                 <TableHead className="font-semibold">Slug</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">CMS Domain</TableHead>
-                <TableHead className="font-semibold text-right">
-                  Actions
-                </TableHead>
+                <TableHead className="font-semibold">Onboarding</TableHead>
+                <TableHead className="font-semibold text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-gray-500">
+                  <TableCell colSpan={6} className="h-32 text-center text-gray-500">
                     Loading tenants...
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-gray-500">
+                  <TableCell colSpan={6} className="h-32 text-center text-gray-500">
                     {search ? 'No tenants match your search.' : 'No tenants yet.'}
                   </TableCell>
                 </TableRow>
@@ -122,17 +148,15 @@ export function TenantDirectory() {
                       {tenant.slug}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        className={
-                          statusColors[tenant.status] ??
-                          'bg-gray-100 text-gray-600'
-                        }
-                      >
+                      <Badge className={statusColors[tenant.status] ?? 'bg-gray-100 text-gray-600'}>
                         {tenant.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
                       {tenant.cmsDomain || '--'}
+                    </TableCell>
+                    <TableCell>
+                      <OnboardingProgress tenantId={tenant.id} />
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" asChild className="gap-1.5">
