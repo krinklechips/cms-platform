@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth-context'
 import { PlatformSidebar } from './PlatformSidebar'
 
 export function PlatformLayout() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, mustChangePassword } = useAuth()
 
   if (isLoading) {
     return (
@@ -16,6 +16,10 @@ export function PlatformLayout() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  if (mustChangePassword) {
+    return <Navigate to="/change-password" replace />
   }
 
   return (

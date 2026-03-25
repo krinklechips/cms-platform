@@ -28,9 +28,10 @@ export function PlatformAuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const res = await api<{ authenticated: boolean; user?: User }>('/api/platform/auth/me')
+      const res = await api<{ authenticated: boolean; user?: User; mustChangePassword?: boolean }>('/api/platform/auth/me')
       if (res.authenticated && res.user) {
         setUser(res.user)
+        setMustChangePassword(res.mustChangePassword ?? false)
       } else {
         setUser(null)
       }

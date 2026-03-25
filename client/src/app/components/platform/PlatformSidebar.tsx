@@ -9,6 +9,7 @@ import {
   Plus,
   LogOut,
   ChevronDown,
+  KeyRound,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 
@@ -176,13 +177,22 @@ export function PlatformSidebar() {
               {user?.platformRole ?? 'Admin'}
             </div>
           </div>
-          <button
-            onClick={() => logout()}
-            className="rounded-md p-1.5 text-[#677286] transition-colors hover:bg-[#e8edf5] hover:text-[#1e293b]"
-            title="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <Link
+              to="/change-password"
+              className="rounded-md p-1.5 text-[#677286] transition-colors hover:bg-[#e8edf5] hover:text-[#1e293b]"
+              title="Change password"
+            >
+              <KeyRound className="h-4 w-4" />
+            </Link>
+            <button
+              onClick={() => logout()}
+              className="rounded-md p-1.5 text-[#677286] transition-colors hover:bg-[#e8edf5] hover:text-[#1e293b]"
+              title="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
     </aside>

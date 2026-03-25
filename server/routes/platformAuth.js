@@ -107,7 +107,12 @@ router.post('/change-password', (req, res) => {
 router.get('/me', (req, res) => {
   const user = req.session?.user;
   if (!user) return res.json({ authenticated: false });
-  return res.json({ authenticated: true, user });
+  const dbUser = db.prepare('SELECT must_change_password FROM users WHERE id = ?').get(user.id);
+  return res.json({
+    authenticated: true,
+    user,
+    mustChangePassword: dbUser?.must_change_password === 1,
+  });
 });
 
 // Logout

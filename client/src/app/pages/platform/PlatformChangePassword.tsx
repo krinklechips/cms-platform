@@ -5,11 +5,12 @@ import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { useAuth } from '@/lib/auth-context'
 import { api } from '@/lib/api'
-import { Loader2, KeyRound } from 'lucide-react'
+import { Loader2, KeyRound, ArrowLeft } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function PlatformChangePassword() {
   const navigate = useNavigate()
-  const { clearMustChangePassword } = useAuth()
+  const { mustChangePassword, clearMustChangePassword } = useAuth()
   const [newPassword, setNewPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
@@ -35,6 +36,7 @@ export function PlatformChangePassword() {
         body: { newPassword },
       })
       clearMustChangePassword()
+      toast.success('Password updated successfully')
       navigate('/', { replace: true })
     } catch (err: unknown) {
       const message =
@@ -47,21 +49,39 @@ export function PlatformChangePassword() {
     }
   }
 
+  const isForced = mustChangePassword
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex justify-center">
-          <img src="/ep.svg" alt="EP CMS logo" className="h-24 w-auto object-contain" />
-        </div>
+        {!isForced && (
+          <button
+            onClick={() => navigate(-1)}
+            className="mb-4 flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+        )}
+
+        {isForced && (
+          <div className="mb-8 flex justify-center">
+            <img src="/ep.svg" alt="EP CMS logo" className="h-24 w-auto object-contain" />
+          </div>
+        )}
 
         <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
           <div className="mb-6 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50">
               <KeyRound className="h-6 w-6 text-amber-500" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-gray-900">Set Your Password</h1>
+            <h1 className="text-xl font-bold tracking-tight text-gray-900">
+              {isForced ? 'Set Your Password' : 'Change Password'}
+            </h1>
             <p className="mt-1 text-sm text-gray-500">
-              You're using a temporary password. Please set a new one to continue.
+              {isForced
+                ? "You're using a temporary password. Please set a new one to continue."
+                : 'Choose a new password for your account.'}
             </p>
           </div>
 
