@@ -22,6 +22,9 @@ import { Testimonials } from '@/app/pages/tenant/Testimonials'
 import { Services } from '@/app/pages/tenant/Services'
 import { ContactSettings } from '@/app/pages/tenant/ContactSettings'
 import { FeaturedProducts } from '@/app/pages/tenant/FeaturedProducts'
+import { SerpbearDashboard } from '@/app/pages/tenant/SerpbearDashboard'
+import { LighthouseAudit } from '@/app/pages/tenant/LighthouseAudit'
+import { IntegrationSettings } from '@/app/pages/tenant/IntegrationSettings'
 
 export const tenantRouter = createBrowserRouter(
   [
@@ -54,6 +57,9 @@ export const tenantRouter = createBrowserRouter(
         { path: 'seo/keywords', element: <KeywordTracking /> },
         { path: 'seo/redirects', element: <RedirectManager /> },
         { path: 'seo/audit', element: <SeoAudit /> },
+        { path: 'seo/rankings', element: <SerpbearDashboard /> },
+        { path: 'seo/performance', element: <LighthouseAudit /> },
+        { path: 'seo/integrations', element: <IntegrationSettings /> },
         { path: 'team', element: <TeamMembers /> },
         { path: 'testimonials', element: <Testimonials /> },
         { path: 'services', element: <Services /> },
