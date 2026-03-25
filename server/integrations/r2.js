@@ -115,3 +115,12 @@ export async function headR2Object(objectKey) {
   };
 }
 
+export async function deleteR2Object(objectKey) {
+  const res = await r2Request({ method: 'DELETE', objectKey });
+  if (!res.ok && res.status !== 404) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`R2 delete failed (${res.status})${text ? `: ${text.slice(0, 200)}` : ''}`);
+  }
+  return { ok: true };
+}
+

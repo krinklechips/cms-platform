@@ -87,29 +87,20 @@ export function MediaLibrary() {
   })
 
   const uploadMutation = useMutation({
-    mutationFn: (files: FileList) => {
-      const formData = new FormData()
-      Array.from(files).forEach((file) => formData.append('files', file))
-      // Simulate progress since we don't have XHR-level progress
+    mutationFn: async (files: FileList) => {
       setUploadProgress(0)
-      const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev === null || prev >= 90) return prev
-          return prev + 10
-        })
-      }, 200)
-      return api('/api/tenant/media/upload', {
-        method: 'POST',
-        body: formData,
-      }).finally(() => {
-        clearInterval(interval)
-        setUploadProgress(100)
-        setTimeout(() => setUploadProgress(null), 500)
-      })
+      const fileArray = Array.from(files)
+      for (let i = 0; i < fileArray.length; i++) {
+        const formData = new FormData()
+        formData.append('file', fileArray[i])
+        await api('/api/tenant/media/upload', { method: 'POST', body: formData })
+        setUploadProgress(Math.round(((i + 1) / fileArray.length) * 100))
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenant', 'media'] })
-      toast.success('Files uploaded')
+      toast.success('Upload complete')
+      setTimeout(() => setUploadProgress(null), 600)
     },
     onError: () => {
       setUploadProgress(null)
