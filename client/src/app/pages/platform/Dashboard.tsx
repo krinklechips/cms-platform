@@ -14,8 +14,13 @@ interface Tenant {
   name: string
   slug?: string
   status: string
+  userCount?: number
   createdAt?: string
   created_at?: string
+}
+
+interface BackupDiag {
+  recentBackups?: { created_at?: string; status?: string }[]
 }
 
 export function Dashboard() {
@@ -24,9 +29,21 @@ export function Dashboard() {
     queryFn: () => api<Tenant[]>('/api/platform/tenants'),
   })
 
+  const { data: backupDiag } = useQuery({
+    queryKey: ['platform', 'backups'],
+    queryFn: () => api<BackupDiag>('/api/platform/backups/db'),
+    staleTime: 60_000,
+  })
+
   const tenants = Array.isArray(rawTenants) ? rawTenants : []
   const totalTenants = tenants.length
   const activeTenants = tenants.filter((t) => t.status === 'active').length
+  const totalUsers = tenants.reduce((sum, t) => sum + (t.userCount ?? 0), 0)
+
+  const lastBackupRaw = backupDiag?.recentBackups?.find((b) => b.status === 'success')?.created_at
+  const lastBackupLabel = lastBackupRaw
+    ? formatDistanceToNow(new Date(lastBackupRaw), { addSuffix: true })
+    : 'Never'
 
   const stats = [
     {
@@ -45,14 +62,14 @@ export function Dashboard() {
     },
     {
       label: 'Total Users',
-      value: '--',
+      value: isLoading ? '--' : String(totalUsers),
       icon: UsersRound,
       iconColor: 'text-blue-600',
       iconBg: 'bg-blue-50',
     },
     {
       label: 'Last Backup',
-      value: 'N/A',
+      value: lastBackupLabel,
       icon: HardDrive,
       iconColor: 'text-amber-600',
       iconBg: 'bg-amber-50',

@@ -50,6 +50,7 @@ import {
   Settings2,
   Package,
   ListChecks,
+  Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { TenantOnboarding } from './TenantOnboarding'
@@ -471,6 +472,7 @@ function UsersTab({ tenantId }: { tenantId: number }) {
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newRole, setNewRole] = useState('editor')
+  const [deleteUserId, setDeleteUserId] = useState<number | null>(null)
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['platform', 'tenant-users', tenantId],
@@ -501,6 +503,17 @@ function UsersTab({ tenantId }: { tenantId: number }) {
       setNewRole('editor')
     },
     onError: () => toast.error('Failed to add user'),
+  })
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId: number) =>
+      api(`/api/platform/tenant-users/${userId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platform', 'tenant-users', tenantId] })
+      toast.success('User removed')
+      setDeleteUserId(null)
+    },
+    onError: () => toast.error('Failed to remove user'),
   })
 
   const handleAddUser = (e: React.FormEvent) => {
@@ -595,19 +608,20 @@ function UsersTab({ tenantId }: { tenantId: number }) {
               <TableHead className="font-semibold">Email</TableHead>
               <TableHead className="font-semibold">Role</TableHead>
               <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="font-semibold w-16" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center text-gray-500">
+                <TableCell colSpan={4} className="h-24 text-center text-gray-500">
                   Loading users...
                 </TableCell>
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center text-gray-500">
-                  No users yet
+                <TableCell colSpan={4} className="h-24 text-center text-gray-500">
+                  No users yet. Add one to give access to this tenant.
                 </TableCell>
               </TableRow>
             ) : (
@@ -628,12 +642,43 @@ function UsersTab({ tenantId }: { tenantId: number }) {
                       {u.status ?? 'active'}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-right">
+                    <button
+                      onClick={() => setDeleteUserId(u.id)}
+                      className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      title="Remove user"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete confirmation */}
+      <Dialog open={deleteUserId !== null} onOpenChange={() => setDeleteUserId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove user</DialogTitle>
+            <DialogDescription>
+              This will remove the user's access to this tenant. The user account itself is not deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteUserId(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={deleteUserMutation.isPending}
+              onClick={() => deleteUserId !== null && deleteUserMutation.mutate(deleteUserId)}
+            >
+              {deleteUserMutation.isPending ? 'Removing...' : 'Remove'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
