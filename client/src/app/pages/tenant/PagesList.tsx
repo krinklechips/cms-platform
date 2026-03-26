@@ -13,6 +13,7 @@ import {
   Eye,
   EyeOff,
   CornerDownRight,
+  SearchCheck,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -193,7 +194,7 @@ export function PagesList() {
                 <TableHead>Status</TableHead>
                 <TableHead>Nav</TableHead>
                 <TableHead>Updated</TableHead>
-                <TableHead className="w-24 text-right">Actions</TableHead>
+                <TableHead className="w-28 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -239,9 +240,19 @@ export function PagesList() {
                           navigate(`/pages/${page.id}`)
                         }}
                         className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                        title="Edit"
+                        title="Edit page"
                       >
                         <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/seo/pages?path=/${page.slug}`)
+                        }}
+                        className="rounded-md p-1.5 text-gray-400 hover:bg-violet-50 hover:text-violet-600"
+                        title="Edit SEO for this page"
+                      >
+                        <SearchCheck className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={(e) => {

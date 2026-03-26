@@ -21,11 +21,13 @@ interface TenantPayload {
   name: string
   slug: string
   status: string
-  primaryColor: string
-  logoUrl: string
-  supportEmail: string
-  publicSiteUrl: string
-  cmsDomain: string
+  branding: {
+    primaryColor: string
+    logoUrl: string
+    supportEmail: string
+    publicSiteUrl: string
+    cmsDomain: string
+  }
 }
 
 interface CreatedTenant {
@@ -83,11 +85,13 @@ export function CreateTenant() {
       name,
       slug,
       status,
-      primaryColor,
-      logoUrl,
-      supportEmail,
-      publicSiteUrl,
-      cmsDomain,
+      branding: {
+        primaryColor,
+        logoUrl,
+        supportEmail,
+        publicSiteUrl,
+        cmsDomain,
+      },
     })
   }
 

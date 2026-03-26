@@ -97,7 +97,7 @@ router.post('/', (req, res) => {
         INSERT INTO tenants (slug, name, status, updated_at)
         VALUES (?, ?, ?, CURRENT_TIMESTAMP)
       `)
-      .run(normalizedSlug, String(name).trim(), status === 'disabled' ? 'disabled' : 'active');
+      .run(normalizedSlug, String(name).trim(), ['active','pending','inactive','suspended','disabled'].includes(status) ? status : 'active');
 
     const tenantId = info.lastInsertRowid;
     db.prepare(`
@@ -145,7 +145,7 @@ router.put('/:id', (req, res) => {
     WHERE id = ?
   `).run(
     name?.trim() || tenant.name,
-    status === 'disabled' ? 'disabled' : 'active',
+    ['active','pending','inactive','suspended','disabled'].includes(status) ? status : tenant.status,
     tenant.id,
   );
 
@@ -154,11 +154,11 @@ router.put('/:id', (req, res) => {
       tenant_id, logo_url, primary_color, support_email, public_site_url, cms_domain, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(tenant_id) DO UPDATE SET
-      logo_url = COALESCE(excluded.logo_url, tenant_branding.logo_url),
-      primary_color = COALESCE(excluded.primary_color, tenant_branding.primary_color),
-      support_email = COALESCE(excluded.support_email, tenant_branding.support_email),
-      public_site_url = COALESCE(excluded.public_site_url, tenant_branding.public_site_url),
-      cms_domain = COALESCE(excluded.cms_domain, tenant_branding.cms_domain),
+      logo_url = excluded.logo_url,
+      primary_color = excluded.primary_color,
+      support_email = excluded.support_email,
+      public_site_url = excluded.public_site_url,
+      cms_domain = excluded.cms_domain,
       updated_at = CURRENT_TIMESTAMP
   `).run(
     tenant.id,

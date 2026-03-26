@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router'
 import { cn } from '@/app/components/ui/utils'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
@@ -498,12 +499,14 @@ function SeoChecklist({ form }: { form: PageForm }) {
 
 export function SeoEditor() {
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
   const [editingPath, setEditingPath] = useState<string | null>(null)
   const [isNew, setIsNew] = useState(false)
   const [form, setForm] = useState<PageForm>(emptyForm)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [newPath, setNewPath] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<SeoPageMeta | null>(null)
+  const [autoOpenPath, setAutoOpenPath] = useState<string | null>(searchParams.get('path'))
 
   /* ---- Queries --------------------------------------------------- */
 
@@ -513,6 +516,18 @@ export function SeoEditor() {
   })
 
   const pages = pagesData?.pages ?? []
+
+  /* Auto-open editor when arriving from Pages list (?path=/slug) */
+  useEffect(() => {
+    if (!autoOpenPath || pagesLoading) return
+    const existing = pages.find((p) => p.page_path === autoOpenPath)
+    if (existing) {
+      openEditor(existing)
+    } else {
+      openNew(autoOpenPath)
+    }
+    setAutoOpenPath(null)
+  }, [autoOpenPath, pagesLoading, pages])
 
   /* ---- Mutations ------------------------------------------------- */
 

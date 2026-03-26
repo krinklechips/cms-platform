@@ -14,15 +14,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/app/components/ui/table'
-import { Plus, Search, ExternalLink } from 'lucide-react'
+import { Plus, Search, ExternalLink, Globe, Users } from 'lucide-react'
 
 interface Tenant {
   id: number
   name: string
   slug: string
   status: string
+  branding?: { cmsDomain?: string | null; publicSiteUrl?: string | null } | null
   cmsDomain?: string | null
   publicSiteUrl?: string | null
+  userCount?: number
+  articleCount?: number
   createdAt?: string
 }
 
@@ -113,9 +116,10 @@ export function TenantDirectory() {
             <TableHeader>
               <TableRow>
                 <TableHead className="font-semibold">Name</TableHead>
-                <TableHead className="font-semibold">Slug</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">CMS Domain</TableHead>
+                <TableHead className="font-semibold">Public Site</TableHead>
+                <TableHead className="font-semibold">Users</TableHead>
                 <TableHead className="font-semibold">Onboarding</TableHead>
                 <TableHead className="font-semibold text-right">Actions</TableHead>
               </TableRow>
@@ -123,51 +127,90 @@ export function TenantDirectory() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-gray-500">
+                  <TableCell colSpan={7} className="h-32 text-center text-gray-500">
                     Loading tenants...
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-gray-500">
-                    {search ? 'No tenants match your search.' : 'No tenants yet.'}
+                  <TableCell colSpan={7} className="h-32 text-center text-gray-500">
+                    {search ? 'No tenants match your search.' : 'No tenants yet. Create your first tenant to get started.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((tenant) => (
-                  <TableRow key={tenant.id} className="hover:bg-gray-50/50">
-                    <TableCell>
-                      <Link
-                        to={`/tenants/${tenant.id}`}
-                        className="font-medium text-gray-900 hover:text-[#7c3aed]"
-                      >
-                        {tenant.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm text-gray-500">
-                      {tenant.slug}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[tenant.status] ?? 'bg-gray-100 text-gray-600'}>
-                        {tenant.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {tenant.cmsDomain || '--'}
-                    </TableCell>
-                    <TableCell>
-                      <OnboardingProgress tenantId={tenant.id} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" asChild className="gap-1.5">
-                        <Link to={`/tenants/${tenant.id}`}>
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          View
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filtered.map((tenant) => {
+                  const cmsDomain = tenant.branding?.cmsDomain ?? tenant.cmsDomain
+                  const publicSiteUrl = tenant.branding?.publicSiteUrl ?? tenant.publicSiteUrl
+                  return (
+                    <TableRow key={tenant.id} className="hover:bg-gray-50/50">
+                      <TableCell>
+                        <div>
+                          <Link
+                            to={`/tenants/${tenant.id}`}
+                            className="font-medium text-gray-900 hover:text-[#7c3aed]"
+                          >
+                            {tenant.name}
+                          </Link>
+                          <div className="font-mono text-xs text-gray-400 mt-0.5">{tenant.slug}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[tenant.status] ?? 'bg-gray-100 text-gray-600'}>
+                          {tenant.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {cmsDomain ? (
+                          <a
+                            href={`https://${cmsDomain}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-[#7c3aed] hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {cmsDomain}
+                            <ExternalLink className="h-3 w-3 shrink-0" />
+                          </a>
+                        ) : (
+                          <span className="text-gray-300">--</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {publicSiteUrl ? (
+                          <a
+                            href={publicSiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-blue-600 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Globe className="h-3 w-3 shrink-0" />
+                            {publicSiteUrl.replace(/^https?:\/\//, '')}
+                          </a>
+                        ) : (
+                          <span className="text-gray-300">--</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <Users className="h-3.5 w-3.5 text-gray-400" />
+                          {tenant.userCount ?? 0}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <OnboardingProgress tenantId={tenant.id} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" asChild className="gap-1.5">
+                          <Link to={`/tenants/${tenant.id}`}>
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            Manage
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
           </Table>
