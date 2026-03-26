@@ -284,11 +284,13 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
     saveMutation.mutate({
       name,
       status,
-      primaryColor,
-      logoUrl,
-      supportEmail,
-      publicSiteUrl,
-      cmsDomain,
+      branding: {
+        primaryColor,
+        logoUrl: logoUrl || null,
+        supportEmail: supportEmail || null,
+        publicSiteUrl: publicSiteUrl || null,
+        cmsDomain: cmsDomain || null,
+      },
     })
   }
 
@@ -641,125 +643,122 @@ function UsersTab({ tenantId }: { tenantId: number }) {
 /* ================================================================== */
 
 function DomainsTab({ tenant }: { tenant: Tenant }) {
-  const provisionMutation = useMutation({
-    mutationFn: () =>
-      api(`/api/platform/tenants/${tenant.id}/domain/provision`, {
-        method: 'POST',
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['platform', 'tenant', String(tenant.id)],
-      })
-      toast.success('Domain provisioned')
-    },
-    onError: () => toast.error('Provisioning failed'),
-  })
+  const cmsDomain = tenant.branding?.cmsDomain ?? tenant.cmsDomain ?? ''
+  const isServiettelab = cmsDomain.endsWith('.serviettelab.com')
+  const [dnsResult, setDnsResult] = useState<{ ok: boolean; message: string } | null>(null)
 
-  const verifyMutation = useMutation({
+  const checkDnsMutation = useMutation({
     mutationFn: () =>
-      api(`/api/platform/tenants/${tenant.id}/domain/verify`, {
-        method: 'POST',
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['platform', 'tenant', String(tenant.id)],
+      api<{ reachable: boolean; message?: string }>(
+        `/api/platform/tenants/${tenant.id}/onboarding/check-dns`,
+        { method: 'POST' },
+      ),
+    onSuccess: (data) => {
+      setDnsResult({
+        ok: data.reachable,
+        message: data.reachable
+          ? 'Domain is reachable and routing correctly.'
+          : (data.message ?? 'Domain did not respond as expected. DNS may still be propagating.'),
       })
-      toast.success('Domain verified')
     },
-    onError: () => toast.error('Verification failed'),
+    onError: () =>
+      setDnsResult({ ok: false, message: 'Check failed — server error.' }),
   })
 
   return (
     <div className="max-w-4xl space-y-6">
-      {/* Domain config */}
+      {/* Current domain status */}
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-3 mb-4">
           <Globe className="h-5 w-5 text-[#7c3aed]" />
-          <h3 className="text-lg font-semibold text-gray-900">
-            Domain Configuration
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900">Domain Configuration</h3>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-gray-900">CMS Domain</p>
-              <p className="text-sm text-gray-500">
-                {tenant.cmsDomain || 'Not configured'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {tenant.domainVerified ? (
+        {!cmsDomain ? (
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-5 py-6 text-center">
+            <p className="text-sm font-medium text-gray-700">No CMS domain set</p>
+            <p className="mt-1 text-sm text-gray-500">
+              Go to the <strong>Branding</strong> tab and set the CMS Domain field, then come back here.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900">CMS Domain</p>
+                <a
+                  href={`https://${cmsDomain}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-sm text-[#7c3aed] hover:underline"
+                >
+                  {cmsDomain}
+                </a>
+              </div>
+              {isServiettelab ? (
                 <Badge className="gap-1 bg-green-100 text-green-700">
                   <CheckCircle2 className="h-3 w-3" />
-                  Verified
+                  Auto-routed
                 </Badge>
               ) : (
                 <Badge className="gap-1 bg-yellow-100 text-yellow-700">
                   <AlertCircle className="h-3 w-3" />
-                  Unverified
+                  Custom domain
                 </Badge>
               )}
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => provisionMutation.mutate()}
-              disabled={provisionMutation.isPending}
-            >
-              {provisionMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Provision Domain
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => verifyMutation.mutate()}
-              disabled={verifyMutation.isPending}
-            >
-              {verifyMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Verify Domain
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* DNS Records */}
-      {tenant.dnsRecords && tenant.dnsRecords.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">
-            DNS Records
-          </h3>
-          <div className="space-y-3">
-            {tenant.dnsRecords.map((record, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {record.type} &mdash; {record.name}
-                  </p>
-                  <p className="font-mono text-xs text-gray-500">
-                    {record.value}
-                  </p>
-                </div>
-                {record.verified ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 text-yellow-500" />
-                )}
+            {isServiettelab ? (
+              <div className="rounded-lg border border-green-100 bg-green-50 px-4 py-3">
+                <p className="text-sm font-medium text-green-800">No DNS setup needed</p>
+                <p className="mt-0.5 text-sm text-green-700">
+                  All <code className="font-mono text-xs">*.serviettelab.com</code> subdomains are automatically routed via your Cloudflare Worker. This domain is ready to use.
+                </p>
               </div>
-            ))}
+            ) : (
+              <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 space-y-2">
+                <p className="text-sm font-medium text-blue-900">Client DNS setup required</p>
+                <p className="text-sm text-blue-800">
+                  The client needs to add a <strong>CNAME</strong> record in their DNS provider:
+                </p>
+                <div className="rounded-md border border-blue-200 bg-white px-3 py-2 font-mono text-xs text-gray-700 space-y-1">
+                  <div><span className="text-gray-400">Type:</span> CNAME</div>
+                  <div><span className="text-gray-400">Name:</span> {cmsDomain.split('.')[0]}</div>
+                  <div><span className="text-gray-400">Value:</span> cms-platform-ap62.onrender.com</div>
+                  <div><span className="text-gray-400">TTL:</span> Auto</div>
+                </div>
+                <p className="text-xs text-blue-700">
+                  Once set, the Cloudflare Worker will route traffic and detect this tenant automatically via the host header.
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setDnsResult(null); checkDnsMutation.mutate() }}
+                disabled={checkDnsMutation.isPending}
+              >
+                {checkDnsMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                )}
+                Check domain
+              </Button>
+              {dnsResult && (
+                <div className={`flex items-center gap-1.5 text-sm ${dnsResult.ok ? 'text-green-700' : 'text-yellow-700'}`}>
+                  {dnsResult.ok
+                    ? <CheckCircle2 className="h-4 w-4" />
+                    : <AlertCircle className="h-4 w-4" />}
+                  {dnsResult.message}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
