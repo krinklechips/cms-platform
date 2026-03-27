@@ -38,6 +38,7 @@ import tenantContactSettingsRouter from './routes/tenantContactSettings.js';
 import tenantIntegrationsRouter from './routes/tenantIntegrations.js';
 import tenantLighthouseRouter from './routes/tenantLighthouse.js';
 import tenantSerpbearRouter from './routes/tenantSerpbear.js';
+import tenantHeroRouter from './routes/tenantHero.js';
 import {
   attachHostContext,
   blockTenantLoginOnPlatformHost,
@@ -235,6 +236,7 @@ app.use('/api/tenant/testimonials', tenantTestimonialsRouter);
 app.use('/api/tenant/services', tenantServicesRouter);
 app.use('/api/tenant/contact', tenantContactSettingsRouter);
 app.use('/api/tenant/integrations', tenantIntegrationsRouter);
+app.use('/api/tenant/hero', tenantHeroRouter);
 app.use('/api/tenant/lighthouse', tenantLighthouseRouter);
 app.use('/api/tenant/serpbear', tenantSerpbearRouter);
 app.use('/api/public', publicPagesRouter);

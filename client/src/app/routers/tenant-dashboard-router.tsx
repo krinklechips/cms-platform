@@ -25,6 +25,7 @@ import { FeaturedProducts } from '@/app/pages/tenant/FeaturedProducts'
 import { SerpbearDashboard } from '@/app/pages/tenant/SerpbearDashboard'
 import { LighthouseAudit } from '@/app/pages/tenant/LighthouseAudit'
 import { IntegrationSettings } from '@/app/pages/tenant/IntegrationSettings'
+import { HeroImages } from '@/app/pages/tenant/HeroImages'
 
 export const tenantRouter = createBrowserRouter(
   [
@@ -49,6 +50,7 @@ export const tenantRouter = createBrowserRouter(
         { path: 'pages/:id', element: <PageEditor /> },
         { path: 'navigation', element: <NavigationEditor /> },
         { path: 'media', element: <MediaLibrary /> },
+        { path: 'hero-images', element: <HeroImages /> },
         { path: 'annual-reports', element: <AnnualReports /> },
         { path: 'preview', element: <SitePreview /> },
         { path: 'account', element: <AccountSecurity /> },

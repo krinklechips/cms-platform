@@ -16,6 +16,7 @@ import {
   Briefcase,
   MapPin,
   Star,
+  MonitorPlay,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/app/components/ui/utils'
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { label: 'Articles', to: '/articles', icon: FileText, moduleKey: 'articles' },
   { label: 'Pages', to: '/pages', icon: Files, moduleKey: 'pages' },
   { label: 'Media', to: '/media', icon: Image, moduleKey: 'mediaLibrary' },
+  { label: 'Hero Images', to: '/hero-images', icon: MonitorPlay },
   { label: 'Annual Reports', to: '/annual-reports', icon: FileBarChart, moduleKey: 'annualReports' },
   {
     label: 'SEO',
@@ -121,7 +123,7 @@ export function TenantSidebar() {
         <div className="space-y-1">
           {filteredItems
             .filter((item) =>
-              ['/articles', '/pages', '/media', '/annual-reports'].includes(item.to),
+              ['/articles', '/pages', '/media', '/hero-images', '/annual-reports'].includes(item.to),
             )
             .map((item) => (
               <NavLink
