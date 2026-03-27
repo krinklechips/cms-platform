@@ -204,17 +204,17 @@ export function TenantDetails() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="branding" className="w-full">
+      <Tabs defaultValue="configuration" className="w-full">
         {/* Tab bar */}
         <div className="border-b border-gray-200 bg-white px-6">
           <TabsList className="h-12 gap-1 bg-transparent p-1">
-            <TabsTrigger value="branding" className={tabTriggerClass}>
-              <Palette className="h-3.5 w-3.5" />
-              Branding
-            </TabsTrigger>
             <TabsTrigger value="configuration" className={tabTriggerClass}>
               <Settings2 className="h-3.5 w-3.5" />
               Configuration
+            </TabsTrigger>
+            <TabsTrigger value="branding" className={tabTriggerClass}>
+              <Palette className="h-3.5 w-3.5" />
+              Branding
             </TabsTrigger>
             <TabsTrigger value="users" className={tabTriggerClass}>
               <Users className="h-3.5 w-3.5" />
@@ -239,11 +239,11 @@ export function TenantDetails() {
           </TabsList>
         </div>
 
-        <TabsContent value="branding" className="mt-0 p-8">
-          <BrandingTab tenant={tenant} />
-        </TabsContent>
         <TabsContent value="configuration" className="mt-0 p-8">
           <ConfigurationTab tenant={tenant} />
+        </TabsContent>
+        <TabsContent value="branding" className="mt-0 p-8">
+          <BrandingTab tenant={tenant} />
         </TabsContent>
         <TabsContent value="users" className="mt-0 p-8">
           <UsersTab tenantId={tenant.id} />
@@ -287,9 +287,7 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
   const [status, setStatus] = useState(tenant.status)
   const [primaryColor, setPrimaryColor] = useState(tenant.branding?.primaryColor ?? '#2563EB')
   const [logoUrl, setLogoUrl] = useState(tenant.branding?.logoUrl ?? '')
-  const [supportEmail, setSupportEmail] = useState(tenant.branding?.supportEmail ?? '')
-  const [publicSiteUrl, setPublicSiteUrl] = useState(tenant.branding?.publicSiteUrl ?? '')
-  const [cmsDomain, setCmsDomain] = useState(tenant.branding?.cmsDomain ?? '')
+  const [uploading, setUploading] = useState(false)
 
   const saveMutation = useTenantSaveMutation(tenant.id)
 
@@ -300,11 +298,35 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
       branding: {
         primaryColor,
         logoUrl: logoUrl || null,
-        supportEmail: supportEmail || null,
-        publicSiteUrl: publicSiteUrl || null,
-        cmsDomain: cmsDomain || null,
       },
     })
+  }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch(`/api/platform/tenants/${tenant.id}/logo`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      })
+      const data = await res.json()
+      if (data.ok && data.logoUrl) {
+        setLogoUrl(data.logoUrl)
+        queryClient.invalidateQueries({ queryKey: ['platform', 'tenant', String(tenant.id)] })
+        toast.success('Logo uploaded')
+      } else {
+        toast.error(data.error || 'Upload failed')
+      }
+    } catch {
+      toast.error('Upload failed')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const colorPresets = [
@@ -376,53 +398,49 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
             </div>
           </div>
 
+          {/* Logo */}
           <div>
-            <Label className="text-sm font-medium text-gray-900">Logo URL</Label>
-            <div className="mt-1.5 flex items-center gap-4">
-              <Input
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="https://example.com/logo.png"
-                className="flex-1"
-              />
-              {logoUrl && (
-                <img
-                  src={logoUrl}
-                  alt="Logo preview"
-                  className="h-10 w-auto rounded border border-gray-200 object-contain"
-                />
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium text-gray-900">Support email</Label>
-            <Input
-              value={supportEmail}
-              onChange={(e) => setSupportEmail(e.target.value)}
-              placeholder="support@example.com"
-              className="mt-1.5"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <Label className="text-sm font-medium text-gray-900">Public site URL</Label>
-              <Input
-                value={publicSiteUrl}
-                onChange={(e) => setPublicSiteUrl(e.target.value)}
-                placeholder="https://www.example.com"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-900">CMS domain</Label>
-              <Input
-                value={cmsDomain}
-                onChange={(e) => setCmsDomain(e.target.value)}
-                placeholder="tenant.serviettelab.com"
-                className="mt-1.5"
-              />
+            <Label className="text-sm font-medium text-gray-900">Logo</Label>
+            <div className="mt-2 flex items-start gap-5">
+              {/* Preview */}
+              <div className="flex h-20 w-28 shrink-0 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="max-h-16 max-w-24 object-contain" />
+                ) : (
+                  <Image className="h-6 w-6 text-gray-300" />
+                )}
+              </div>
+              <div className="flex-1 space-y-3">
+                {/* Upload */}
+                <div>
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Image className="h-4 w-4" />
+                    )}
+                    {uploading ? 'Uploading...' : 'Upload file'}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                  </label>
+                  <p className="mt-1 text-xs text-gray-400">PNG, JPG, SVG or WebP. Max 5 MB.</p>
+                </div>
+                {/* URL */}
+                <div>
+                  <p className="mb-1 text-xs text-gray-500">Or paste a URL</p>
+                  <Input
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="https://cdn.example.com/logo.png"
+                    className="text-sm"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,6 +1,11 @@
 import express from 'express';
+import os from 'os';
+import fs from 'fs';
+import path from 'path';
 import { db, ensureDefaultTenantSlots } from '../db.js';
 import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
+import { isR2Configured, uploadBufferToR2 } from '../integrations/r2.js';
+import { env } from '../config/env.js';
 
 const router = express.Router();
 
@@ -186,6 +191,64 @@ router.put('/:id', (req, res) => {
     WHERE t.id = ?
   `).get(tenant.id);
   return res.json(mapTenant(row));
+});
+
+/* ------------------------------------------------------------------ */
+/*  Logo upload                                                        */
+/* ------------------------------------------------------------------ */
+
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']);
+
+function r2PublicUrl(objectKey) {
+  const base = (env.R2_PUBLIC_BASE_URL || '').replace(/\/$/, '');
+  return `${base}/${objectKey}`;
+}
+
+router.post('/:id/logo', async (req, res) => {
+  const tenant = db.prepare('SELECT * FROM tenants WHERE id = ?').get(req.params.id);
+  if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+
+  if (!isR2Configured()) {
+    return res.status(503).json({ error: 'File storage (R2) is not configured' });
+  }
+
+  try {
+    const { default: formidable } = await import('formidable');
+    const form = formidable({
+      maxFileSize: 5 * 1024 * 1024, // 5 MB for logos
+      uploadDir: os.tmpdir(),
+      keepExtensions: true,
+    });
+
+    const [fields, files] = await form.parse(req);
+    const file = Array.isArray(files.file) ? files.file[0] : files.file;
+    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const mime = file.mimetype || '';
+    if (!ALLOWED_IMAGE_TYPES.has(mime)) {
+      return res.status(400).json({ error: `Unsupported image type: ${mime}` });
+    }
+
+    const ext = path.extname(file.originalFilename || '.png');
+    const objectKey = `tenants/${tenant.slug}/branding/logo${ext}`;
+    const buffer = await fs.promises.readFile(file.filepath);
+
+    await uploadBufferToR2({ objectKey, bytes: buffer, contentType: mime });
+    const publicUrl = r2PublicUrl(objectKey);
+
+    // Update tenant_branding.logo_url
+    db.prepare(`
+      UPDATE tenant_branding SET logo_url = ?, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ?
+    `).run(publicUrl, tenant.id);
+
+    // Clean up temp file
+    fs.promises.unlink(file.filepath).catch(() => {});
+
+    return res.json({ ok: true, logoUrl: publicUrl });
+  } catch (err) {
+    console.error('[platform] logo upload failed', err);
+    return res.status(500).json({ error: 'Logo upload failed' });
+  }
 });
 
 export default router;
