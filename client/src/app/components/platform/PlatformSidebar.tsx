@@ -29,7 +29,7 @@ export function PlatformSidebar() {
   return (
     <aside className="flex h-screen w-[240px] max-w-full shrink-0 flex-col border-r border-[#d2d8e0] bg-[#f3f4f6] text-[#3e4a5d]">
       {/* Logo */}
-      <div className="border-b border-[#d2d8e0] flex items-center justify-center px-4 py-3" style={{ minHeight: '56px' }}>
+      <div className="border-b border-[#d2d8e0] flex items-center justify-center px-4 py-5">
         <img
           src="/serviette-logo.png"
           alt="Serviettelab logo"
