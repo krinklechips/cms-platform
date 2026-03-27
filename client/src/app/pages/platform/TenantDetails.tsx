@@ -53,9 +53,6 @@ import {
   Package,
   ListChecks,
   Trash2,
-  Eye,
-  EyeOff,
-  Database,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { TenantOnboarding } from './TenantOnboarding'
@@ -494,8 +491,7 @@ function ConfigurationTab({ tenant }: { tenant: Tenant }) {
   }
 
   return (
-    <div className="max-w-4xl space-y-6">
-      {/* ── General config ── */}
+    <div className="max-w-4xl">
       <div className="rounded-xl border border-gray-200 bg-white p-8">
         <h3 className="mb-1 text-lg font-semibold text-gray-900">Configuration</h3>
         <p className="mb-8 text-sm text-gray-600">
@@ -557,138 +553,6 @@ function ConfigurationTab({ tenant }: { tenant: Tenant }) {
         </div>
       </div>
 
-      {/* ── Supabase integration ── */}
-      <SupabaseIntegrationCard tenantId={tenant.id} />
-    </div>
-  )
-}
-
-function SupabaseIntegrationCard({ tenantId }: { tenantId: number }) {
-  const [supabaseUrl, setSupabaseUrl] = useState('')
-  const [anonKey, setAnonKey] = useState('')
-  const [serviceKey, setServiceKey] = useState('')
-  const [showServiceKey, setShowServiceKey] = useState(false)
-  const [hasServiceKey, setHasServiceKey] = useState(false)
-  const [saving, setSaving] = useState(false)
-
-  const { isLoading } = useQuery({
-    queryKey: ['tenant-supabase', tenantId],
-    queryFn: async () => {
-      const res = await api.get(`/platform/tenants/${tenantId}/supabase`)
-      const data = res.data
-      setSupabaseUrl(data.supabaseUrl ?? '')
-      setAnonKey(data.supabaseAnonKey ?? '')
-      setHasServiceKey(data.hasServiceKey ?? false)
-      return data
-    },
-  })
-
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      const body: Record<string, string> = { supabaseUrl, supabaseAnonKey: anonKey }
-      // Only send serviceKey if user typed something (empty = don't change)
-      if (serviceKey) body.supabaseServiceKey = serviceKey
-      await api.put(`/platform/tenants/${tenantId}/supabase`, body)
-      if (serviceKey) { setHasServiceKey(true); setServiceKey('') }
-      toast.success('Supabase integration saved')
-    } catch {
-      toast.error('Failed to save Supabase config')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-8">
-      <div className="mb-6 flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-          <Database className="h-4 w-4" />
-        </div>
-        <div>
-          <h3 className="text-base font-semibold text-gray-900">Supabase Integration</h3>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Connect this tenant's Supabase project. Each tenant can have their own database.
-            These credentials are used by the CMS to manage hero images and other content.
-          </p>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <div>
-            <Label className="text-sm font-medium text-gray-900">Project URL</Label>
-            <p className="mb-2 mt-1 text-xs text-gray-500">
-              e.g. <code className="rounded bg-gray-100 px-1 font-mono">https://abcxyz.supabase.co</code>
-            </p>
-            <Input
-              value={supabaseUrl}
-              onChange={(e) => setSupabaseUrl(e.target.value)}
-              placeholder="https://xxxxxxxxxxxxxxxx.supabase.co"
-              className="max-w-md font-mono text-sm"
-            />
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium text-gray-900">Publishable / Anon Key</Label>
-            <p className="mb-2 mt-1 text-xs text-gray-500">
-              Safe for browser use. Used by the tenant's Next.js site (<code className="rounded bg-gray-100 px-1 font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>).
-            </p>
-            <Input
-              value={anonKey}
-              onChange={(e) => setAnonKey(e.target.value)}
-              placeholder="sb_publishable_..."
-              className="max-w-md font-mono text-sm"
-            />
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium text-gray-900">
-              Secret / Service Key
-              {hasServiceKey && (
-                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                  <CheckCircle2 className="h-3 w-3" /> Saved
-                </span>
-              )}
-            </Label>
-            <p className="mb-2 mt-1 text-xs text-gray-500">
-              Server-side only. Used by the CMS backend to write hero slides and other content.
-              Never exposed to the browser.
-            </p>
-            <div className="relative max-w-md">
-              <Input
-                type={showServiceKey ? 'text' : 'password'}
-                value={serviceKey}
-                onChange={(e) => setServiceKey(e.target.value)}
-                placeholder={hasServiceKey ? '••••••••••••••••• (leave blank to keep existing)' : 'sb_secret_...'}
-                className="pr-10 font-mono text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => setShowServiceKey(!showServiceKey)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showServiceKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-100 pt-4">
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-[#7c3aed] hover:bg-[#6d28d9]"
-            >
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Supabase config
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
