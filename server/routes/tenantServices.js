@@ -28,12 +28,13 @@ function mapOut(row) {
     id: row.id,
     name: row.name,
     slug: row.slug,
+    eyebrow: row.eyebrow ?? null,
     description: row.description ?? null,
-    price: null,
-    priceNote: null,
+    heroDescription: row.heroDescription ?? null,
     features: Array.isArray(row.features) ? row.features : [],
     category: row.category ?? null,
     isFeatured: Boolean(row.isFeatured),
+    content: row.content ?? { sections: [] },
     sortOrder: row.order ?? 0,
     status: row.published ? 'published' : 'draft',
     createdAt: row.createdAt ?? null,
@@ -62,7 +63,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { url, key } = getSupabaseConfig();
   if (!url || !key) return res.status(503).json({ error: 'Supabase not configured' });
-  const { name, slug, description, category, features, isFeatured, sortOrder, status } = req.body ?? {};
+  const { name, slug, eyebrow, description, heroDescription, category, features, isFeatured, content, sortOrder, status } = req.body ?? {};
   if (!String(name || '').trim()) return res.status(400).json({ error: 'name is required' });
   try {
     const resp = await fetch(`${url}/rest/v1/services`, {
@@ -71,10 +72,13 @@ router.post('/', async (req, res) => {
       body: JSON.stringify({
         name: String(name).trim(),
         slug: String(slug || slugify(name)).trim(),
+        eyebrow: eyebrow || null,
         description: description || null,
+        heroDescription: heroDescription || null,
         category: category || null,
         features: Array.isArray(features) ? features : [],
         isFeatured: Boolean(isFeatured),
+        content: content ?? { sections: [] },
         order: Number(sortOrder) || 0,
         published: status !== 'draft',
       }),
@@ -96,10 +100,13 @@ router.put('/:id', async (req, res) => {
   const patch = {};
   if (body.name !== undefined) patch.name = String(body.name).trim();
   if (body.slug !== undefined) patch.slug = String(body.slug).trim();
+  if (body.eyebrow !== undefined) patch.eyebrow = body.eyebrow || null;
   if (body.description !== undefined) patch.description = body.description || null;
+  if (body.heroDescription !== undefined) patch.heroDescription = body.heroDescription || null;
   if (body.category !== undefined) patch.category = body.category || null;
   if (body.features !== undefined) patch.features = Array.isArray(body.features) ? body.features : [];
   if (body.isFeatured !== undefined) patch.isFeatured = Boolean(body.isFeatured);
+  if (body.content !== undefined) patch.content = body.content;
   if (body.sortOrder !== undefined) patch.order = Number(body.sortOrder) || 0;
   if (body.status !== undefined) patch.published = body.status !== 'draft';
   patch.updatedAt = new Date().toISOString();

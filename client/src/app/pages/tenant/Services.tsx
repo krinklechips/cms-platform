@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/components/shared/PageHeader'
-import { Plus, Trash2, Pencil, Briefcase } from 'lucide-react'
+import { Plus, Trash2, Pencil, Briefcase, FileText } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -41,15 +41,19 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/app/components/ui/sheet'
+import { ServiceContentEditor, type ServiceSection } from './ServiceContentEditor'
 
 interface Service {
   id: string
   name: string
   slug: string
+  eyebrow?: string | null
   description?: string | null
+  heroDescription?: string | null
   features: string[]
   category?: string | null
   isFeatured: boolean
+  content: { sections: ServiceSection[] }
   sortOrder: number
   status: string
   createdAt?: string
@@ -58,7 +62,9 @@ interface Service {
 
 interface ServiceFormData {
   name: string
+  eyebrow: string
   description: string
+  heroDescription: string
   featuresInput: string
   category: string
   isFeatured: boolean
@@ -68,7 +74,9 @@ interface ServiceFormData {
 
 const emptyForm: ServiceFormData = {
   name: '',
+  eyebrow: '',
   description: '',
+  heroDescription: '',
   featuresInput: '',
   category: '',
   isFeatured: false,
@@ -79,7 +87,9 @@ const emptyForm: ServiceFormData = {
 function serviceToForm(s: Service): ServiceFormData {
   return {
     name: s.name ?? '',
+    eyebrow: s.eyebrow ?? '',
     description: s.description ?? '',
+    heroDescription: s.heroDescription ?? '',
     featuresInput: Array.isArray(s.features) ? s.features.join(', ') : '',
     category: s.category ?? '',
     isFeatured: Boolean(s.isFeatured),
@@ -98,6 +108,7 @@ export function Services() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Service | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Service | null>(null)
+  const [contentTarget, setContentTarget] = useState<Service | null>(null)
   const [form, setForm] = useState<ServiceFormData>(emptyForm)
 
   const { data: services = [], isLoading } = useQuery<Service[]>({
@@ -111,7 +122,9 @@ export function Services() {
         method: 'POST',
         body: {
           name: data.name,
+          eyebrow: data.eyebrow || null,
           description: data.description || null,
+          heroDescription: data.heroDescription || null,
           features: parseFeatures(data.featuresInput),
           category: data.category || null,
           isFeatured: data.isFeatured,
@@ -134,7 +147,9 @@ export function Services() {
         method: 'PUT',
         body: {
           name: data.name,
+          eyebrow: data.eyebrow || null,
           description: data.description || null,
+          heroDescription: data.heroDescription || null,
           features: parseFeatures(data.featuresInput),
           category: data.category || null,
           isFeatured: data.isFeatured,
@@ -150,6 +165,20 @@ export function Services() {
       setForm(emptyForm)
     },
     onError: () => toast.error('Failed to update service'),
+  })
+
+  const contentMutation = useMutation({
+    mutationFn: ({ id, content }: { id: string; content: { sections: ServiceSection[] } }) =>
+      api(`/api/tenant/services/${id}`, {
+        method: 'PUT',
+        body: { content },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant', 'services'] })
+      toast.success('Page content saved')
+      setContentTarget(null)
+    },
+    onError: () => toast.error('Failed to save content'),
   })
 
   const deleteMutation = useMutation({
@@ -191,10 +220,21 @@ export function Services() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
+      {/* Full-screen content editor overlay */}
+      {contentTarget && (
+        <ServiceContentEditor
+          serviceName={contentTarget.name}
+          initialContent={contentTarget.content ?? { sections: [] }}
+          isSaving={contentMutation.isPending}
+          onSave={(content) => contentMutation.mutate({ id: contentTarget.id, content })}
+          onClose={() => setContentTarget(null)}
+        />
+      )}
+
       <PageHeader
-        title="Services"
+        title="Services & Pricing"
         subtitle="Manage the services listed on the website"
-        breadcrumbs={[{ label: 'Overview', href: '/' }, { label: 'Services' }]}
+        breadcrumbs={[{ label: 'Overview', href: '/' }, { label: 'Services & Pricing' }]}
         actions={
           <Button onClick={openAdd} size="sm">
             <Plus className="mr-1.5 h-4 w-4" />
@@ -220,7 +260,7 @@ export function Services() {
                 <TableHead>Category</TableHead>
                 <TableHead>Featured</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-24 text-right">Actions</TableHead>
+                <TableHead className="w-32 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -248,9 +288,16 @@ export function Services() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button
+                        onClick={() => setContentTarget(s)}
+                        className="rounded-md p-1.5 text-gray-400 hover:bg-purple-50 hover:text-purple-600"
+                        title="Edit page content"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                      </button>
+                      <button
                         onClick={() => openEdit(s)}
                         className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                        title="Edit"
+                        title="Edit details"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -292,12 +339,33 @@ export function Services() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="svc-description">Description</Label>
+              <Label htmlFor="svc-eyebrow">Eyebrow Label <span className="text-gray-400 text-xs">(small text above title on page)</span></Label>
+              <Input
+                id="svc-eyebrow"
+                value={form.eyebrow}
+                onChange={(e) => setForm({ ...form, eyebrow: e.target.value })}
+                placeholder="IMPLANTOLOGY"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="svc-description">Short Description <span className="text-gray-400 text-xs">(used in service cards)</span></Label>
               <Textarea
                 id="svc-description"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="Brief description of this service..."
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="svc-hero-desc">Hero Description <span className="text-gray-400 text-xs">(longer intro shown at top of service page)</span></Label>
+              <Textarea
+                id="svc-hero-desc"
+                value={form.heroDescription}
+                onChange={(e) => setForm({ ...form, heroDescription: e.target.value })}
+                placeholder="Dental implants are currently the best treatment option for a lost tooth..."
                 rows={3}
               />
             </div>

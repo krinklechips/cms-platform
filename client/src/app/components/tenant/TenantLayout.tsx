@@ -1,10 +1,29 @@
+import { useEffect } from 'react'
 import { Outlet, Navigate } from 'react-router'
 import { Toaster } from 'sonner'
 import { useTenantAuth } from '@/lib/tenant-context'
 import { TenantSidebar } from './TenantSidebar'
 
 export function TenantLayout() {
-  const { isAuthenticated, isLoading, mustChangePassword } = useTenantAuth()
+  const { isAuthenticated, isLoading, mustChangePassword, tenant } = useTenantAuth()
+
+  useEffect(() => {
+    if (!tenant) return
+    // Set page title
+    document.title = `${tenant.name} — CMS`
+    // Set favicon from tenant logo
+    const logoUrl = tenant.branding?.logo_url
+    if (logoUrl) {
+      let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+      if (!link) {
+        link = document.createElement('link')
+        link.rel = 'icon'
+        document.head.appendChild(link)
+      }
+      link.href = logoUrl
+      link.type = logoUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png'
+    }
+  }, [tenant])
 
   if (isLoading) {
     return (
@@ -28,7 +47,7 @@ export function TenantLayout() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-6xl px-6 lg:px-8 py-6">
+          <div className="px-6 lg:px-8 py-6">
             <Outlet />
           </div>
         </main>
