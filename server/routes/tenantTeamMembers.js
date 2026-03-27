@@ -1,128 +1,150 @@
+// Proxies to Supabase `doctors` table.
+// CMS field `title` maps to Supabase `role` (the doctor's readable position).
+// CMS field `department` must be one of the Supabase enum values:
+//   DIRECTOR | IMPLANTOLOGY | COSMETIC | ORTHODONTICS | PEDIATRICS |
+//   GENERAL  | SENIOR_CONSULTANT | PERIODONTICS
+// Fields not in the doctors table (email, linkedinUrl) are ignored on write.
+
 import express from 'express';
-import { db } from '../db.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { requireTenantContext } from '../middleware/tenantContext.js';
 
 const router = express.Router();
-
 router.use(requireAuth);
 router.use(requireTenantContext);
 
-function mapMember(row) {
-  if (!row) return null;
+function getSupabaseConfig() {
   return {
-    id: row.id,
-    tenantId: row.tenant_id,
-    name: row.name,
-    title: row.title,
-    department: row.department,
-    bio: row.bio,
-    photoUrl: row.photo_url,
-    email: row.email,
-    linkedinUrl: row.linkedin_url,
-    sortOrder: row.sort_order,
-    status: row.status,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY,
   };
 }
 
-router.get('/', (req, res) => {
-  const rows = db.prepare(`
-    SELECT * FROM team_members
-    WHERE tenant_id = ?
-    ORDER BY sort_order ASC, name ASC
-  `).all(req.tenant.id);
-  res.json(rows.map(mapMember));
-});
+function sbHeaders(key) {
+  return {
+    'Content-Type': 'application/json',
+    'apikey': key,
+    'Authorization': `Bearer ${key}`,
+    'Prefer': 'return=representation',
+  };
+}
 
-router.get('/:id', (req, res) => {
-  const id = Number(req.params.id);
-  if (!id) return res.status(400).json({ error: 'Invalid id' });
-  const row = db.prepare('SELECT * FROM team_members WHERE tenant_id = ? AND id = ?').get(req.tenant.id, id);
-  if (!row) return res.status(404).json({ error: 'Team member not found' });
-  return res.json(mapMember(row));
-});
+function autoInitials(name) {
+  return String(name || '').split(/\s+/).map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || '??';
+}
 
-router.post('/', (req, res) => {
-  const {
-    name,
-    title = null,
-    department = null,
-    bio = null,
-    photoUrl = null,
-    email = null,
-    linkedinUrl = null,
-    sortOrder = 0,
-    status = 'published',
-  } = req.body ?? {};
+function mapOut(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    title: row.role ?? row.credentials ?? null,   // show role as the "title"
+    department: row.department ?? null,
+    bio: row.bio ?? null,
+    photoUrl: row.photoUrl ?? null,
+    email: null,
+    linkedinUrl: null,
+    sortOrder: row.order ?? 0,
+    status: row.published ? 'published' : 'draft',
+    createdAt: row.createdAt ?? null,
+    updatedAt: row.updatedAt ?? null,
+  };
+}
 
-  if (!String(name || '').trim()) {
-    return res.status(400).json({ error: 'name is required' });
+router.get('/', async (req, res) => {
+  const { url, key } = getSupabaseConfig();
+  if (!url || !key) return res.json([]);
+  try {
+    const resp = await fetch(`${url}/rest/v1/doctors?select=*&order=order.asc`, { headers: sbHeaders(key) });
+    if (!resp.ok) return res.status(resp.status).json({ error: 'Supabase error' });
+    const rows = await resp.json();
+    res.json(Array.isArray(rows) ? rows.map(mapOut) : []);
+  } catch (err) {
+    console.error('[team] fetch failed', err);
+    res.status(500).json({ error: 'Failed to fetch team members' });
   }
-
-  const now = new Date().toISOString();
-  const info = db.prepare(`
-    INSERT INTO team_members (tenant_id, name, title, department, bio, photo_url, email, linkedin_url, sort_order, status, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    req.tenant.id,
-    String(name).trim(),
-    title ? String(title).trim() : null,
-    department ? String(department).trim() : null,
-    bio ? String(bio).trim() : null,
-    photoUrl ? String(photoUrl).trim() : null,
-    email ? String(email).trim() : null,
-    linkedinUrl ? String(linkedinUrl).trim() : null,
-    Number(sortOrder) || 0,
-    status === 'draft' ? 'draft' : 'published',
-    now,
-    now,
-  );
-
-  const row = db.prepare('SELECT * FROM team_members WHERE id = ?').get(info.lastInsertRowid);
-  return res.status(201).json(mapMember(row));
 });
 
-router.put('/:id', (req, res) => {
-  const id = Number(req.params.id);
-  if (!id) return res.status(400).json({ error: 'Invalid id' });
-  const existing = db.prepare('SELECT * FROM team_members WHERE tenant_id = ? AND id = ?').get(req.tenant.id, id);
-  if (!existing) return res.status(404).json({ error: 'Team member not found' });
-
-  const name = req.body?.name !== undefined ? String(req.body.name).trim() : existing.name;
-  if (!name) return res.status(400).json({ error: 'name is required' });
-
-  const now = new Date().toISOString();
-  db.prepare(`
-    UPDATE team_members
-    SET name = ?, title = ?, department = ?, bio = ?, photo_url = ?, email = ?, linkedin_url = ?, sort_order = ?, status = ?, updated_at = ?
-    WHERE tenant_id = ? AND id = ?
-  `).run(
-    name,
-    req.body?.title !== undefined ? (req.body.title ? String(req.body.title).trim() : null) : existing.title,
-    req.body?.department !== undefined ? (req.body.department ? String(req.body.department).trim() : null) : existing.department,
-    req.body?.bio !== undefined ? (req.body.bio ? String(req.body.bio).trim() : null) : existing.bio,
-    req.body?.photoUrl !== undefined ? (req.body.photoUrl ? String(req.body.photoUrl).trim() : null) : existing.photo_url,
-    req.body?.email !== undefined ? (req.body.email ? String(req.body.email).trim() : null) : existing.email,
-    req.body?.linkedinUrl !== undefined ? (req.body.linkedinUrl ? String(req.body.linkedinUrl).trim() : null) : existing.linkedin_url,
-    req.body?.sortOrder !== undefined ? (Number(req.body.sortOrder) || 0) : existing.sort_order,
-    req.body?.status === 'draft' ? 'draft' : (req.body?.status === 'published' ? 'published' : existing.status),
-    now,
-    req.tenant.id,
-    id,
-  );
-
-  const row = db.prepare('SELECT * FROM team_members WHERE tenant_id = ? AND id = ?').get(req.tenant.id, id);
-  return res.json(mapMember(row));
+router.post('/', async (req, res) => {
+  const { url, key } = getSupabaseConfig();
+  if (!url || !key) return res.status(503).json({ error: 'Supabase not configured' });
+  const { name, title, department, bio, photoUrl, sortOrder, status } = req.body ?? {};
+  if (!String(name || '').trim()) return res.status(400).json({ error: 'name is required' });
+  const nm = String(name).trim();
+  try {
+    const resp = await fetch(`${url}/rest/v1/doctors`, {
+      method: 'POST',
+      headers: sbHeaders(key),
+      body: JSON.stringify({
+        name: nm,
+        role: title || null,
+        credentials: '',
+        initials: autoInitials(nm),
+        department: department || 'GENERAL',
+        bio: bio || null,
+        photoUrl: photoUrl || null,
+        specialty: [],
+        languages: [],
+        order: Number(sortOrder) || 0,
+        published: status !== 'draft',
+      }),
+    });
+    if (!resp.ok) { const t = await resp.text(); return res.status(resp.status).json({ error: t }); }
+    const data = await resp.json();
+    res.status(201).json(mapOut(Array.isArray(data) ? data[0] : data));
+  } catch (err) {
+    console.error('[team] create failed', err);
+    res.status(500).json({ error: 'Failed to create team member' });
+  }
 });
 
-router.delete('/:id', (req, res) => {
-  const id = Number(req.params.id);
-  if (!id) return res.status(400).json({ error: 'Invalid id' });
-  const info = db.prepare('DELETE FROM team_members WHERE tenant_id = ? AND id = ?').run(req.tenant.id, id);
-  if (!info.changes) return res.status(404).json({ error: 'Team member not found' });
-  return res.json({ ok: true });
+router.put('/:id', async (req, res) => {
+  const { url, key } = getSupabaseConfig();
+  if (!url || !key) return res.status(503).json({ error: 'Supabase not configured' });
+  const { id } = req.params;
+  const body = req.body ?? {};
+  const patch = {};
+  if (body.name !== undefined) {
+    patch.name = String(body.name).trim();
+    patch.initials = autoInitials(patch.name);
+  }
+  if (body.title !== undefined) patch.role = body.title || null;
+  if (body.department !== undefined) patch.department = body.department || 'GENERAL';
+  if (body.bio !== undefined) patch.bio = body.bio || null;
+  if (body.photoUrl !== undefined) patch.photoUrl = body.photoUrl || null;
+  if (body.sortOrder !== undefined) patch.order = Number(body.sortOrder) || 0;
+  if (body.status !== undefined) patch.published = body.status !== 'draft';
+  patch.updatedAt = new Date().toISOString();
+  try {
+    const resp = await fetch(`${url}/rest/v1/doctors?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(key),
+      body: JSON.stringify(patch),
+    });
+    if (!resp.ok) return res.status(resp.status).json({ error: 'Supabase error' });
+    const data = await resp.json();
+    res.json(mapOut(Array.isArray(data) ? data[0] : data));
+  } catch (err) {
+    console.error('[team] update failed', err);
+    res.status(500).json({ error: 'Failed to update team member' });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  const { url, key } = getSupabaseConfig();
+  if (!url || !key) return res.status(503).json({ error: 'Supabase not configured' });
+  const { id } = req.params;
+  try {
+    const resp = await fetch(`${url}/rest/v1/doctors?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: sbHeaders(key),
+    });
+    if (!resp.ok) return res.status(resp.status).json({ error: 'Supabase error' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[team] delete failed', err);
+    res.status(500).json({ error: 'Failed to delete team member' });
+  }
 });
 
 export default router;
