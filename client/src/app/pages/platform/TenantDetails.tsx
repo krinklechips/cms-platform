@@ -483,8 +483,6 @@ function ConfigurationTab({ tenant }: { tenant: Tenant }) {
       name: tenant.name,
       status: tenant.status,
       branding: {
-        primaryColor: tenant.branding?.primaryColor ?? null,
-        logoUrl: tenant.branding?.logoUrl ?? null,
         supportEmail: supportEmail || null,
         publicSiteUrl: publicSiteUrl || null,
         cmsDomain: cmsDomain || null,
@@ -494,42 +492,43 @@ function ConfigurationTab({ tenant }: { tenant: Tenant }) {
 
   return (
     <div className="max-w-4xl">
-      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6">
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-8">
         <h3 className="mb-1 text-lg font-semibold text-gray-900">Configuration</h3>
-        <p className="mb-6 text-sm text-gray-600">
+        <p className="mb-8 text-sm text-gray-600">
           Domains, URLs and contact settings for this tenant
         </p>
 
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <Label className="text-sm font-medium text-gray-900">CMS domain</Label>
-              <p className="mb-1.5 mt-0.5 text-xs text-gray-500">
-                Subdomain used to access the CMS (e.g.{' '}
-                <code className="font-mono">roomchang.serviettelab.com</code>)
-              </p>
-              <Input
-                value={cmsDomain}
-                onChange={(e) => setCmsDomain(e.target.value)}
-                placeholder="tenant.serviettelab.com"
-              />
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-900">Public site URL</Label>
-              <p className="mb-1.5 mt-0.5 text-xs text-gray-500">
-                The live website this tenant's CMS publishes to
-              </p>
-              <Input
-                value={publicSiteUrl}
-                onChange={(e) => setPublicSiteUrl(e.target.value)}
-                placeholder="https://www.example.com"
-              />
-            </div>
+        <div className="space-y-8">
+          <div>
+            <Label className="text-sm font-medium text-gray-900">CMS domain</Label>
+            <p className="mb-2 mt-1 text-xs text-gray-500">
+              Subdomain used to access the CMS (e.g.{' '}
+              <code className="rounded bg-gray-100 px-1 font-mono">roomchang.serviettelab.com</code>)
+            </p>
+            <Input
+              value={cmsDomain}
+              onChange={(e) => setCmsDomain(e.target.value)}
+              placeholder="tenant.serviettelab.com"
+              className="max-w-md"
+            />
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium text-gray-900">Public site URL</Label>
+            <p className="mb-2 mt-1 text-xs text-gray-500">
+              The live website this tenant's CMS publishes to
+            </p>
+            <Input
+              value={publicSiteUrl}
+              onChange={(e) => setPublicSiteUrl(e.target.value)}
+              placeholder="https://www.example.com"
+              className="max-w-md"
+            />
           </div>
 
           <div>
             <Label className="text-sm font-medium text-gray-900">Support email</Label>
-            <p className="mb-1.5 mt-0.5 text-xs text-gray-500">
+            <p className="mb-2 mt-1 text-xs text-gray-500">
               Shown to tenant users when they need help
             </p>
             <Input
@@ -537,7 +536,7 @@ function ConfigurationTab({ tenant }: { tenant: Tenant }) {
               value={supportEmail}
               onChange={(e) => setSupportEmail(e.target.value)}
               placeholder="support@example.com"
-              className="max-w-sm"
+              className="max-w-md"
             />
           </div>
         </div>
