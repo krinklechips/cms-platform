@@ -96,10 +96,10 @@ export function TenantDirectory() {
         />
       </div>
 
-      <div className="flex-1 overflow-auto bg-gray-50 p-8">
+      <div className="flex-1 overflow-auto bg-gray-50 px-6 py-6">
         {/* Toolbar */}
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div className="relative max-w-sm flex-1">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="relative max-w-xs flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               placeholder="Search tenants..."
@@ -111,8 +111,8 @@ export function TenantDirectory() {
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-gray-200 bg-white">
-          <Table>
+        <div className="rounded-xl border border-gray-200 bg-white overflow-x-auto">
+          <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="font-semibold">Name</TableHead>

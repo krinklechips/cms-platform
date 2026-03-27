@@ -149,6 +149,16 @@ router.put('/:id', (req, res) => {
     tenant.id,
   );
 
+  // Merge incoming branding with existing values so partial saves don't wipe fields
+  const existing = db.prepare('SELECT * FROM tenant_branding WHERE tenant_id = ?').get(tenant.id) || {};
+  const merged = {
+    logoUrl: branding.logoUrl !== undefined ? branding.logoUrl : (existing.logo_url || null),
+    primaryColor: branding.primaryColor !== undefined ? branding.primaryColor : (existing.primary_color || null),
+    supportEmail: branding.supportEmail !== undefined ? branding.supportEmail : (existing.support_email || null),
+    publicSiteUrl: branding.publicSiteUrl !== undefined ? branding.publicSiteUrl : (existing.public_site_url || null),
+    cmsDomain: branding.cmsDomain !== undefined ? branding.cmsDomain : (existing.cms_domain || null),
+  };
+
   db.prepare(`
     INSERT INTO tenant_branding (
       tenant_id, logo_url, primary_color, support_email, public_site_url, cms_domain, updated_at
@@ -162,11 +172,11 @@ router.put('/:id', (req, res) => {
       updated_at = CURRENT_TIMESTAMP
   `).run(
     tenant.id,
-    branding.logoUrl ?? null,
-    branding.primaryColor ?? null,
-    branding.supportEmail ?? null,
-    branding.publicSiteUrl ?? null,
-    branding.cmsDomain ?? null,
+    merged.logoUrl,
+    merged.primaryColor,
+    merged.supportEmail,
+    merged.publicSiteUrl,
+    merged.cmsDomain,
   );
 
   const row = db.prepare(`

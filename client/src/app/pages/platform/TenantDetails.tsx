@@ -19,6 +19,8 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -59,16 +61,20 @@ import { TenantOnboarding } from './TenantOnboarding'
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
+interface TenantBranding {
+  logoUrl?: string | null
+  primaryColor?: string | null
+  supportEmail?: string | null
+  publicSiteUrl?: string | null
+  cmsDomain?: string | null
+}
+
 interface Tenant {
   id: number
   name: string
   slug: string
   status: string
-  primaryColor?: string | null
-  logoUrl?: string | null
-  supportEmail?: string | null
-  publicSiteUrl?: string | null
-  cmsDomain?: string | null
+  branding?: TenantBranding | null
   domainVerified?: boolean
   dnsRecords?: DnsRecord[]
   createdAt?: string
@@ -169,25 +175,25 @@ export function TenantDetails() {
               </div>
               <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
                 <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-mono text-gray-600">{tenant.slug}</code>
-                {tenant.cmsDomain && <span className="text-gray-300">·</span>}
-                {tenant.cmsDomain && <span>{tenant.cmsDomain}</span>}
+                {tenant.branding?.cmsDomain && <span className="text-gray-300">·</span>}
+                {tenant.branding?.cmsDomain && <span>{tenant.branding.cmsDomain}</span>}
               </div>
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {tenant.cmsDomain && (
+            {tenant.branding?.cmsDomain && (
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <a href={`https://${tenant.cmsDomain}/tenant-dashboard`} target="_blank" rel="noreferrer">
+                <a href={`https://${tenant.branding.cmsDomain}/tenant-dashboard`} target="_blank" rel="noreferrer">
                   <ExternalLink className="h-3.5 w-3.5" />
                   Open CMS
                 </a>
               </Button>
             )}
-            {tenant.publicSiteUrl && (
+            {tenant.branding?.publicSiteUrl && (
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <a href={tenant.publicSiteUrl} target="_blank" rel="noreferrer">
+                <a href={tenant.branding.publicSiteUrl} target="_blank" rel="noreferrer">
                   <ExternalLink className="h-3.5 w-3.5" />
                   Public Site
                 </a>
@@ -206,6 +212,10 @@ export function TenantDetails() {
               <Palette className="h-3.5 w-3.5" />
               Branding
             </TabsTrigger>
+            <TabsTrigger value="configuration" className={tabTriggerClass}>
+              <Settings2 className="h-3.5 w-3.5" />
+              Configuration
+            </TabsTrigger>
             <TabsTrigger value="users" className={tabTriggerClass}>
               <Users className="h-3.5 w-3.5" />
               Users
@@ -215,11 +225,11 @@ export function TenantDetails() {
               Domains
             </TabsTrigger>
             <TabsTrigger value="modules" className={tabTriggerClass}>
-              <Settings2 className="h-3.5 w-3.5" />
+              <Package className="h-3.5 w-3.5" />
               Modules
             </TabsTrigger>
             <TabsTrigger value="content" className={tabTriggerClass}>
-              <Package className="h-3.5 w-3.5" />
+              <FileText className="h-3.5 w-3.5" />
               Content
             </TabsTrigger>
             <TabsTrigger value="onboarding" className={tabTriggerClass}>
@@ -231,6 +241,9 @@ export function TenantDetails() {
 
         <TabsContent value="branding" className="mt-0 p-8">
           <BrandingTab tenant={tenant} />
+        </TabsContent>
+        <TabsContent value="configuration" className="mt-0 p-8">
+          <ConfigurationTab tenant={tenant} />
         </TabsContent>
         <TabsContent value="users" className="mt-0 p-8">
           <UsersTab tenantId={tenant.id} />
@@ -245,7 +258,7 @@ export function TenantDetails() {
           <ContentTab tenant={tenant} />
         </TabsContent>
         <TabsContent value="onboarding" className="mt-0 p-8">
-          <TenantOnboarding tenantId={tenant.id} cmsDomain={tenant.cmsDomain} />
+          <TenantOnboarding tenantId={tenant.id} cmsDomain={tenant.branding?.cmsDomain} />
         </TabsContent>
       </Tabs>
     </div>
@@ -256,30 +269,29 @@ export function TenantDetails() {
 /*  BRANDING TAB                                                       */
 /* ================================================================== */
 
+function useTenantSaveMutation(tenantId: number) {
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      api<Tenant>(`/api/platform/tenants/${tenantId}`, { method: 'PUT', body: payload }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platform', 'tenant', String(tenantId)] })
+      queryClient.invalidateQueries({ queryKey: ['platform', 'tenants'] })
+      toast.success('Saved')
+    },
+    onError: () => toast.error('Failed to save'),
+  })
+}
+
 function BrandingTab({ tenant }: { tenant: Tenant }) {
   const [name, setName] = useState(tenant.name)
   const [status, setStatus] = useState(tenant.status)
-  const [primaryColor, setPrimaryColor] = useState(tenant.primaryColor ?? '#2563EB')
-  const [logoUrl, setLogoUrl] = useState(tenant.logoUrl ?? '')
-  const [supportEmail, setSupportEmail] = useState(tenant.supportEmail ?? '')
-  const [publicSiteUrl, setPublicSiteUrl] = useState(tenant.publicSiteUrl ?? '')
-  const [cmsDomain, setCmsDomain] = useState(tenant.cmsDomain ?? '')
+  const [primaryColor, setPrimaryColor] = useState(tenant.branding?.primaryColor ?? '#2563EB')
+  const [logoUrl, setLogoUrl] = useState(tenant.branding?.logoUrl ?? '')
+  const [supportEmail, setSupportEmail] = useState(tenant.branding?.supportEmail ?? '')
+  const [publicSiteUrl, setPublicSiteUrl] = useState(tenant.branding?.publicSiteUrl ?? '')
+  const [cmsDomain, setCmsDomain] = useState(tenant.branding?.cmsDomain ?? '')
 
-  const saveMutation = useMutation({
-    mutationFn: (payload: Partial<Tenant>) =>
-      api<Tenant>(`/api/platform/tenants/${tenant.id}`, {
-        method: 'PUT',
-        body: payload,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['platform', 'tenant', String(tenant.id)],
-      })
-      queryClient.invalidateQueries({ queryKey: ['platform', 'tenants'] })
-      toast.success('Tenant updated')
-    },
-    onError: () => toast.error('Failed to update tenant'),
-  })
+  const saveMutation = useTenantSaveMutation(tenant.id)
 
   const handleSave = () => {
     saveMutation.mutate({
@@ -297,6 +309,7 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
 
   const colorPresets = [
     { name: 'Blue', value: '#2563EB' },
+    { name: 'Green', value: '#059669' },
     { name: 'Purple', value: '#9F76E6' },
     { name: 'Violet', value: '#7C3AED' },
     { name: 'Cyan', value: '#0EA5E9' },
@@ -306,82 +319,65 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
   return (
     <div className="max-w-4xl">
       <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6">
-        <h3 className="mb-1 text-lg font-semibold text-gray-900">
-          Basic Tenant Setup
-        </h3>
-        <p className="mb-6 text-sm text-gray-600">
-          Core business details and branding
-        </p>
+        <h3 className="mb-1 text-lg font-semibold text-gray-900">Branding</h3>
+        <p className="mb-6 text-sm text-gray-600">Tenant identity, logo and colour scheme</p>
 
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <Label className="text-sm font-medium text-gray-900">
-                Tenant name
-              </Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1.5"
-              />
+              <Label className="text-sm font-medium text-gray-900">Tenant name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5" />
             </div>
             <div>
-              <Label className="text-sm font-medium text-gray-900">
-                Slug (read-only)
-              </Label>
+              <Label className="text-sm font-medium text-gray-900">Slug (read-only)</Label>
               <Input value={tenant.slug} disabled className="mt-1.5 bg-gray-50" />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <Label className="text-sm font-medium text-gray-900">Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-900">
-                Primary color
-              </Label>
-              <div className="mt-1.5 flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  {colorPresets.map((c) => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => setPrimaryColor(c.value)}
-                      className={`h-8 w-8 rounded-md border-2 transition-all ${
-                        primaryColor === c.value
-                          ? 'border-blue-600 scale-110'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      style={{ backgroundColor: c.value }}
-                      title={c.name}
-                    />
-                  ))}
-                </div>
-                <Input
-                  value={primaryColor}
-                  onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="max-w-[120px]"
-                />
+          <div>
+            <Label className="text-sm font-medium text-gray-900">Status</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="mt-1.5 max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium text-gray-900">Primary color</Label>
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="flex gap-1.5">
+                {colorPresets.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setPrimaryColor(c.value)}
+                    className={`h-8 w-8 rounded-md border-2 transition-all ${
+                      primaryColor === c.value
+                        ? 'border-blue-600 scale-110'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    style={{ backgroundColor: c.value }}
+                    title={c.name}
+                  />
+                ))}
               </div>
+              <Input
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                className="max-w-[120px]"
+              />
             </div>
           </div>
 
           <div>
-            <Label className="text-sm font-medium text-gray-900">
-              Logo URL
-            </Label>
+            <Label className="text-sm font-medium text-gray-900">Logo URL</Label>
             <div className="mt-1.5 flex items-center gap-4">
               <Input
                 value={logoUrl}
@@ -400,11 +396,8 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
           </div>
 
           <div>
-            <Label className="text-sm font-medium text-gray-900">
-              Support email
-            </Label>
+            <Label className="text-sm font-medium text-gray-900">Support email</Label>
             <Input
-              type="email"
               value={supportEmail}
               onChange={(e) => setSupportEmail(e.target.value)}
               placeholder="support@example.com"
@@ -414,9 +407,7 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
 
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <Label className="text-sm font-medium text-gray-900">
-                Public site URL
-              </Label>
+              <Label className="text-sm font-medium text-gray-900">Public site URL</Label>
               <Input
                 value={publicSiteUrl}
                 onChange={(e) => setPublicSiteUrl(e.target.value)}
@@ -425,13 +416,11 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
               />
             </div>
             <div>
-              <Label className="text-sm font-medium text-gray-900">
-                CMS domain
-              </Label>
+              <Label className="text-sm font-medium text-gray-900">CMS domain</Label>
               <Input
                 value={cmsDomain}
                 onChange={(e) => setCmsDomain(e.target.value)}
-                placeholder="cms.example.com"
+                placeholder="tenant.serviettelab.com"
                 className="mt-1.5"
               />
             </div>
@@ -444,9 +433,7 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
             disabled={saveMutation.isPending}
             className="bg-[#7c3aed] hover:bg-[#6d28d9]"
           >
-            {saveMutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save changes
           </Button>
         </div>
@@ -455,10 +442,99 @@ function BrandingTab({ tenant }: { tenant: Tenant }) {
       {tenant.createdAt && (
         <p className="text-sm text-gray-500">
           Created: {new Date(tenant.createdAt).toLocaleString()}
-          {tenant.updatedAt &&
-            ` | Updated: ${new Date(tenant.updatedAt).toLocaleString()}`}
+          {tenant.updatedAt && ` | Updated: ${new Date(tenant.updatedAt).toLocaleString()}`}
         </p>
       )}
+    </div>
+  )
+}
+
+/* ================================================================== */
+/*  CONFIGURATION TAB                                                  */
+/* ================================================================== */
+
+function ConfigurationTab({ tenant }: { tenant: Tenant }) {
+  const [supportEmail, setSupportEmail] = useState(tenant.branding?.supportEmail ?? '')
+  const [publicSiteUrl, setPublicSiteUrl] = useState(tenant.branding?.publicSiteUrl ?? '')
+  const [cmsDomain, setCmsDomain] = useState(tenant.branding?.cmsDomain ?? '')
+
+  const saveMutation = useTenantSaveMutation(tenant.id)
+
+  const handleSave = () => {
+    saveMutation.mutate({
+      name: tenant.name,
+      status: tenant.status,
+      branding: {
+        primaryColor: tenant.branding?.primaryColor ?? null,
+        logoUrl: tenant.branding?.logoUrl ?? null,
+        supportEmail: supportEmail || null,
+        publicSiteUrl: publicSiteUrl || null,
+        cmsDomain: cmsDomain || null,
+      },
+    })
+  }
+
+  return (
+    <div className="max-w-4xl">
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6">
+        <h3 className="mb-1 text-lg font-semibold text-gray-900">Configuration</h3>
+        <p className="mb-6 text-sm text-gray-600">
+          Domains, URLs and contact settings for this tenant
+        </p>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <Label className="text-sm font-medium text-gray-900">CMS domain</Label>
+              <p className="mb-1.5 mt-0.5 text-xs text-gray-500">
+                Subdomain used to access the CMS (e.g.{' '}
+                <code className="font-mono">roomchang.serviettelab.com</code>)
+              </p>
+              <Input
+                value={cmsDomain}
+                onChange={(e) => setCmsDomain(e.target.value)}
+                placeholder="tenant.serviettelab.com"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-900">Public site URL</Label>
+              <p className="mb-1.5 mt-0.5 text-xs text-gray-500">
+                The live website this tenant's CMS publishes to
+              </p>
+              <Input
+                value={publicSiteUrl}
+                onChange={(e) => setPublicSiteUrl(e.target.value)}
+                placeholder="https://www.example.com"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium text-gray-900">Support email</Label>
+            <p className="mb-1.5 mt-0.5 text-xs text-gray-500">
+              Shown to tenant users when they need help
+            </p>
+            <Input
+              type="email"
+              value={supportEmail}
+              onChange={(e) => setSupportEmail(e.target.value)}
+              placeholder="support@example.com"
+              className="max-w-sm"
+            />
+          </div>
+        </div>
+
+        <div className="mt-8 flex items-center gap-3 border-t border-gray-200 pt-6">
+          <Button
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
+            className="bg-[#7c3aed] hover:bg-[#6d28d9]"
+          >
+            {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save changes
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -723,7 +799,7 @@ function DomainsTab({ tenant }: { tenant: Tenant }) {
           <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-5 py-6 text-center">
             <p className="text-sm font-medium text-gray-700">No CMS domain set</p>
             <p className="mt-1 text-sm text-gray-500">
-              Go to the <strong>Branding</strong> tab and set the CMS Domain field, then come back here.
+              Go to the <strong>Configuration</strong> tab and set the CMS Domain field, then come back here.
             </p>
           </div>
         ) : (
