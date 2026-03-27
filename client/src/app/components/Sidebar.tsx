@@ -15,9 +15,9 @@ export function Sidebar() {
       <div className="flex h-full flex-col">
         <div className="border-b border-[#d2d8e0] px-4 py-2 overflow-hidden">
           <img
-            src="/ep.svg"
-            alt="Think logo"
-            className="w-full h-16 object-cover object-[50%_40%]"
+            src="/serviette-logo.png"
+            alt="Serviette Lab"
+            className="max-w-[180px] h-auto object-contain"
           />
         </div>
 
