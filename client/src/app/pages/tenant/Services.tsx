@@ -43,12 +43,10 @@ import {
 } from '@/app/components/ui/sheet'
 
 interface Service {
-  id: number
+  id: string
   name: string
   slug: string
   description?: string | null
-  price?: string | null
-  priceNote?: string | null
   features: string[]
   category?: string | null
   isFeatured: boolean
@@ -61,8 +59,6 @@ interface Service {
 interface ServiceFormData {
   name: string
   description: string
-  price: string
-  priceNote: string
   featuresInput: string
   category: string
   isFeatured: boolean
@@ -73,8 +69,6 @@ interface ServiceFormData {
 const emptyForm: ServiceFormData = {
   name: '',
   description: '',
-  price: '',
-  priceNote: '',
   featuresInput: '',
   category: '',
   isFeatured: false,
@@ -86,8 +80,6 @@ function serviceToForm(s: Service): ServiceFormData {
   return {
     name: s.name ?? '',
     description: s.description ?? '',
-    price: s.price ?? '',
-    priceNote: s.priceNote ?? '',
     featuresInput: Array.isArray(s.features) ? s.features.join(', ') : '',
     category: s.category ?? '',
     isFeatured: Boolean(s.isFeatured),
@@ -97,10 +89,7 @@ function serviceToForm(s: Service): ServiceFormData {
 }
 
 function parseFeatures(input: string): string[] {
-  return input
-    .split(',')
-    .map((f) => f.trim())
-    .filter(Boolean)
+  return input.split(',').map((f) => f.trim()).filter(Boolean)
 }
 
 export function Services() {
@@ -123,8 +112,6 @@ export function Services() {
         body: {
           name: data.name,
           description: data.description || null,
-          price: data.price || null,
-          priceNote: data.priceNote || null,
           features: parseFeatures(data.featuresInput),
           category: data.category || null,
           isFeatured: data.isFeatured,
@@ -142,14 +129,12 @@ export function Services() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ServiceFormData }) =>
+    mutationFn: ({ id, data }: { id: string; data: ServiceFormData }) =>
       api(`/api/tenant/services/${id}`, {
         method: 'PUT',
         body: {
           name: data.name,
           description: data.description || null,
-          price: data.price || null,
-          priceNote: data.priceNote || null,
           features: parseFeatures(data.featuresInput),
           category: data.category || null,
           isFeatured: data.isFeatured,
@@ -168,7 +153,7 @@ export function Services() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) =>
+    mutationFn: (id: string) =>
       api(`/api/tenant/services/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenant', 'services'] })
@@ -208,7 +193,7 @@ export function Services() {
     <div className="p-6 lg:p-8 space-y-6">
       <PageHeader
         title="Services"
-        subtitle="Manage your services and pricing"
+        subtitle="Manage the services listed on the website"
         breadcrumbs={[{ label: 'Overview', href: '/' }, { label: 'Services' }]}
         actions={
           <Button onClick={openAdd} size="sm">
@@ -232,7 +217,6 @@ export function Services() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Price</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Featured</TableHead>
                 <TableHead>Status</TableHead>
@@ -242,17 +226,10 @@ export function Services() {
             <TableBody>
               {services.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell className="font-medium text-gray-900">{s.name}</TableCell>
-                  <TableCell className="text-gray-500">
-                    {s.price ? (
-                      <div>
-                        <span>{s.price}</span>
-                        {s.priceNote && (
-                          <span className="ml-1 text-xs text-gray-400">{s.priceNote}</span>
-                        )}
-                      </div>
-                    ) : (
-                      '--'
+                  <TableCell>
+                    <div className="font-medium text-gray-900">{s.name}</div>
+                    {s.description && (
+                      <div className="mt-0.5 text-xs text-gray-400 line-clamp-1">{s.description}</div>
                     )}
                   </TableCell>
                   <TableCell className="text-gray-500">{s.category || '--'}</TableCell>
@@ -299,7 +276,7 @@ export function Services() {
           <SheetHeader>
             <SheetTitle>{editTarget ? 'Edit Service' : 'Add Service'}</SheetTitle>
             <SheetDescription>
-              {editTarget ? 'Update service details.' : 'Fill in the details for the new service.'}
+              {editTarget ? 'Update service details.' : 'Add a new service to the website.'}
             </SheetDescription>
           </SheetHeader>
 
@@ -310,7 +287,7 @@ export function Services() {
                 id="svc-name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Website Design"
+                placeholder="Dental Implants"
               />
             </div>
 
@@ -320,40 +297,18 @@ export function Services() {
                 id="svc-description"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Describe this service..."
+                placeholder="Brief description of this service..."
                 rows={3}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="svc-price">Price</Label>
-                <Input
-                  id="svc-price"
-                  value={form.price}
-                  onChange={(e) => setForm({ ...form, price: e.target.value })}
-                  placeholder="$99/month"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="svc-price-note">Price Note</Label>
-                <Input
-                  id="svc-price-note"
-                  value={form.priceNote}
-                  onChange={(e) => setForm({ ...form, priceNote: e.target.value })}
-                  placeholder="billed annually"
-                />
-              </div>
-            </div>
-
             <div className="space-y-1.5">
-              <Label htmlFor="svc-features">Features</Label>
+              <Label htmlFor="svc-features">Key Features</Label>
               <Input
                 id="svc-features"
                 value={form.featuresInput}
                 onChange={(e) => setForm({ ...form, featuresInput: e.target.value })}
-                placeholder="Feature 1, Feature 2, Feature 3"
+                placeholder="Single Implant, Implant Bridge, All-on-4"
               />
               <p className="text-xs text-gray-400">Separate features with commas</p>
             </div>
@@ -364,7 +319,7 @@ export function Services() {
                 id="svc-category"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
-                placeholder="Design, Development, Consulting..."
+                placeholder="Implants & Reconstruction, Cosmetic, Orthodontics..."
               />
             </div>
 
