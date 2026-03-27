@@ -1,4 +1,5 @@
 import express from 'express';
+import { db } from '../db.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { requireTenantContext } from '../middleware/tenantContext.js';
 
@@ -9,14 +10,31 @@ router.use(requireTenantContext);
 
 // ---------------------------------------------------------------------------
 // Supabase REST proxy for hero_slides
-// The SUPABASE_URL and SUPABASE_SERVICE_KEY env vars must be set on the server.
-// The service key is preferred for writes; falls back to anon key.
+//
+// Credentials are read from tenant_settings.settings_json → supabase { url, serviceKey, anonKey }
+// This means each tenant can have their OWN Supabase project.
+// Falls back to server-level env vars (SUPABASE_URL / SUPABASE_SERVICE_KEY)
+// if no tenant-specific config is present — useful for the default tenant.
 // ---------------------------------------------------------------------------
 
-function getSupabaseConfig() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-  return { url, key };
+function getSupabaseConfig(tenantId) {
+  // 1. Try per-tenant settings
+  try {
+    const row = db.prepare('SELECT settings_json FROM tenant_settings WHERE tenant_id = ?').get(tenantId);
+    if (row) {
+      const settings = JSON.parse(row.settings_json || '{}');
+      const sb = settings.supabase ?? {};
+      if (sb.url && (sb.serviceKey || sb.anonKey)) {
+        return { url: sb.url, key: sb.serviceKey || sb.anonKey };
+      }
+    }
+  } catch { /* ignore parse errors */ }
+
+  // 2. Fall back to server-level env vars
+  return {
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY,
+  };
 }
 
 function sbHeaders(key) {
@@ -30,7 +48,7 @@ function sbHeaders(key) {
 
 // GET /api/tenant/hero/slides
 router.get('/slides', async (req, res) => {
-  const { url, key } = getSupabaseConfig();
+  const { url, key } = getSupabaseConfig(req.tenant.id);
   if (!url || !key) return res.json([]);
   try {
     const resp = await fetch(
@@ -48,7 +66,7 @@ router.get('/slides', async (req, res) => {
 
 // POST /api/tenant/hero/slides
 router.post('/slides', async (req, res) => {
-  const { url, key } = getSupabaseConfig();
+  const { url, key } = getSupabaseConfig(req.tenant.id);
   if (!url || !key) return res.status(503).json({ error: 'Supabase not configured' });
 
   const {
@@ -96,7 +114,7 @@ router.post('/slides', async (req, res) => {
 
 // PUT /api/tenant/hero/slides/:id
 router.put('/slides/:id', async (req, res) => {
-  const { url, key } = getSupabaseConfig();
+  const { url, key } = getSupabaseConfig(req.tenant.id);
   if (!url || !key) return res.status(503).json({ error: 'Supabase not configured' });
 
   const { id } = req.params;
@@ -125,7 +143,7 @@ router.put('/slides/:id', async (req, res) => {
 
 // DELETE /api/tenant/hero/slides/:id
 router.delete('/slides/:id', async (req, res) => {
-  const { url, key } = getSupabaseConfig();
+  const { url, key } = getSupabaseConfig(req.tenant.id);
   if (!url || !key) return res.status(503).json({ error: 'Supabase not configured' });
 
   const { id } = req.params;
