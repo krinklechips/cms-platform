@@ -63,9 +63,9 @@ export function PlatformLogin() {
         {/* Logo */}
         <div className="mb-8 flex justify-center">
           <img
-            src="/ep.svg"
-            alt="EP CMS logo"
-            className="h-24 w-auto object-contain"
+            src="/serviette-logo.png"
+            alt="Serviette Lab"
+            className="h-16 w-auto object-contain"
           />
         </div>
 

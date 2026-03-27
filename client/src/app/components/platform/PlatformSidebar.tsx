@@ -31,9 +31,9 @@ export function PlatformSidebar() {
       {/* Logo */}
       <div className="border-b border-[#d2d8e0] flex items-center justify-center p-3" style={{ minHeight: '80px' }}>
         <img
-          src="/ep.svg"
-          alt="EP CMS logo"
-          className="w-full h-full max-h-[60px] object-contain"
+          src="/serviette-logo.png"
+          alt="Serviettelab logo"
+          className="w-full h-full max-h-[52px] object-contain"
         />
       </div>
 
