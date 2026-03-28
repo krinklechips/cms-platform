@@ -252,15 +252,15 @@ export function Services() {
           <p className="mt-1 text-xs text-gray-400">Use the button above to add your first service.</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-gray-200">
+        <div className="rounded-lg border border-gray-200 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Featured</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-32 text-right">Actions</TableHead>
+                <TableHead className="min-w-[200px]">Name</TableHead>
+                <TableHead className="min-w-[140px]">Category</TableHead>
+                <TableHead className="w-24">Featured</TableHead>
+                <TableHead className="w-24">Status</TableHead>
+                <TableHead className="w-28 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -269,10 +269,10 @@ export function Services() {
                   <TableCell>
                     <div className="font-medium text-gray-900">{s.name}</div>
                     {s.description && (
-                      <div className="mt-0.5 text-xs text-gray-400 line-clamp-1">{s.description}</div>
+                      <div className="mt-0.5 max-w-xs text-xs text-gray-400 line-clamp-1">{s.description}</div>
                     )}
                   </TableCell>
-                  <TableCell className="text-gray-500">{s.category || '--'}</TableCell>
+                  <TableCell className="text-gray-500 whitespace-nowrap">{s.category || '--'}</TableCell>
                   <TableCell>
                     {s.isFeatured ? (
                       <Badge variant="secondary" className="text-xs">Featured</Badge>

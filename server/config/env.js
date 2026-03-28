@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 
-dotenv.config({ path: process.env.PLATFORM_ENV_PATH || '.env.local' });
+dotenv.config({ path: process.env.PLATFORM_ENV_PATH || '.env' });
 
 function splitCsv(value) {
   return String(value || '')

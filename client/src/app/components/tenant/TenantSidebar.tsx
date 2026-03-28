@@ -196,9 +196,11 @@ export function TenantSidebar() {
         </div>
 
         {/* SEO & MARKETING section */}
+        {filteredItems.some((item) => item.children) && (
         <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
           SEO & Marketing
         </p>
+        )}
         <div className="space-y-1">
           {filteredItems
             .filter((item) => item.children)

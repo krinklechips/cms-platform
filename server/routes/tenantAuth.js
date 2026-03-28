@@ -25,19 +25,23 @@ function readTenantModuleAccess(tenantId) {
     libraries: true,
     annualReports: true,
     navigationTabs: true,
+    pages: true,
+    seo: true,
+    mediaLibrary: true,
+    navigation: true,
   };
   const row = db.prepare('SELECT settings_json FROM tenant_settings WHERE tenant_id = ?').get(tenantId);
   if (!row?.settings_json) return fallback;
   try {
     const parsed = JSON.parse(row.settings_json || '{}') || {};
     const source = parsed.moduleAccess && typeof parsed.moduleAccess === 'object' ? parsed.moduleAccess : {};
-    return {
-      homepagePlacements: source.homepagePlacements !== false,
-      articles: source.articles !== false,
-      libraries: source.libraries !== false,
-      annualReports: source.annualReports !== false,
-      navigationTabs: source.navigationTabs !== false,
-    };
+    const result = { ...fallback };
+    for (const key of Object.keys(fallback)) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        result[key] = source[key] !== false;
+      }
+    }
+    return result;
   } catch {
     return fallback;
   }

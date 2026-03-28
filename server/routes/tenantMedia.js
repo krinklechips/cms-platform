@@ -108,7 +108,7 @@ router.post('/upload', async (req, res) => {
 
     const ext = extForMime(mime);
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`;
-    const objectKey = `tenants/${req.tenant.slug}/media/${filename}`;
+    const objectKey = `${req.tenant.slug}/${filename}`;
 
     const buffer = await fs.promises.readFile(tmpFilePath);
     await uploadBufferToR2({ objectKey, bytes: buffer, contentType: mime });
