@@ -29,6 +29,12 @@ function readTenantModuleAccess(tenantId) {
     seo: true,
     mediaLibrary: true,
     navigation: true,
+    heroImages: true,
+    teamMembers: true,
+    testimonials: true,
+    services: true,
+    featuredProducts: true,
+    contactInfo: true,
   };
   const row = db.prepare('SELECT settings_json FROM tenant_settings WHERE tenant_id = ?').get(tenantId);
   if (!row?.settings_json) return fallback;

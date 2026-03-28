@@ -31,6 +31,12 @@ function defaultModuleAccess() {
     seo: true,
     mediaLibrary: true,
     navigation: true,
+    heroImages: true,
+    teamMembers: true,
+    testimonials: true,
+    services: true,
+    featuredProducts: true,
+    contactInfo: true,
   };
 }
 
