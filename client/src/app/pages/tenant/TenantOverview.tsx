@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router'
 import { api } from '@/lib/api'
 import { useTenantAuth } from '@/lib/tenant-context'
 import { PageHeader } from '@/app/components/shared/PageHeader'
-import { FileText, Image, FileBarChart, Layers, Users, Briefcase, MessageSquare } from 'lucide-react'
+import { FileText, Image, Layers, Users, Briefcase, MessageSquare } from 'lucide-react'
 import { Card, CardContent } from '@/app/components/ui/card'
 import { Badge } from '@/app/components/ui/badge'
 import { Separator } from '@/app/components/ui/separator'
@@ -160,9 +161,9 @@ export function TenantOverview() {
             </Card>
           )
           return stat.href ? (
-            <a key={stat.label} href={stat.href} className="block">
+            <Link key={stat.label} to={stat.href} className="block">
               {content}
-            </a>
+            </Link>
           ) : (
             <div key={stat.label}>{content}</div>
           )
