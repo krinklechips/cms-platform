@@ -197,31 +197,236 @@ const TEAM_MEMBERS = [
   },
 ];
 
+// ── Pages (Website Structure) ────────────────────────────────────
+const PAGES = [
+  {
+    title: 'Home',
+    slug: 'home',
+    status: 'published',
+    template: 'home',
+    sortOrder: 0,
+    showInNav: true,
+    navLabel: 'Home',
+    seoTitle: 'Roomchang Dental Hospital — International Dental Care in Cambodia',
+    seoDescription: 'Cambodia\'s leading international dental hospital. World-class implants, orthodontics, cosmetic dentistry, and full mouth reconstruction at affordable prices.',
+  },
+  {
+    title: 'Services',
+    slug: 'services',
+    status: 'published',
+    template: 'default',
+    sortOrder: 1,
+    showInNav: true,
+    navLabel: 'Services',
+    seoTitle: 'Dental Services — Roomchang Dental Hospital',
+    seoDescription: 'Full range of dental services: implants, crowns, orthodontics, cosmetic dentistry, oral surgery, pediatric care, and more.',
+  },
+  // Sub-service pages under Services
+  {
+    title: 'Dental Implants',
+    slug: 'services/dental-implants',
+    status: 'published',
+    template: 'service-detail',
+    sortOrder: 0,
+    showInNav: true,
+    navLabel: 'Dental Implants',
+    parentSlug: 'services',
+    seoTitle: 'Dental Implants — Roomchang Dental Hospital',
+    seoDescription: 'Permanent tooth replacement with titanium implants. Single implants, implant bridges, and All-on-4/6/8 full-arch solutions.',
+  },
+  {
+    title: 'Crowns & Bridges',
+    slug: 'services/dental-crowns',
+    status: 'published',
+    template: 'service-detail',
+    sortOrder: 1,
+    showInNav: true,
+    navLabel: 'Crowns & Bridges',
+    parentSlug: 'services',
+    seoTitle: 'Dental Crowns & Bridges — Roomchang Dental Hospital',
+    seoDescription: 'High-strength E-Max and zirconia crowns with digital design and in-house CAD/CAM milling.',
+  },
+  {
+    title: 'Orthodontics',
+    slug: 'services/orthodontics',
+    status: 'published',
+    template: 'service-detail',
+    sortOrder: 2,
+    showInNav: true,
+    navLabel: 'Orthodontics',
+    parentSlug: 'services',
+    seoTitle: 'Orthodontics — Roomchang Dental Hospital',
+    seoDescription: 'Clear aligners, Invisalign, metal and ceramic braces for all ages.',
+  },
+  {
+    title: 'Cosmetic Dentistry',
+    slug: 'services/cosmetic-dentistry',
+    status: 'published',
+    template: 'service-detail',
+    sortOrder: 3,
+    showInNav: true,
+    navLabel: 'Cosmetic Dentistry',
+    parentSlug: 'services',
+    seoTitle: 'Cosmetic Dentistry — Roomchang Dental Hospital',
+    seoDescription: 'Veneers, teeth whitening, smile design, and aesthetic bonding.',
+  },
+  {
+    title: 'Full Mouth Reconstruction',
+    slug: 'services/full-mouth-reconstruction',
+    status: 'published',
+    template: 'service-detail',
+    sortOrder: 4,
+    showInNav: true,
+    navLabel: 'Full Mouth Reconstruction',
+    parentSlug: 'services',
+    seoTitle: 'Full Mouth Reconstruction — Roomchang Dental Hospital',
+    seoDescription: 'Comprehensive treatment planning for complete mouth restoration using advanced techniques.',
+  },
+  {
+    title: 'Oral Surgery',
+    slug: 'services/oral-surgery',
+    status: 'published',
+    template: 'service-detail',
+    sortOrder: 5,
+    showInNav: true,
+    navLabel: 'Oral Surgery',
+    parentSlug: 'services',
+    seoTitle: 'Oral Surgery — Roomchang Dental Hospital',
+    seoDescription: 'Wisdom tooth extraction, bone grafting, sinus lifts, and surgical procedures.',
+  },
+  {
+    title: 'Pediatric Dentistry',
+    slug: 'services/pediatric-dentistry',
+    status: 'published',
+    template: 'service-detail',
+    sortOrder: 6,
+    showInNav: true,
+    navLabel: 'Pediatric Dentistry',
+    parentSlug: 'services',
+    seoTitle: 'Pediatric Dentistry — Roomchang Dental Hospital',
+    seoDescription: 'Child-friendly dental care from infancy through adolescence.',
+  },
+  {
+    title: 'Sleep Apnea & Snoring',
+    slug: 'services/sleep-apnea',
+    status: 'published',
+    template: 'service-detail',
+    sortOrder: 7,
+    showInNav: true,
+    navLabel: 'Sleep Apnea',
+    parentSlug: 'services',
+    seoTitle: 'Sleep Apnea Treatment — Roomchang Dental Hospital',
+    seoDescription: 'Non-surgical oral appliance therapy for snoring and obstructive sleep apnea.',
+  },
+  {
+    title: 'Teeth Whitening',
+    slug: 'services/teeth-whitening',
+    status: 'published',
+    template: 'service-detail',
+    sortOrder: 8,
+    showInNav: true,
+    navLabel: 'Teeth Whitening',
+    parentSlug: 'services',
+    seoTitle: 'Professional Teeth Whitening — Roomchang Dental Hospital',
+    seoDescription: 'Beyond professional whitening — up to 14 shades brighter in a single session.',
+  },
+  // Top-level pages
+  {
+    title: 'About',
+    slug: 'about',
+    status: 'published',
+    template: 'default',
+    sortOrder: 2,
+    showInNav: true,
+    navLabel: 'About',
+    seoTitle: 'About Roomchang Dental Hospital',
+    seoDescription: 'Founded in 1996, Roomchang is Cambodia\'s leading international dental hospital with 6 branches and 40+ dentists.',
+  },
+  {
+    title: 'Our Team',
+    slug: 'team',
+    status: 'published',
+    template: 'default',
+    sortOrder: 3,
+    showInNav: true,
+    navLabel: 'Our Team',
+    seoTitle: 'Our Dental Team — Roomchang Dental Hospital',
+    seoDescription: 'Meet our team of 40+ specialist dentists and support staff.',
+  },
+  {
+    title: 'Technology',
+    slug: 'technology',
+    status: 'published',
+    template: 'default',
+    sortOrder: 4,
+    showInNav: true,
+    navLabel: 'Technology',
+    seoTitle: 'Dental Technology — Roomchang Dental Hospital',
+    seoDescription: 'CBCT imaging, CAD/CAM milling, digital smile design, and in-house dental lab.',
+  },
+  {
+    title: 'International Patients',
+    slug: 'international',
+    status: 'published',
+    template: 'default',
+    sortOrder: 5,
+    showInNav: true,
+    navLabel: 'International Patients',
+    seoTitle: 'International Patients — Roomchang Dental Hospital',
+    seoDescription: 'Dental tourism in Cambodia. Cost comparison, treatment planning, and patient coordination for international visitors.',
+  },
+  {
+    title: 'Pricing',
+    slug: 'pricing',
+    status: 'published',
+    template: 'default',
+    sortOrder: 6,
+    showInNav: true,
+    navLabel: 'Pricing',
+    seoTitle: 'Dental Pricing — Roomchang Dental Hospital',
+    seoDescription: 'Transparent pricing for all dental treatments. Compare with international rates.',
+  },
+  {
+    title: 'Clinical Results',
+    slug: 'clinical-results',
+    status: 'published',
+    template: 'default',
+    sortOrder: 7,
+    showInNav: true,
+    navLabel: 'Clinical Results',
+    seoTitle: 'Clinical Results & Case Gallery — Roomchang Dental Hospital',
+    seoDescription: 'Before and after dental treatment photos showcasing our clinical results.',
+  },
+  {
+    title: 'Contact',
+    slug: 'contact',
+    status: 'published',
+    template: 'default',
+    sortOrder: 8,
+    showInNav: true,
+    navLabel: 'Contact',
+    seoTitle: 'Contact Roomchang Dental Hospital',
+    seoDescription: 'Book an appointment or enquire about treatment. 6 branches across Phnom Penh and Siem Reap.',
+  },
+];
+
 // ── Main ──────────────────────────────────────────────────────────
 
-console.log('🏥 Roomchang CMS Seed Script');
+console.log('Roomchang CMS Seed Script');
 console.log(`   Target: ${BASE}`);
 console.log('');
 
-console.log('📋 Data to seed:');
-console.log(`   • ${SERVICES.length} services`);
-console.log(`   • ${TESTIMONIALS.length} testimonials`);
-console.log(`   • ${TEAM_MEMBERS.length} team members`);
-console.log('');
-console.log('⚠️  This script requires the platform-level seed endpoint.');
-console.log('   Run: node scripts/seed-roomchang.mjs');
+console.log('Data to seed:');
+console.log(`   ${PAGES.length} pages`);
 console.log('');
 
-// We'll POST to a platform-level bulk seed endpoint
 async function seed() {
   const payload = {
     tenantSlug: 'roomchang',
-    services: SERVICES,
-    testimonials: TESTIMONIALS,
-    teamMembers: TEAM_MEMBERS,
+    pages: PAGES,
   };
 
-  console.log('🚀 Seeding data...');
+  console.log('Seeding pages...');
 
   const res = await fetch(`${BASE}/api/platform/seed`, {
     method: 'POST',
@@ -232,12 +437,10 @@ async function seed() {
   const data = await res.json();
 
   if (res.ok) {
-    console.log('✅ Seed complete!');
-    console.log(`   Services: ${data.services ?? 0}`);
-    console.log(`   Testimonials: ${data.testimonials ?? 0}`);
-    console.log(`   Team members: ${data.teamMembers ?? 0}`);
+    console.log('Seed complete!');
+    console.log(`   Pages: ${data.pages ?? 0}`);
   } else {
-    console.error('❌ Seed failed:', data.error || res.statusText);
+    console.error('Seed failed:', data.error || res.statusText);
   }
 }
 
