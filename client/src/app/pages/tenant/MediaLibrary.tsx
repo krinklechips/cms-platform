@@ -275,7 +275,7 @@ export function MediaLibrary() {
               <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
               <button
                 onClick={() => setCurrentFolder(path)}
-                className={`font-medium transition-colors ${isLast ? 'text-gray-900' : 'text-blue-600 hover:text-blue-700'}`}
+                className={`cursor-pointer font-medium transition-colors ${isLast ? 'text-gray-900' : 'text-blue-600 hover:text-blue-700'}`}
               >
                 {part}
               </button>
@@ -293,7 +293,7 @@ export function MediaLibrary() {
               <button
                 key={folder}
                 onClick={() => setCurrentFolder(fullPath)}
-                className="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:bg-gray-50 hover:border-gray-300"
+                className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:bg-gray-50 hover:border-gray-300"
               >
                 <FolderOpen className="h-5 w-5 shrink-0 text-amber-500" />
                 <span className="truncate text-sm font-medium text-gray-700">{folder}</span>
@@ -305,13 +305,14 @@ export function MediaLibrary() {
 
       {/* Upload zone */}
       <div
+        onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault()
           setDragging(true)
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
-        className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
+        className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
           dragging
             ? 'border-blue-400 bg-blue-50'
             : 'border-gray-300 bg-gray-50 hover:border-gray-400'
