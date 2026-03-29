@@ -97,15 +97,19 @@ export async function listR2Objects(prefix = '', delimiter = '/') {
   const bucket = env.R2_BUCKET_NAME;
   const host = new URL(endpoint).host;
 
-  const queryParams = new URLSearchParams({
-    'list-type': '2',
-    prefix,
-    delimiter,
-    'max-keys': '1000',
-  });
-  const queryString = queryParams.toString();
+  // Query params MUST be sorted alphabetically for AWS SigV4 canonical request
+  const params = [
+    ['delimiter', delimiter],
+    ['list-type', '2'],
+    ['max-keys', '1000'],
+    ['prefix', prefix],
+  ];
+  params.sort((a, b) => a[0].localeCompare(b[0]));
+  const canonicalQueryString = params
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join('&');
   const pathname = `/${bucket}`;
-  const url = `${endpoint}${pathname}?${queryString}`;
+  const url = `${endpoint}${pathname}?${canonicalQueryString}`;
 
   const now = new Date();
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
@@ -126,7 +130,7 @@ export async function listR2Objects(prefix = '', delimiter = '/') {
   const canonicalHeaders = sortedHeaderKeys.map((k) => `${k}:${String(headers[k]).trim()}\n`).join('');
   const signedHeaders = sortedHeaderKeys.join(';');
 
-  const canonicalRequest = ['GET', pathname, queryString, canonicalHeaders, signedHeaders, payloadHash].join('\n');
+  const canonicalRequest = ['GET', pathname, canonicalQueryString, canonicalHeaders, signedHeaders, payloadHash].join('\n');
   const stringToSign = [algorithm, amzDate, credentialScope, sha256Hex(canonicalRequest)].join('\n');
 
   const kDate = hmac(`AWS4${env.R2_SECRET_ACCESS_KEY}`, dateStamp);
