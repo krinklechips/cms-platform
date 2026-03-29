@@ -225,7 +225,7 @@ app.use('/api/platform/placements', platformPlacementsRouter);
 app.use('/api/platform/tenant-users', platformTenantUsersRouter);
 app.use('/api/platform/backups', platformBackupsRouter);
 app.use('/api/platform', platformOnboardingRouter);
-app.use('/api/platform', platformSeedRouter);
+app.use('/api/internal', platformSeedRouter);
 app.use('/api/tenant/articles', tenantArticlesRouter);
 app.use('/api/tenant/media', tenantMediaRouter);
 app.use('/api/tenant/annual-reports', tenantAnnualReportsRouter);

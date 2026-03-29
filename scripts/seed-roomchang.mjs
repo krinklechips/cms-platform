@@ -428,7 +428,7 @@ async function seed() {
 
   console.log('Seeding pages...');
 
-  const res = await fetch(`${BASE}/api/platform/seed`, {
+  const res = await fetch(`${BASE}/api/internal/seed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
