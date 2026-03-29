@@ -86,6 +86,92 @@ async function r2Request({ method, objectKey, body, contentType = '', contentLen
   });
 }
 
+/**
+ * List objects in R2 bucket under a given prefix.
+ * Uses S3 ListObjectsV2 API.
+ */
+export async function listR2Objects(prefix = '', delimiter = '/') {
+  if (!isR2Configured()) throw new Error('R2 is not configured');
+
+  const endpoint = env.R2_S3_ENDPOINT.replace(/\/$/, '');
+  const bucket = env.R2_BUCKET_NAME;
+  const host = new URL(endpoint).host;
+
+  const queryParams = new URLSearchParams({
+    'list-type': '2',
+    prefix,
+    delimiter,
+    'max-keys': '1000',
+  });
+  const queryString = queryParams.toString();
+  const pathname = `/${bucket}`;
+  const url = `${endpoint}${pathname}?${queryString}`;
+
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const dateStamp = amzDate.slice(0, 8);
+  const region = 'auto';
+  const service = 's3';
+  const algorithm = 'AWS4-HMAC-SHA256';
+  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const payloadHash = sha256Hex('');
+
+  const headers = {
+    host,
+    'x-amz-content-sha256': payloadHash,
+    'x-amz-date': amzDate,
+  };
+
+  const sortedHeaderKeys = Object.keys(headers).sort();
+  const canonicalHeaders = sortedHeaderKeys.map((k) => `${k}:${String(headers[k]).trim()}\n`).join('');
+  const signedHeaders = sortedHeaderKeys.join(';');
+
+  const canonicalRequest = ['GET', pathname, queryString, canonicalHeaders, signedHeaders, payloadHash].join('\n');
+  const stringToSign = [algorithm, amzDate, credentialScope, sha256Hex(canonicalRequest)].join('\n');
+
+  const kDate = hmac(`AWS4${env.R2_SECRET_ACCESS_KEY}`, dateStamp);
+  const kRegion = hmac(kDate, region);
+  const kService = hmac(kRegion, service);
+  const kSigning = hmac(kService, 'aws4_request');
+  const signature = hmac(kSigning, stringToSign, 'hex');
+
+  headers.authorization =
+    `${algorithm} Credential=${env.R2_ACCESS_KEY_ID}/${credentialScope}, ` +
+    `SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const res = await fetch(url, { method: 'GET', headers });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`R2 list failed (${res.status})${text ? `: ${text.slice(0, 300)}` : ''}`);
+  }
+
+  const xml = await res.text();
+
+  // Parse folders (CommonPrefixes)
+  const folders = [];
+  const prefixRegex = /<CommonPrefixes>\s*<Prefix>([^<]+)<\/Prefix>\s*<\/CommonPrefixes>/g;
+  let match;
+  while ((match = prefixRegex.exec(xml)) !== null) {
+    folders.push(match[1]);
+  }
+
+  // Parse files (Contents)
+  const files = [];
+  const contentsRegex = /<Contents>([\s\S]*?)<\/Contents>/g;
+  while ((match = contentsRegex.exec(xml)) !== null) {
+    const block = match[1];
+    const key = block.match(/<Key>([^<]+)<\/Key>/)?.[1] || '';
+    const size = parseInt(block.match(/<Size>(\d+)<\/Size>/)?.[1] || '0', 10);
+    const lastModified = block.match(/<LastModified>([^<]+)<\/LastModified>/)?.[1] || '';
+    // Skip folder markers (zero-byte objects ending with /)
+    if (key && !key.endsWith('/')) {
+      files.push({ key, size, lastModified });
+    }
+  }
+
+  return { folders, files };
+}
+
 export async function uploadBufferToR2({ objectKey, bytes, contentType = 'application/octet-stream' }) {
   if (!(bytes instanceof Uint8Array) && !Buffer.isBuffer(bytes)) {
     throw new Error('bytes must be a Buffer or Uint8Array');

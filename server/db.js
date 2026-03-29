@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS media (
   mime_type TEXT,
   kind TEXT,
   size INTEGER,
+  folder TEXT DEFAULT '',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
@@ -443,6 +444,7 @@ ensureColumn('platform_db_backups', 'completed_at', 'ALTER TABLE platform_db_bac
 ensureColumn('platform_db_backups', 'metadata_json', 'ALTER TABLE platform_db_backups ADD COLUMN metadata_json TEXT');
 ensureColumn('users', 'must_change_password', 'ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0');
 ensureColumn('users', 'last_login_at', 'ALTER TABLE users ADD COLUMN last_login_at DATETIME');
+ensureColumn('media', 'folder', "ALTER TABLE media ADD COLUMN folder TEXT DEFAULT ''");
 
 // Tenant onboarding — manual overrides & notes per step
 db.exec(`

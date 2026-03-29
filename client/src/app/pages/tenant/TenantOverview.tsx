@@ -44,11 +44,12 @@ export function TenantOverview() {
     enabled: moduleAccess.articles !== false,
   })
 
-  const { data: media = [] } = useQuery<MediaItem[]>({
+  const { data: mediaData } = useQuery<{ items: MediaItem[]; folders: string[] }>({
     queryKey: ['tenant', 'media'],
     queryFn: () => api('/api/tenant/media'),
     enabled: moduleAccess.mediaLibrary !== false,
   })
+  const media = mediaData?.items ?? []
 
   const { data: services = [] } = useQuery<Service[]>({
     queryKey: ['tenant', 'services'],

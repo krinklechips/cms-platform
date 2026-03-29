@@ -13,10 +13,16 @@ import {
   Copy,
   Search,
   Eye,
+  FolderPlus,
+  FolderOpen,
+  RefreshCw,
+  ChevronRight,
+  Link2,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Progress } from '@/app/components/ui/progress'
+import { Badge } from '@/app/components/ui/badge'
 import {
   Select,
   SelectContent,
@@ -47,7 +53,14 @@ interface MediaItem {
   url: string
   mime_type: string
   size: number
+  folder: string
+  usageCount: number
   created_at: string
+}
+
+interface MediaResponse {
+  items: MediaItem[]
+  folders: string[]
 }
 
 type ViewMode = 'grid' | 'list'
@@ -76,14 +89,41 @@ export function MediaLibrary() {
   const [deleteTarget, setDeleteTarget] = useState<MediaItem | null>(null)
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null)
   const [dragging, setDragging] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
+  const [currentFolder, setCurrentFolder] = useState('')
+  const [newFolderOpen, setNewFolderOpen] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
 
-  const { data: media = [], isLoading } = useQuery<MediaItem[]>({
+  const { data, isLoading } = useQuery<MediaResponse>({
     queryKey: ['tenant', 'media'],
     queryFn: () => api('/api/tenant/media'),
+  })
+
+  const media = data?.items ?? []
+  const allFolders = data?.folders ?? []
+
+  const syncMutation = useMutation({
+    mutationFn: () => api('/api/tenant/media/sync', { method: 'POST' }),
+    onSuccess: (result: any) => {
+      queryClient.invalidateQueries({ queryKey: ['tenant', 'media'] })
+      toast.success(`Synced ${result.imported} new files from storage`)
+    },
+    onError: () => toast.error('Failed to sync from storage'),
+  })
+
+  const createFolderMutation = useMutation({
+    mutationFn: (name: string) =>
+      api('/api/tenant/media/folder', { method: 'POST', body: { name: currentFolder ? `${currentFolder}/${name}` : name } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant', 'media'] })
+      toast.success('Folder created')
+      setNewFolderOpen(false)
+      setNewFolderName('')
+    },
+    onError: () => toast.error('Failed to create folder'),
   })
 
   const uploadMutation = useMutation({
@@ -93,6 +133,7 @@ export function MediaLibrary() {
       for (let i = 0; i < fileArray.length; i++) {
         const formData = new FormData()
         formData.append('file', fileArray[i])
+        if (currentFolder) formData.append('folder', currentFolder)
         await api('/api/tenant/media/upload', { method: 'POST', body: formData })
         setUploadProgress(Math.round(((i + 1) / fileArray.length) * 100))
       }
@@ -116,9 +157,7 @@ export function MediaLibrary() {
       toast.success('File deleted')
       setDeleteTarget(null)
     },
-    onError: () => {
-      toast.error('Failed to delete file')
-    },
+    onError: () => toast.error('Failed to delete file'),
   })
 
   const handleDrop = useCallback(
@@ -139,22 +178,57 @@ export function MediaLibrary() {
     }
   }
 
-  // Filtered media based on search and type filter
+  // Compute visible folders for current path
+  const visibleSubfolders = useMemo(() => {
+    const prefix = currentFolder ? `${currentFolder}/` : ''
+    const subfolders = new Set<string>()
+    // From folder metadata
+    for (const f of allFolders) {
+      if (currentFolder === '') {
+        // Top level: extract first segment
+        const first = f.split('/')[0]
+        if (first) subfolders.add(first)
+      } else if (f.startsWith(prefix)) {
+        const rest = f.slice(prefix.length)
+        const next = rest.split('/')[0]
+        if (next) subfolders.add(next)
+      }
+    }
+    // Also derive from file folders
+    for (const item of media) {
+      const folder = item.folder || ''
+      if (currentFolder === '' && folder) {
+        const first = folder.split('/')[0]
+        if (first) subfolders.add(first)
+      } else if (folder.startsWith(prefix)) {
+        const rest = folder.slice(prefix.length)
+        const next = rest.split('/')[0]
+        if (next && rest !== '') subfolders.add(next)
+      }
+    }
+    return Array.from(subfolders).sort()
+  }, [allFolders, media, currentFolder])
+
+  // Filter media for current folder
   const filteredMedia = useMemo(() => {
     return media.filter((item) => {
+      // Folder filter
+      const itemFolder = item.folder || ''
+      if (itemFolder !== currentFolder) return false
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
-        if (!item.filename.toLowerCase().includes(query)) {
-          return false
-        }
+        if (!item.filename.toLowerCase().includes(query)) return false
       }
       // Type filter
       if (typeFilter === 'images' && !isImage(item.mime_type)) return false
       if (typeFilter === 'documents' && isImage(item.mime_type)) return false
       return true
     })
-  }, [media, searchQuery, typeFilter])
+  }, [media, searchQuery, typeFilter, currentFolder])
+
+  // Breadcrumb parts
+  const breadcrumbParts = currentFolder ? currentFolder.split('/') : []
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -164,6 +238,71 @@ export function MediaLibrary() {
         breadcrumbs={[{ label: 'Overview', href: '/' }, { label: 'Media' }]}
       />
 
+      {/* Toolbar: Sync + New Folder */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => syncMutation.mutate()}
+          disabled={syncMutation.isPending}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+          {syncMutation.isPending ? 'Syncing...' : 'Sync from R2'}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setNewFolderOpen(true)}
+        >
+          <FolderPlus className="h-4 w-4 mr-2" />
+          New Folder
+        </Button>
+      </div>
+
+      {/* Folder breadcrumb */}
+      <div className="flex items-center gap-1 text-sm">
+        <button
+          onClick={() => setCurrentFolder('')}
+          className={`font-medium transition-colors ${currentFolder ? 'text-blue-600 hover:text-blue-700' : 'text-gray-900'}`}
+        >
+          All Files
+        </button>
+        {breadcrumbParts.map((part, i) => {
+          const path = breadcrumbParts.slice(0, i + 1).join('/')
+          const isLast = i === breadcrumbParts.length - 1
+          return (
+            <span key={path} className="flex items-center gap-1">
+              <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+              <button
+                onClick={() => setCurrentFolder(path)}
+                className={`font-medium transition-colors ${isLast ? 'text-gray-900' : 'text-blue-600 hover:text-blue-700'}`}
+              >
+                {part}
+              </button>
+            </span>
+          )
+        })}
+      </div>
+
+      {/* Subfolder cards */}
+      {visibleSubfolders.length > 0 && (
+        <div className="grid gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {visibleSubfolders.map((folder) => {
+            const fullPath = currentFolder ? `${currentFolder}/${folder}` : folder
+            return (
+              <button
+                key={folder}
+                onClick={() => setCurrentFolder(fullPath)}
+                className="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:bg-gray-50 hover:border-gray-300"
+              >
+                <FolderOpen className="h-5 w-5 shrink-0 text-amber-500" />
+                <span className="truncate text-sm font-medium text-gray-700">{folder}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Upload zone */}
       <div
         onDragOver={(e) => {
@@ -172,13 +311,13 @@ export function MediaLibrary() {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
-        className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 py-10 transition-colors ${
+        className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
           dragging
             ? 'border-blue-400 bg-blue-50'
             : 'border-gray-300 bg-gray-50 hover:border-gray-400'
         }`}
       >
-        <Upload className="h-8 w-8 text-gray-400" />
+        <Upload className="h-7 w-7 text-gray-400" />
         <div className="text-center">
           <p className="text-sm text-gray-600">
             Drag and drop files here, or{' '}
@@ -191,7 +330,8 @@ export function MediaLibrary() {
             </button>
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            Images, PDFs, and documents up to 10 MB
+            Images, PDFs, and documents up to 15 MB
+            {currentFolder && <> &middot; Uploading to <strong>{currentFolder}/</strong></>}
           </p>
         </div>
         <input
@@ -211,7 +351,7 @@ export function MediaLibrary() {
         )}
       </div>
 
-      {/* Toolbar: Search, Type Filter, View Toggle */}
+      {/* Search, Filter, View Toggle */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 items-center gap-3">
           <div className="relative max-w-xs flex-1">
@@ -262,11 +402,11 @@ export function MediaLibrary() {
       {/* Media content */}
       {isLoading ? (
         <div className="py-12 text-center text-sm text-gray-500">Loading...</div>
-      ) : filteredMedia.length === 0 ? (
+      ) : filteredMedia.length === 0 && visibleSubfolders.length === 0 ? (
         <div className="py-12 text-center text-sm text-gray-500">
           {media.length === 0
-            ? 'No media files yet. Upload your first file above.'
-            : 'No files match your filters.'}
+            ? 'No media files yet. Click "Sync from R2" to import existing files, or upload new ones above.'
+            : 'No files match your filters in this folder.'}
         </div>
       ) : viewMode === 'grid' ? (
         /* Grid View */
@@ -276,7 +416,6 @@ export function MediaLibrary() {
               key={item.id}
               className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white"
             >
-              {/* Thumbnail / icon */}
               <div
                 className="flex h-40 items-center justify-center bg-gray-50 cursor-pointer"
                 onClick={() => isImage(item.mime_type) && setPreviewItem(item)}
@@ -291,19 +430,22 @@ export function MediaLibrary() {
                   <FileIcon className="h-10 w-10 text-gray-300" />
                 )}
               </div>
-
-              {/* Info */}
               <div className="px-3 py-2.5">
                 <p className="truncate text-sm font-medium text-gray-900">
                   {item.filename}
                 </p>
-                <p className="text-xs text-gray-400">
-                  {formatBytes(item.size)} &middot;{' '}
-                  {new Date(item.created_at).toLocaleDateString()}
-                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-gray-400">
+                    {formatBytes(item.size)}
+                  </span>
+                  {item.usageCount > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      <Link2 className="h-2.5 w-2.5 mr-0.5" />
+                      {item.usageCount}
+                    </Badge>
+                  )}
+                </div>
               </div>
-
-              {/* Overlay actions */}
               <div className="absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                 <button
                   onClick={() => copyToClipboard(item.url)}
@@ -334,103 +476,111 @@ export function MediaLibrary() {
         </div>
       ) : (
         /* List View */
-        <div className="rounded-lg border border-gray-200 bg-white">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[60px]">Preview</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="w-[120px]">Type</TableHead>
-                <TableHead className="w-[100px]">Size</TableHead>
-                <TableHead className="w-[140px] text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredMedia.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div
-                      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-gray-50 cursor-pointer"
-                      onClick={() =>
-                        isImage(item.mime_type) && setPreviewItem(item)
-                      }
-                    >
-                      {isImage(item.mime_type) ? (
-                        <img
-                          src={item.url}
-                          alt={item.filename}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <FileIcon className="h-5 w-5 text-gray-300" />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm font-medium text-gray-900">
-                      {item.filename}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-gray-500">
-                      {item.mime_type}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-gray-500">
-                      {formatBytes(item.size)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => copyToClipboard(item.url)}
-                        title="Copy URL"
+        filteredMedia.length > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px]">Preview</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="w-[100px]">Type</TableHead>
+                  <TableHead className="w-[80px]">Size</TableHead>
+                  <TableHead className="w-[80px]">Used In</TableHead>
+                  <TableHead className="w-[140px] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMedia.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div
+                        className="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-gray-50 cursor-pointer"
+                        onClick={() =>
+                          isImage(item.mime_type) && setPreviewItem(item)
+                        }
                       >
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      {isImage(item.mime_type) && (
+                        {isImage(item.mime_type) ? (
+                          <img
+                            src={item.url}
+                            alt={item.filename}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <FileIcon className="h-5 w-5 text-gray-300" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm font-medium text-gray-900">
+                        {item.filename}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-gray-500">
+                        {item.mime_type.split('/')[1]?.toUpperCase() || item.mime_type}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-500">
+                        {formatBytes(item.size)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {item.usageCount > 0 ? (
+                        <Badge variant="secondary" className="text-xs">
+                          <Link2 className="h-3 w-3 mr-1" />
+                          {item.usageCount} {item.usageCount === 1 ? 'place' : 'places'}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-gray-400">Unused</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => setPreviewItem(item)}
-                          title="Preview"
+                          onClick={() => copyToClipboard(item.url)}
+                          title="Copy URL"
                         >
-                          <Eye className="h-3.5 w-3.5" />
+                          <Copy className="h-3.5 w-3.5" />
                         </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
-                        onClick={() => setDeleteTarget(item)}
-                        title="Delete"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                        {isImage(item.mime_type) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => setPreviewItem(item)}
+                            title="Preview"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
+                          onClick={() => setDeleteTarget(item)}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )
       )}
 
       {/* Image Preview Dialog */}
-      <Dialog
-        open={!!previewItem}
-        onOpenChange={() => setPreviewItem(null)}
-      >
+      <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="truncate">
-              {previewItem?.filename}
-            </DialogTitle>
+            <DialogTitle className="truncate">{previewItem?.filename}</DialogTitle>
           </DialogHeader>
           {previewItem && (
             <div className="space-y-4">
@@ -444,20 +594,28 @@ export function MediaLibrary() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Filename</span>
-                  <span className="font-medium text-gray-900">
-                    {previewItem.filename}
-                  </span>
+                  <span className="font-medium text-gray-900">{previewItem.filename}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Type</span>
-                  <span className="font-medium text-gray-900">
-                    {previewItem.mime_type}
-                  </span>
+                  <span className="font-medium text-gray-900">{previewItem.mime_type}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Size</span>
+                  <span className="font-medium text-gray-900">{formatBytes(previewItem.size)}</span>
+                </div>
+                {previewItem.folder && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Folder</span>
+                    <span className="font-medium text-gray-900">{previewItem.folder}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Used in</span>
                   <span className="font-medium text-gray-900">
-                    {formatBytes(previewItem.size)}
+                    {previewItem.usageCount > 0
+                      ? `${previewItem.usageCount} ${previewItem.usageCount === 1 ? 'place' : 'places'}`
+                      : 'Unused'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
@@ -489,8 +647,11 @@ export function MediaLibrary() {
           <DialogHeader>
             <DialogTitle>Delete file</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;{deleteTarget?.filename}
-              &rdquo;? This action cannot be undone.
+              Are you sure you want to delete &ldquo;{deleteTarget?.filename}&rdquo;?
+              {(deleteTarget?.usageCount ?? 0) > 0 && (
+                <> This file is used in <strong>{deleteTarget?.usageCount}</strong> {deleteTarget?.usageCount === 1 ? 'place' : 'places'}.</>
+              )}{' '}
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -500,11 +661,44 @@ export function MediaLibrary() {
             <Button
               variant="destructive"
               disabled={deleteMutation.isPending}
-              onClick={() =>
-                deleteTarget && deleteMutation.mutate(deleteTarget.id)
-              }
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
               {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Folder Dialog */}
+      <Dialog open={newFolderOpen} onOpenChange={setNewFolderOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Folder</DialogTitle>
+            <DialogDescription>
+              {currentFolder
+                ? `Create a subfolder inside "${currentFolder}"`
+                : 'Create a new folder to organize your media files'}
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Folder name"
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newFolderName.trim()) {
+                createFolderMutation.mutate(newFolderName.trim())
+              }
+            }}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewFolderOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!newFolderName.trim() || createFolderMutation.isPending}
+              onClick={() => createFolderMutation.mutate(newFolderName.trim())}
+            >
+              {createFolderMutation.isPending ? 'Creating...' : 'Create'}
             </Button>
           </DialogFooter>
         </DialogContent>
