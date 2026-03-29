@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router'
+import { NavLink, useLocation } from 'react-router'
+import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard,
   FileText,
@@ -17,11 +18,24 @@ import {
   MapPin,
   Star,
   MonitorPlay,
+  Plus,
+  FileIcon,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/app/components/ui/utils'
 import { useTenantAuth } from '@/lib/tenant-context'
+import { api } from '@/lib/api'
 import { Separator } from '@/app/components/ui/separator'
+
+interface SidebarPage {
+  id: number
+  title: string
+  slug: string
+  navLabel: string | null
+  parentId: number | null
+  sortOrder: number
+  status: string
+}
 
 interface NavItem {
   label: string
@@ -34,7 +48,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Overview', to: '/', icon: LayoutDashboard },
   { label: 'Articles', to: '/articles', icon: FileText, moduleKey: 'articles' },
-  { label: 'Pages', to: '/pages', icon: Files, moduleKey: 'pages' },
   { label: 'Media', to: '/media', icon: Image, moduleKey: 'mediaLibrary' },
   { label: 'Hero Images', to: '/hero-images', icon: MonitorPlay, moduleKey: 'heroImages' },
   { label: 'Annual Reports', to: '/annual-reports', icon: FileBarChart, moduleKey: 'annualReports' },
@@ -63,14 +76,66 @@ const navItems: NavItem[] = [
   { label: 'Site Preview', to: '/preview', icon: Eye },
 ]
 
+function SidebarNavLink({
+  to,
+  end,
+  icon: Icon,
+  children,
+  indent,
+}: {
+  to: string
+  end?: boolean
+  icon?: React.ComponentType<{ className?: string }>
+  children: React.ReactNode
+  indent?: boolean
+}) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
+          'hover:bg-[#eaeff8]',
+          isActive && 'bg-[#e8edf5] text-gray-900',
+          indent && 'ml-4 gap-2',
+        )
+      }
+    >
+      {Icon && <Icon className={cn('shrink-0', indent ? 'h-3.5 w-3.5' : 'h-4 w-4')} />}
+      <span className="truncate">{children}</span>
+    </NavLink>
+  )
+}
+
 export function TenantSidebar() {
   const { tenant, user, moduleAccess, logout } = useTenantAuth()
+  const location = useLocation()
   const [seoOpen, setSeoOpen] = useState(false)
+  const [pagesOpen, setPagesOpen] = useState(() => location.pathname.startsWith('/pages'))
+
+  const { data: pages = [] } = useQuery<SidebarPage[]>({
+    queryKey: ['tenant', 'pages-sidebar'],
+    queryFn: () => api('/api/tenant/pages'),
+    enabled: moduleAccess.pages !== false,
+  })
 
   const filteredItems = navItems.filter((item) => {
     if (!item.moduleKey) return true
     return moduleAccess[item.moduleKey] !== false
   })
+
+  // Build page tree: top-level pages sorted by sortOrder, children nested
+  const topPages = pages
+    .filter((p) => !p.parentId)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+
+  const childPages = (parentId: number) =>
+    pages
+      .filter((p) => p.parentId === parentId)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+
+  const isOnPageEditor = location.pathname.startsWith('/pages/')
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-gray-50">
@@ -95,111 +160,120 @@ export function TenantSidebar() {
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         {/* Overview */}
         <div className="space-y-1">
-          {filteredItems
-            .filter((item) => item.to === '/')
-            .map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
-                    'hover:bg-[#eaeff8]',
-                    isActive && 'bg-[#e8edf5] text-gray-900',
-                  )
-                }
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {item.label}
-              </NavLink>
-            ))}
+          <SidebarNavLink to="/" end icon={LayoutDashboard}>Overview</SidebarNavLink>
         </div>
 
+        {/* PAGES section */}
+        {moduleAccess.pages !== false && (
+          <>
+            <div className="flex items-center justify-between px-3 mt-5 mb-1">
+              <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
+                Pages
+              </p>
+              <div className="flex items-center gap-1">
+                <NavLink
+                  to="/pages/new"
+                  className="rounded p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors"
+                  title="Add page"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </NavLink>
+                <button
+                  onClick={() => setPagesOpen(!pagesOpen)}
+                  className="rounded p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors"
+                  title={pagesOpen ? 'Collapse' : 'Expand'}
+                >
+                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !pagesOpen && '-rotate-90')} />
+                </button>
+              </div>
+            </div>
+            <div className={cn(
+              'space-y-0.5 transition-all duration-200 overflow-hidden',
+              pagesOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0',
+            )}>
+              {/* All Pages link */}
+              <SidebarNavLink to="/pages" end icon={Files}>All Pages</SidebarNavLink>
+              {/* Individual pages */}
+              {topPages.map((page) => {
+                const children = childPages(page.id)
+                return (
+                  <div key={page.id}>
+                    <SidebarNavLink to={`/pages/${page.id}`} icon={FileIcon}>
+                      {page.navLabel || page.title}
+                    </SidebarNavLink>
+                    {children.length > 0 && isOnPageEditor && children.map((child) => (
+                      <SidebarNavLink key={child.id} to={`/pages/${child.id}`} indent icon={FileIcon}>
+                        {child.navLabel || child.title}
+                      </SidebarNavLink>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+
         {/* CONTENT section */}
-        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
-          Content
-        </p>
+        {filteredItems.some((item) =>
+          ['/articles', '/media', '/hero-images', '/annual-reports'].includes(item.to),
+        ) && (
+          <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+            Content
+          </p>
+        )}
         <div className="space-y-1">
           {filteredItems
             .filter((item) =>
-              ['/articles', '/pages', '/media', '/hero-images', '/annual-reports'].includes(item.to),
+              ['/articles', '/media', '/hero-images', '/annual-reports'].includes(item.to),
             )
             .map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
-                    'hover:bg-[#eaeff8]',
-                    isActive && 'bg-[#e8edf5] text-gray-900',
-                  )
-                }
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
+              <SidebarNavLink key={item.to} to={item.to} icon={item.icon}>
                 {item.label}
-              </NavLink>
+              </SidebarNavLink>
             ))}
         </div>
 
         {/* PEOPLE section */}
-        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
-          People
-        </p>
+        {filteredItems.some((item) => item.to === '/team') && (
+          <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+            People
+          </p>
+        )}
         <div className="space-y-1">
           {filteredItems
             .filter((item) => ['/team'].includes(item.to))
             .map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
-                    'hover:bg-[#eaeff8]',
-                    isActive && 'bg-[#e8edf5] text-gray-900',
-                  )
-                }
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
+              <SidebarNavLink key={item.to} to={item.to} icon={item.icon}>
                 {item.label}
-              </NavLink>
+              </SidebarNavLink>
             ))}
         </div>
 
         {/* MARKETING section */}
-        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
-          Marketing
-        </p>
+        {filteredItems.some((item) =>
+          ['/testimonials', '/services', '/contact', '/featured-products'].includes(item.to),
+        ) && (
+          <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+            Marketing
+          </p>
+        )}
         <div className="space-y-1">
           {filteredItems
             .filter((item) =>
               ['/testimonials', '/services', '/contact', '/featured-products'].includes(item.to),
             )
             .map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
-                    'hover:bg-[#eaeff8]',
-                    isActive && 'bg-[#e8edf5] text-gray-900',
-                  )
-                }
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
+              <SidebarNavLink key={item.to} to={item.to} icon={item.icon}>
                 {item.label}
-              </NavLink>
+              </SidebarNavLink>
             ))}
         </div>
 
         {/* SEO & MARKETING section */}
         {filteredItems.some((item) => item.children) && (
-        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
-          SEO & Marketing
-        </p>
+          <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+            SEO & Marketing
+          </p>
         )}
         <div className="space-y-1">
           {filteredItems
@@ -254,46 +328,25 @@ export function TenantSidebar() {
         </div>
 
         {/* SITE section */}
-        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
-          Site
-        </p>
+        {filteredItems.some((item) => ['/navigation', '/preview'].includes(item.to)) && (
+          <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+            Site
+          </p>
+        )}
         <div className="space-y-1">
           {filteredItems
             .filter((item) => ['/navigation', '/preview'].includes(item.to))
             .map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
-                    'hover:bg-[#eaeff8]',
-                    isActive && 'bg-[#e8edf5] text-gray-900',
-                  )
-                }
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
+              <SidebarNavLink key={item.to} to={item.to} icon={item.icon}>
                 {item.label}
-              </NavLink>
+              </SidebarNavLink>
             ))}
         </div>
       </nav>
 
       {/* Bottom section */}
       <div className="mt-auto border-t border-gray-200 px-3 py-3 space-y-1">
-        <NavLink
-          to="/account"
-          className={({ isActive }) =>
-            cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
-              'hover:bg-[#eaeff8]',
-              isActive && 'bg-[#e8edf5] text-gray-900',
-            )
-          }
-        >
-          <Shield className="h-4 w-4 shrink-0" />
-          Account Security
-        </NavLink>
+        <SidebarNavLink to="/account" icon={Shield}>Account Security</SidebarNavLink>
 
         <Separator className="my-2" />
 
