@@ -18,6 +18,7 @@ import {
   RefreshCw,
   ChevronRight,
   Link2,
+  FolderInput,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -96,6 +97,8 @@ export function MediaLibrary() {
   const [currentFolder, setCurrentFolder] = useState('')
   const [newFolderOpen, setNewFolderOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
+  const [moveTarget, setMoveTarget] = useState<MediaItem | null>(null)
+  const [moveFolder, setMoveFolder] = useState('')
 
   const { data, isLoading } = useQuery<MediaResponse>({
     queryKey: ['tenant', 'media'],
@@ -189,6 +192,18 @@ export function MediaLibrary() {
       setDeleteTarget(null)
     },
     onError: () => toast.error('Failed to delete file'),
+  })
+
+  const moveMutation = useMutation({
+    mutationFn: ({ id, folder }: { id: number; folder: string }) =>
+      api(`/api/tenant/media/${id}/move`, { method: 'PATCH', body: { folder } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant', 'media'] })
+      toast.success('File moved')
+      setMoveTarget(null)
+      setMoveFolder('')
+    },
+    onError: () => toast.error('Failed to move file'),
   })
 
   const handleDrop = useCallback(
@@ -362,14 +377,15 @@ export function MediaLibrary() {
             </button>
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            Images, PDFs, and documents up to 15 MB
-            {currentFolder && <> &middot; Uploading to <strong>{currentFolder}/</strong></>}
+            Select multiple files at once. JPG, PNG, GIF, WebP, PDF up to 15 MB each.
+            {currentFolder && <> Uploading to <strong>{currentFolder}/</strong></>}
           </p>
         </div>
         <input
           ref={fileInputRef}
           type="file"
           multiple
+          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
           className="hidden"
           onChange={handleFileChange}
         />
@@ -592,6 +608,15 @@ export function MediaLibrary() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => { setMoveTarget(item); setMoveFolder(item.folder || '') }}
+                          title="Move to folder"
+                        >
+                          <FolderInput className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
                           onClick={() => setDeleteTarget(item)}
                           title="Delete"
@@ -612,64 +637,122 @@ export function MediaLibrary() {
       <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="truncate">{previewItem?.filename}</DialogTitle>
+            <DialogTitle className="truncate text-base">{previewItem?.filename}</DialogTitle>
           </DialogHeader>
           {previewItem && (
             <div className="space-y-4">
-              <div className="flex items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+              <div className="flex items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-gray-50 p-2">
                 <img
                   src={previewItem.url}
                   alt={previewItem.filename}
-                  className="max-h-[60vh] object-contain"
+                  className="max-h-[50vh] rounded-lg object-contain"
                 />
               </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Filename</span>
-                  <span className="font-medium text-gray-900">{previewItem.filename}</span>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Filename</p>
+                  <p className="mt-0.5 font-medium text-gray-900 truncate">{previewItem.filename}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Type</span>
-                  <span className="font-medium text-gray-900">{previewItem.mime_type}</span>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Type</p>
+                  <p className="mt-0.5 font-medium text-gray-900">{previewItem.mime_type}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Size</span>
-                  <span className="font-medium text-gray-900">{formatBytes(previewItem.size)}</span>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Size</p>
+                  <p className="mt-0.5 font-medium text-gray-900">{formatBytes(previewItem.size)}</p>
                 </div>
-                {previewItem.folder && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Folder</span>
-                    <span className="font-medium text-gray-900">{previewItem.folder}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Used in</span>
-                  <span className="font-medium text-gray-900">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Used in</p>
+                  <p className="mt-0.5 font-medium text-gray-900">
                     {previewItem.usageCount > 0
                       ? `${previewItem.usageCount} ${previewItem.usageCount === 1 ? 'place' : 'places'}`
                       : 'Unused'}
-                  </span>
+                  </p>
                 </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-gray-500 shrink-0">URL</span>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="truncate font-mono text-xs text-gray-600">
-                      {previewItem.url}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 shrink-0"
-                      onClick={() => copyToClipboard(previewItem.url)}
-                    >
-                      <Copy className="mr-1.5 h-3 w-3" />
-                      Copy
-                    </Button>
+                {previewItem.folder && (
+                  <div className="col-span-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Folder</p>
+                    <p className="mt-0.5 font-medium text-gray-900">{previewItem.folder}</p>
                   </div>
-                </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-4 py-2.5">
+                <span className="flex-1 truncate font-mono text-xs text-gray-500">{previewItem.url}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 shrink-0"
+                  onClick={() => copyToClipboard(previewItem.url)}
+                >
+                  <Copy className="mr-1.5 h-3 w-3" />
+                  Copy URL
+                </Button>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setMoveTarget(previewItem); setMoveFolder(previewItem.folder || ''); setPreviewItem(null) }}
+                >
+                  <FolderInput className="mr-1.5 h-3.5 w-3.5" />
+                  Move
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => { setDeleteTarget(previewItem); setPreviewItem(null) }}
+                >
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                  Delete
+                </Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Move to Folder Dialog */}
+      <Dialog open={!!moveTarget} onOpenChange={() => setMoveTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move to folder</DialogTitle>
+            <DialogDescription>
+              Move &ldquo;{moveTarget?.filename}&rdquo; to a folder.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <button
+              onClick={() => setMoveFolder('')}
+              className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                moveFolder === '' ? 'border-violet-300 bg-violet-50 text-violet-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <FolderOpen className="h-4 w-4" />
+              Root (All Files)
+            </button>
+            {allFolders.map((f) => (
+              <button
+                key={f}
+                onClick={() => setMoveFolder(f)}
+                className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                  moveFolder === f ? 'border-violet-300 bg-violet-50 text-violet-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <FolderOpen className="h-4 w-4 text-amber-500" />
+                {f}
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMoveTarget(null)}>Cancel</Button>
+            <Button
+              onClick={() => moveTarget && moveMutation.mutate({ id: moveTarget.id, folder: moveFolder })}
+              disabled={moveMutation.isPending}
+            >
+              {moveMutation.isPending ? 'Moving...' : 'Move Here'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

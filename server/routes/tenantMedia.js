@@ -277,6 +277,23 @@ router.post('/upload', async (req, res) => {
   }
 });
 
+// PATCH /api/tenant/media/:id/move — move file to a different folder
+router.patch('/:id/move', (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid media id' });
+
+  const folder = String(req.body?.folder ?? '').trim().replace(/^\/|\/$/g, '');
+
+  const media = db.prepare('SELECT * FROM media WHERE tenant_id = ? AND id = ?')
+    .get(req.tenant.id, id);
+  if (!media) return res.status(404).json({ error: 'Media not found' });
+
+  db.prepare('UPDATE media SET folder = ? WHERE tenant_id = ? AND id = ?')
+    .run(folder, req.tenant.id, id);
+
+  res.json({ ok: true, id, folder });
+});
+
 // DELETE /api/tenant/media/:id — delete file from R2 and DB
 router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
