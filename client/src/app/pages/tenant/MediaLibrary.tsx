@@ -126,26 +126,57 @@ export function MediaLibrary() {
     onError: () => toast.error('Failed to create folder'),
   })
 
+  function uploadFileWithProgress(file: File, folder: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      if (folder) formData.append('folder', folder)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', '/api/tenant/media/upload')
+      xhr.withCredentials = true
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round((e.loaded / e.total) * 100))
+        }
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve()
+        } else {
+          let msg = 'Upload failed'
+          try { msg = JSON.parse(xhr.responseText).error || msg } catch {}
+          reject(new Error(msg))
+        }
+      }
+
+      xhr.onerror = () => reject(new Error('Network error during upload'))
+      xhr.send(formData)
+    })
+  }
+
   const uploadMutation = useMutation({
     mutationFn: async (files: FileList) => {
       setUploadProgress(0)
       const fileArray = Array.from(files)
       for (let i = 0; i < fileArray.length; i++) {
-        const formData = new FormData()
-        formData.append('file', fileArray[i])
-        if (currentFolder) formData.append('folder', currentFolder)
-        await api('/api/tenant/media/upload', { method: 'POST', body: formData })
-        setUploadProgress(Math.round(((i + 1) / fileArray.length) * 100))
+        if (fileArray.length > 1) {
+          toast.info(`Uploading ${i + 1} of ${fileArray.length}...`)
+        }
+        await uploadFileWithProgress(fileArray[i], currentFolder)
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant', 'media'] })
       queryClient.refetchQueries({ queryKey: ['tenant', 'media'] })
       toast.success('Upload complete')
       setTimeout(() => setUploadProgress(null), 600)
     },
-    onError: () => {
+    onError: (err: Error) => {
       setUploadProgress(null)
-      toast.error('Upload failed')
+      toast.error(err.message || 'Upload failed')
     },
   })
 
