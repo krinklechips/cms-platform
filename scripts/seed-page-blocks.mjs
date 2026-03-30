@@ -345,17 +345,9 @@ async function seed() {
       continue;
     }
 
-    // Check if page already has blocks
-    const existingRes = await fetch(`${BASE}/api/public/pages/${slug}?tenantSlug=roomchang`);
-    const existingData = await existingRes.json();
-    if (existingData.page?.blocks?.length > 0) {
-      console.log(`  Skip "${slug}" — already has ${existingData.page.blocks.length} blocks`);
-      continue;
-    }
-
     console.log(`  Seeding "${slug}" (${blocks.length} blocks)...`);
 
-    // Use internal seed endpoint for blocks
+    // Use internal seed endpoint for blocks (clearExisting replaces any prior blocks)
     const res = await fetch(`${BASE}/api/internal/seed-blocks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -363,6 +355,7 @@ async function seed() {
         tenantSlug: 'roomchang',
         pageId: page.id,
         blocks,
+        clearExisting: true,
       }),
     });
 

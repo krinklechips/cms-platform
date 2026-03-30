@@ -82,7 +82,7 @@ router.post('/seed', (req, res) => {
 
 // ── Seed content blocks for a page ──────────────────────────────
 router.post('/seed-blocks', (req, res) => {
-  const { tenantSlug, pageId, blocks } = req.body || {};
+  const { tenantSlug, pageId, blocks, clearExisting } = req.body || {};
   if (!tenantSlug) return res.status(400).json({ error: 'tenantSlug is required' });
   if (!pageId) return res.status(400).json({ error: 'pageId is required' });
   if (!Array.isArray(blocks) || blocks.length === 0) return res.status(400).json({ error: 'blocks array is required' });
@@ -94,6 +94,10 @@ router.post('/seed-blocks', (req, res) => {
   if (!page) return res.status(404).json({ error: `Page ${pageId} not found for tenant "${tenantSlug}"` });
 
   try {
+    if (clearExisting) {
+      db.prepare('DELETE FROM page_blocks WHERE page_id = ? AND tenant_id = ?').run(page.id, tenant.id);
+    }
+
     const insert = db.prepare(`
       INSERT INTO page_blocks (page_id, tenant_id, block_type, sort_order, block_data)
       VALUES (?, ?, ?, ?, ?)
