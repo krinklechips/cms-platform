@@ -120,4 +120,16 @@ router.post('/seed-blocks', (req, res) => {
   }
 });
 
+// ── Clear all blocks for a tenant ────────────────────────────────
+router.post('/clear-blocks', (req, res) => {
+  const { tenantSlug } = req.body || {};
+  if (!tenantSlug) return res.status(400).json({ error: 'tenantSlug is required' });
+
+  const tenant = db.prepare('SELECT id FROM tenants WHERE slug = ?').get(tenantSlug);
+  if (!tenant) return res.status(404).json({ error: `Tenant "${tenantSlug}" not found` });
+
+  const result = db.prepare('DELETE FROM page_blocks WHERE tenant_id = ?').run(tenant.id);
+  return res.json({ ok: true, deleted: result.changes });
+});
+
 export default router;
