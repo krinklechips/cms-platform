@@ -12,14 +12,10 @@ const BASE = process.env.CMS_URL || 'http://localhost:4100';
 const PAGE_BLOCKS = {
   home: [
     {
-      blockType: 'hero',
+      blockType: 'hero_slideshow',
       sortOrder: 0,
       blockData: {
-        heroTitle: 'A Large Specialist Dental Team',
-        heroSubtitle: 'Trusted since 1996 — Cambodia\'s leading dental hospital with 30+ specialist dentists across 5 branches in Phnom Penh.',
-        heroImage: '/hero/roomchang-team-hero.jpg',
-        ctaText: 'Request An Appointment',
-        ctaUrl: '/contact',
+        note: 'Slides are managed in Hero Images section',
       },
     },
     {

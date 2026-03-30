@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate, Link } from 'react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
@@ -43,7 +43,7 @@ import {
 
 // ---------- Types ----------
 
-type BlockType = 'text' | 'image' | 'hero' | 'cta' | 'html' | 'carousel' | 'testimonials_block' | 'pricing_block'
+type BlockType = 'text' | 'image' | 'hero' | 'hero_slideshow' | 'cta' | 'html' | 'carousel' | 'testimonials_block' | 'pricing_block'
 
 interface BlockData {
   // text
@@ -139,6 +139,7 @@ const BLOCK_TYPE_META: Record<BlockType, { label: string; icon: React.ComponentT
   text: { label: 'Text Block', icon: Type },
   image: { label: 'Image', icon: ImageIcon },
   hero: { label: 'Hero Section', icon: Sparkles },
+  hero_slideshow: { label: 'Hero Slideshow', icon: GalleryHorizontal },
   cta: { label: 'Call to Action', icon: MousePointerClick },
   html: { label: 'HTML', icon: Code },
   carousel: { label: 'Carousel', icon: GalleryHorizontal },
@@ -375,6 +376,106 @@ function HeroBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: Bl
   )
 }
 
+interface HeroSlideData {
+  id: string
+  imageSrc: string
+  title: string | null
+  eyebrow: string | null
+  description: string | null
+  imagePosition: string | null
+  preserveFullImage: boolean
+  published: boolean
+}
+
+function HeroSlideshowBlockEditor({ data: _data, onChange: _onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  const [slides, setSlides] = useState<HeroSlideData[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/tenant/hero/slides', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => { setSlides(Array.isArray(d) ? d : []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-gray-600" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500">
+          {slides.length} slide{slides.length !== 1 ? 's' : ''} in the homepage slideshow
+        </p>
+        <Link
+          to="/hero-images"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors"
+        >
+          <Sparkles className="h-3 w-3" />
+          Manage Slides
+        </Link>
+      </div>
+
+      {slides.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed border-gray-200 px-4 py-8 text-center">
+          <GalleryHorizontal className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+          <p className="text-sm text-gray-500">No slides yet</p>
+          <Link
+            to="/hero-images"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-700"
+          >
+            <Plus className="h-3 w-3" /> Add slides in Hero Images
+          </Link>
+        </div>
+      ) : (
+        <div className="grid gap-2 sm:grid-cols-3">
+          {slides.map((slide, i) => (
+            <div
+              key={slide.id}
+              className={`relative overflow-hidden rounded-xl border bg-white ${
+                slide.published ? 'border-gray-200' : 'border-gray-200 opacity-50'
+              }`}
+            >
+              <div
+                className="h-24 bg-gray-100 bg-no-repeat"
+                style={{
+                  backgroundImage: `url(${slide.imageSrc})`,
+                  backgroundSize: slide.preserveFullImage ? 'contain' : 'cover',
+                  backgroundPosition: slide.imagePosition || 'center',
+                  backgroundColor: slide.preserveFullImage ? 'white' : undefined,
+                }}
+              />
+              <div className="px-2.5 py-2">
+                {slide.eyebrow && (
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-violet-500">{slide.eyebrow}</p>
+                )}
+                <p className="truncate text-xs font-semibold text-gray-800">{slide.title || 'Untitled'}</p>
+              </div>
+              <span className="absolute right-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase text-white bg-black/40 backdrop-blur-sm">
+                {i + 1}
+              </span>
+              {!slide.published && (
+                <span className="absolute left-1.5 top-1.5 rounded-full bg-gray-500/80 px-1.5 py-0.5 text-[8px] font-bold uppercase text-white">
+                  Hidden
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p className="text-[11px] text-gray-400">
+        Slides are managed in the <Link to="/hero-images" className="text-violet-600 hover:underline">Hero Images</Link> section. Changes there update the live website.
+      </p>
+    </div>
+  )
+}
+
 function CtaBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -565,6 +666,7 @@ const BLOCK_EDITORS: Record<BlockType, React.ComponentType<{ data: BlockData; on
   text: TextBlockEditor,
   image: ImageBlockEditor,
   hero: HeroBlockEditor,
+  hero_slideshow: HeroSlideshowBlockEditor,
   cta: CtaBlockEditor,
   html: HtmlBlockEditor,
   carousel: CarouselBlockEditor,
