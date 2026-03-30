@@ -93,22 +93,27 @@ router.post('/seed-blocks', (req, res) => {
   const page = db.prepare('SELECT id FROM pages WHERE id = ? AND tenant_id = ?').get(pageId, tenant.id);
   if (!page) return res.status(404).json({ error: `Page ${pageId} not found for tenant "${tenantSlug}"` });
 
-  const insert = db.prepare(`
-    INSERT INTO page_blocks (page_id, tenant_id, block_type, sort_order, block_data)
-    VALUES (?, ?, ?, ?, ?)
-  `);
+  try {
+    const insert = db.prepare(`
+      INSERT INTO page_blocks (page_id, tenant_id, block_type, sort_order, block_data)
+      VALUES (?, ?, ?, ?, ?)
+    `);
 
-  let inserted = 0;
-  for (const block of blocks) {
-    const blockType = block.blockType || block.block_type;
-    const sortOrder = block.sortOrder ?? block.sort_order ?? 0;
-    const blockData = typeof block.blockData === 'string' ? block.blockData : JSON.stringify(block.blockData || {});
+    let inserted = 0;
+    for (const block of blocks) {
+      const blockType = block.blockType || block.block_type;
+      const sortOrder = block.sortOrder ?? block.sort_order ?? 0;
+      const blockData = typeof block.blockData === 'string' ? block.blockData : JSON.stringify(block.blockData || {});
 
-    insert.run(page.id, tenant.id, blockType, sortOrder, blockData);
-    inserted++;
+      insert.run(page.id, tenant.id, blockType, sortOrder, blockData);
+      inserted++;
+    }
+
+    return res.json({ ok: true, pageId, inserted });
+  } catch (err) {
+    console.error('seed-blocks error:', err);
+    return res.status(500).json({ error: err.message });
   }
-
-  return res.json({ ok: true, pageId, inserted });
 });
 
 export default router;
