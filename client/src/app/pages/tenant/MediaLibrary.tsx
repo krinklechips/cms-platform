@@ -139,7 +139,7 @@ export function MediaLibrary() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tenant', 'media'] })
+      queryClient.refetchQueries({ queryKey: ['tenant', 'media'] })
       toast.success('Upload complete')
       setTimeout(() => setUploadProgress(null), 600)
     },
