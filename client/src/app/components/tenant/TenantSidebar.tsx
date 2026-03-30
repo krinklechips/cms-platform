@@ -10,7 +10,6 @@ import {
   Shield,
   LogOut,
   ChevronDown,
-  Files,
   Menu,
   Users,
   MessageSquare,
@@ -19,6 +18,7 @@ import {
   Star,
   MonitorPlay,
   Plus,
+  Minus,
   FileIcon,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -46,7 +46,6 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Overview', to: '/', icon: LayoutDashboard },
   { label: 'Articles', to: '/articles', icon: FileText, moduleKey: 'articles' },
   { label: 'Media', to: '/media', icon: Image, moduleKey: 'mediaLibrary' },
   { label: 'Hero Images', to: '/hero-images', icon: MonitorPlay, moduleKey: 'heroImages' },
@@ -112,7 +111,7 @@ export function TenantSidebar() {
   const { tenant, user, moduleAccess, logout } = useTenantAuth()
   const location = useLocation()
   const [seoOpen, setSeoOpen] = useState(false)
-  const [pagesOpen, setPagesOpen] = useState(() => location.pathname.startsWith('/pages'))
+  const [expandedParents, setExpandedParents] = useState<Set<number>>(new Set())
 
   const { data: pages = [] } = useQuery<SidebarPage[]>({
     queryKey: ['tenant', 'pages-sidebar'],
@@ -125,7 +124,7 @@ export function TenantSidebar() {
     return moduleAccess[item.moduleKey] !== false
   })
 
-  // Build page tree: top-level pages sorted by sortOrder, children nested
+  // Build page tree: top-level pages sorted by sortOrder
   const topPages = pages
     .filter((p) => !p.parentId)
     .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -135,7 +134,14 @@ export function TenantSidebar() {
       .filter((p) => p.parentId === parentId)
       .sort((a, b) => a.sortOrder - b.sortOrder)
 
-  const isOnPageEditor = location.pathname.startsWith('/pages/')
+  const toggleParent = (id: number) => {
+    setExpandedParents((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-gray-50">
@@ -159,53 +165,83 @@ export function TenantSidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         {/* Overview */}
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <SidebarNavLink to="/" end icon={LayoutDashboard}>Overview</SidebarNavLink>
         </div>
 
-        {/* PAGES section */}
+        {/* PAGES — the main website pages, always visible */}
         {moduleAccess.pages !== false && (
           <>
             <div className="flex items-center justify-between px-3 mt-5 mb-1">
               <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
                 Pages
               </p>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <NavLink
                   to="/pages/new"
-                  className="rounded p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors"
+                  className="rounded p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
                   title="Add page"
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </NavLink>
-                <button
-                  onClick={() => setPagesOpen(!pagesOpen)}
-                  className="rounded p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors"
-                  title={pagesOpen ? 'Collapse' : 'Expand'}
+                <NavLink
+                  to="/pages"
+                  className="rounded p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                  title="Manage all pages"
                 >
-                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !pagesOpen && '-rotate-90')} />
-                </button>
+                  <Minus className="h-3.5 w-3.5" />
+                </NavLink>
               </div>
             </div>
-            <div className={cn(
-              'space-y-0.5 transition-all duration-200 overflow-hidden',
-              pagesOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0',
-            )}>
-              {/* All Pages link */}
-              <SidebarNavLink to="/pages" end icon={Files}>All Pages</SidebarNavLink>
-              {/* Individual pages */}
+            <div className="space-y-0.5">
               {topPages.map((page) => {
                 const children = childPages(page.id)
+                const hasChildren = children.length > 0
+                const isExpanded = expandedParents.has(page.id)
+
                 return (
                   <div key={page.id}>
-                    <SidebarNavLink to={`/pages/${page.id}`} icon={FileIcon}>
-                      {page.navLabel || page.title}
-                    </SidebarNavLink>
-                    {children.length > 0 && isOnPageEditor && children.map((child) => (
-                      <SidebarNavLink key={child.id} to={`/pages/${child.id}`} indent icon={FileIcon}>
-                        {child.navLabel || child.title}
-                      </SidebarNavLink>
-                    ))}
+                    <div className="flex items-center">
+                      <NavLink
+                        to={`/pages/${page.id}`}
+                        className={({ isActive }) =>
+                          cn(
+                            'flex flex-1 items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors',
+                            'hover:bg-[#eaeff8]',
+                            isActive && 'bg-[#e8edf5] text-gray-900',
+                          )
+                        }
+                      >
+                        <span className="truncate">{page.navLabel || page.title}</span>
+                      </NavLink>
+                      {hasChildren && (
+                        <button
+                          onClick={() => toggleParent(page.id)}
+                          className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors mr-1 cursor-pointer"
+                        >
+                          <ChevronDown className={cn('h-3 w-3 transition-transform', !isExpanded && '-rotate-90')} />
+                        </button>
+                      )}
+                    </div>
+                    {hasChildren && isExpanded && (
+                      <div className="ml-3 mt-0.5 space-y-0.5 border-l border-gray-200 pl-2">
+                        {children.map((child) => (
+                          <NavLink
+                            key={child.id}
+                            to={`/pages/${child.id}`}
+                            className={({ isActive }) =>
+                              cn(
+                                'block rounded-lg px-2.5 py-1 text-[13px] text-gray-500 transition-colors',
+                                'hover:bg-[#eaeff8] hover:text-gray-700',
+                                isActive && 'bg-[#dfe6f2] text-gray-900 font-medium',
+                              )
+                            }
+                          >
+                            {child.navLabel || child.title}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -221,7 +257,7 @@ export function TenantSidebar() {
             Content
           </p>
         )}
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {filteredItems
             .filter((item) =>
               ['/articles', '/media', '/hero-images', '/annual-reports'].includes(item.to),
@@ -239,7 +275,7 @@ export function TenantSidebar() {
             People
           </p>
         )}
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {filteredItems
             .filter((item) => ['/team'].includes(item.to))
             .map((item) => (
@@ -257,7 +293,7 @@ export function TenantSidebar() {
             Marketing
           </p>
         )}
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {filteredItems
             .filter((item) =>
               ['/testimonials', '/services', '/contact', '/featured-products'].includes(item.to),
@@ -275,7 +311,7 @@ export function TenantSidebar() {
             SEO & Marketing
           </p>
         )}
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {filteredItems
             .filter((item) => item.children)
             .map((item) => (
@@ -283,7 +319,7 @@ export function TenantSidebar() {
                 <button
                   onClick={() => setSeoOpen(!seoOpen)}
                   className={cn(
-                    'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
+                    'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors cursor-pointer',
                     'hover:bg-[#eaeff8]',
                     seoOpen && 'bg-[#e8edf5] text-gray-900',
                   )}
@@ -333,7 +369,7 @@ export function TenantSidebar() {
             Site
           </p>
         )}
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {filteredItems
             .filter((item) => ['/navigation', '/preview'].includes(item.to))
             .map((item) => (
@@ -354,7 +390,7 @@ export function TenantSidebar() {
           <span className="truncate text-xs text-gray-500">{user?.email}</span>
           <button
             onClick={() => logout()}
-            className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+            className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600 cursor-pointer"
             title="Sign out"
           >
             <LogOut className="h-3.5 w-3.5" />

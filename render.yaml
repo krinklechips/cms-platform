@@ -29,6 +29,16 @@ services:
         sync: false
       - key: PLATFORM_CORS_ORIGIN
         sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_PUBLIC_BASE_URL
+        sync: false
 
   # ── SerpBear (keyword rank tracker) ─────────────────────────────────────────
   - type: web
