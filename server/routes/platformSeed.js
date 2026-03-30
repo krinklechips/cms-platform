@@ -94,8 +94,8 @@ router.post('/seed-blocks', (req, res) => {
   if (!page) return res.status(404).json({ error: `Page ${pageId} not found for tenant "${tenantSlug}"` });
 
   const insert = db.prepare(`
-    INSERT INTO page_blocks (page_id, block_type, sort_order, block_data)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO page_blocks (page_id, tenant_id, block_type, sort_order, block_data)
+    VALUES (?, ?, ?, ?, ?)
   `);
 
   let inserted = 0;
@@ -104,7 +104,7 @@ router.post('/seed-blocks', (req, res) => {
     const sortOrder = block.sortOrder ?? block.sort_order ?? 0;
     const blockData = typeof block.blockData === 'string' ? block.blockData : JSON.stringify(block.blockData || {});
 
-    insert.run(page.id, blockType, sortOrder, blockData);
+    insert.run(page.id, tenant.id, blockType, sortOrder, blockData);
     inserted++;
   }
 
