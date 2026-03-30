@@ -12,6 +12,8 @@ import {
   ImageIcon,
   Check,
 } from 'lucide-react'
+import { Switch } from '@/app/components/ui/switch'
+import { Label } from '@/app/components/ui/label'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -268,44 +270,20 @@ function SlideModal({
 
           {/* Preserve full image toggle */}
           <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-            <div>
-              <p className="text-sm font-semibold text-gray-700">Preserve Full Image</p>
+            <div className="space-y-0.5 pr-4">
+              <Label htmlFor="preserve-toggle" className="text-sm font-semibold text-gray-700">Preserve Full Image</Label>
               <p className="text-xs text-gray-500">Show the entire image without cropping (white background). Best for group/team photos.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setPreserveFullImage(!preserveFullImage)}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${
-                preserveFullImage ? 'bg-violet-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  preserveFullImage ? 'translate-x-5' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
+            <Switch id="preserve-toggle" checked={preserveFullImage} onCheckedChange={setPreserveFullImage} />
           </div>
 
           {/* Published toggle */}
           <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-            <div>
-              <p className="text-sm font-semibold text-gray-700">Published</p>
+            <div className="space-y-0.5 pr-4">
+              <Label htmlFor="published-toggle" className="text-sm font-semibold text-gray-700">Published</Label>
               <p className="text-xs text-gray-500">Show this slide on the live website</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setPublished(!published)}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${
-                published ? 'bg-violet-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  published ? 'translate-x-5' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
+            <Switch id="published-toggle" checked={published} onCheckedChange={setPublished} />
           </div>
         </div>
 
