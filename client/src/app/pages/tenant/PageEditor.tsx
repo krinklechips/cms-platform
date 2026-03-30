@@ -923,15 +923,16 @@ export function PageEditor() {
             )}
 
             {form.blocks.map((block, index) => {
-              const meta = BLOCK_TYPE_META[block.type]
-              const BlockEditor = BLOCK_EDITORS[block.type]
+              const meta = BLOCK_TYPE_META[block.type as BlockType] ?? { label: block.type, icon: Code }
+              const BlockEditor = BLOCK_EDITORS[block.type as BlockType]
+              const MetaIcon = meta.icon
               return (
                 <Card key={block.id} className="border-gray-200">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-3 px-4">
                     <div className="flex items-center gap-2">
                       <GripVertical className="h-4 w-4 text-gray-300 cursor-grab" />
                       <div className="flex items-center gap-1.5">
-                        <meta.icon className="h-4 w-4 text-gray-400" />
+                        <MetaIcon className="h-4 w-4 text-gray-400" />
                         <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                           {meta.label}
                         </span>
@@ -991,17 +992,20 @@ export function PageEditor() {
               {addBlockOpen && (
                 <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
                   {(Object.entries(BLOCK_TYPE_META) as [BlockType, typeof BLOCK_TYPE_META[BlockType]][]).map(
-                    ([type, meta]) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => addBlock(type)}
-                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        <meta.icon className="h-4 w-4 text-gray-400" />
-                        {meta.label}
-                      </button>
-                    ),
+                    ([type, meta]) => {
+                      const Icon = meta.icon
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => addBlock(type)}
+                          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          <Icon className="h-4 w-4 text-gray-400" />
+                          {meta.label}
+                        </button>
+                      )
+                    },
                   )}
                 </div>
               )}
