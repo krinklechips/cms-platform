@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
@@ -38,6 +38,7 @@ import {
   GalleryHorizontal,
   Quote,
   DollarSign,
+  Upload,
 } from 'lucide-react'
 
 // ---------- Types ----------
@@ -54,6 +55,11 @@ interface BlockData {
   heroTitle?: string
   heroSubtitle?: string
   heroImage?: string
+  heroImageAlt?: string
+  heroImagePosition?: string
+  heroImageSize?: string
+  heroPreserveFullImage?: boolean
+  heroEyebrow?: string
   ctaText?: string
   ctaUrl?: string
   // cta
@@ -187,39 +193,173 @@ function ImageBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: B
 }
 
 function HeroBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('folder', 'hero')
+      const result = await api<{ media: { url: string } }>('/api/tenant/media/upload', { method: 'POST', body: form })
+      onChange({ ...data, heroImage: result.media?.url ?? '' })
+      if (!data.heroImageAlt) onChange({ ...data, heroImage: result.media?.url ?? '', heroImageAlt: file.name.replace(/\.[^.]+$/, '') })
+      toast.success('Image uploaded')
+    } catch {
+      toast.error('Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const preserveFullImage = data.heroPreserveFullImage ?? false
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Image preview + upload */}
       <div className="space-y-2">
-        <Label>Hero Title</Label>
-        <Input
-          value={data.heroTitle || ''}
-          onChange={(e) => onChange({ ...data, heroTitle: e.target.value })}
-          placeholder="Main heading"
-        />
+        <Label>Hero Image</Label>
+        {data.heroImage && (
+          <div
+            className="h-40 w-full rounded-xl border border-gray-200 bg-gray-100 bg-no-repeat"
+            style={{
+              backgroundImage: `url(${data.heroImage})`,
+              backgroundSize: preserveFullImage ? 'contain' : (data.heroImageSize || 'cover'),
+              backgroundPosition: data.heroImagePosition || 'center center',
+              backgroundRepeat: 'no-repeat',
+              backgroundColor: preserveFullImage ? 'white' : undefined,
+            }}
+          />
+        )}
+        <div className="flex gap-2">
+          <Input
+            value={data.heroImage || ''}
+            onChange={(e) => onChange({ ...data, heroImage: e.target.value })}
+            placeholder="https://... or /hero/image.jpg"
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border border-gray-300 border-t-gray-600" />
+            ) : (
+              <Upload className="h-3.5 w-3.5" />
+            )}
+            <span className="ml-1.5">Upload</span>
+          </Button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+        </div>
       </div>
+
+      {/* Eyebrow + Title */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Eyebrow Label</Label>
+          <Input
+            value={data.heroEyebrow || ''}
+            onChange={(e) => onChange({ ...data, heroEyebrow: e.target.value })}
+            placeholder="e.g. Roomchang team"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Hero Title</Label>
+          <Input
+            value={data.heroTitle || ''}
+            onChange={(e) => onChange({ ...data, heroTitle: e.target.value })}
+            placeholder="Main heading"
+          />
+        </div>
+      </div>
+
+      {/* Subtitle */}
       <div className="space-y-2">
         <Label>Subtitle</Label>
-        <Input
+        <Textarea
           value={data.heroSubtitle || ''}
           onChange={(e) => onChange({ ...data, heroSubtitle: e.target.value })}
           placeholder="Supporting text"
+          rows={2}
         />
       </div>
-      <div className="space-y-2">
-        <Label>Background Image URL</Label>
-        <Input
-          value={data.heroImage || ''}
-          onChange={(e) => onChange({ ...data, heroImage: e.target.value })}
-          placeholder="https://..."
+
+      {/* Alt text + Image Position */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Alt Text</Label>
+          <Input
+            value={data.heroImageAlt || ''}
+            onChange={(e) => onChange({ ...data, heroImageAlt: e.target.value })}
+            placeholder="Describe the image"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Image Position</Label>
+          <Select
+            value={data.heroImagePosition || 'center center'}
+            onValueChange={(v) => onChange({ ...data, heroImagePosition: v })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="center center">Center</SelectItem>
+              <SelectItem value="top center">Top</SelectItem>
+              <SelectItem value="bottom center">Bottom</SelectItem>
+              <SelectItem value="center left">Left</SelectItem>
+              <SelectItem value="center right">Right</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Image Size (when not preserve) */}
+      {!preserveFullImage && (
+        <div className="space-y-2">
+          <Label>Image Size</Label>
+          <Select
+            value={data.heroImageSize || 'cover'}
+            onValueChange={(v) => onChange({ ...data, heroImageSize: v })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cover">Cover (fill &amp; crop)</SelectItem>
+              <SelectItem value="contain">Contain (fit entire image)</SelectItem>
+              <SelectItem value="100% auto">Full width</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Preserve full image */}
+      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold text-gray-700">Preserve Full Image</p>
+          <p className="text-xs text-gray-500">Show entire image without cropping (white bg). Best for group photos.</p>
+        </div>
+        <Switch
+          checked={preserveFullImage}
+          onCheckedChange={(v) => onChange({ ...data, heroPreserveFullImage: v, heroImageSize: v ? '100% auto' : 'cover' })}
         />
       </div>
+
+      {/* CTA */}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>CTA Button Text</Label>
           <Input
             value={data.ctaText || ''}
             onChange={(e) => onChange({ ...data, ctaText: e.target.value })}
-            placeholder="Get Started"
+            placeholder="Request An Appointment"
           />
         </div>
         <div className="space-y-2">
