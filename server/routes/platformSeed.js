@@ -80,4 +80,35 @@ router.post('/seed', (req, res) => {
   return res.json({ ok: true, tenantSlug, ...results });
 });
 
+// ── Seed content blocks for a page ──────────────────────────────
+router.post('/seed-blocks', (req, res) => {
+  const { tenantSlug, pageId, blocks } = req.body || {};
+  if (!tenantSlug) return res.status(400).json({ error: 'tenantSlug is required' });
+  if (!pageId) return res.status(400).json({ error: 'pageId is required' });
+  if (!Array.isArray(blocks) || blocks.length === 0) return res.status(400).json({ error: 'blocks array is required' });
+
+  const tenant = db.prepare('SELECT id FROM tenants WHERE slug = ?').get(tenantSlug);
+  if (!tenant) return res.status(404).json({ error: `Tenant "${tenantSlug}" not found` });
+
+  const page = db.prepare('SELECT id FROM pages WHERE id = ? AND tenant_id = ?').get(pageId, tenant.id);
+  if (!page) return res.status(404).json({ error: `Page ${pageId} not found for tenant "${tenantSlug}"` });
+
+  const insert = db.prepare(`
+    INSERT INTO page_blocks (page_id, block_type, sort_order, block_data)
+    VALUES (?, ?, ?, ?)
+  `);
+
+  let inserted = 0;
+  for (const block of blocks) {
+    const blockType = block.blockType || block.block_type;
+    const sortOrder = block.sortOrder ?? block.sort_order ?? 0;
+    const blockData = typeof block.blockData === 'string' ? block.blockData : JSON.stringify(block.blockData || {});
+
+    insert.run(page.id, blockType, sortOrder, blockData);
+    inserted++;
+  }
+
+  return res.json({ ok: true, pageId, inserted });
+});
+
 export default router;
