@@ -39,11 +39,13 @@ function isFullUrl(src: string) {
   return src.startsWith('http://') || src.startsWith('https://')
 }
 
-function thumbnailStyle(src: string): React.CSSProperties {
+function thumbnailStyle(src: string, preserve?: boolean, pos?: string): React.CSSProperties {
   return {
     backgroundImage: `url(${src})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
+    backgroundSize: preserve ? 'contain' : 'cover',
+    backgroundPosition: pos || 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundColor: preserve ? 'white' : undefined,
   }
 }
 
@@ -67,6 +69,8 @@ function SlideModal({
   const [description, setDescription] = useState(slide?.description ?? '')
   const [imageAlt, setImageAlt] = useState(slide?.imageAlt ?? '')
   const [imagePosition, setImagePosition] = useState(slide?.imagePosition ?? 'center center')
+  const [imageSize, setImageSize] = useState(slide?.imageSize ?? 'cover')
+  const [preserveFullImage, setPreserveFullImage] = useState(slide?.preserveFullImage ?? false)
   const [published, setPublished] = useState(slide?.published !== false)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -79,10 +83,15 @@ function SlideModal({
     try {
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch('/api/tenant/media/upload', { method: 'POST', body: form })
+      form.append('folder', 'hero')
+      const res = await fetch('/api/tenant/media/upload', {
+        method: 'POST',
+        body: form,
+        credentials: 'include',
+      })
       if (!res.ok) throw new Error(await res.text())
       const data = await res.json()
-      setImageSrc(data.fileUrl ?? data.url ?? '')
+      setImageSrc(data.media?.url ?? data.fileUrl ?? data.url ?? '')
       if (!imageAlt) setImageAlt(file.name.replace(/\.[^.]+$/, ''))
       toast.success('Image uploaded')
     } catch (err: unknown) {
@@ -99,7 +108,7 @@ function SlideModal({
     }
     setSaving(true)
     try {
-      await onSave({ imageSrc, eyebrow, title, description, imageAlt, imagePosition, published })
+      await onSave({ imageSrc, eyebrow, title, description, imageAlt, imagePosition, imageSize: preserveFullImage ? '100% auto' : imageSize, preserveFullImage, published })
     } finally {
       setSaving(false)
     }
@@ -131,7 +140,7 @@ function SlideModal({
             {imageSrc && (
               <div
                 className="mb-3 h-36 w-full rounded-xl border border-gray-200 bg-gray-100"
-                style={thumbnailStyle(imageSrc)}
+                style={thumbnailStyle(imageSrc, preserveFullImage, imagePosition)}
               />
             )}
             <div className="flex gap-2">
@@ -239,6 +248,45 @@ function SlideModal({
             </div>
           </div>
 
+          {/* Image Size (only when not preserve full image) */}
+          {!preserveFullImage && (
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Image Size
+              </label>
+              <select
+                value={imageSize}
+                onChange={(e) => setImageSize(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              >
+                <option value="cover">Cover (fill &amp; crop)</option>
+                <option value="contain">Contain (fit entire image)</option>
+                <option value="100% auto">Full width</option>
+              </select>
+            </div>
+          )}
+
+          {/* Preserve full image toggle */}
+          <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-gray-700">Preserve Full Image</p>
+              <p className="text-xs text-gray-500">Show the entire image without cropping (white background). Best for group/team photos.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPreserveFullImage(!preserveFullImage)}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${
+                preserveFullImage ? 'bg-violet-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                  preserveFullImage ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
+
           {/* Published toggle */}
           <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
             <div>
@@ -248,7 +296,7 @@ function SlideModal({
             <button
               type="button"
               onClick={() => setPublished(!published)}
-              className={`relative h-6 w-11 rounded-full transition-colors ${
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${
                 published ? 'bg-violet-600' : 'bg-gray-300'
               }`}
             >
@@ -429,7 +477,7 @@ export function HeroImages() {
               {/* Thumbnail */}
               <div
                 className="relative h-44 bg-gray-100"
-                style={thumbnailStyle(slide.imageSrc)}
+                style={thumbnailStyle(slide.imageSrc, slide.preserveFullImage, slide.imagePosition ?? undefined)}
               >
                 {/* Order badge */}
                 <span className="absolute left-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-xs font-bold text-white backdrop-blur-sm">
