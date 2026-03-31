@@ -115,7 +115,8 @@ export function TenantLogin() {
         </form>
 
         <p className="mt-8 text-center text-xs text-gray-400">
-          Powered by CMS Platform
+          Powered by <span className="font-medium">Serviette Lab CMS</span>
+          <span className="mx-1.5">·</span>© 2026
         </p>
       </div>
     </div>
