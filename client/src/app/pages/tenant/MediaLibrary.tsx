@@ -129,7 +129,7 @@ export function MediaLibrary() {
     onError: () => toast.error('Failed to create folder'),
   })
 
-  function uploadFileWithProgress(file: File, folder: string): Promise<void> {
+  function uploadFileWithProgress(file: File, folder: string): Promise<MediaItem> {
     return new Promise((resolve, reject) => {
       const formData = new FormData()
       formData.append('file', file)
@@ -147,7 +147,16 @@ export function MediaLibrary() {
 
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          resolve()
+          try {
+            const data = JSON.parse(xhr.responseText)
+            if (data.media) {
+              resolve({ ...data.media, usageCount: 0 } as MediaItem)
+            } else {
+              reject(new Error('Unexpected server response'))
+            }
+          } catch {
+            reject(new Error('Failed to parse upload response'))
+          }
         } else {
           let msg = 'Upload failed'
           try { msg = JSON.parse(xhr.responseText).error || msg } catch {}
@@ -164,17 +173,27 @@ export function MediaLibrary() {
     mutationFn: async (files: FileList) => {
       setUploadProgress(0)
       const fileArray = Array.from(files)
+      const uploaded: MediaItem[] = []
       for (let i = 0; i < fileArray.length; i++) {
         if (fileArray.length > 1) {
           toast.info(`Uploading ${i + 1} of ${fileArray.length}...`)
         }
-        await uploadFileWithProgress(fileArray[i], currentFolder)
+        const item = await uploadFileWithProgress(fileArray[i], currentFolder)
+        uploaded.push(item)
       }
+      return uploaded
     },
-    onSuccess: () => {
+    onSuccess: (uploaded) => {
+      // Inject uploaded items directly into cache — no refetch race
+      queryClient.setQueryData<MediaResponse>(['tenant', 'media'], (old) => {
+        if (!old) return old
+        const existingIds = new Set(old.items.map((i) => i.id))
+        const newItems = uploaded.filter((u) => !existingIds.has(u.id))
+        return { ...old, items: [...newItems, ...old.items] }
+      })
+      // Also invalidate so a background refetch keeps things fresh
       queryClient.invalidateQueries({ queryKey: ['tenant', 'media'] })
-      queryClient.refetchQueries({ queryKey: ['tenant', 'media'] })
-      toast.success('Upload complete')
+      toast.success(uploaded.length === 1 ? 'File uploaded' : `${uploaded.length} files uploaded`)
       setTimeout(() => setUploadProgress(null), 600)
     },
     onError: (err: Error) => {
