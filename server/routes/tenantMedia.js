@@ -294,6 +294,24 @@ router.patch('/:id/move', (req, res) => {
   res.json({ ok: true, id, folder });
 });
 
+// PATCH /api/tenant/media/:id/rename — rename file label
+router.patch('/:id/rename', (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid media id' });
+
+  const label = String(req.body?.label ?? '').trim();
+  if (!label) return res.status(400).json({ error: 'Label is required' });
+
+  const media = db.prepare('SELECT * FROM media WHERE tenant_id = ? AND id = ?')
+    .get(req.tenant.id, id);
+  if (!media) return res.status(404).json({ error: 'Media not found' });
+
+  db.prepare('UPDATE media SET label = ? WHERE tenant_id = ? AND id = ?')
+    .run(label, req.tenant.id, id);
+
+  res.json({ ok: true, id, label });
+});
+
 // DELETE /api/tenant/media/:id — delete file from R2 and DB
 router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);

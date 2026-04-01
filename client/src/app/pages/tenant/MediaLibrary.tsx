@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Link2,
   FolderInput,
+  Pencil,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -99,6 +100,8 @@ export function MediaLibrary() {
   const [newFolderName, setNewFolderName] = useState('')
   const [moveTarget, setMoveTarget] = useState<MediaItem | null>(null)
   const [moveFolder, setMoveFolder] = useState('')
+  const [renameTarget, setRenameTarget] = useState<MediaItem | null>(null)
+  const [renameValue, setRenameValue] = useState('')
 
   const { data, isLoading } = useQuery<MediaResponse>({
     queryKey: ['tenant', 'media'],
@@ -210,6 +213,18 @@ export function MediaLibrary() {
       setDeleteTarget(null)
     },
     onError: () => toast.error('Failed to delete file'),
+  })
+
+  const renameMutation = useMutation({
+    mutationFn: ({ id, label }: { id: number; label: string }) =>
+      api(`/api/tenant/media/${id}/rename`, { method: 'PATCH', body: { label } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant', 'media'] })
+      toast.success('File renamed')
+      setRenameTarget(null)
+      setRenameValue('')
+    },
+    onError: () => toast.error('Failed to rename file'),
   })
 
   const moveMutation = useMutation({
@@ -518,6 +533,13 @@ export function MediaLibrary() {
               </div>
               <div className="absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                 <button
+                  onClick={() => { setRenameTarget(item); setRenameValue(item.filename) }}
+                  className="rounded-md bg-white/80 p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  title="Rename"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
                   onClick={() => copyToClipboard(item.url)}
                   className="rounded-md bg-white/80 p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                   title="Copy URL"
@@ -556,7 +578,7 @@ export function MediaLibrary() {
                   <TableHead className="w-[100px]">Type</TableHead>
                   <TableHead className="w-[80px]">Size</TableHead>
                   <TableHead className="w-[80px]">Used In</TableHead>
-                  <TableHead className="w-[140px] text-right">Actions</TableHead>
+                  <TableHead className="w-[170px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -607,6 +629,15 @@ export function MediaLibrary() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => { setRenameTarget(item); setRenameValue(item.filename) }}
+                          title="Rename"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -714,6 +745,14 @@ export function MediaLibrary() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => { setRenameTarget(previewItem); setRenameValue(previewItem.filename); setPreviewItem(null) }}
+                >
+                  <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                  Rename
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => { setMoveTarget(previewItem); setMoveFolder(previewItem.folder || ''); setPreviewItem(null) }}
                 >
                   <FolderInput className="mr-1.5 h-3.5 w-3.5" />
@@ -801,6 +840,37 @@ export function MediaLibrary() {
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
               {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Dialog */}
+      <Dialog open={!!renameTarget} onOpenChange={() => setRenameTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename file</DialogTitle>
+            <DialogDescription>
+              Enter a new name for &ldquo;{renameTarget?.filename}&rdquo;
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && renameValue.trim() && renameTarget) {
+                renameMutation.mutate({ id: renameTarget.id, label: renameValue.trim() })
+              }
+            }}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameTarget(null)}>Cancel</Button>
+            <Button
+              disabled={!renameValue.trim() || renameMutation.isPending}
+              onClick={() => renameTarget && renameMutation.mutate({ id: renameTarget.id, label: renameValue.trim() })}
+            >
+              {renameMutation.isPending ? 'Renaming...' : 'Rename'}
             </Button>
           </DialogFooter>
         </DialogContent>
