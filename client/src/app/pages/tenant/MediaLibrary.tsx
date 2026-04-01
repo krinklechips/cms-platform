@@ -170,15 +170,14 @@ export function MediaLibrary() {
   }
 
   const uploadMutation = useMutation({
-    mutationFn: async (files: FileList) => {
+    mutationFn: async (files: File[]) => {
       setUploadProgress(0)
-      const fileArray = Array.from(files)
       const uploaded: MediaItem[] = []
-      for (let i = 0; i < fileArray.length; i++) {
-        if (fileArray.length > 1) {
-          toast.info(`Uploading ${i + 1} of ${fileArray.length}...`)
+      for (let i = 0; i < files.length; i++) {
+        if (files.length > 1) {
+          toast.info(`Uploading ${i + 1} of ${files.length}...`)
         }
-        const item = await uploadFileWithProgress(fileArray[i], currentFolder)
+        const item = await uploadFileWithProgress(files[i], currentFolder)
         uploaded.push(item)
       }
       return uploaded
@@ -230,7 +229,8 @@ export function MediaLibrary() {
       e.preventDefault()
       setDragging(false)
       if (e.dataTransfer.files.length) {
-        uploadMutation.mutate(e.dataTransfer.files)
+        // Snapshot into a plain array — DataTransfer.files is a live DOM reference
+        uploadMutation.mutate(Array.from(e.dataTransfer.files))
       }
     },
     [uploadMutation],
@@ -238,8 +238,11 @@ export function MediaLibrary() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) {
-      uploadMutation.mutate(e.target.files)
+      // Snapshot into a plain array BEFORE clearing the input —
+      // FileList is a live DOM reference that empties when input.value is reset
+      const files = Array.from(e.target.files)
       e.target.value = ''
+      uploadMutation.mutate(files)
     }
   }
 
