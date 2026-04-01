@@ -3,10 +3,23 @@ import { db } from '../db.js';
 
 const router = Router();
 
+// Only allow safe slug characters (alphanumeric, hyphens, underscores)
+const SAFE_SLUG = /^[a-z0-9_-]+$/i;
+
+function escapeXml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 // ── Sitemap XML ─────────────────────────────────────────────────────
 
 router.get('/:tenantSlug/sitemap.xml', (req, res) => {
   const { tenantSlug } = req.params;
+  if (!SAFE_SLUG.test(tenantSlug)) return res.status(400).type('text/plain').send('Invalid slug');
   const tenant = db.prepare(`
     SELECT t.id, tb.public_site_url, tb.cms_domain
     FROM tenants t LEFT JOIN tenant_branding tb ON tb.tenant_id = t.id
@@ -38,25 +51,27 @@ router.get('/:tenantSlug/sitemap.xml', (req, res) => {
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
+  const safeBase = escapeXml(baseUrl);
+
   // Homepage
-  xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+  xml += `  <url>\n    <loc>${safeBase}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
 
   // Articles
   for (const a of articles) {
-    const lastmod = a.updated_at ? `\n    <lastmod>${a.updated_at.split(' ')[0]}</lastmod>` : '';
-    xml += `  <url>\n    <loc>${baseUrl}/articles/${a.slug}</loc>${lastmod}\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+    const lastmod = a.updated_at ? `\n    <lastmod>${escapeXml(a.updated_at.split(' ')[0])}</lastmod>` : '';
+    xml += `  <url>\n    <loc>${safeBase}/articles/${escapeXml(a.slug)}</loc>${lastmod}\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
   }
 
   // Annual reports
   for (const r of reports) {
-    const lastmod = r.updated_at ? `\n    <lastmod>${r.updated_at.split(' ')[0]}</lastmod>` : '';
-    xml += `  <url>\n    <loc>${baseUrl}/annual-reports/${r.id}</loc>${lastmod}\n    <changefreq>yearly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+    const lastmod = r.updated_at ? `\n    <lastmod>${escapeXml(r.updated_at.split(' ')[0])}</lastmod>` : '';
+    xml += `  <url>\n    <loc>${safeBase}/annual-reports/${escapeXml(String(r.id))}</loc>${lastmod}\n    <changefreq>yearly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
   }
 
   // Product lines
   for (const p of products) {
-    const lastmod = p.updated_at ? `\n    <lastmod>${p.updated_at.split(' ')[0]}</lastmod>` : '';
-    xml += `  <url>\n    <loc>${baseUrl}/products/${p.slug}</loc>${lastmod}\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+    const lastmod = p.updated_at ? `\n    <lastmod>${escapeXml(p.updated_at.split(' ')[0])}</lastmod>` : '';
+    xml += `  <url>\n    <loc>${safeBase}/products/${escapeXml(p.slug)}</loc>${lastmod}\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
   }
 
   xml += '</urlset>';
@@ -68,6 +83,7 @@ router.get('/:tenantSlug/sitemap.xml', (req, res) => {
 
 router.get('/:tenantSlug/robots.txt', (req, res) => {
   const { tenantSlug } = req.params;
+  if (!SAFE_SLUG.test(tenantSlug)) return res.status(400).type('text/plain').send('Invalid slug');
   const tenant = db.prepare(`
     SELECT t.id, tb.public_site_url, tb.cms_domain
     FROM tenants t LEFT JOIN tenant_branding tb ON tb.tenant_id = t.id
@@ -93,6 +109,7 @@ router.get('/:tenantSlug/robots.txt', (req, res) => {
 
 router.get('/:tenantSlug/seo-meta/:path(*)', (req, res) => {
   const { tenantSlug } = req.params;
+  if (!SAFE_SLUG.test(tenantSlug)) return res.status(400).json({ error: 'Invalid slug' });
   const pagePath = '/' + (req.params.path || '').replace(/^\/+/, '');
 
   const tenant = db.prepare(`
