@@ -120,6 +120,7 @@ interface PageRecord {
 interface PageListItem {
   id: number
   title: string
+  parentId: number | null
 }
 
 // ---------- Helpers ----------
@@ -836,6 +837,23 @@ export function PageEditor() {
   const seoTitleDisplay = form.seo_title || form.title
   const seoDescDisplay = form.seo_description || ''
 
+  // Build breadcrumb ancestry from parent chain
+  const parentBreadcrumbs = (() => {
+    const crumbs: { label: string; href?: string }[] = []
+    const pageMap = new Map(allPages.map((p) => [p.id, p]))
+    let currentParentId = form.parent_id
+    const visited = new Set<number>()
+    while (currentParentId && !visited.has(currentParentId)) {
+      visited.add(currentParentId)
+      const parent = pageMap.get(currentParentId)
+      if (!parent) break
+      crumbs.unshift({ label: parent.title, href: `/pages/${parent.id}/edit` })
+      // Walk up further if the parent itself has a parent (need parentId on PageListItem)
+      currentParentId = parent.parentId ?? null
+    }
+    return crumbs
+  })()
+
   if (isEdit && isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -851,6 +869,7 @@ export function PageEditor() {
         breadcrumbs={[
           { label: 'Overview', href: '/' },
           { label: 'Pages', href: '/pages' },
+          ...parentBreadcrumbs,
           { label: isEdit ? (form.title || 'Edit Page') : 'New Page' },
         ]}
         actions={
