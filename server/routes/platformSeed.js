@@ -68,7 +68,12 @@ router.post('/seed', (req, res) => {
       const slug = page.slug || slugify(page.title);
       const pageId = idMap[slug];
       if (!pageId || !page.parentSlug) continue;
-      const parentId = idMap[page.parentSlug];
+      // Look up parent in idMap first, then fall back to DB
+      let parentId = idMap[page.parentSlug];
+      if (!parentId) {
+        const parentRow = db.prepare('SELECT id FROM pages WHERE tenant_id = ? AND slug = ?').get(tenant.id, page.parentSlug);
+        if (parentRow) parentId = parentRow.id;
+      }
       if (parentId) {
         updateParent.run(parentId, parentId, pageId);
       }
