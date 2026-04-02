@@ -1007,10 +1007,26 @@ export function PageEditor() {
       const parent = pageMap.get(currentParentId)
       if (!parent) break
       crumbs.unshift({ label: parent.title, href: `/pages/${parent.id}/edit` })
-      // Walk up further if the parent itself has a parent (need parentId on PageListItem)
       currentParentId = parent.parentId ?? null
     }
     return crumbs
+  })()
+
+  // Compute full URL path (e.g. /services/crowns-bridges) from the parent chain + own slug
+  const fullUrlPath = (() => {
+    const pageMap = new Map(allPages.map((p) => [p.id, p]))
+    const parts: string[] = []
+    let currentParentId = form.parent_id
+    const visited = new Set<number>()
+    while (currentParentId && !visited.has(currentParentId)) {
+      visited.add(currentParentId)
+      const parent = pageMap.get(currentParentId)
+      if (!parent) break
+      parts.unshift(parent.slug)
+      currentParentId = parent.parentId ?? null
+    }
+    if (form.slug) parts.push(form.slug)
+    return parts.length > 0 ? '/' + parts.join('/') : '/'
   })()
 
   if (isEdit && isLoading) {
@@ -1152,7 +1168,7 @@ export function PageEditor() {
               <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
               <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
               <div className="ml-3 flex-1 rounded bg-white px-3 py-1 text-xs text-gray-400 font-mono">
-                roomchang.com/{form.slug || 'page-slug'}
+                roomchang.com{fullUrlPath || '/page-slug'}
               </div>
             </div>
 

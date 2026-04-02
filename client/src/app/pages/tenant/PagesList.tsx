@@ -72,6 +72,23 @@ export function PagesList() {
     },
   })
 
+  // Compute the full URL path by walking up the parent chain
+  function fullPath(page: Page, allPages: Page[]): string {
+    const byId = new Map(allPages.map((p) => [p.id, p]))
+    const parts: string[] = [page.slug]
+    const visited = new Set<number>([page.id])
+    let cur: Page | undefined = page
+    while (cur?.parentId) {
+      if (visited.has(cur.parentId)) break
+      visited.add(cur.parentId)
+      const parent = byId.get(cur.parentId)
+      if (!parent) break
+      parts.unshift(parent.slug)
+      cur = parent
+    }
+    return '/' + parts.join('/')
+  }
+
   // Build tree structure for display
   function buildTree(items: Page[]): (Page & { depth: number })[] {
     const result: (Page & { depth: number })[] = []
@@ -213,7 +230,7 @@ export function PagesList() {
                     </div>
                   </TableCell>
                   <TableCell className="text-gray-500 font-mono text-xs">
-                    /{page.slug}
+                    {fullPath(page, pages)}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -247,7 +264,7 @@ export function PagesList() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          navigate(`/seo/pages?path=/${page.slug}`)
+                          navigate(`/seo/pages?path=${fullPath(page, pages)}`)
                         }}
                         className="rounded-md p-1.5 text-gray-400 hover:bg-violet-50 hover:text-violet-600"
                         title="Edit SEO for this page"
