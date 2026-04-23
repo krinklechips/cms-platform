@@ -20,6 +20,7 @@ import { NavigationEditor } from '@/app/pages/tenant/NavigationEditor'
 import { TeamMembers } from '@/app/pages/tenant/TeamMembers'
 import { Testimonials } from '@/app/pages/tenant/Testimonials'
 import { Services } from '@/app/pages/tenant/Services'
+import { Pricing } from '@/app/pages/tenant/Pricing'
 import { ContactSettings } from '@/app/pages/tenant/ContactSettings'
 import { FeaturedProducts } from '@/app/pages/tenant/FeaturedProducts'
 import { SerpbearDashboard } from '@/app/pages/tenant/SerpbearDashboard'
@@ -65,6 +66,7 @@ export const tenantRouter = createBrowserRouter(
         { path: 'team', element: <TeamMembers /> },
         { path: 'testimonials', element: <Testimonials /> },
         { path: 'services', element: <Services /> },
+        { path: 'pricing', element: <Pricing /> },
         { path: 'contact', element: <ContactSettings /> },
         { path: 'featured-products', element: <FeaturedProducts /> },
       ],
