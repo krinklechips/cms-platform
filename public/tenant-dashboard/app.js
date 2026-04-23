@@ -240,6 +240,20 @@
     els.appView.classList.toggle('hidden', loading);
   }
 
+  function applyTenantMarkBranding(tenant, initials) {
+    const logoImg = els.tenantMark && els.tenantMark.querySelector('img');
+    if (logoImg) {
+      els.tenantMark.setAttribute('title', tenant.name || tenant.slug || 'Tenant CMS');
+      els.tenantMark.dataset.initials = initials;
+      if (tenant.branding && tenant.branding.primaryColor) els.tenantMark.style.borderColor = tenant.branding.primaryColor;
+    } else {
+      els.tenantMark.textContent = initials;
+      if (tenant.branding && tenant.branding.primaryColor) {
+        els.tenantMark.style.background = 'linear-gradient(135deg, ' + tenant.branding.primaryColor + ' 0%, #0f172a 100%)';
+      }
+    }
+  }
+
   function renderTenantChrome() {
     const tenant = state.tenant;
     if (!tenant) return;
@@ -251,19 +265,7 @@
       .join('')
       .toUpperCase() || 'TC';
 
-    const logoImg = els.tenantMark && els.tenantMark.querySelector('img');
-    if (logoImg) {
-      els.tenantMark.setAttribute('title', tenant.name || tenant.slug || 'Tenant CMS');
-      els.tenantMark.dataset.initials = initials;
-      if (tenant.branding && tenant.branding.primaryColor) {
-        els.tenantMark.style.borderColor = tenant.branding.primaryColor;
-      }
-    } else {
-      els.tenantMark.textContent = initials;
-      if (tenant.branding && tenant.branding.primaryColor) {
-        els.tenantMark.style.background = 'linear-gradient(135deg, ' + tenant.branding.primaryColor + ' 0%, #0f172a 100%)';
-      }
-    }
+    applyTenantMarkBranding(tenant, initials);
 
     els.tenantName.textContent = tenant.name || 'Tenant CMS';
     els.tenantSlug.textContent = tenant.slug ? 'Tenant workspace • ' + tenant.slug : 'Tenant workspace';
@@ -283,9 +285,7 @@
       const disabled = Object.entries(state.moduleAccess || {})
         .filter(([, enabled]) => enabled === false)
         .map(([key]) => key);
-      const restrictionNote = disabled.length
-        ? ' Some modules are hidden by platform access controls.'
-        : '';
+      const restrictionNote = disabled.length ? ' Some modules are hidden by platform access controls.' : '';
       els.dashboardSubtitle.textContent =
         'Protected tenant CMS data and public site previews for ' + tenant.name + '. Use this dashboard to verify content readiness before wiring the full tenant editor experience.' +
         restrictionNote;
@@ -457,6 +457,24 @@
     renderArticleEditor();
   }
 
+  function applyArticleEditorBusyState(article, busy) {
+    [els.tenantArticleTitleInput, els.tenantArticleStatusInput, els.tenantArticleCategoryInput, els.tenantArticleSummaryInput, els.tenantArticleBodyInput]
+      .filter(Boolean)
+      .forEach((field) => { field.disabled = busy; });
+    if (els.tenantArticleSaveBtn) {
+      els.tenantArticleSaveBtn.disabled = busy;
+      els.tenantArticleSaveBtn.textContent = state.articleEditor.saving ? 'Saving...' : 'Save Article';
+    }
+    if (els.tenantArticleDeleteBtn) {
+      els.tenantArticleDeleteBtn.disabled = busy || !article;
+      els.tenantArticleDeleteBtn.textContent = state.articleEditor.deleting ? 'Deleting...' : 'Delete';
+    }
+    if (els.tenantArticleCancelBtn) {
+      els.tenantArticleCancelBtn.disabled = busy;
+      els.tenantArticleCancelBtn.textContent = article ? 'Close Editor' : 'Cancel';
+    }
+  }
+
   function renderArticleEditor() {
     if (!els.tenantArticleEditor) return;
     const access = normalizeModuleAccess(state.moduleAccess);
@@ -478,21 +496,7 @@
     }
 
     const busy = state.articleEditor.saving || state.articleEditor.deleting;
-    [els.tenantArticleTitleInput, els.tenantArticleStatusInput, els.tenantArticleCategoryInput, els.tenantArticleSummaryInput, els.tenantArticleBodyInput]
-      .filter(Boolean)
-      .forEach((field) => { field.disabled = busy; });
-    if (els.tenantArticleSaveBtn) {
-      els.tenantArticleSaveBtn.disabled = busy;
-      els.tenantArticleSaveBtn.textContent = state.articleEditor.saving ? 'Saving...' : 'Save Article';
-    }
-    if (els.tenantArticleDeleteBtn) {
-      els.tenantArticleDeleteBtn.disabled = busy || !article;
-      els.tenantArticleDeleteBtn.textContent = state.articleEditor.deleting ? 'Deleting...' : 'Delete';
-    }
-    if (els.tenantArticleCancelBtn) {
-      els.tenantArticleCancelBtn.disabled = busy;
-      els.tenantArticleCancelBtn.textContent = article ? 'Close Editor' : 'Cancel';
-    }
+    applyArticleEditorBusyState(article, busy);
   }
 
   function buildTenantArticlePayloadFromForm() {
@@ -713,6 +717,20 @@
     return true;
   }
 
+  function applySettledDashboardResults(articlesRes, mediaRes, annualRes, navTabsRes, slotRes) {
+    state.tenantArticles = articlesRes.status === 'fulfilled' && Array.isArray(articlesRes.value) ? articlesRes.value : [];
+    state.tenantMedia = mediaRes.status === 'fulfilled' && Array.isArray(mediaRes.value) ? mediaRes.value : [];
+    state.tenantAnnualReports = annualRes.status === 'fulfilled' && Array.isArray(annualRes.value) ? annualRes.value : [];
+    state.publicNavTabs = navTabsRes.status === 'fulfilled' && Array.isArray(navTabsRes.value.navigationTabs) ? navTabsRes.value.navigationTabs : [];
+    if (slotRes.status === 'fulfilled') {
+      state.publicSlot = slotRes.value.slot || null;
+      state.publicSlotItemsByTab = slotRes.value.itemsByTab || null;
+    } else {
+      state.publicSlot = null;
+      state.publicSlotItemsByTab = null;
+    }
+  }
+
   async function loadDashboardData() {
     const tenantSlug = state.tenant?.slug;
     if (!tenantSlug) throw new Error('Tenant context is missing');
@@ -726,28 +744,7 @@
       access.homepagePlacements ? api('/api/public/slots/home.news-promotions?tenantSlug=' + encodeURIComponent(tenantSlug), { method: 'GET' }) : Promise.resolve({ slot: null, itemsByTab: null }),
     ]);
 
-    if (articlesRes.status === 'fulfilled') state.tenantArticles = Array.isArray(articlesRes.value) ? articlesRes.value : [];
-    else state.tenantArticles = [];
-
-    if (mediaRes.status === 'fulfilled') state.tenantMedia = Array.isArray(mediaRes.value) ? mediaRes.value : [];
-    else state.tenantMedia = [];
-
-    if (annualRes.status === 'fulfilled') state.tenantAnnualReports = Array.isArray(annualRes.value) ? annualRes.value : [];
-    else state.tenantAnnualReports = [];
-
-    if (navTabsRes.status === 'fulfilled') {
-      state.publicNavTabs = Array.isArray(navTabsRes.value.navigationTabs) ? navTabsRes.value.navigationTabs : [];
-    } else {
-      state.publicNavTabs = [];
-    }
-
-    if (slotRes.status === 'fulfilled') {
-      state.publicSlot = slotRes.value.slot || null;
-      state.publicSlotItemsByTab = slotRes.value.itemsByTab || null;
-    } else {
-      state.publicSlot = null;
-      state.publicSlotItemsByTab = null;
-    }
+    applySettledDashboardResults(articlesRes, mediaRes, annualRes, navTabsRes, slotRes);
 
     const errors = [articlesRes, mediaRes, annualRes, navTabsRes, slotRes]
       .filter((result) => result.status === 'rejected')
@@ -883,8 +880,8 @@
       els.articlesTbody.addEventListener('click', function (event) {
         const btn = event.target.closest('[data-article-action]');
         if (!btn) return;
-        const action = btn.getAttribute('data-article-action');
-        const articleId = Number(btn.getAttribute('data-article-id'));
+        const action = btn.dataset.articleAction;
+        const articleId = Number(btn.dataset.articleId);
         if (!articleId) return;
         if (action === 'edit') {
           const article = getArticleById(articleId);

@@ -494,6 +494,37 @@ function SeoChecklist({ form }: { form: PageForm }) {
 }
 
 /* ================================================================== */
+/*  Helpers                                                            */
+/* ================================================================== */
+
+function extractDomain(path: string): string {
+  try {
+    if (path.startsWith('http')) return new URL(path).hostname
+  } catch {}
+  return 'example.com'
+}
+
+function buildSeoPageApiBody(data: PageForm) {
+  return {
+    title: data.title || null,
+    description: data.description || null,
+    og_title: data.og_title || null,
+    og_description: data.og_description || null,
+    og_image: data.og_image || null,
+    twitter_card: data.twitter_card,
+    twitter_title: data.twitter_title || null,
+    twitter_description: data.twitter_description || null,
+    twitter_image: data.twitter_image || null,
+    canonical_url: data.canonical_url || null,
+    noindex: data.noindex ? 1 : 0,
+    nofollow: data.nofollow ? 1 : 0,
+    json_ld_type: data.json_ld_type || null,
+    json_ld_json: data.json_ld_json || null,
+    keywords: data.keywords || null,
+  }
+}
+
+/* ================================================================== */
 /*  Main Component                                                     */
 /* ================================================================== */
 
@@ -535,23 +566,7 @@ export function SeoEditor() {
     mutationFn: (data: PageForm) =>
       api(`/api/tenant/seo/pages/${encodeURIComponent(data.page_path)}`, {
         method: 'PUT',
-        body: {
-          title: data.title || null,
-          description: data.description || null,
-          og_title: data.og_title || null,
-          og_description: data.og_description || null,
-          og_image: data.og_image || null,
-          twitter_card: data.twitter_card,
-          twitter_title: data.twitter_title || null,
-          twitter_description: data.twitter_description || null,
-          twitter_image: data.twitter_image || null,
-          canonical_url: data.canonical_url || null,
-          noindex: data.noindex ? 1 : 0,
-          nofollow: data.nofollow ? 1 : 0,
-          json_ld_type: data.json_ld_type || null,
-          json_ld_json: data.json_ld_json || null,
-          keywords: data.keywords || null,
-        },
+        body: buildSeoPageApiBody(data),
       }),
     onSuccess: () => {
       toast.success('Page SEO saved')
@@ -591,13 +606,6 @@ export function SeoEditor() {
 
   function updateField<K extends keyof PageForm>(key: K, value: PageForm[K]) {
     setForm((f) => ({ ...f, [key]: value }))
-  }
-
-  function extractDomain(path: string): string {
-    try {
-      if (path.startsWith('http')) return new URL(path).hostname
-    } catch {}
-    return 'example.com'
   }
 
   /* ---- Accordion section state ----------------------------------- */

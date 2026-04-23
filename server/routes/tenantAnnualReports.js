@@ -25,6 +25,19 @@ function mapAnnualReport(row) {
   };
 }
 
+function resolveStatusUpdate(bodyStatus, existingStatus) {
+  if (bodyStatus === 'draft') return 'draft';
+  if (bodyStatus === 'published') return 'published';
+  return existingStatus || 'published';
+}
+
+function resolveSortOrderUpdate(bodySortOrder, existingSortOrder) {
+  if (bodySortOrder !== undefined) {
+    return Number.isFinite(Number(bodySortOrder)) ? Number(bodySortOrder) : 0;
+  }
+  return Number(existingSortOrder || 0);
+}
+
 function loadTenantPdfMedia(tenantId, mediaId) {
   if (!mediaId) return null;
   return db.prepare(`
@@ -135,8 +148,8 @@ router.put('/:id', (req, res) => {
     req.body?.summary !== undefined ? String(req.body.summary || '').trim() : (existing.summary || ''),
     nextFileUrl,
     nextMediaId || null,
-    req.body?.status === 'draft' ? 'draft' : (req.body?.status === 'published' ? 'published' : (existing.status || 'published')),
-    req.body?.sortOrder !== undefined ? (Number.isFinite(Number(req.body.sortOrder)) ? Number(req.body.sortOrder) : 0) : Number(existing.sort_order || 0),
+    resolveStatusUpdate(req.body?.status, existing.status),
+    resolveSortOrderUpdate(req.body?.sortOrder, existing.sort_order),
     req.tenant.id,
     id,
   );

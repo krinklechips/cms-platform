@@ -3,6 +3,39 @@ import { db } from '../db.js';
 
 const router = express.Router();
 
+function isRowActive(row) {
+  return row.assignment_status === 'active' && row.content_status === 'published';
+}
+
+function isRowWithinWindows(row) {
+  return isNowWithinWindow(row.starts_at, row.ends_at) &&
+    isNowWithinWindow(row.publish_start_at, row.publish_end_at);
+}
+
+function groupRowsByTab(rows, tabs, maxItemsPerTab) {
+  const grouped = Object.fromEntries(tabs.map((tab) => [tab, []]));
+  for (const row of rows) {
+    if (!isRowActive(row)) continue;
+    if (!isRowWithinWindows(row)) continue;
+    const tab = tabs.includes(row.tab_key) ? row.tab_key : tabs[0];
+    if (grouped[tab].length >= maxItemsPerTab) continue;
+    grouped[tab].push({
+      id: row.id,
+      type: row.type,
+      title: row.title,
+      summary: row.summary,
+      body: row.body,
+      imageUrl: row.image_url,
+      location: row.location,
+      ctaLabel: row.cta_label || 'Read More',
+      ctaUrl: row.cta_url || '#',
+      sortOrder: Number(row.sort_order || 0),
+      updatedAt: row.updated_at,
+    });
+  }
+  return grouped;
+}
+
 function isNowWithinWindow(start, end) {
   const now = Date.now();
   if (start) {
@@ -60,27 +93,7 @@ router.get('/slots/:slotKey', (req, res) => {
   `).all(tenant.id, slot.id);
 
   const maxItemsPerTab = Number(config.maxItemsPerTab || 6);
-  const grouped = Object.fromEntries(tabs.map((tab) => [tab, []]));
-  for (const row of rows) {
-    if (row.assignment_status !== 'active' || row.content_status !== 'published') continue;
-    if (!isNowWithinWindow(row.starts_at, row.ends_at)) continue;
-    if (!isNowWithinWindow(row.publish_start_at, row.publish_end_at)) continue;
-    const tab = tabs.includes(row.tab_key) ? row.tab_key : tabs[0];
-    if (grouped[tab].length >= maxItemsPerTab) continue;
-    grouped[tab].push({
-      id: row.id,
-      type: row.type,
-      title: row.title,
-      summary: row.summary,
-      body: row.body,
-      imageUrl: row.image_url,
-      location: row.location,
-      ctaLabel: row.cta_label || 'Read More',
-      ctaUrl: row.cta_url || '#',
-      sortOrder: Number(row.sort_order || 0),
-      updatedAt: row.updated_at,
-    });
-  }
+  const grouped = groupRowsByTab(rows, tabs, maxItemsPerTab);
 
   res.json({
     tenant: {

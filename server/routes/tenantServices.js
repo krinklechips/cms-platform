@@ -46,6 +46,23 @@ function slugify(v = '') {
   return String(v || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
+function buildServicePatch(body) {
+  const patch = {};
+  if (body.name !== undefined) patch.name = String(body.name).trim();
+  if (body.slug !== undefined) patch.slug = String(body.slug).trim();
+  if (body.eyebrow !== undefined) patch.eyebrow = body.eyebrow || null;
+  if (body.description !== undefined) patch.description = body.description || null;
+  if (body.heroDescription !== undefined) patch.heroDescription = body.heroDescription || null;
+  if (body.category !== undefined) patch.category = body.category || null;
+  if (body.features !== undefined) patch.features = Array.isArray(body.features) ? body.features : [];
+  if (body.isFeatured !== undefined) patch.isFeatured = Boolean(body.isFeatured);
+  if (body.content !== undefined) patch.content = body.content;
+  if (body.sortOrder !== undefined) patch.order = Number(body.sortOrder) || 0;
+  if (body.status !== undefined) patch.published = body.status !== 'draft';
+  patch.updatedAt = new Date().toISOString();
+  return patch;
+}
+
 router.get('/', async (req, res) => {
   const { url, key } = getSupabaseConfig();
   if (!url || !key) return res.json([]);
@@ -96,20 +113,7 @@ router.put('/:id', async (req, res) => {
   const { url, key } = getSupabaseConfig();
   if (!url || !key) return res.status(503).json({ error: 'Supabase not configured' });
   const { id } = req.params;
-  const body = req.body ?? {};
-  const patch = {};
-  if (body.name !== undefined) patch.name = String(body.name).trim();
-  if (body.slug !== undefined) patch.slug = String(body.slug).trim();
-  if (body.eyebrow !== undefined) patch.eyebrow = body.eyebrow || null;
-  if (body.description !== undefined) patch.description = body.description || null;
-  if (body.heroDescription !== undefined) patch.heroDescription = body.heroDescription || null;
-  if (body.category !== undefined) patch.category = body.category || null;
-  if (body.features !== undefined) patch.features = Array.isArray(body.features) ? body.features : [];
-  if (body.isFeatured !== undefined) patch.isFeatured = Boolean(body.isFeatured);
-  if (body.content !== undefined) patch.content = body.content;
-  if (body.sortOrder !== undefined) patch.order = Number(body.sortOrder) || 0;
-  if (body.status !== undefined) patch.published = body.status !== 'draft';
-  patch.updatedAt = new Date().toISOString();
+  const patch = buildServicePatch(req.body ?? {});
   try {
     const resp = await fetch(`${url}/rest/v1/services?id=eq.${encodeURIComponent(id)}`, {
       method: 'PATCH',

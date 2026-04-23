@@ -136,6 +136,6 @@ export function blockTenantLoginOnPlatformHost(req, res, next) {
 
 export function getHostContextDebug() {
   return {
-    platformHosts: Array.from(platformHosts.values()).sort(),
+    platformHosts: Array.from(platformHosts.values()).sort((a, b) => String(a).localeCompare(String(b))),
   };
 }

@@ -85,6 +85,78 @@ function copyToClipboard(url: string) {
   )
 }
 
+function collectNextSegment(path: string, prefix: string, currentFolder: string): string | null {
+  if (currentFolder === '') {
+    const first = path.split('/')[0]
+    return first || null
+  }
+  if (path.startsWith(prefix)) {
+    const rest = path.slice(prefix.length)
+    const next = rest.split('/')[0]
+    return next && rest !== '' ? next : null
+  }
+  return null
+}
+
+function computeVisibleSubfolders(allFolders: string[], media: MediaItem[], currentFolder: string): string[] {
+  const prefix = currentFolder ? `${currentFolder}/` : ''
+  const subfolders = new Set<string>()
+  for (const f of allFolders) {
+    const seg = collectNextSegment(f, prefix, currentFolder)
+    if (seg) subfolders.add(seg)
+  }
+  for (const item of media) {
+    const folder = item.folder || ''
+    if (folder) {
+      const seg = collectNextSegment(folder, prefix, currentFolder)
+      if (seg) subfolders.add(seg)
+    }
+  }
+  return Array.from(subfolders).sort((a, b) => String(a).localeCompare(String(b)))
+}
+
+function uploadFileWithProgress(
+  file: File,
+  folder: string,
+  onProgress: (pct: number) => void,
+): Promise<MediaItem> {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (folder) formData.append('folder', folder)
+
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/api/tenant/media/upload')
+    xhr.withCredentials = true
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText)
+          if (data.media) {
+            resolve({ ...data.media, usageCount: 0 } as MediaItem)
+          } else {
+            reject(new Error('Unexpected server response'))
+          }
+        } catch {
+          reject(new Error('Failed to parse upload response'))
+        }
+      } else {
+        let msg = 'Upload failed'
+        try { msg = JSON.parse(xhr.responseText).error || msg } catch {}
+        reject(new Error(msg))
+      }
+    }
+
+    xhr.onerror = () => reject(new Error('Network error during upload'))
+    xhr.send(formData)
+  })
+}
+
 export function MediaLibrary() {
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -132,46 +204,6 @@ export function MediaLibrary() {
     onError: () => toast.error('Failed to create folder'),
   })
 
-  function uploadFileWithProgress(file: File, folder: string): Promise<MediaItem> {
-    return new Promise((resolve, reject) => {
-      const formData = new FormData()
-      formData.append('file', file)
-      if (folder) formData.append('folder', folder)
-
-      const xhr = new XMLHttpRequest()
-      xhr.open('POST', '/api/tenant/media/upload')
-      xhr.withCredentials = true
-
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          setUploadProgress(Math.round((e.loaded / e.total) * 100))
-        }
-      }
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const data = JSON.parse(xhr.responseText)
-            if (data.media) {
-              resolve({ ...data.media, usageCount: 0 } as MediaItem)
-            } else {
-              reject(new Error('Unexpected server response'))
-            }
-          } catch {
-            reject(new Error('Failed to parse upload response'))
-          }
-        } else {
-          let msg = 'Upload failed'
-          try { msg = JSON.parse(xhr.responseText).error || msg } catch {}
-          reject(new Error(msg))
-        }
-      }
-
-      xhr.onerror = () => reject(new Error('Network error during upload'))
-      xhr.send(formData)
-    })
-  }
-
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
       setUploadProgress(0)
@@ -180,7 +212,7 @@ export function MediaLibrary() {
         if (files.length > 1) {
           toast.info(`Uploading ${i + 1} of ${files.length}...`)
         }
-        const item = await uploadFileWithProgress(files[i], currentFolder)
+        const item = await uploadFileWithProgress(files[i], currentFolder, setUploadProgress)
         uploaded.push(item)
       }
       return uploaded
@@ -262,35 +294,10 @@ export function MediaLibrary() {
   }
 
   // Compute visible folders for current path
-  const visibleSubfolders = useMemo(() => {
-    const prefix = currentFolder ? `${currentFolder}/` : ''
-    const subfolders = new Set<string>()
-    // From folder metadata
-    for (const f of allFolders) {
-      if (currentFolder === '') {
-        // Top level: extract first segment
-        const first = f.split('/')[0]
-        if (first) subfolders.add(first)
-      } else if (f.startsWith(prefix)) {
-        const rest = f.slice(prefix.length)
-        const next = rest.split('/')[0]
-        if (next) subfolders.add(next)
-      }
-    }
-    // Also derive from file folders
-    for (const item of media) {
-      const folder = item.folder || ''
-      if (currentFolder === '' && folder) {
-        const first = folder.split('/')[0]
-        if (first) subfolders.add(first)
-      } else if (folder.startsWith(prefix)) {
-        const rest = folder.slice(prefix.length)
-        const next = rest.split('/')[0]
-        if (next && rest !== '') subfolders.add(next)
-      }
-    }
-    return Array.from(subfolders).sort()
-  }, [allFolders, media, currentFolder])
+  const visibleSubfolders = useMemo(
+    () => computeVisibleSubfolders(allFolders, media, currentFolder),
+    [allFolders, media, currentFolder],
+  )
 
   // Filter media for current folder
   const filteredMedia = useMemo(() => {

@@ -62,7 +62,7 @@ async function r2Request({ method, objectKey, body, contentType = '', contentLen
   if (contentType) headers['content-type'] = contentType;
   if (contentLength) headers['content-length'] = String(contentLength);
 
-  const sortedHeaderKeys = Object.keys(headers).sort();
+  const sortedHeaderKeys = Object.keys(headers).sort((a, b) => String(a).localeCompare(String(b)));
   const canonicalHeaders = sortedHeaderKeys.map((k) => `${k}:${String(headers[k]).trim()}\n`).join('');
   const signedHeaders = sortedHeaderKeys.join(';');
 
@@ -126,7 +126,7 @@ export async function listR2Objects(prefix = '', delimiter = '/') {
     'x-amz-date': amzDate,
   };
 
-  const sortedHeaderKeys = Object.keys(headers).sort();
+  const sortedHeaderKeys = Object.keys(headers).sort((a, b) => String(a).localeCompare(String(b)));
   const canonicalHeaders = sortedHeaderKeys.map((k) => `${k}:${String(headers[k]).trim()}\n`).join('');
   const signedHeaders = sortedHeaderKeys.join(';');
 

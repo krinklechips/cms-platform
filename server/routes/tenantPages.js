@@ -8,6 +8,21 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(requireTenantContext);
 
+function resolvePageStatus(bodyStatus, existingStatus) {
+  if (bodyStatus !== undefined) return bodyStatus === 'published' ? 'published' : 'draft';
+  return existingStatus;
+}
+
+function resolveNullableString(bodyValue, existingValue) {
+  if (bodyValue !== undefined) return bodyValue ? String(bodyValue).trim() : null;
+  return existingValue;
+}
+
+function resolvePageSeoField(bodyValue, existingValue) {
+  if (bodyValue !== undefined) return bodyValue ? String(bodyValue).trim() : null;
+  return existingValue;
+}
+
 function slugify(value = '') {
   return String(value || '')
     .toLowerCase()
@@ -235,16 +250,16 @@ router.put('/:id', (req, res) => {
     `).run(
       nextSlug,
       nextTitle,
-      req.body?.status !== undefined ? (req.body.status === 'published' ? 'published' : 'draft') : existing.status,
+      resolvePageStatus(req.body?.status, existing.status),
       req.body?.template !== undefined ? String(req.body.template || 'default').trim() : existing.template,
       req.body?.parentId !== undefined ? (req.body.parentId || null) : existing.parent_id,
       req.body?.sortOrder !== undefined ? (Number(req.body.sortOrder) || 0) : existing.sort_order,
       req.body?.showInNav !== undefined ? (req.body.showInNav ? 1 : 0) : existing.show_in_nav,
-      req.body?.navLabel !== undefined ? (req.body.navLabel ? String(req.body.navLabel).trim() : null) : existing.nav_label,
+      resolveNullableString(req.body?.navLabel, existing.nav_label),
       req.body?.navParentId !== undefined ? (req.body.navParentId || null) : existing.nav_parent_id,
-      req.body?.seoTitle !== undefined ? (req.body.seoTitle ? String(req.body.seoTitle).trim() : null) : existing.seo_title,
-      req.body?.seoDescription !== undefined ? (req.body.seoDescription ? String(req.body.seoDescription).trim() : null) : existing.seo_description,
-      req.body?.seoImage !== undefined ? (req.body.seoImage ? String(req.body.seoImage).trim() : null) : existing.seo_image,
+      resolvePageSeoField(req.body?.seoTitle, existing.seo_title),
+      resolvePageSeoField(req.body?.seoDescription, existing.seo_description),
+      resolvePageSeoField(req.body?.seoImage, existing.seo_image),
       now,
       req.tenant.id,
       id,

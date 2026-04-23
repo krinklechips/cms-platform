@@ -16,6 +16,12 @@ interface SeoScoreGaugeProps {
   size?: 'sm' | 'lg'
 }
 
+function scoreColorTokens(clamped: number) {
+  if (clamped >= 80) return { color: '#22c55e', bgColor: 'bg-green-50', textColor: 'text-green-700', label: 'Good' }
+  if (clamped >= 50) return { color: '#eab308', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', label: 'Needs Work' }
+  return { color: '#ef4444', bgColor: 'bg-red-50', textColor: 'text-red-700', label: 'Poor' }
+}
+
 export function SeoScoreGauge({ score, size = 'lg' }: SeoScoreGaugeProps) {
   const clamped = Math.max(0, Math.min(100, Math.round(score)))
 
@@ -31,13 +37,7 @@ export function SeoScoreGauge({ score, size = 'lg' }: SeoScoreGaugeProps) {
   const offset = circumference - progress
 
   // --- color tokens ---
-  const color =
-    clamped >= 80 ? '#22c55e' : clamped >= 50 ? '#eab308' : '#ef4444'
-  const bgColor =
-    clamped >= 80 ? 'bg-green-50' : clamped >= 50 ? 'bg-yellow-50' : 'bg-red-50'
-  const textColor =
-    clamped >= 80 ? 'text-green-700' : clamped >= 50 ? 'text-yellow-700' : 'text-red-700'
-  const label = clamped >= 80 ? 'Good' : clamped >= 50 ? 'Needs Work' : 'Poor'
+  const { color, bgColor, textColor, label } = scoreColorTokens(clamped)
 
   if (isSmall) {
     return (

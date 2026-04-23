@@ -53,41 +53,37 @@ function defaultSiteSections() {
   };
 }
 
+function pickBool(source, key, merged) {
+  return Object.prototype.hasOwnProperty.call(source, key) ? Boolean(source[key]) : Boolean(merged[key]);
+}
+
+function pickNavbarOrder(source, merged, base) {
+  const raw = Object.prototype.hasOwnProperty.call(source, 'navbarOrder')
+    ? Number(source.navbarOrder)
+    : Number(Object.prototype.hasOwnProperty.call(merged, 'navbarOrder') ? merged.navbarOrder : base.navbarOrder);
+  return Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : Math.max(0, Number(base.navbarOrder) || 0);
+}
+
+function pickStringField(source, key, merged, base) {
+  const value = Object.prototype.hasOwnProperty.call(source, key)
+    ? String(source[key] || '').trim()
+    : String(merged[key] || '');
+  return value || String(base[key] || '');
+}
+
 function normalizeSiteSectionBlock(input, current, fallback) {
   const source = input && typeof input === 'object' ? input : {};
   const prior = current && typeof current === 'object' ? current : {};
   const base = fallback && typeof fallback === 'object' ? fallback : {};
   const merged = { ...base, ...prior };
 
-  const enabled = Object.prototype.hasOwnProperty.call(source, 'enabled')
-    ? Boolean(source.enabled)
-    : Boolean(merged.enabled);
-  const navbarEnabled = Object.prototype.hasOwnProperty.call(source, 'navbarEnabled')
-    ? Boolean(source.navbarEnabled)
-    : Boolean(Object.prototype.hasOwnProperty.call(merged, 'navbarEnabled') ? merged.navbarEnabled : base.navbarEnabled);
-  const parsedNavbarOrder = Object.prototype.hasOwnProperty.call(source, 'navbarOrder')
-    ? Number(source.navbarOrder)
-    : Number(Object.prototype.hasOwnProperty.call(merged, 'navbarOrder') ? merged.navbarOrder : base.navbarOrder);
-  const navbarOrder = Number.isFinite(parsedNavbarOrder) && parsedNavbarOrder >= 0
-    ? Math.floor(parsedNavbarOrder)
-    : Math.max(0, Number(base.navbarOrder) || 0);
-  const eyebrow = Object.prototype.hasOwnProperty.call(source, 'eyebrow')
-    ? String(source.eyebrow || '').trim()
-    : String(merged.eyebrow || '');
-  const title = Object.prototype.hasOwnProperty.call(source, 'title')
-    ? String(source.title || '').trim()
-    : String(merged.title || '');
-  const subtitle = Object.prototype.hasOwnProperty.call(source, 'subtitle')
-    ? String(source.subtitle || '').trim()
-    : String(merged.subtitle || '');
-
   return {
-    enabled,
-    navbarEnabled,
-    navbarOrder,
-    eyebrow: eyebrow || String(base.eyebrow || ''),
-    title: title || String(base.title || ''),
-    subtitle: subtitle || String(base.subtitle || ''),
+    enabled: pickBool(source, 'enabled', merged),
+    navbarEnabled: pickBool(source, 'navbarEnabled', merged),
+    navbarOrder: pickNavbarOrder(source, merged, base),
+    eyebrow: pickStringField(source, 'eyebrow', merged, base),
+    title: pickStringField(source, 'title', merged, base),
+    subtitle: pickStringField(source, 'subtitle', merged, base),
   };
 }
 

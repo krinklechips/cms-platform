@@ -204,6 +204,49 @@ router.delete('/keywords/:id', (req, res) => {
 
 // ── SEO Audit ───────────────────────────────────────────────────────
 
+function auditArticle(art, issues) {
+  let penalty = 0;
+  const page = `/articles/${art.slug}`;
+  if (!art.seo_title) {
+    issues.push({ severity: 'warning', type: 'missing_seo_title', page, message: `Article "${art.title}" is missing an SEO title` });
+    penalty += 3;
+  }
+  if (!art.seo_description) {
+    issues.push({ severity: 'warning', type: 'missing_seo_description', page, message: `Article "${art.title}" is missing an SEO description` });
+    penalty += 3;
+  } else if (art.seo_description.length < 50) {
+    issues.push({ severity: 'info', type: 'short_seo_description', page, message: `Article "${art.title}" has a very short SEO description (${art.seo_description.length} chars)` });
+    penalty += 1;
+  } else if (art.seo_description.length > 160) {
+    issues.push({ severity: 'info', type: 'long_seo_description', page, message: `Article "${art.title}" SEO description exceeds 160 chars` });
+    penalty += 1;
+  }
+  if (!art.seo_image && !art.cover_image) {
+    issues.push({ severity: 'warning', type: 'missing_og_image', page, message: `Article "${art.title}" has no OG image or cover image` });
+    penalty += 2;
+  }
+  if (art.seo_title && art.seo_title.length > 60) {
+    issues.push({ severity: 'info', type: 'long_seo_title', page, message: `Article "${art.title}" SEO title exceeds 60 chars` });
+    penalty += 1;
+  }
+  return penalty;
+}
+
+function auditPageMeta(pageMeta, issues) {
+  let penalty = 0;
+  for (const pm of pageMeta) {
+    if (!pm.title) {
+      issues.push({ severity: 'critical', type: 'missing_page_title', page: pm.page_path, message: `Page "${pm.page_path}" has no title tag` });
+      penalty += 5;
+    }
+    if (!pm.description) {
+      issues.push({ severity: 'warning', type: 'missing_page_description', page: pm.page_path, message: `Page "${pm.page_path}" has no meta description` });
+      penalty += 3;
+    }
+  }
+  return penalty;
+}
+
 router.get('/audit', (req, res) => {
   const tenantId = req.tenant.id;
   const issues = [];
@@ -216,28 +259,7 @@ router.get('/audit', (req, res) => {
   `).all(tenantId);
 
   for (const art of articles) {
-    if (!art.seo_title) {
-      issues.push({ severity: 'warning', type: 'missing_seo_title', page: `/articles/${art.slug}`, message: `Article "${art.title}" is missing an SEO title` });
-      score -= 3;
-    }
-    if (!art.seo_description) {
-      issues.push({ severity: 'warning', type: 'missing_seo_description', page: `/articles/${art.slug}`, message: `Article "${art.title}" is missing an SEO description` });
-      score -= 3;
-    } else if (art.seo_description.length < 50) {
-      issues.push({ severity: 'info', type: 'short_seo_description', page: `/articles/${art.slug}`, message: `Article "${art.title}" has a very short SEO description (${art.seo_description.length} chars)` });
-      score -= 1;
-    } else if (art.seo_description.length > 160) {
-      issues.push({ severity: 'info', type: 'long_seo_description', page: `/articles/${art.slug}`, message: `Article "${art.title}" SEO description exceeds 160 chars` });
-      score -= 1;
-    }
-    if (!art.seo_image && !art.cover_image) {
-      issues.push({ severity: 'warning', type: 'missing_og_image', page: `/articles/${art.slug}`, message: `Article "${art.title}" has no OG image or cover image` });
-      score -= 2;
-    }
-    if (art.seo_title && art.seo_title.length > 60) {
-      issues.push({ severity: 'info', type: 'long_seo_title', page: `/articles/${art.slug}`, message: `Article "${art.title}" SEO title exceeds 60 chars` });
-      score -= 1;
-    }
+    score -= auditArticle(art, issues);
   }
 
   if (articles.length === 0) {
@@ -246,16 +268,7 @@ router.get('/audit', (req, res) => {
 
   // Check page meta coverage
   const pageMeta = db.prepare('SELECT page_path, title, description, og_image FROM seo_page_meta WHERE tenant_id = ?').all(tenantId);
-  for (const pm of pageMeta) {
-    if (!pm.title) {
-      issues.push({ severity: 'critical', type: 'missing_page_title', page: pm.page_path, message: `Page "${pm.page_path}" has no title tag` });
-      score -= 5;
-    }
-    if (!pm.description) {
-      issues.push({ severity: 'warning', type: 'missing_page_description', page: pm.page_path, message: `Page "${pm.page_path}" has no meta description` });
-      score -= 3;
-    }
-  }
+  score -= auditPageMeta(pageMeta, issues);
 
   // Check for duplicate meta descriptions
   const descriptions = articles.map(a => a.seo_description).filter(Boolean);

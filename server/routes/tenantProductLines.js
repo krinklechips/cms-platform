@@ -8,6 +8,16 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(requireTenantContext);
 
+function resolveStringField(bodyValue, existingValue, fallback = '') {
+  if (bodyValue !== undefined) return String(bodyValue || '').trim();
+  return existingValue || fallback;
+}
+
+function resolveNullableLabel(bodyValue, existingValue) {
+  if (bodyValue !== undefined) return String(bodyValue || '').trim() || null;
+  return existingValue;
+}
+
 function slugifyLocal(value = '') {
   return String(value || '')
     .toLowerCase()
@@ -178,10 +188,10 @@ router.put('/:id', (req, res) => {
     `).run(
       nextSlug,
       nextLabel,
-      req.body?.summary !== undefined ? String(req.body.summary || '').trim() : (existing.summary || ''),
-      req.body?.href !== undefined ? String(req.body.href || '').trim() : (existing.href || ''),
+      resolveStringField(req.body?.summary, existing.summary),
+      resolveStringField(req.body?.href, existing.href),
       nextGroupKey,
-      req.body?.groupLabel !== undefined ? (String(req.body.groupLabel || '').trim() || null) : existing.group_label,
+      resolveNullableLabel(req.body?.groupLabel, existing.group_label),
       nextItemType,
       req.body?.status !== undefined ? normalizeStatus(req.body.status, existing.status) : existing.status,
       req.body?.featured !== undefined ? normalizeBool(req.body.featured) : Number(existing.featured || 0),

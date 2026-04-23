@@ -21,6 +21,32 @@ function asTrimmedString(value, fallback = '') {
   return value === undefined || value === null ? fallback : String(value);
 }
 
+function resolveArticleStatus(bodyStatus, existingStatus) {
+  if (bodyStatus === 'published') return 'published';
+  if (bodyStatus === 'draft') return 'draft';
+  return existingStatus;
+}
+
+function resolveArticleCategory(bodyCategory, existingCategory) {
+  if (bodyCategory === undefined) return existingCategory || 'newsroom';
+  return String(bodyCategory || 'newsroom').trim() || 'newsroom';
+}
+
+function resolveArticleSource(bodySource, existingSource) {
+  if (bodySource === undefined) return existingSource || 'manual';
+  return String(bodySource || 'manual').trim() || 'manual';
+}
+
+function resolveFirstPublish(nextStatus, existing, now, sessionEmail) {
+  if (nextStatus === 'published' && !existing.first_publish_at) {
+    return {
+      firstPublishAt: now,
+      publishedBy: sessionEmail || existing.published_by || null,
+    };
+  }
+  return { firstPublishAt: existing.first_publish_at, publishedBy: existing.published_by };
+}
+
 function normalizeSeoPayload(input = {}) {
   const nullableTrim = (value) => {
     const trimmed = typeof value === 'string' ? value.trim() : '';
@@ -233,7 +259,7 @@ router.put('/:id', (req, res) => {
     : (req.body?.title !== undefined ? slugifyLocal(nextTitle) : existing.slug);
   if (!nextSlug) return res.status(400).json({ error: 'A valid slug could not be generated' });
 
-  const nextStatus = req.body?.status === 'published' ? 'published' : (req.body?.status === 'draft' ? 'draft' : existing.status);
+  const nextStatus = resolveArticleStatus(req.body?.status, existing.status);
   const seo = normalizeSeoPayload({
     seoTitle: req.body?.seoTitle,
     seoDescription: req.body?.seoDescription,
@@ -243,12 +269,7 @@ router.put('/:id', (req, res) => {
   });
 
   const now = new Date().toISOString();
-  let firstPublishAt = existing.first_publish_at;
-  let publishedBy = existing.published_by;
-  if (nextStatus === 'published' && !existing.first_publish_at) {
-    firstPublishAt = now;
-    publishedBy = req.session?.user?.email || existing.published_by || null;
-  }
+  const { firstPublishAt, publishedBy } = resolveFirstPublish(nextStatus, existing, now, req.session?.user?.email);
 
   try {
     db.prepare(`
@@ -263,8 +284,8 @@ router.put('/:id', (req, res) => {
       req.body?.summary !== undefined ? asTrimmedString(req.body.summary, '') : (existing.summary ?? ''),
       req.body?.body !== undefined ? asTrimmedString(req.body.body, '') : (existing.body ?? ''),
       nextStatus,
-      req.body?.category !== undefined ? (String(req.body.category || 'newsroom').trim() || 'newsroom') : (existing.category || 'newsroom'),
-      req.body?.source !== undefined ? (String(req.body.source || 'manual').trim() || 'manual') : (existing.source || 'manual'),
+      resolveArticleCategory(req.body?.category, existing.category),
+      resolveArticleSource(req.body?.source, existing.source),
       req.body?.seoTitle !== undefined ? seo.seoTitle : existing.seo_title,
       req.body?.seoDescription !== undefined ? seo.seoDescription : existing.seo_description,
       req.body?.seoImage !== undefined ? seo.seoImage : existing.seo_image,

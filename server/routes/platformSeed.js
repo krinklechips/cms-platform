@@ -3,6 +3,57 @@ import { db } from '../db.js';
 
 const router = express.Router();
 
+function insertPagesFirstPass(tenantId, pages, insertPage) {
+  let inserted = 0;
+  const idMap = {};
+  for (const page of pages) {
+    const slug = page.slug || slugify(page.title);
+    const title = String(page.title || '').trim();
+    if (!title) continue;
+
+    const result = insertPage.run(
+      tenantId,
+      slug,
+      title,
+      page.status || 'published',
+      page.template || 'default',
+      null,
+      page.sortOrder ?? 0,
+      page.showInNav !== false ? 1 : 0,
+      page.navLabel || null,
+      null,
+      page.seoTitle || null,
+      page.seoDescription || null,
+    );
+
+    if (result.changes > 0) {
+      inserted++;
+      idMap[slug] = result.lastInsertRowid;
+    } else {
+      const existing = db.prepare('SELECT id FROM pages WHERE tenant_id = ? AND slug = ?').get(tenantId, slug);
+      if (existing) idMap[slug] = existing.id;
+    }
+  }
+  return { inserted, idMap };
+}
+
+function applyParentReferences(tenantId, pages, idMap) {
+  const updateParent = db.prepare('UPDATE pages SET parent_id = ?, nav_parent_id = ? WHERE id = ?');
+  for (const page of pages) {
+    const slug = page.slug || slugify(page.title);
+    const pageId = idMap[slug];
+    if (!pageId || !page.parentSlug) continue;
+    let parentId = idMap[page.parentSlug];
+    if (!parentId) {
+      const parentRow = db.prepare('SELECT id FROM pages WHERE tenant_id = ? AND slug = ?').get(tenantId, page.parentSlug);
+      if (parentRow) parentId = parentRow.id;
+    }
+    if (parentId) {
+      updateParent.run(parentId, parentId, pageId);
+    }
+  }
+}
+
 function slugify(value = '') {
   return String(value || '')
     .toLowerCase()
@@ -28,56 +79,11 @@ router.post('/seed', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    let inserted = 0;
-    const idMap = {}; // slug -> id for parent references
-
     // First pass: insert all pages without parent references
-    for (const page of pages) {
-      const slug = page.slug || slugify(page.title);
-      const title = String(page.title || '').trim();
-      if (!title) continue;
-
-      const result = insertPage.run(
-        tenant.id,
-        slug,
-        title,
-        page.status || 'published',
-        page.template || 'default',
-        null, // parent_id set in second pass
-        page.sortOrder ?? 0,
-        page.showInNav !== false ? 1 : 0,
-        page.navLabel || null,
-        null, // nav_parent_id set in second pass
-        page.seoTitle || null,
-        page.seoDescription || null,
-      );
-
-      if (result.changes > 0) {
-        inserted++;
-        idMap[slug] = result.lastInsertRowid;
-      } else {
-        // Already exists, fetch its id
-        const existing = db.prepare('SELECT id FROM pages WHERE tenant_id = ? AND slug = ?').get(tenant.id, slug);
-        if (existing) idMap[slug] = existing.id;
-      }
-    }
+    const { inserted, idMap } = insertPagesFirstPass(tenant.id, pages, insertPage);
 
     // Second pass: set parent references
-    const updateParent = db.prepare('UPDATE pages SET parent_id = ?, nav_parent_id = ? WHERE id = ?');
-    for (const page of pages) {
-      const slug = page.slug || slugify(page.title);
-      const pageId = idMap[slug];
-      if (!pageId || !page.parentSlug) continue;
-      // Look up parent in idMap first, then fall back to DB
-      let parentId = idMap[page.parentSlug];
-      if (!parentId) {
-        const parentRow = db.prepare('SELECT id FROM pages WHERE tenant_id = ? AND slug = ?').get(tenant.id, page.parentSlug);
-        if (parentRow) parentId = parentRow.id;
-      }
-      if (parentId) {
-        updateParent.run(parentId, parentId, pageId);
-      }
-    }
+    applyParentReferences(tenant.id, pages, idMap);
 
     results.pages = inserted;
   }

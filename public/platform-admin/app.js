@@ -388,6 +388,24 @@
     syncSidebarActiveLink();
   }
 
+  function applyNavBlockSearch(block, term) {
+    const headLink = block.querySelector(':scope > .nav-menu-head > a');
+    const submenuLinks = Array.from(block.querySelectorAll(':scope > .submenu .submenu-link'));
+    const headText = String(headLink?.textContent || '').toLowerCase();
+    const headMatches = headText.includes(term);
+    let hasMatchingSub = false;
+
+    submenuLinks.forEach((link) => {
+      const matches = headMatches || String(link.textContent || '').toLowerCase().includes(term);
+      link.classList.toggle('is-search-hidden', !matches);
+      if (matches) hasMatchingSub = true;
+    });
+
+    const showBlock = headMatches || hasMatchingSub;
+    block.classList.toggle('is-search-hidden', !showBlock);
+    return showBlock;
+  }
+
   function applyPlatformNavSearch(query) {
     const term = String(query || '').trim().toLowerCase();
     if (!term) {
@@ -399,20 +417,7 @@
       let visibleCount = 0;
 
       group.querySelectorAll(':scope > .nav-menu-block').forEach((block) => {
-        const headLink = block.querySelector(':scope > .nav-menu-head > a');
-        const submenuLinks = Array.from(block.querySelectorAll(':scope > .submenu .submenu-link'));
-        const headText = String(headLink?.textContent || '').toLowerCase();
-        const headMatches = headText.includes(term);
-        let hasMatchingSub = false;
-
-        submenuLinks.forEach((link) => {
-          const matches = headMatches || String(link.textContent || '').toLowerCase().includes(term);
-          link.classList.toggle('is-search-hidden', !matches);
-          if (matches) hasMatchingSub = true;
-        });
-
-        const showBlock = headMatches || hasMatchingSub;
-        block.classList.toggle('is-search-hidden', !showBlock);
+        const showBlock = applyNavBlockSearch(block, term);
         if (showBlock) {
           visibleCount += 1;
           const menu = block.dataset.navMenu || '';
@@ -630,8 +635,44 @@
     `).join('');
   }
 
-  function applyAdminPageLayout(options) {
+  function applyTenantSectionVisibility(targetPage) {
     const tenantDirectoryPages = new Set(['create-tenant', 'tenant-directory']);
+    if (els.sectionTenants) {
+      els.sectionTenants.classList.remove('admin-subpage-create', 'admin-subpage-directory');
+      els.sectionTenants.classList.toggle('hidden', !tenantDirectoryPages.has(targetPage));
+      if (targetPage === 'create-tenant') els.sectionTenants.classList.add('admin-subpage-create');
+      if (targetPage === 'tenant-directory') els.sectionTenants.classList.add('admin-subpage-directory');
+    }
+  }
+
+  function applyOperationsSubpanels(item) {
+    if (els.sectionStorageDiagnostics) els.sectionStorageDiagnostics.classList.remove('hidden');
+    if (els.sectionDbBackups) els.sectionDbBackups.classList.remove('hidden');
+    if (els.sectionPlatformOpsGrid) els.sectionPlatformOpsGrid.classList.remove('single-panel');
+    if (item?.id === 'storage-diagnostics') {
+      if (els.sectionDbBackups) els.sectionDbBackups.classList.add('hidden');
+      if (els.sectionPlatformOpsGrid) els.sectionPlatformOpsGrid.classList.add('single-panel');
+    } else if (item?.id === 'db-backups') {
+      if (els.sectionStorageDiagnostics) els.sectionStorageDiagnostics.classList.add('hidden');
+      if (els.sectionPlatformOpsGrid) els.sectionPlatformOpsGrid.classList.add('single-panel');
+    }
+  }
+
+  function scrollToAdminPage(targetPage, item, options) {
+    if (options?.focus === false) return;
+    requestAnimationFrame(() => {
+      const pageTarget = document.querySelector(`[data-admin-page="${targetPage}"]`);
+      const target = pageTarget && !pageTarget.classList.contains('hidden')
+        ? pageTarget
+        : (item?.hash ? document.querySelector(item.hash) : null);
+      if (!target || target.classList.contains('hidden')) return;
+      const topOffset = 92;
+      const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - topOffset);
+      window.scrollTo({ top, behavior: options?.behavior || 'auto' });
+    });
+  }
+
+  function applyAdminPageLayout(options) {
     const tenantSettingsPages = new Set([
       'selected-tenant',
       'domain-provisioning',
@@ -650,27 +691,11 @@
     adminPageSections.forEach((section) => {
       section.classList.toggle('admin-page-hidden', section.dataset.adminPage !== targetPage);
     });
-    if (els.sectionTenants) {
-      els.sectionTenants.classList.remove('admin-subpage-create', 'admin-subpage-directory');
-      els.sectionTenants.classList.toggle('hidden', !tenantDirectoryPages.has(targetPage));
-      if (targetPage === 'create-tenant') els.sectionTenants.classList.add('admin-subpage-create');
-      if (targetPage === 'tenant-directory') els.sectionTenants.classList.add('admin-subpage-directory');
-    }
+    applyTenantSectionVisibility(targetPage);
     if (els.sectionTenantSettings) {
       els.sectionTenantSettings.classList.toggle('hidden', !tenantSettingsPages.has(targetPage));
     }
-    if (els.sectionStorageDiagnostics) els.sectionStorageDiagnostics.classList.remove('hidden');
-    if (els.sectionDbBackups) els.sectionDbBackups.classList.remove('hidden');
-    if (els.sectionPlatformOpsGrid) els.sectionPlatformOpsGrid.classList.remove('single-panel');
-    if (targetPage === 'operations') {
-      if (item?.id === 'storage-diagnostics') {
-        if (els.sectionDbBackups) els.sectionDbBackups.classList.add('hidden');
-        if (els.sectionPlatformOpsGrid) els.sectionPlatformOpsGrid.classList.add('single-panel');
-      } else if (item?.id === 'db-backups') {
-        if (els.sectionStorageDiagnostics) els.sectionStorageDiagnostics.classList.add('hidden');
-        if (els.sectionPlatformOpsGrid) els.sectionPlatformOpsGrid.classList.add('single-panel');
-      }
-    }
+    applyOperationsSubpanels(targetPage === 'operations' ? item : null);
 
     if (item?.tenantSettingsTab) {
       setTenantSettingsTab(item.tenantSettingsTab, { skipAdminNavSync: true });
@@ -683,18 +708,7 @@
     setPlatformNavMenuOpen(main, true, { persist: true, closeOthers: !isSearchingNav });
 
     renderAdminSubnav();
-
-    if (options?.focus === false) return;
-    requestAnimationFrame(() => {
-      const pageTarget = document.querySelector(`[data-admin-page="${targetPage}"]`);
-      const target = pageTarget && !pageTarget.classList.contains('hidden')
-        ? pageTarget
-        : (item?.hash ? document.querySelector(item.hash) : null);
-      if (!target || target.classList.contains('hidden')) return;
-      const topOffset = 92;
-      const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - topOffset);
-      window.scrollTo({ top, behavior: options?.behavior || 'auto' });
-    });
+    scrollToAdminPage(targetPage, item, options);
   }
 
   function setAdminNav(next, options) {
@@ -937,6 +951,34 @@
     setTenantFieldError(els.editSupportEmail, els.editSupportEmailHelp, '');
   }
 
+  function validateUrlField(value, key, errors) {
+    if (!value) return;
+    try {
+      new URL(ensureAbsoluteUrl(value));
+    } catch {
+      errors[key] = 'Enter a valid URL or hostname.';
+    }
+  }
+
+  function focusFirstErrorField(firstErrorKey) {
+    const fieldToTab = {
+      name: 'branding',
+      primaryColor: 'branding',
+      publicSiteUrl: 'branding',
+      cmsDomain: 'domains',
+      supportEmail: 'support',
+    };
+    if (fieldToTab[firstErrorKey]) setTenantSettingsTab(fieldToTab[firstErrorKey]);
+    if (firstErrorKey === 'publicSiteUrl') {
+      const details = document.getElementById('tenant-branding-advanced');
+      if (details) details.open = true;
+    }
+    if (firstErrorKey === 'cmsDomain') {
+      const details = document.getElementById('tenant-domain-provisioning-details');
+      if (details) details.open = true;
+    }
+  }
+
   function validateTenantForm() {
     clearTenantFormValidation();
     const values = getTenantFormSnapshot();
@@ -946,16 +988,8 @@
     if (values.primaryColor && !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.primaryColor)) {
       errors.primaryColor = 'Use a hex color such as #2563EB.';
     }
-
-    [['publicSiteUrl', values.publicSiteUrl], ['cmsDomain', values.cmsDomain]].forEach(([key, value]) => {
-      if (!value) return;
-      try {
-        new URL(ensureAbsoluteUrl(value));
-      } catch {
-        errors[key] = 'Enter a valid URL or hostname.';
-      }
-    });
-
+    validateUrlField(values.publicSiteUrl, 'publicSiteUrl', errors);
+    validateUrlField(values.cmsDomain, 'cmsDomain', errors);
     if (values.supportEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.supportEmail)) {
       errors.supportEmail = 'Enter a valid support email.';
     }
@@ -970,25 +1004,27 @@
     const messages = Object.values(errors);
     if (messages.length) {
       setNotice(els.tenantFormValidationSummary, `Please fix ${messages.length} field${messages.length > 1 ? 's' : ''} before saving.`, 'error');
-      const fieldToTab = {
-        name: 'branding',
-        primaryColor: 'branding',
-        publicSiteUrl: 'branding',
-        cmsDomain: 'domains',
-        supportEmail: 'support',
-      };
-      const firstErrorKey = Object.keys(errors)[0];
-      if (fieldToTab[firstErrorKey]) setTenantSettingsTab(fieldToTab[firstErrorKey]);
-      if (firstErrorKey === 'publicSiteUrl') {
-        const details = document.getElementById('tenant-branding-advanced');
-        if (details) details.open = true;
-      }
-      if (firstErrorKey === 'cmsDomain') {
-        const details = document.getElementById('tenant-domain-provisioning-details');
-        if (details) details.open = true;
-      }
+      focusFirstErrorField(Object.keys(errors)[0]);
     }
     return { valid: messages.length === 0, values, errors };
+  }
+
+  function renderSaveFeedback(tenant, saving, dirty, lastSavedAt, lastSaveMessage) {
+    if (!els.tenantFormSaveFeedback) return;
+    els.tenantFormSaveFeedback.classList.remove('is-saved', 'is-fadeout');
+    if (!tenant || saving || dirty) {
+      els.tenantFormSaveFeedback.textContent = saving ? 'Saving tenant changes…' : '';
+      return;
+    }
+    if (!lastSavedAt) { els.tenantFormSaveFeedback.textContent = ''; return; }
+    const elapsed = Date.now() - new Date(lastSavedAt).getTime();
+    if (elapsed < 6000) {
+      els.tenantFormSaveFeedback.textContent = lastSaveMessage || 'Saved';
+      els.tenantFormSaveFeedback.classList.add('is-saved', 'is-fadeout');
+      state.tenantForm.saveHintTimeout = setTimeout(() => { renderTenantFormState(); }, 6100 - elapsed);
+    } else {
+      els.tenantFormSaveFeedback.textContent = '';
+    }
   }
 
   function renderTenantFormState() {
@@ -1022,29 +1058,7 @@
       clearTimeout(state.tenantForm.saveHintTimeout);
       state.tenantForm.saveHintTimeout = null;
     }
-    if (els.tenantFormSaveFeedback) {
-      els.tenantFormSaveFeedback.classList.remove('is-saved', 'is-fadeout');
-      if (!tenant) {
-        els.tenantFormSaveFeedback.textContent = '';
-      } else if (saving) {
-        els.tenantFormSaveFeedback.textContent = 'Saving tenant changes…';
-      } else if (dirty) {
-        els.tenantFormSaveFeedback.textContent = '';
-      } else if (lastSavedAt) {
-        const elapsed = Date.now() - new Date(lastSavedAt).getTime();
-        if (elapsed < 6000) {
-          els.tenantFormSaveFeedback.textContent = lastSaveMessage || 'Saved';
-          els.tenantFormSaveFeedback.classList.add('is-saved', 'is-fadeout');
-          state.tenantForm.saveHintTimeout = setTimeout(() => {
-            renderTenantFormState();
-          }, 6100 - elapsed);
-        } else {
-          els.tenantFormSaveFeedback.textContent = '';
-        }
-      } else {
-        els.tenantFormSaveFeedback.textContent = '';
-      }
-    }
+    renderSaveFeedback(tenant, saving, dirty, lastSavedAt, lastSaveMessage);
   }
 
   function refreshTenantFormDirtyState() {
@@ -1184,37 +1198,42 @@
     return normalizeSiteSections(state.cms?.siteSections || DEFAULT_SITE_SECTIONS);
   }
 
+  function setHomeInsightsFieldValues(insights, disabled) {
+    if (els.tenantSiteHomeInsightsEnabled) {
+      els.tenantSiteHomeInsightsEnabled.checked = Boolean(insights.enabled);
+      els.tenantSiteHomeInsightsEnabled.disabled = disabled;
+    }
+    if (els.tenantSiteHomeInsightsNavbarEnabled) {
+      els.tenantSiteHomeInsightsNavbarEnabled.checked = Boolean(insights.navbarEnabled);
+      els.tenantSiteHomeInsightsNavbarEnabled.disabled = disabled;
+    }
+    if (els.tenantSiteHomeInsightsNavbarOrder) {
+      const value = Number(insights.navbarOrder);
+      els.tenantSiteHomeInsightsNavbarOrder.value = String(Number.isFinite(value) && value >= 0 ? Math.floor(value) : 3);
+      els.tenantSiteHomeInsightsNavbarOrder.disabled = disabled;
+    }
+    if (els.tenantSiteHomeInsightsEyebrow) {
+      els.tenantSiteHomeInsightsEyebrow.value = insights.eyebrow || '';
+      els.tenantSiteHomeInsightsEyebrow.disabled = disabled;
+    }
+    if (els.tenantSiteHomeInsightsTitle) {
+      els.tenantSiteHomeInsightsTitle.value = insights.title || '';
+      els.tenantSiteHomeInsightsTitle.disabled = disabled;
+    }
+    if (els.tenantSiteHomeInsightsSubtitle) {
+      els.tenantSiteHomeInsightsSubtitle.value = insights.subtitle || '';
+      els.tenantSiteHomeInsightsSubtitle.disabled = disabled;
+    }
+  }
+
   function renderTenantSiteSectionsControls() {
     const tenant = getSelectedTenant();
     const current = getCurrentSiteSections();
     const snapshot = normalizeSiteSections(state.cms?.siteSectionsSnapshot || DEFAULT_SITE_SECTIONS);
     const dirty = !siteSectionsEqual(current, snapshot);
 
-    if (els.tenantSiteHomeInsightsEnabled) {
-      els.tenantSiteHomeInsightsEnabled.checked = Boolean(current.homeInsights.enabled);
-      els.tenantSiteHomeInsightsEnabled.disabled = !tenant;
-    }
-    if (els.tenantSiteHomeInsightsNavbarEnabled) {
-      els.tenantSiteHomeInsightsNavbarEnabled.checked = Boolean(current.homeInsights.navbarEnabled);
-      els.tenantSiteHomeInsightsNavbarEnabled.disabled = !tenant;
-    }
-    if (els.tenantSiteHomeInsightsNavbarOrder) {
-      const value = Number(current.homeInsights.navbarOrder);
-      els.tenantSiteHomeInsightsNavbarOrder.value = String(Number.isFinite(value) && value >= 0 ? Math.floor(value) : 3);
-      els.tenantSiteHomeInsightsNavbarOrder.disabled = !tenant;
-    }
-    if (els.tenantSiteHomeInsightsEyebrow) {
-      els.tenantSiteHomeInsightsEyebrow.value = current.homeInsights.eyebrow || '';
-      els.tenantSiteHomeInsightsEyebrow.disabled = !tenant;
-    }
-    if (els.tenantSiteHomeInsightsTitle) {
-      els.tenantSiteHomeInsightsTitle.value = current.homeInsights.title || '';
-      els.tenantSiteHomeInsightsTitle.disabled = !tenant;
-    }
-    if (els.tenantSiteHomeInsightsSubtitle) {
-      els.tenantSiteHomeInsightsSubtitle.value = current.homeInsights.subtitle || '';
-      els.tenantSiteHomeInsightsSubtitle.disabled = !tenant;
-    }
+    setHomeInsightsFieldValues(current.homeInsights, !tenant);
+
     if (els.tenantSiteSectionsSaveBtn) {
       els.tenantSiteSectionsSaveBtn.disabled = !tenant || !dirty;
       els.tenantSiteSectionsSaveBtn.textContent = dirty ? 'Save Section Controls' : 'Section Controls Saved';
@@ -1336,6 +1355,87 @@
     syncSidebarActiveLink();
   }
 
+  function renderStorageSection(storage) {
+    if (!storage) {
+      setPillStatus(els.platformStoragePathPill, 'Unknown', '');
+      if (els.platformDbPath) els.platformDbPath.textContent = '—';
+      if (els.platformDbSize) els.platformDbSize.textContent = '—';
+      if (els.platformDbJournal) els.platformDbJournal.textContent = '—';
+      return;
+    }
+    const persistentStatus = storage.persistentDiskStatus || (storage.dbOnVarData ? 'ok' : 'not_persistent_path');
+    const persistentLabel =
+      persistentStatus === 'ok'
+        ? `On ${storage.expectedDiskMountPath || '/var/data'}`
+        : persistentStatus === 'path_mismatch'
+          ? 'Disk attached, path mismatch'
+          : 'Not on persistent path';
+    setPillStatus(els.platformStoragePathPill, persistentLabel, persistentStatus === 'ok' ? 'ok' : 'error');
+    if (els.platformDbPath) {
+      els.platformDbPath.textContent = storage.persistentDiskHint
+        ? `${storage.resolvedDbPath || '—'} • ${storage.persistentDiskHint}`
+        : (storage.resolvedDbPath || '—');
+    }
+    if (els.platformDbSize) {
+      const parts = [formatBytes(storage.dbSize || 0)];
+      if (storage.dbUpdatedAt) parts.push(`updated ${formatDateTime(storage.dbUpdatedAt)}`);
+      els.platformDbSize.textContent = parts.join(' • ') || '—';
+    }
+    if (els.platformDbJournal) {
+      const journalParts = [];
+      if (storage.journalMode) journalParts.push(`journal: ${storage.journalMode}`);
+      if (storage.walFileExists) journalParts.push(`wal ${formatBytes(storage.walFileSize || 0)}`);
+      if (storage.shmFileExists) journalParts.push(`shm ${formatBytes(storage.shmFileSize || 0)}`);
+      els.platformDbJournal.textContent = journalParts.join(' • ') || '—';
+    }
+  }
+
+  function renderR2Section(r2) {
+    if (!r2) {
+      setPillStatus(els.platformBackupR2Pill, 'Unknown', '');
+      if (els.platformBackupR2Target) els.platformBackupR2Target.textContent = '—';
+      return;
+    }
+    setPillStatus(els.platformBackupR2Pill, r2.configured ? 'Configured' : 'Not configured', r2.configured ? 'ok' : 'error');
+    if (els.platformBackupR2Target) {
+      let endpointHost = '';
+      try { endpointHost = r2.endpoint ? new URL(r2.endpoint).host : ''; } catch { endpointHost = r2.endpoint || ''; }
+      els.platformBackupR2Target.textContent = [
+        r2.bucketName ? `bucket: ${r2.bucketName}` : null,
+        endpointHost ? `endpoint: ${endpointHost}` : null,
+        r2.backupPrefix ? `prefix: ${r2.backupPrefix}` : null,
+      ].filter(Boolean).join(' • ') || '—';
+    }
+  }
+
+  function renderBackupList(payload, backups) {
+    if (!els.platformBackupList) return;
+    if (!payload && state.platformBackups.loading) {
+      els.platformBackupList.innerHTML = renderLoadingRow('Loading backup status…');
+      return;
+    }
+    if (!backups.length) {
+      els.platformBackupList.innerHTML = '<div class=”meta”>No DB backups yet. Click “Backup DB to R2” after configuring R2.</div>';
+      return;
+    }
+    els.platformBackupList.innerHTML = backups.map((item) => `
+      <div class=”backup-row”>
+        <div class=”backup-row-head”>
+          <div class=”backup-row-title”>${escapeHtml(item.objectKey || `Backup #${item.id}`)}</div>
+          <span class=”pill ${item.status === 'completed' ? 'ok' : ''}”>${escapeHtml(item.status || 'unknown')}</span>
+        </div>
+        <div class=”backup-row-meta”>
+          ${[
+            item.createdAt ? `Created ${formatDateTime(item.createdAt)}` : null,
+            item.fileSize ? formatBytes(item.fileSize) : null,
+            item.checksumSha256 ? `sha256 ${item.checksumSha256.slice(0, 12)}…` : null,
+            item.errorMessage ? `Error: ${item.errorMessage}` : null,
+          ].filter(Boolean).join(' • ')}
+        </div>
+      </div>
+    `).join('');
+  }
+
   function renderPlatformBackupPanel() {
     const payload = state.platformBackups.current;
     const storage = payload?.storage || null;
@@ -1350,84 +1450,9 @@
       els.platformBackupRunBtn.textContent = state.platformBackups.running ? 'Backing up…' : 'Backup DB to R2';
     }
 
-    if (!storage) {
-      setPillStatus(els.platformStoragePathPill, 'Unknown', '');
-      if (els.platformDbPath) els.platformDbPath.textContent = '—';
-      if (els.platformDbSize) els.platformDbSize.textContent = '—';
-      if (els.platformDbJournal) els.platformDbJournal.textContent = '—';
-    } else {
-      const persistentStatus = storage.persistentDiskStatus || (storage.dbOnVarData ? 'ok' : 'not_persistent_path');
-      const persistentLabel =
-        persistentStatus === 'ok'
-          ? `On ${storage.expectedDiskMountPath || '/var/data'}`
-          : persistentStatus === 'path_mismatch'
-            ? 'Disk attached, path mismatch'
-            : 'Not on persistent path';
-      setPillStatus(els.platformStoragePathPill, persistentLabel, persistentStatus === 'ok' ? 'ok' : 'error');
-      if (els.platformDbPath) els.platformDbPath.textContent = storage.resolvedDbPath || '—';
-      if (els.platformDbPath && storage.persistentDiskHint) {
-        els.platformDbPath.textContent = `${storage.resolvedDbPath || '—'} • ${storage.persistentDiskHint}`;
-      }
-      if (els.platformDbSize) {
-        const parts = [];
-        parts.push(formatBytes(storage.dbSize || 0));
-        if (storage.dbUpdatedAt) parts.push(`updated ${formatDateTime(storage.dbUpdatedAt)}`);
-        els.platformDbSize.textContent = parts.join(' • ') || '—';
-      }
-      if (els.platformDbJournal) {
-        const journalParts = [];
-        if (storage.journalMode) journalParts.push(`journal: ${storage.journalMode}`);
-        if (storage.walFileExists) journalParts.push(`wal ${formatBytes(storage.walFileSize || 0)}`);
-        if (storage.shmFileExists) journalParts.push(`shm ${formatBytes(storage.shmFileSize || 0)}`);
-        els.platformDbJournal.textContent = journalParts.join(' • ') || '—';
-      }
-    }
-
-    if (!r2) {
-      setPillStatus(els.platformBackupR2Pill, 'Unknown', '');
-      if (els.platformBackupR2Target) els.platformBackupR2Target.textContent = '—';
-    } else {
-      setPillStatus(els.platformBackupR2Pill, r2.configured ? 'Configured' : 'Not configured', r2.configured ? 'ok' : 'error');
-      if (els.platformBackupR2Target) {
-        const endpointHost = (() => {
-          try {
-            return r2.endpoint ? new URL(r2.endpoint).host : '';
-          } catch {
-            return r2.endpoint || '';
-          }
-        })();
-        els.platformBackupR2Target.textContent = [
-          r2.bucketName ? `bucket: ${r2.bucketName}` : null,
-          endpointHost ? `endpoint: ${endpointHost}` : null,
-          r2.backupPrefix ? `prefix: ${r2.backupPrefix}` : null,
-        ].filter(Boolean).join(' • ') || '—';
-      }
-    }
-
-    if (els.platformBackupList) {
-      if (!payload && state.platformBackups.loading) {
-        els.platformBackupList.innerHTML = renderLoadingRow('Loading backup status…');
-      } else if (!backups.length) {
-        els.platformBackupList.innerHTML = '<div class="meta">No DB backups yet. Click “Backup DB to R2” after configuring R2.</div>';
-      } else {
-        els.platformBackupList.innerHTML = backups.map((item) => `
-          <div class="backup-row">
-            <div class="backup-row-head">
-              <div class="backup-row-title">${escapeHtml(item.objectKey || `Backup #${item.id}`)}</div>
-              <span class="pill ${item.status === 'completed' ? 'ok' : ''}">${escapeHtml(item.status || 'unknown')}</span>
-            </div>
-            <div class="backup-row-meta">
-              ${[
-                item.createdAt ? `Created ${formatDateTime(item.createdAt)}` : null,
-                item.fileSize ? formatBytes(item.fileSize) : null,
-                item.checksumSha256 ? `sha256 ${item.checksumSha256.slice(0, 12)}…` : null,
-                item.errorMessage ? `Error: ${item.errorMessage}` : null,
-              ].filter(Boolean).join(' • ')}
-            </div>
-          </div>
-        `).join('');
-      }
-    }
+    renderStorageSection(storage);
+    renderR2Section(r2);
+    renderBackupList(payload, backups);
   }
 
   async function loadPlatformBackups() {
@@ -1500,25 +1525,43 @@
     applyTenantWorkspaceView();
   }
 
+  const WORKSPACE_VIEW_ACCESS_MAP = {
+    placements: 'homepagePlacements',
+    articles: 'articles',
+    libraries: 'libraries',
+    'annual-reports': 'annualReports',
+    'nav-tabs': 'navigationTabs',
+  };
+
+  function resolveFallbackWorkspaceView(access) {
+    return ['articles', 'libraries', 'annual-reports', 'nav-tabs', 'placements', 'tenant-settings']
+      .find((candidate) => {
+        const key = WORKSPACE_VIEW_ACCESS_MAP[candidate];
+        return !key || access[key] !== false;
+      }) || 'tenant-settings';
+  }
+
+  function applyTenantPanelVisibility(view) {
+    const showLibraries = view === 'libraries';
+    const showArticles = view === 'articles';
+    const showAnnual = view === 'annual-reports';
+    const showNavTabs = view === 'nav-tabs';
+    if (els.tenantPanelLibraries) els.tenantPanelLibraries.classList.toggle('hidden', !showLibraries);
+    if (els.tenantPanelArticles) els.tenantPanelArticles.classList.toggle('hidden', !showArticles);
+    if (els.tenantPanelArticleEditor) els.tenantPanelArticleEditor.classList.toggle('hidden', !showArticles);
+    if (els.tenantPanelAnnualList) els.tenantPanelAnnualList.classList.toggle('hidden', !showAnnual);
+    if (els.tenantPanelAnnualEditor) els.tenantPanelAnnualEditor.classList.toggle('hidden', !showAnnual);
+    if (els.tenantPanelNavTabsList) els.tenantPanelNavTabsList.classList.toggle('hidden', !showNavTabs);
+    if (els.tenantPanelNavTabsEditor) els.tenantPanelNavTabsEditor.classList.toggle('hidden', !showNavTabs);
+  }
+
   function applyTenantWorkspaceView() {
     const isTenantMode = state.uiMode === 'tenant';
     const access = getCurrentTenantModuleAccess();
-    const viewAccessMap = {
-      placements: 'homepagePlacements',
-      articles: 'articles',
-      libraries: 'libraries',
-      'annual-reports': 'annualReports',
-      'nav-tabs': 'navigationTabs',
-    };
     const requestedView = state.tenantWorkspaceView || 'articles';
-    const requestedAccessKey = viewAccessMap[requestedView];
+    const requestedAccessKey = WORKSPACE_VIEW_ACCESS_MAP[requestedView];
     if (requestedAccessKey && access[requestedAccessKey] === false) {
-      const fallbackView = ['articles', 'libraries', 'annual-reports', 'nav-tabs', 'placements', 'tenant-settings']
-        .find((candidate) => {
-          const key = viewAccessMap[candidate];
-          return !key || access[key] !== false;
-        }) || 'tenant-settings';
-      state.tenantWorkspaceView = fallbackView;
+      state.tenantWorkspaceView = resolveFallbackWorkspaceView(access);
       localStorage.setItem('cms-platform-tenant-workspace-view', state.tenantWorkspaceView);
     }
     const view = state.tenantWorkspaceView || 'articles';
@@ -1535,7 +1578,7 @@
       if (els.tenantWorkspaceModePill) els.tenantWorkspaceModePill.textContent = 'Workspace module: Full dashboard';
       workspaceNavLinks.forEach((link) => {
         const workspaceView = link.dataset.workspaceView || '';
-        const accessKey = viewAccessMap[workspaceView];
+        const accessKey = WORKSPACE_VIEW_ACCESS_MAP[workspaceView];
         link.classList.toggle('hidden', Boolean(accessKey));
         link.classList.toggle('is-active', false);
       });
@@ -1557,27 +1600,43 @@
       els.tenantWorkspaceModePill.textContent = labels[view] || 'Workspace module';
     }
 
-    const showLibraries = view === 'libraries';
-    const showArticles = view === 'articles';
-    const showAnnual = view === 'annual-reports';
-    const showNavTabs = view === 'nav-tabs';
-
-    if (els.tenantPanelLibraries) els.tenantPanelLibraries.classList.toggle('hidden', !showLibraries);
-    if (els.tenantPanelArticles) els.tenantPanelArticles.classList.toggle('hidden', !showArticles);
-    if (els.tenantPanelArticleEditor) els.tenantPanelArticleEditor.classList.toggle('hidden', !showArticles);
-    if (els.tenantPanelAnnualList) els.tenantPanelAnnualList.classList.toggle('hidden', !showAnnual);
-    if (els.tenantPanelAnnualEditor) els.tenantPanelAnnualEditor.classList.toggle('hidden', !showAnnual);
-    if (els.tenantPanelNavTabsList) els.tenantPanelNavTabsList.classList.toggle('hidden', !showNavTabs);
-    if (els.tenantPanelNavTabsEditor) els.tenantPanelNavTabsEditor.classList.toggle('hidden', !showNavTabs);
+    applyTenantPanelVisibility(view);
 
     workspaceNavLinks.forEach((link) => {
       const workspaceView = link.dataset.workspaceView || '';
-      const accessKey = viewAccessMap[workspaceView];
+      const accessKey = WORKSPACE_VIEW_ACCESS_MAP[workspaceView];
       const isAllowed = !accessKey || access[accessKey] !== false;
       link.classList.toggle('hidden', !isAllowed);
-      const active = isAllowed && workspaceView === view;
-      link.classList.toggle('is-active', active);
+      link.classList.toggle('is-active', isAllowed && workspaceView === view);
     });
+  }
+
+  function applyUiModeLoginLabels(isTenantMode) {
+    if (els.loginEmailLabel) {
+      els.loginEmailLabel.textContent = isTenantMode ? 'Tenant operator email (platform bootstrap for now)' : 'Platform admin email';
+    }
+    if (els.loginModeHelp) {
+      els.loginModeHelp.innerHTML = isTenantMode
+        ? 'Tenant CMS View currently uses the same bootstrap login during Phase 2. A dedicated tenant login will be added next.'
+        : 'Set <code>PLATFORM_BOOTSTRAP_SECRET</code> in Render to enable this login.';
+    }
+  }
+
+  function applyUiModeSidebarAndTopbar(isTenantMode) {
+    if (els.sidebarPlatformGroup) els.sidebarPlatformGroup.classList.toggle('hidden', isTenantMode);
+    if (els.sidebarTenantGroup) els.sidebarTenantGroup.classList.toggle('hidden', !isTenantMode);
+    if (els.tenantExitAdminLink) els.tenantExitAdminLink.classList.toggle('hidden', !isTenantMode);
+    if (els.sectionTenants) els.sectionTenants.classList.toggle('hidden', isTenantMode);
+    if (els.sectionTenantSettings) els.sectionTenantSettings.classList.toggle('hidden', isTenantMode);
+    if (els.tenantSwitchWrap) els.tenantSwitchWrap.classList.toggle('hidden', !isTenantMode);
+    if (els.topbarTitle) els.topbarTitle.textContent = isTenantMode ? 'Tenant CMS Workspace' : 'Content Management System';
+    if (els.topbarSubtitle) {
+      els.topbarSubtitle.textContent = isTenantMode
+        ? 'Manage homepage placements, articles, libraries, and annual reports for a selected tenant.'
+        : 'Manage customer tenants, branding, and access foundations.';
+    }
+    if (els.sidebarLogoTitle) els.sidebarLogoTitle.textContent = isTenantMode ? 'Tenant CMS' : 'CMS Platform';
+    if (els.sidebarLogoSubtitle) els.sidebarLogoSubtitle.textContent = isTenantMode ? 'Kardal-style workspace view' : 'Multi-tenant SaaS admin';
   }
 
   function applyUiMode() {
@@ -1592,46 +1651,8 @@
       els.appModeAdminBtn.classList.toggle('is-active', !isTenantMode);
       els.appModeTenantBtn.classList.toggle('is-active', isTenantMode);
     }
-    if (els.loginEmailLabel) {
-      els.loginEmailLabel.textContent = isTenantMode ? 'Tenant operator email (platform bootstrap for now)' : 'Platform admin email';
-    }
-    if (els.loginModeHelp) {
-      els.loginModeHelp.innerHTML = isTenantMode
-        ? 'Tenant CMS View currently uses the same bootstrap login during Phase 2. A dedicated tenant login will be added next.'
-        : 'Set <code>PLATFORM_BOOTSTRAP_SECRET</code> in Render to enable this login.';
-    }
-    if (els.sidebarPlatformGroup) {
-      els.sidebarPlatformGroup.classList.toggle('hidden', isTenantMode);
-    }
-    if (els.sidebarTenantGroup) {
-      els.sidebarTenantGroup.classList.toggle('hidden', !isTenantMode);
-    }
-    if (els.tenantExitAdminLink) {
-      els.tenantExitAdminLink.classList.toggle('hidden', !isTenantMode);
-    }
-    if (els.sectionTenants) {
-      els.sectionTenants.classList.toggle('hidden', isTenantMode);
-    }
-    if (els.sectionTenantSettings) {
-      els.sectionTenantSettings.classList.toggle('hidden', isTenantMode);
-    }
-    if (els.tenantSwitchWrap) {
-      els.tenantSwitchWrap.classList.toggle('hidden', !isTenantMode);
-    }
-    if (els.topbarTitle) {
-      els.topbarTitle.textContent = isTenantMode ? 'Tenant CMS Workspace' : 'Content Management System';
-    }
-    if (els.topbarSubtitle) {
-      els.topbarSubtitle.textContent = isTenantMode
-        ? 'Manage homepage placements, articles, libraries, and annual reports for a selected tenant.'
-        : 'Manage customer tenants, branding, and access foundations.';
-    }
-    if (els.sidebarLogoTitle) {
-      els.sidebarLogoTitle.textContent = isTenantMode ? 'Tenant CMS' : 'CMS Platform';
-    }
-    if (els.sidebarLogoSubtitle) {
-      els.sidebarLogoSubtitle.textContent = isTenantMode ? 'Kardal-style workspace view' : 'Multi-tenant SaaS admin';
-    }
+    applyUiModeLoginLabels(isTenantMode);
+    applyUiModeSidebarAndTopbar(isTenantMode);
     applyTenantWorkspaceView();
     if (!isTenantMode) {
       applyAdminPageLayout({ focus: false });
@@ -1727,6 +1748,34 @@
     }
   }
 
+  function normalizeNavSubItem(sub, subIndex, index, colIndex) {
+    const subLabel = String(sub?.label || '').trim();
+    if (!subLabel) return null;
+    return {
+      id: String(sub?.id || `sub-${Date.now()}-${index}-${colIndex}-${subIndex}`),
+      label: subLabel,
+      href: String(sub?.href || '').trim(),
+      description: String(sub?.description || '').trim(),
+      visible: sub?.visible !== false,
+      order: Number.isFinite(Number(sub?.order)) ? Number(sub.order) : subIndex,
+    };
+  }
+
+  function normalizeNavColumn(col, colIndex, index) {
+    const title = String(col?.title || '').trim();
+    const items = Array.isArray(col?.items) ? col.items : [];
+    return {
+      id: String(col?.id || `col-${Date.now()}-${index}-${colIndex}`),
+      title,
+      visible: col?.visible !== false,
+      order: Number.isFinite(Number(col?.order)) ? Number(col.order) : colIndex,
+      items: items
+        .map((sub, subIndex) => normalizeNavSubItem(sub, subIndex, index, colIndex))
+        .filter(Boolean)
+        .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)),
+    };
+  }
+
   function normalizeClientSiteNavigation(input) {
     const source = input && typeof input === 'object' ? input : {};
     const primary = Array.isArray(source.primary) ? source.primary : [];
@@ -1746,31 +1795,7 @@
             visible: item?.visible !== false,
             order: Number.isFinite(Number(item?.order)) ? Number(item.order) : index,
             columns: columns
-              .map((col, colIndex) => {
-                const title = String(col?.title || '').trim();
-                const items = Array.isArray(col?.items) ? col.items : [];
-                return {
-                  id: String(col?.id || `col-${Date.now()}-${index}-${colIndex}`),
-                  title,
-                  visible: col?.visible !== false,
-                  order: Number.isFinite(Number(col?.order)) ? Number(col.order) : colIndex,
-                  items: items
-                    .map((sub, subIndex) => {
-                      const subLabel = String(sub?.label || '').trim();
-                      if (!subLabel) return null;
-                      return {
-                        id: String(sub?.id || `sub-${Date.now()}-${index}-${colIndex}-${subIndex}`),
-                        label: subLabel,
-                        href: String(sub?.href || '').trim(),
-                        description: String(sub?.description || '').trim(),
-                        visible: sub?.visible !== false,
-                        order: Number.isFinite(Number(sub?.order)) ? Number(sub.order) : subIndex,
-                      };
-                    })
-                    .filter(Boolean)
-                    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)),
-                };
-              })
+              .map((col, colIndex) => normalizeNavColumn(col, colIndex, index))
               .filter((col) => col.title || (Array.isArray(col.items) && col.items.length))
               .sort((a, b) => a.order - b.order || String(a.title || '').localeCompare(String(b.title || ''))),
           };
@@ -1833,6 +1858,69 @@
     }
   }
 
+  function renderNavTopList(primary) {
+    if (!primary.length) return 'No top-level items yet. Add a top link or mega menu.';
+    return primary.map((item, index) => `
+      <div class="card nested-card" style="padding:8px; margin:0 0 8px; border:${String(state.cms.siteNavSelection.topId) === String(item.id) ? '1px solid #c4b5fd' : '1px solid #e5e7eb'};">
+        <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
+          <div>
+            <div style="font-weight:700;">${escapeHtml(item.label)}</div>
+            <div class="meta">${escapeHtml(item.type === 'mega' ? 'Mega menu' : 'Link')} • ${escapeHtml(item.href || '(no href)')}</div>
+          </div>
+          <span class="pill">${item.visible === false ? 'Hidden' : 'Visible'}</span>
+        </div>
+        <div class="actions" style="margin-top:8px;">
+          <button type="button" class="btn-edit btn-equal" data-site-nav-top-action="select" data-site-nav-top-id="${escapeHtml(String(item.id))}">Select</button>
+          <button type="button" class="btn-edit btn-equal" data-site-nav-top-action="edit" data-site-nav-top-id="${escapeHtml(String(item.id))}">Edit</button>
+          <button type="button" class="btn-equal" data-site-nav-top-action="toggle" data-site-nav-top-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
+          <button type="button" class="btn-compact" data-site-nav-top-action="up" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" class="btn-compact" data-site-nav-top-action="down" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === primary.length - 1 ? 'disabled' : ''}>↓</button>
+          <button type="button" class="btn-danger btn-equal" data-site-nav-top-action="delete" data-site-nav-top-id="${escapeHtml(String(item.id))}">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderNavColumnsList(selectedTop) {
+    if (!selectedTop) return 'Select a top-level menu item first.';
+    if (selectedTop.type !== 'mega') return 'Selected top item is a simple link. Edit it and set type to mega (or add a mega menu) to manage columns.';
+    const columns = Array.isArray(selectedTop.columns) ? selectedTop.columns : [];
+    if (!columns.length) return 'No columns yet. Add a column for this mega menu.';
+    return columns.map((column, index) => `
+      <div class="card nested-card" style="padding:8px; margin:0 0 8px; border:${String(state.cms.siteNavSelection.columnId) === String(column.id) ? '1px solid #93c5fd' : '1px solid #e5e7eb'};">
+        <div style="font-weight:700;">${escapeHtml(column.title || `Column ${index + 1}`)}</div>
+        <div class="meta">${(Array.isArray(column.items) ? column.items.length : 0)} submenu items</div>
+        <div class="actions" style="margin-top:8px;">
+          <button type="button" class="btn-edit btn-equal" data-site-nav-col-action="select" data-site-nav-col-id="${escapeHtml(String(column.id))}">Select</button>
+          <button type="button" class="btn-edit btn-equal" data-site-nav-col-action="edit" data-site-nav-col-id="${escapeHtml(String(column.id))}">Edit</button>
+          <button type="button" class="btn-compact" data-site-nav-col-action="up" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" class="btn-compact" data-site-nav-col-action="down" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === columns.length - 1 ? 'disabled' : ''}>↓</button>
+          <button type="button" class="btn-danger btn-equal" data-site-nav-col-action="delete" data-site-nav-col-id="${escapeHtml(String(column.id))}">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderNavSubitemsList(selectedTop, selectedColumn) {
+    if (!selectedTop || selectedTop.type !== 'mega') return 'Select a mega-menu item first.';
+    if (!selectedColumn) return 'Select a column to manage submenu links.';
+    const items = Array.isArray(selectedColumn.items) ? selectedColumn.items : [];
+    if (!items.length) return 'No submenu links yet. Add a submenu item for the selected column.';
+    return items.map((item, index) => `
+      <div class="card nested-card" style="padding:8px; margin:0 0 8px;">
+        <div style="font-weight:700;">${escapeHtml(item.label)}</div>
+        <div class="meta">${escapeHtml(item.href || '(no href)')}</div>
+        <div class="actions" style="margin-top:8px;">
+          <button type="button" class="btn-edit btn-equal" data-site-nav-sub-action="edit" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Edit</button>
+          <button type="button" class="btn-equal" data-site-nav-sub-action="toggle" data-site-nav-sub-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
+          <button type="button" class="btn-compact" data-site-nav-sub-action="up" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" class="btn-compact" data-site-nav-sub-action="down" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === items.length - 1 ? 'disabled' : ''}>↓</button>
+          <button type="button" class="btn-danger btn-equal" data-site-nav-sub-action="delete" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
   function renderSiteNavigationBuilder() {
     if (!els.siteNavTopList || !els.siteNavColumnsList || !els.siteNavSubitemsList) return;
     ensureSiteNavSelection();
@@ -1843,81 +1931,9 @@
     const selectedTop = getSelectedSiteNavTopItem();
     const selectedColumn = getSelectedSiteNavColumn();
 
-    if (els.siteNavTopList) {
-      if (!primary.length) {
-        els.siteNavTopList.innerHTML = 'No top-level items yet. Add a top link or mega menu.';
-      } else {
-        els.siteNavTopList.innerHTML = primary.map((item, index) => `
-          <div class="card nested-card" style="padding:8px; margin:0 0 8px; border:${String(state.cms.siteNavSelection.topId) === String(item.id) ? '1px solid #c4b5fd' : '1px solid #e5e7eb'};">
-            <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
-              <div>
-                <div style="font-weight:700;">${escapeHtml(item.label)}</div>
-                <div class="meta">${escapeHtml(item.type === 'mega' ? 'Mega menu' : 'Link')} • ${escapeHtml(item.href || '(no href)')}</div>
-              </div>
-              <span class="pill">${item.visible === false ? 'Hidden' : 'Visible'}</span>
-            </div>
-            <div class="actions" style="margin-top:8px;">
-              <button type="button" class="btn-edit btn-equal" data-site-nav-top-action="select" data-site-nav-top-id="${escapeHtml(String(item.id))}">Select</button>
-              <button type="button" class="btn-edit btn-equal" data-site-nav-top-action="edit" data-site-nav-top-id="${escapeHtml(String(item.id))}">Edit</button>
-              <button type="button" class="btn-equal" data-site-nav-top-action="toggle" data-site-nav-top-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
-              <button type="button" class="btn-compact" data-site-nav-top-action="up" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
-              <button type="button" class="btn-compact" data-site-nav-top-action="down" data-site-nav-top-id="${escapeHtml(String(item.id))}" ${index === primary.length - 1 ? 'disabled' : ''}>↓</button>
-              <button type="button" class="btn-danger btn-equal" data-site-nav-top-action="delete" data-site-nav-top-id="${escapeHtml(String(item.id))}">Delete</button>
-            </div>
-          </div>
-        `).join('');
-      }
-    }
-
-    if (els.siteNavColumnsList) {
-      if (!selectedTop) {
-        els.siteNavColumnsList.innerHTML = 'Select a top-level menu item first.';
-      } else if (selectedTop.type !== 'mega') {
-        els.siteNavColumnsList.innerHTML = 'Selected top item is a simple link. Edit it and set type to mega (or add a mega menu) to manage columns.';
-      } else {
-        const columns = Array.isArray(selectedTop.columns) ? selectedTop.columns : [];
-        els.siteNavColumnsList.innerHTML = columns.length
-          ? columns.map((column, index) => `
-              <div class="card nested-card" style="padding:8px; margin:0 0 8px; border:${String(state.cms.siteNavSelection.columnId) === String(column.id) ? '1px solid #93c5fd' : '1px solid #e5e7eb'};">
-                <div style="font-weight:700;">${escapeHtml(column.title || `Column ${index + 1}`)}</div>
-                <div class="meta">${(Array.isArray(column.items) ? column.items.length : 0)} submenu items</div>
-                <div class="actions" style="margin-top:8px;">
-                  <button type="button" class="btn-edit btn-equal" data-site-nav-col-action="select" data-site-nav-col-id="${escapeHtml(String(column.id))}">Select</button>
-                  <button type="button" class="btn-edit btn-equal" data-site-nav-col-action="edit" data-site-nav-col-id="${escapeHtml(String(column.id))}">Edit</button>
-                  <button type="button" class="btn-compact" data-site-nav-col-action="up" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
-                  <button type="button" class="btn-compact" data-site-nav-col-action="down" data-site-nav-col-id="${escapeHtml(String(column.id))}" ${index === columns.length - 1 ? 'disabled' : ''}>↓</button>
-                  <button type="button" class="btn-danger btn-equal" data-site-nav-col-action="delete" data-site-nav-col-id="${escapeHtml(String(column.id))}">Delete</button>
-                </div>
-              </div>
-            `).join('')
-          : 'No columns yet. Add a column for this mega menu.';
-      }
-    }
-
-    if (els.siteNavSubitemsList) {
-      if (!selectedTop || selectedTop.type !== 'mega') {
-        els.siteNavSubitemsList.innerHTML = 'Select a mega-menu item first.';
-      } else if (!selectedColumn) {
-        els.siteNavSubitemsList.innerHTML = 'Select a column to manage submenu links.';
-      } else {
-        const items = Array.isArray(selectedColumn.items) ? selectedColumn.items : [];
-        els.siteNavSubitemsList.innerHTML = items.length
-          ? items.map((item, index) => `
-              <div class="card nested-card" style="padding:8px; margin:0 0 8px;">
-                <div style="font-weight:700;">${escapeHtml(item.label)}</div>
-                <div class="meta">${escapeHtml(item.href || '(no href)')}</div>
-                <div class="actions" style="margin-top:8px;">
-                  <button type="button" class="btn-edit btn-equal" data-site-nav-sub-action="edit" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Edit</button>
-                  <button type="button" class="btn-equal" data-site-nav-sub-action="toggle" data-site-nav-sub-id="${escapeHtml(String(item.id))}">${item.visible === false ? 'Show' : 'Hide'}</button>
-                  <button type="button" class="btn-compact" data-site-nav-sub-action="up" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === 0 ? 'disabled' : ''}>↑</button>
-                  <button type="button" class="btn-compact" data-site-nav-sub-action="down" data-site-nav-sub-id="${escapeHtml(String(item.id))}" ${index === items.length - 1 ? 'disabled' : ''}>↓</button>
-                  <button type="button" class="btn-danger btn-equal" data-site-nav-sub-action="delete" data-site-nav-sub-id="${escapeHtml(String(item.id))}">Delete</button>
-                </div>
-              </div>
-            `).join('')
-          : 'No submenu links yet. Add a submenu item for the selected column.';
-      }
-    }
+    if (els.siteNavTopList) els.siteNavTopList.innerHTML = renderNavTopList(primary);
+    if (els.siteNavColumnsList) els.siteNavColumnsList.innerHTML = renderNavColumnsList(selectedTop);
+    if (els.siteNavSubitemsList) els.siteNavSubitemsList.innerHTML = renderNavSubitemsList(selectedTop, selectedColumn);
 
     if (els.siteNavCtaSummary) {
       const cta = nav.cta;
@@ -2442,7 +2458,7 @@
     els.navTabsTableBody.querySelectorAll('.edit-nav-tab-btn').forEach((btn) => {
       btn.addEventListener('click', (event) => {
         event.preventDefault();
-        const id = String(btn.getAttribute('data-nav-tab-id') || '');
+        const id = String(btn.dataset.navTabId || '');
         const tab = tabs.find((item) => String(item.id) === id);
         if (tab) loadNavTabIntoEditor(tab);
       });
@@ -2529,193 +2545,198 @@
     els.articleDeleteBtn.disabled = !article.id;
   }
 
+  function applyMediaFilterControls(mediaFilter) {
+    if (els.libraryPanelTitle) {
+      els.libraryPanelTitle.textContent =
+        mediaFilter === ‘image’
+          ? ‘Media Library (Images)’
+          : mediaFilter === ‘document’
+            ? ‘Document Library (PDFs)’
+            : ‘Libraries (All Files)’;
+    }
+    if (els.mediaUploadInput) {
+      els.mediaUploadInput.accept =
+        mediaFilter === ‘image’ ? ‘image/*’ : mediaFilter === ‘document’ ? ‘application/pdf’ : ‘image/*,application/pdf’;
+    }
+    if (els.mediaUploadBtn) {
+      els.mediaUploadBtn.textContent =
+        mediaFilter === ‘image’ ? ‘Upload image’ : mediaFilter === ‘document’ ? ‘Upload PDF’ : ‘Upload image/PDF’;
+    }
+    [
+      [els.libraryMediaBtn, mediaFilter === ‘image’],
+      [els.libraryDocsBtn, mediaFilter === ‘document’],
+      [els.libraryAllBtn, mediaFilter === ‘all’],
+    ].forEach(([btn, active]) => {
+      if (!btn) return;
+      btn.classList.toggle(‘ghost-brand’, Boolean(active));
+    });
+  }
+
+  function renderMediaTable(media) {
+    els.mediaTableBody.innerHTML = media.length
+      ? media
+          .map((item) => `
+            <tr>
+              <td>
+                <div><strong>${escapeHtml(item.label || (item.fileUrl || ‘’).split(‘/’).pop() || `File #${item.id}`)}</strong></div>
+                <div class="meta">${escapeHtml(item.fileUrl || ‘’)}</div>
+              </td>
+              <td>${escapeHtml(item.kind === ‘document’ || item.mimeType === ‘application/pdf’ ? ‘PDF’ : (item.kind || ‘File’))}</td>
+              <td>${escapeHtml(formatBytes(item.size))}</td>
+              <td>
+                <div class="mini-actions">
+                  <a href="${escapeHtml(item.fileUrl || ‘#’)}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open</a>
+                  <button class="delete-media-btn btn-danger" data-media-id="${item.id}">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `)
+          .join(‘’)
+      : ‘<tr><td colspan="4" class="meta">No files yet. Upload an image or PDF to start the tenant library. <button type="button" class="empty-upload-media-btn">Choose file</button></td></tr>’;
+
+    els.mediaTableBody.querySelectorAll(‘.delete-media-btn’).forEach((btn) => {
+      btn.addEventListener(‘click’, (event) => {
+        event.preventDefault();
+        handleDeleteTenantMedia(btn.dataset.mediaId);
+      });
+    });
+    els.mediaTableBody.querySelectorAll(‘.empty-upload-media-btn’).forEach((btn) => {
+      btn.addEventListener(‘click’, () => { els.mediaUploadInput?.click(); });
+    });
+  }
+
+  function renderArticlesTable(articles) {
+    els.articleTableBody.innerHTML = articles.length
+      ? articles
+          .map((article) => `
+            <tr>
+              <td>
+                <div><strong>${escapeHtml(article.title || ‘Untitled’)}</strong></div>
+                <div class="meta">${escapeHtml(article.slug || ‘’)}</div>
+              </td>
+              <td><span class="pill">${escapeHtml(article.status || ‘draft’)}</span></td>
+              <td>${escapeHtml(article.category || ‘newsroom’)}</td>
+              <td class="meta">${escapeHtml(formatDateTime(article.updatedAt))}</td>
+              <td>
+                <div class="mini-actions">
+                  <button class="edit-article-btn btn-edit" data-article-id="${article.id}">Edit</button>
+                  ${article.status === ‘published’ && articlePublicHref(article) !== ‘#’
+                    ? `<a href="${escapeHtml(articlePublicHref(article))}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open</a>`
+                    : ‘’}
+                </div>
+              </td>
+            </tr>
+          `)
+          .join(‘’)
+      : ‘<tr><td colspan="5" class="meta">No articles yet. Create the first article to populate the tenant news page. <button type="button" class="empty-new-article-btn">Create article</button></td></tr>’;
+
+    els.articleTableBody.querySelectorAll(‘.edit-article-btn’).forEach((btn) => {
+      btn.addEventListener(‘click’, (event) => {
+        event.preventDefault();
+        setTenantWorkspaceView(‘articles’);
+        const id = Number(btn.dataset.articleId);
+        const article = articles.find((a) => a.id === id);
+        if (article) loadArticleIntoEditor(article);
+      });
+    });
+    els.articleTableBody.querySelectorAll(‘.empty-new-article-btn’).forEach((btn) => {
+      btn.addEventListener(‘click’, () => {
+        setTenantWorkspaceView(‘articles’);
+        clearArticleEditor();
+        setNotice(els.cmsNotice, ‘Creating a new article.’, ‘ok’);
+      });
+    });
+  }
+
+  function renderAnnualReportsTable(annualReports) {
+    els.annualTableBody.innerHTML = annualReports.length
+      ? annualReports
+          .map((item) => `
+            <tr>
+              <td>${escapeHtml(String(item.year || ‘—‘))}</td>
+              <td>
+                <div><strong>${escapeHtml(item.title || ‘Untitled’)}</strong></div>
+                ${item.summary ? `<div class="meta">${escapeHtml(item.summary)}</div>` : ‘’}
+              </td>
+              <td><span class="pill">${escapeHtml(item.status || ‘published’)}</span></td>
+              <td>
+                <div class="mini-actions">
+                  <button class="edit-annual-btn btn-edit" data-annual-id="${item.id}">Edit</button>
+                  ${item.fileUrl ? `<a href="${escapeHtml(item.fileUrl)}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">PDF</a>` : ‘’}
+                </div>
+              </td>
+            </tr>
+          `)
+          .join(‘’)
+      : ‘<tr><td colspan="4" class="meta">No annual reports yet. Add a year and attach a PDF from the library. <button type="button" class="empty-new-annual-btn">Create annual report</button></td></tr>’;
+    els.annualTableBody.querySelectorAll(‘.edit-annual-btn’).forEach((btn) => {
+      btn.addEventListener(‘click’, (event) => {
+        event.preventDefault();
+        setTenantWorkspaceView(‘annual-reports’);
+        const id = Number(btn.dataset.annualId);
+        const item = annualReports.find((a) => a.id === id);
+        if (item) loadAnnualReportIntoEditor(item);
+      });
+    });
+    els.annualTableBody.querySelectorAll(‘.empty-new-annual-btn’).forEach((btn) => {
+      btn.addEventListener(‘click’, () => {
+        setTenantWorkspaceView(‘annual-reports’);
+        clearAnnualReportEditor();
+        setNotice(els.cmsNotice, ‘Creating a new annual report entry.’, ‘ok’);
+      });
+    });
+  }
+
   function renderCmsPanel() {
     const tenant = getSelectedTenant();
     renderTenantModuleAccessControls();
     renderTenantSiteSectionsControls();
     if (!tenant) {
-      els.cmsContentEmpty.classList.remove('hidden');
-      els.cmsContentPanel.classList.add('hidden');
-      els.cmsContentEmpty.innerHTML = 'Select a tenant above, then open a workspace module (Articles, Libraries, Annual Reports, or Navigation Tabs) to start editing customer content.';
-      els.mediaTableBody.innerHTML = '<tr><td colspan="4" class="meta">Select a tenant to load media.</td></tr>';
-      els.articleTableBody.innerHTML = '<tr><td colspan="5" class="meta">Select a tenant to load articles.</td></tr>';
+      els.cmsContentEmpty.classList.remove(‘hidden’);
+      els.cmsContentPanel.classList.add(‘hidden’);
+      els.cmsContentEmpty.innerHTML = ‘Select a tenant above, then open a workspace module (Articles, Libraries, Annual Reports, or Navigation Tabs) to start editing customer content.’;
+      els.mediaTableBody.innerHTML = ‘<tr><td colspan="4" class="meta">Select a tenant to load media.</td></tr>’;
+      els.articleTableBody.innerHTML = ‘<tr><td colspan="5" class="meta">Select a tenant to load articles.</td></tr>’;
       if (els.navTabsTableBody) {
-        els.navTabsTableBody.innerHTML = '<tr><td colspan="6" class="meta">Select a tenant to load navigation tabs.</td></tr>';
+        els.navTabsTableBody.innerHTML = ‘<tr><td colspan="6" class="meta">Select a tenant to load navigation tabs.</td></tr>’;
       }
       setSiteNavBuilderEmptyState();
       clearArticleEditor();
       clearNavTabEditor();
       return;
     }
-    els.cmsContentEmpty.classList.add('hidden');
-    els.cmsContentEmpty.textContent = 'Select a tenant above to manage that customer’s CMS articles and media library.';
-    els.cmsContentPanel.classList.remove('hidden');
+    els.cmsContentEmpty.classList.add(‘hidden’);
+    els.cmsContentEmpty.textContent = ‘Select a tenant above to manage that customer’s CMS articles and media library.’;
+    els.cmsContentPanel.classList.remove(‘hidden’);
     const moduleAccess = getCurrentTenantModuleAccess();
     if (els.tenantContentOpenArticlesBtn) els.tenantContentOpenArticlesBtn.disabled = moduleAccess.articles === false;
     if (els.tenantContentOpenLibraryBtn) els.tenantContentOpenLibraryBtn.disabled = moduleAccess.libraries === false;
     if (els.tenantContentOpenHomepageBtn) els.tenantContentOpenHomepageBtn.disabled = moduleAccess.homepagePlacements === false;
 
-    const mediaFilter = els.mediaFilter.value || 'all';
+    const mediaFilter = els.mediaFilter.value || ‘all’;
     const allMedia = Array.isArray(state.cms.media) ? state.cms.media : [];
     const media = allMedia.filter((item) => {
-      if (mediaFilter === 'all') return true;
-      if (mediaFilter === 'image') return item.kind === 'image' || item.mimeType?.startsWith('image/');
-      if (mediaFilter === 'document') return item.kind === 'document' || item.mimeType === 'application/pdf';
+      if (mediaFilter === ‘all’) return true;
+      if (mediaFilter === ‘image’) return item.kind === ‘image’ || item.mimeType?.startsWith(‘image/’);
+      if (mediaFilter === ‘document’) return item.kind === ‘document’ || item.mimeType === ‘application/pdf’;
       return true;
     });
 
-    if (els.libraryPanelTitle) {
-      els.libraryPanelTitle.textContent =
-        mediaFilter === 'image'
-          ? 'Media Library (Images)'
-          : mediaFilter === 'document'
-            ? 'Document Library (PDFs)'
-            : 'Libraries (All Files)';
-    }
-    if (els.mediaUploadInput) {
-      els.mediaUploadInput.accept =
-        mediaFilter === 'image'
-          ? 'image/*'
-          : mediaFilter === 'document'
-            ? 'application/pdf'
-            : 'image/*,application/pdf';
-    }
-    if (els.mediaUploadBtn) {
-      els.mediaUploadBtn.textContent =
-        mediaFilter === 'image'
-          ? 'Upload image'
-          : mediaFilter === 'document'
-            ? 'Upload PDF'
-            : 'Upload image/PDF';
-    }
-    [
-      [els.libraryMediaBtn, mediaFilter === 'image'],
-      [els.libraryDocsBtn, mediaFilter === 'document'],
-      [els.libraryAllBtn, mediaFilter === 'all'],
-    ].forEach(([btn, active]) => {
-      if (!btn) return;
-      btn.classList.toggle('ghost-brand', Boolean(active));
-    });
-
-    els.mediaTableBody.innerHTML = media.length
-      ? media
-          .map((item) => `
-            <tr>
-              <td>
-                <div><strong>${escapeHtml(item.label || (item.fileUrl || '').split('/').pop() || `File #${item.id}`)}</strong></div>
-                <div class="meta">${escapeHtml(item.fileUrl || '')}</div>
-              </td>
-              <td>${escapeHtml(item.kind === 'document' || item.mimeType === 'application/pdf' ? 'PDF' : (item.kind || 'File'))}</td>
-              <td>${escapeHtml(formatBytes(item.size))}</td>
-              <td>
-                <div class="mini-actions">
-                  <a href="${escapeHtml(item.fileUrl || '#')}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open</a>
-                  <button class="delete-media-btn btn-danger" data-media-id="${item.id}">Delete</button>
-                </div>
-              </td>
-            </tr>
-          `)
-          .join('')
-      : '<tr><td colspan="4" class="meta">No files yet. Upload an image or PDF to start the tenant library. <button type="button" class="empty-upload-media-btn">Choose file</button></td></tr>';
-
-    els.mediaTableBody.querySelectorAll('.delete-media-btn').forEach((btn) => {
-      btn.addEventListener('click', (event) => {
-        event.preventDefault();
-        handleDeleteTenantMedia(btn.getAttribute('data-media-id'));
-      });
-    });
-    els.mediaTableBody.querySelectorAll('.empty-upload-media-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        els.mediaUploadInput?.click();
-      });
-    });
+    applyMediaFilterControls(mediaFilter);
+    renderMediaTable(media);
 
     const articles = Array.isArray(state.cms.articles) ? state.cms.articles : [];
-    els.articleTableBody.innerHTML = articles.length
-      ? articles
-          .map((article) => `
-            <tr>
-              <td>
-                <div><strong>${escapeHtml(article.title || 'Untitled')}</strong></div>
-                <div class="meta">${escapeHtml(article.slug || '')}</div>
-              </td>
-              <td><span class="pill">${escapeHtml(article.status || 'draft')}</span></td>
-              <td>${escapeHtml(article.category || 'newsroom')}</td>
-              <td class="meta">${escapeHtml(formatDateTime(article.updatedAt))}</td>
-              <td>
-                <div class="mini-actions">
-                  <button class="edit-article-btn btn-edit" data-article-id="${article.id}">Edit</button>
-                  ${article.status === 'published' && articlePublicHref(article) !== '#'
-                    ? `<a href="${escapeHtml(articlePublicHref(article))}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">Open</a>`
-                    : ''}
-                </div>
-              </td>
-            </tr>
-          `)
-          .join('')
-      : '<tr><td colspan="5" class="meta">No articles yet. Create the first article to populate the tenant news page. <button type="button" class="empty-new-article-btn">Create article</button></td></tr>';
-
-    els.articleTableBody.querySelectorAll('.edit-article-btn').forEach((btn) => {
-      btn.addEventListener('click', (event) => {
-        event.preventDefault();
-        setTenantWorkspaceView('articles');
-        const id = Number(btn.getAttribute('data-article-id'));
-        const article = articles.find((a) => a.id === id);
-        if (article) loadArticleIntoEditor(article);
-      });
-    });
-    els.articleTableBody.querySelectorAll('.empty-new-article-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        setTenantWorkspaceView('articles');
-        clearArticleEditor();
-        setNotice(els.cmsNotice, 'Creating a new article.', 'ok');
-      });
-    });
+    renderArticlesTable(articles);
 
     const annualReports = Array.isArray(state.cms.annualReports) ? state.cms.annualReports : [];
-    els.annualTableBody.innerHTML = annualReports.length
-      ? annualReports
-          .map((item) => `
-            <tr>
-              <td>${escapeHtml(String(item.year || '—'))}</td>
-              <td>
-                <div><strong>${escapeHtml(item.title || 'Untitled')}</strong></div>
-                ${item.summary ? `<div class="meta">${escapeHtml(item.summary)}</div>` : ''}
-              </td>
-              <td><span class="pill">${escapeHtml(item.status || 'published')}</span></td>
-              <td>
-                <div class="mini-actions">
-                  <button class="edit-annual-btn btn-edit" data-annual-id="${item.id}">Edit</button>
-                  ${item.fileUrl ? `<a href="${escapeHtml(item.fileUrl)}" target="_blank" rel="noopener noreferrer" class="pill" style="text-decoration:none;">PDF</a>` : ''}
-                </div>
-              </td>
-            </tr>
-          `)
-          .join('')
-      : '<tr><td colspan="4" class="meta">No annual reports yet. Add a year and attach a PDF from the library. <button type="button" class="empty-new-annual-btn">Create annual report</button></td></tr>';
-    els.annualTableBody.querySelectorAll('.edit-annual-btn').forEach((btn) => {
-      btn.addEventListener('click', (event) => {
-        event.preventDefault();
-        setTenantWorkspaceView('annual-reports');
-        const id = Number(btn.getAttribute('data-annual-id'));
-        const item = annualReports.find((a) => a.id === id);
-        if (item) loadAnnualReportIntoEditor(item);
-      });
-    });
-    els.annualTableBody.querySelectorAll('.empty-new-annual-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        setTenantWorkspaceView('annual-reports');
-        clearAnnualReportEditor();
-        setNotice(els.cmsNotice, 'Creating a new annual report entry.', 'ok');
-      });
-    });
+    renderAnnualReportsTable(annualReports);
 
     if (!state.cms.editingArticle) {
       populateAttachmentOptions([]);
       els.articleDeleteBtn.disabled = true;
-      els.articleOpenLink.href = '#';
-      els.articleOpenLink.style.pointerEvents = 'none';
-      els.articleOpenLink.style.opacity = '0.6';
+      els.articleOpenLink.href = ‘#’;
+      els.articleOpenLink.style.pointerEvents = ‘none’;
+      els.articleOpenLink.style.opacity = ‘0.6’;
     } else {
       populateAttachmentOptions(Array.isArray(state.cms.editingArticle.attachments) ? state.cms.editingArticle.attachments.map((a) => a.id) : []);
     }
@@ -2784,7 +2805,7 @@
     els.assignmentTableBody.querySelectorAll('.delete-assignment-btn').forEach((btn) => {
       btn.addEventListener('click', (event) => {
         event.stopPropagation();
-        handleDeleteAssignment(btn.getAttribute('data-assignment-id'));
+        handleDeleteAssignment(btn.dataset.assignmentId);
       });
     });
   }
@@ -2823,8 +2844,32 @@
     return lines.join('\n');
   }
 
-  function buildDomainProvisionChecks(tenant, payload) {
+  function buildRenderConfigCheck(payload, renderTarget) {
     const renderConfigured = Boolean(payload?.render?.configured);
+    return {
+      key: 'render-config',
+      label: 'Render API integration configured',
+      status: renderConfigured ? 'pass' : 'fail',
+      detail: renderConfigured
+        ? `Service ${payload?.render?.serviceId || ''}${renderTarget ? ` • target ${renderTarget}` : ''}`
+        : 'Set RENDER_API_TOKEN and RENDER_SERVICE_ID in Render env vars.',
+    };
+  }
+
+  function buildDnsVerifyCheck(payload, status) {
+    return {
+      key: 'dns-verify',
+      label: 'Render verification passed',
+      status: status === 'verified' ? 'pass' : (status === 'failed' ? 'fail' : 'pending'),
+      detail: status === 'verified'
+        ? `Verified${payload?.domain?.verifiedAt ? ` at ${formatDateTime(payload.domain.verifiedAt)}` : ''}`
+        : status === 'failed'
+          ? (payload?.domain?.lastError || 'Verification failed. Fix DNS and recheck.')
+          : 'After updating DNS in Exabytes, click “Verify / Recheck”.',
+    };
+  }
+
+  function buildDomainProvisionChecks(tenant, payload) {
     const renderTarget = payload?.render?.serviceHostname || '';
     const hostname = (payload?.domain?.hostname || tenant?.branding?.cmsDomain || '').trim();
     const status = String(payload?.domain?.status || '').toLowerCase();
@@ -2834,14 +2879,7 @@
     const brandingSynced = !hostname || (tenant?.branding?.cmsDomain || '').trim() === hostname;
 
     const checks = [
-      {
-        key: 'render-config',
-        label: 'Render API integration configured',
-        status: renderConfigured ? 'pass' : 'fail',
-        detail: renderConfigured
-          ? `Service ${payload?.render?.serviceId || ''}${renderTarget ? ` • target ${renderTarget}` : ''}`
-          : 'Set RENDER_API_TOKEN and RENDER_SERVICE_ID in Render env vars.',
-      },
+      buildRenderConfigCheck(payload, renderTarget),
       {
         key: 'hostname',
         label: 'Tenant CMS hostname saved',
@@ -2851,7 +2889,7 @@
       {
         key: 'render-domain',
         label: 'Custom domain registered in Render',
-        status: renderRegistered ? 'pass' : (hostname ? 'pending' : 'pending'),
+        status: renderRegistered ? 'pass' : 'pending',
         detail: renderRegistered
           ? `${payload?.domain?.renderCustomDomainName || hostname}${payload?.domain?.renderStatus ? ` • ${payload.domain.renderStatus}` : ''}`
           : 'Click “Provision in Render” to create (or sync) the custom domain on your Render service.',
@@ -2859,21 +2897,12 @@
       {
         key: 'dns-instructions',
         label: 'DNS instructions ready (Exabytes/manual)',
-        status: hasInstructions ? 'pass' : (renderRegistered || hostname ? 'pending' : 'pending'),
+        status: hasInstructions ? 'pass' : 'pending',
         detail: hasInstructions
           ? `${dnsRecords.length} DNS record(s) prepared`
           : 'Provision first so the portal can show DNS record instructions.',
       },
-      {
-        key: 'dns-verify',
-        label: 'Render verification passed',
-        status: status === 'verified' ? 'pass' : (status === 'failed' ? 'fail' : 'pending'),
-        detail: status === 'verified'
-          ? `Verified${payload?.domain?.verifiedAt ? ` at ${formatDateTime(payload.domain.verifiedAt)}` : ''}`
-          : status === 'failed'
-            ? (payload?.domain?.lastError || 'Verification failed. Fix DNS and recheck.')
-            : 'After updating DNS in Exabytes, click “Verify / Recheck”.',
-      },
+      buildDnsVerifyCheck(payload, status),
       {
         key: 'branding-sync',
         label: 'Tenant branding CMS domain synced',
@@ -2932,48 +2961,34 @@
       : (blocking ? 'Resolve the blocking checks above, then click Verify / Recheck.' : '');
   }
 
-  function renderDomainProvisioningPanel() {
-    const tenant = getSelectedTenant();
-    const payload = state.domainProvisioning.current;
-    const tenantHostname = tenant?.branding?.cmsDomain || '';
+  function clearDomainProvisioningPanelFields() {
+    if (els.tenantDomainHostname) els.tenantDomainHostname.value = '';
+    if (els.tenantDomainInstructions) els.tenantDomainInstructions.value = '';
+    if (els.tenantDomainStatusPill) els.tenantDomainStatusPill.textContent = 'Not provisioned';
+    if (els.tenantDomainLastChecked) els.tenantDomainLastChecked.textContent = '';
+    if (els.tenantDomainProvisionBtn) els.tenantDomainProvisionBtn.disabled = true;
+    if (els.tenantDomainVerifyBtn) els.tenantDomainVerifyBtn.disabled = true;
+    if (els.tenantDomainRefreshBtn) els.tenantDomainRefreshBtn.disabled = true;
+    if (els.tenantDomainCopyInstructionsBtn) els.tenantDomainCopyInstructionsBtn.disabled = true;
+    setNotice(els.tenantDomainProvisionNotice, '', '');
+  }
 
-    if (!tenant) {
-      if (els.tenantDomainHostname) els.tenantDomainHostname.value = '';
-      if (els.tenantDomainInstructions) els.tenantDomainInstructions.value = '';
-      if (els.tenantDomainStatusPill) els.tenantDomainStatusPill.textContent = 'Not provisioned';
-      if (els.tenantDomainLastChecked) els.tenantDomainLastChecked.textContent = '';
-      if (els.tenantDomainProvisionBtn) els.tenantDomainProvisionBtn.disabled = true;
-      if (els.tenantDomainVerifyBtn) els.tenantDomainVerifyBtn.disabled = true;
-      if (els.tenantDomainRefreshBtn) els.tenantDomainRefreshBtn.disabled = true;
-      if (els.tenantDomainCopyInstructionsBtn) els.tenantDomainCopyInstructionsBtn.disabled = true;
-      setNotice(els.tenantDomainProvisionNotice, '', '');
-      renderDomainProvisioningChecklist(null, null);
-      return;
-    }
-
+  function applyDomainProvisioningFormFields(payload, tenantHostname) {
     const renderConfigured = Boolean(payload?.render?.configured);
     if (els.tenantDomainProvisionBtn) els.tenantDomainProvisionBtn.disabled = !renderConfigured;
     if (els.tenantDomainRefreshBtn) els.tenantDomainRefreshBtn.disabled = false;
-    if (els.tenantDomainVerifyBtn) {
-      els.tenantDomainVerifyBtn.disabled = !renderConfigured || (!payload?.domain?.hostname && !tenantHostname);
-    }
+    if (els.tenantDomainVerifyBtn) els.tenantDomainVerifyBtn.disabled = !renderConfigured || (!payload?.domain?.hostname && !tenantHostname);
     if (els.tenantDomainCopyInstructionsBtn) {
       els.tenantDomainCopyInstructionsBtn.disabled = !(payload?.instructions && formatDomainInstructionsText(payload.instructions));
     }
-
     if (els.tenantDomainHostname) {
       const domainValue = payload?.domain?.hostname || tenantHostname || '';
       if (!els.tenantDomainHostname.value || els.tenantDomainHostname.value === tenantHostname || payload) {
         els.tenantDomainHostname.value = domainValue;
       }
     }
-    if (els.tenantDomainDnsMode && payload?.domain?.dnsMode) {
-      els.tenantDomainDnsMode.value = payload.domain.dnsMode;
-    }
-    if (els.tenantDomainDnsProvider && payload?.domain?.dnsProvider) {
-      els.tenantDomainDnsProvider.value = payload.domain.dnsProvider;
-    }
-
+    if (els.tenantDomainDnsMode && payload?.domain?.dnsMode) els.tenantDomainDnsMode.value = payload.domain.dnsMode;
+    if (els.tenantDomainDnsProvider && payload?.domain?.dnsProvider) els.tenantDomainDnsProvider.value = payload.domain.dnsProvider;
     const status = payload?.domain?.status || (tenantHostname ? 'draft' : 'not configured');
     if (els.tenantDomainStatusPill) {
       els.tenantDomainStatusPill.textContent = `Status: ${status}`;
@@ -2984,9 +2999,21 @@
       const checkedAt = payload?.domain?.lastCheckedAt;
       els.tenantDomainLastChecked.textContent = checkedAt ? `Last checked: ${formatDateTime(checkedAt)}` : '';
     }
-    if (els.tenantDomainInstructions) {
-      els.tenantDomainInstructions.value = formatDomainInstructionsText(payload?.instructions || null);
+    if (els.tenantDomainInstructions) els.tenantDomainInstructions.value = formatDomainInstructionsText(payload?.instructions || null);
+  }
+
+  function renderDomainProvisioningPanel() {
+    const tenant = getSelectedTenant();
+    const payload = state.domainProvisioning.current;
+    const tenantHostname = tenant?.branding?.cmsDomain || '';
+
+    if (!tenant) {
+      clearDomainProvisioningPanelFields();
+      renderDomainProvisioningChecklist(null, null);
+      return;
     }
+
+    applyDomainProvisioningFormFields(payload, tenantHostname);
     renderDomainProvisioningChecklist(tenant, payload);
     renderTenantContextHeader(tenant);
   }
@@ -3466,7 +3493,7 @@
 
     els.tenantTableBody.querySelectorAll('.tenant-row').forEach((row) => {
       row.addEventListener('click', async () => {
-        state.selectedTenantId = Number(row.getAttribute('data-tenant-id'));
+        state.selectedTenantId = Number(row.dataset.tenantId);
         renderTenants();
         await loadHomepagePlacement();
         await loadTenantDomainProvisioning();
@@ -3566,6 +3593,54 @@
     }
   }
 
+  function applyCmsStateFromSettings(tenantSettings) {
+    state.cms.navTabs = Array.isArray(tenantSettings?.navigationTabs) ? tenantSettings.navigationTabs : [];
+    state.cms.siteNavigation = normalizeClientSiteNavigation(tenantSettings?.siteNavigation);
+    state.cms.siteSections = normalizeSiteSections(tenantSettings?.siteSections);
+    state.cms.siteSectionsSnapshot = JSON.parse(JSON.stringify(state.cms.siteSections));
+    state.cms.moduleAccess = normalizeTenantModuleAccess(tenantSettings?.moduleAccess);
+    state.cms.moduleAccessSnapshot = { ...state.cms.moduleAccess };
+  }
+
+  function reconcileCmsEditingSelections() {
+    if (state.cms.editingArticle?.id) {
+      const latest = state.cms.articles.find((a) => a.id === state.cms.editingArticle.id);
+      state.cms.editingArticle = latest || null;
+    }
+    if (state.cms.editingAnnualReport?.id) {
+      const latestAnnual = state.cms.annualReports.find((a) => a.id === state.cms.editingAnnualReport.id);
+      state.cms.editingAnnualReport = latestAnnual || null;
+    }
+    if (state.cms.editingNavTabId) {
+      const latestTab = state.cms.navTabs.find((tab) => String(tab.id) === String(state.cms.editingNavTabId));
+      state.cms.editingNavTabId = latestTab ? String(latestTab.id) : null;
+    }
+    if (state.cms.siteNavSelection?.topId) {
+      const topId = String(state.cms.siteNavSelection.topId);
+      const hasTop = (state.cms.siteNavigation?.primary || []).some((item) => String(item.id) === topId);
+      if (!hasTop) state.cms.siteNavSelection.topId = null;
+    }
+    if (state.cms.siteNavSelection?.columnId) {
+      const selectedTop = getSelectedSiteNavTopItem();
+      const colId = String(state.cms.siteNavSelection.columnId);
+      const hasCol = Boolean(selectedTop && Array.isArray(selectedTop.columns) && selectedTop.columns.some((col) => String(col.id) === colId));
+      if (!hasCol) state.cms.siteNavSelection.columnId = null;
+    }
+  }
+
+  function reloadEditorsAfterCmsLoad() {
+    if (state.cms.editingArticle) {
+      loadArticleIntoEditor(state.cms.editingArticle);
+    }
+    if (state.cms.editingAnnualReport) {
+      loadAnnualReportIntoEditor(state.cms.editingAnnualReport);
+    }
+    if (state.cms.editingNavTabId) {
+      const latestTab = state.cms.navTabs.find((tab) => String(tab.id) === String(state.cms.editingNavTabId));
+      if (latestTab) loadNavTabIntoEditor(latestTab);
+    }
+  }
+
   async function loadTenantCmsContent() {
     const tenant = getSelectedTenant();
     if (!tenant) {
@@ -3583,48 +3658,11 @@
       state.cms.articles = Array.isArray(articles) ? articles : [];
       state.cms.media = Array.isArray(media) ? media : [];
       state.cms.annualReports = Array.isArray(annualReports) ? annualReports : [];
-      state.cms.navTabs = Array.isArray(tenantSettings?.navigationTabs) ? tenantSettings.navigationTabs : [];
-      state.cms.siteNavigation = normalizeClientSiteNavigation(tenantSettings?.siteNavigation);
-      state.cms.siteSections = normalizeSiteSections(tenantSettings?.siteSections);
-      state.cms.siteSectionsSnapshot = JSON.parse(JSON.stringify(state.cms.siteSections));
-      state.cms.moduleAccess = normalizeTenantModuleAccess(tenantSettings?.moduleAccess);
-      state.cms.moduleAccessSnapshot = { ...state.cms.moduleAccess };
-
-      if (state.cms.editingArticle?.id) {
-        const latest = state.cms.articles.find((a) => a.id === state.cms.editingArticle.id);
-        state.cms.editingArticle = latest || null;
-      }
-      if (state.cms.editingAnnualReport?.id) {
-        const latestAnnual = state.cms.annualReports.find((a) => a.id === state.cms.editingAnnualReport.id);
-        state.cms.editingAnnualReport = latestAnnual || null;
-      }
-      if (state.cms.editingNavTabId) {
-        const latestTab = state.cms.navTabs.find((tab) => String(tab.id) === String(state.cms.editingNavTabId));
-        state.cms.editingNavTabId = latestTab ? String(latestTab.id) : null;
-      }
-      if (state.cms.siteNavSelection?.topId) {
-        const topId = String(state.cms.siteNavSelection.topId);
-        const hasTop = (state.cms.siteNavigation?.primary || []).some((item) => String(item.id) === topId);
-        if (!hasTop) state.cms.siteNavSelection.topId = null;
-      }
-      if (state.cms.siteNavSelection?.columnId) {
-        const selectedTop = getSelectedSiteNavTopItem();
-        const colId = String(state.cms.siteNavSelection.columnId);
-        const hasCol = Boolean(selectedTop && Array.isArray(selectedTop.columns) && selectedTop.columns.some((col) => String(col.id) === colId));
-        if (!hasCol) state.cms.siteNavSelection.columnId = null;
-      }
+      applyCmsStateFromSettings(tenantSettings);
+      reconcileCmsEditingSelections();
       renderTenantModuleAccessControls();
       renderCmsPanel();
-      if (state.cms.editingArticle) {
-        loadArticleIntoEditor(state.cms.editingArticle);
-      }
-      if (state.cms.editingAnnualReport) {
-        loadAnnualReportIntoEditor(state.cms.editingAnnualReport);
-      }
-      if (state.cms.editingNavTabId) {
-        const latestTab = state.cms.navTabs.find((tab) => String(tab.id) === String(state.cms.editingNavTabId));
-        if (latestTab) loadNavTabIntoEditor(latestTab);
-      }
+      reloadEditorsAfterCmsLoad();
     } catch (err) {
       resetCmsState();
       renderTenantModuleAccessControls();
@@ -4193,161 +4231,59 @@
     }
   }
 
-  function wireEvents() {
-    normalizeWorkbenchLayout();
-    applyPlatformNavAccordionState();
-    if (els.platformNavSearchInput) {
-      els.platformNavSearchInput.addEventListener('input', () => {
-        applyPlatformNavSearch(els.platformNavSearchInput.value || '');
+  function handleSidebarNavLinkClick(link, event) {
+    const hash = link.getAttribute('href') || '';
+    if (!hash.startsWith('#')) return;
+    const isPlatformAdminLink = Boolean(link.closest('#sidebar-platform-group'));
+    const requestedSub = link.dataset.adminSubLink || '';
+    const requestedMain = link.dataset.adminMainLink
+      || (isPlatformAdminLink ? (link.closest('[data-nav-menu]')?.dataset?.navMenu || '') : '');
+    if (requestedMain && state.uiMode !== 'tenant') {
+      event.preventDefault();
+      navigateAdminRoute(requestedMain, requestedSub, link.dataset.tenantSettingsTab || '', {
+        focus: !requestedSub,
+        behavior: 'auto',
       });
-      els.platformNavSearchInput.addEventListener('search', () => {
-        applyPlatformNavSearch(els.platformNavSearchInput.value || '');
-      });
+      return;
     }
-    applyUiMode();
-    setTenantSettingsTab(state.tenantSettingsTab || 'branding', { skipAdminNavSync: true });
-    if (els.tenantSearchInput) els.tenantSearchInput.value = state.tenantFilters.search || '';
-    if (els.tenantStatusFilter) els.tenantStatusFilter.value = state.tenantFilters.status || 'all';
-    renderTenantFormState();
-    els.loginModeAdminBtn.addEventListener('click', () => setUiMode('admin'));
-    els.loginModeTenantBtn.addEventListener('click', () => setUiMode('tenant'));
-    if (els.appModeAdminBtn && els.appModeTenantBtn) {
-      els.appModeAdminBtn.addEventListener('click', () => {
-        setUiMode('admin');
-        requestAnimationFrame(() => scrollToSectionHash('#section-tenants'));
-      });
-      els.appModeTenantBtn.addEventListener('click', () => {
-        setUiMode('tenant');
-        const targetHash = (state.tenantWorkspaceView || '') === 'tenant-settings'
-          ? '#section-tenant-settings'
-          : (state.tenantWorkspaceView || '') === 'placements'
-            ? '#section-homepage-slot'
-            : '#section-tenant-cms';
-        requestAnimationFrame(() => scrollToSectionHash(targetHash));
-      });
+    event.preventDefault();
+    const requestedUiMode = link.dataset.uiMode || '';
+    const requestedWorkspaceView = link.dataset.workspaceView || '';
+    const requestedTenantSettingsTab = link.dataset.tenantSettingsTab || '';
+    if (requestedUiMode === 'admin' && state.uiMode !== 'admin') {
+      setUiMode('admin');
+    } else if (requestedWorkspaceView && state.uiMode !== 'tenant') {
+      setUiMode('tenant');
     }
-    platformNavMenuToggleButtons.forEach((btn) => {
-      btn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const menu = btn.dataset.navMenuToggle || '';
-        if (!menu) return;
-        const block = platformNavMenuBlocks.find((item) => item.dataset.navMenu === menu);
-        const isCollapsed = block ? block.classList.contains('is-collapsed') : true;
-        if (isCollapsed) {
-          setPlatformNavMenuOpen(menu, true, { closeOthers: true });
-        } else {
-          setPlatformNavMenuOpen(menu, false, { closeOthers: false });
-        }
-      });
-    });
-    if (els.adminSubnavList) {
-      els.adminSubnavList.addEventListener('click', (event) => {
-        const btn = event.target.closest('[data-admin-subnav-id]');
-        if (!btn) return;
-        const main = btn.dataset.adminSubnavMain || state.adminNav?.main || 'tenants';
-        const sub = btn.dataset.adminSubnavId || '';
-        setAdminNav({ main, sub });
-      });
-    }
-    sidebarNavLinks.forEach((link) => {
-      link.addEventListener('click', (event) => {
-        const hash = link.getAttribute('href') || '';
-        if (!hash.startsWith('#')) return;
-        const isPlatformAdminLink = Boolean(link.closest('#sidebar-platform-group'));
-        const requestedSub = link.dataset.adminSubLink || '';
-        const requestedMain = link.dataset.adminMainLink
-          || (isPlatformAdminLink ? (link.closest('[data-nav-menu]')?.dataset?.navMenu || '') : '');
-        if (requestedMain && state.uiMode !== 'tenant') {
-          event.preventDefault();
-          navigateAdminRoute(requestedMain, requestedSub, link.dataset.tenantSettingsTab || '', {
-            focus: !requestedSub,
-            behavior: 'auto',
-          });
-          return;
-        }
-        event.preventDefault();
+    if (requestedWorkspaceView) setTenantWorkspaceView(requestedWorkspaceView);
+    if (requestedTenantSettingsTab) setTenantSettingsTab(requestedTenantSettingsTab);
+    if (state.uiMode !== 'tenant' && !isPlatformAdminLink) expandPlatformNavMenuForLink(link);
+    requestAnimationFrame(() => scrollToSectionHash(hash));
+  }
 
-        const requestedUiMode = link.dataset.uiMode || '';
-        const requestedWorkspaceView = link.dataset.workspaceView || '';
-        const requestedTenantSettingsTab = link.dataset.tenantSettingsTab || '';
-        const isTenantWorkspaceLink = Boolean(requestedWorkspaceView);
-        if (requestedUiMode === 'admin' && state.uiMode !== 'admin') {
-          setUiMode('admin');
-        } else if (isTenantWorkspaceLink && state.uiMode !== 'tenant') {
-          setUiMode('tenant');
-        }
-        if (requestedWorkspaceView) {
-          setTenantWorkspaceView(requestedWorkspaceView);
-        }
-        if (requestedTenantSettingsTab) {
-          setTenantSettingsTab(requestedTenantSettingsTab);
-        }
-        if (state.uiMode !== 'tenant' && !isPlatformAdminLink) {
-          expandPlatformNavMenuForLink(link);
-        }
-
-        requestAnimationFrame(() => scrollToSectionHash(hash));
+  function handleNonSidebarHashLinkClick(link, event) {
+    const hash = link.getAttribute('href') || '';
+    if (!hash.startsWith('#')) return;
+    const requestedMain = link.dataset.adminMainLink || '';
+    if (requestedMain) {
+      event.preventDefault();
+      if (state.uiMode !== 'admin') setUiMode('admin');
+      navigateAdminRoute(requestedMain, link.dataset.adminSubLink || '', link.dataset.tenantSettingsTab || '', {
+        focus: true,
+        behavior: 'smooth',
       });
-    });
-    nonSidebarCmsHashLinks.forEach((link) => {
-      link.addEventListener('click', (event) => {
-        const hash = link.getAttribute('href') || '';
-        if (!hash.startsWith('#')) return;
-        const requestedMain = link.dataset.adminMainLink || '';
-        if (requestedMain) {
-          event.preventDefault();
-          if (state.uiMode !== 'admin') setUiMode('admin');
-          navigateAdminRoute(requestedMain, link.dataset.adminSubLink || '', link.dataset.tenantSettingsTab || '', {
-            focus: true,
-            behavior: 'smooth',
-          });
-          return;
-        }
-        const requestedWorkspaceView = link.dataset.workspaceView || '';
-        if (requestedWorkspaceView) {
-          event.preventDefault();
-          if (state.uiMode !== 'tenant') setUiMode('tenant');
-          setTenantWorkspaceView(requestedWorkspaceView);
-          requestAnimationFrame(() => scrollToSectionHash(hash));
-        }
-      });
-    });
-    window.addEventListener('scroll', syncSidebarActiveLink, { passive: true });
-    window.addEventListener('hashchange', syncSidebarActiveLink);
-
-    els.loginBtn.addEventListener('click', handleLogin);
-    els.refreshAuthBtn.addEventListener('click', async () => {
-      try {
-        await loadAuth();
-        setNotice(els.loginNotice, 'Session checked.', 'ok');
-      } catch (err) {
-        setNotice(els.loginNotice, err.message || 'Failed to check session', 'error');
-      }
-    });
-
-    els.logoutBtn.addEventListener('click', handleLogout);
-    if (els.tenantSearchInput) {
-      els.tenantSearchInput.addEventListener('input', () => {
-        state.tenantFilters.search = els.tenantSearchInput.value || '';
-        renderTenants();
-      });
+      return;
     }
-    if (els.tenantStatusFilter) {
-      els.tenantStatusFilter.addEventListener('change', () => {
-        state.tenantFilters.status = els.tenantStatusFilter.value || 'all';
-        renderTenants();
-      });
+    const requestedWorkspaceView = link.dataset.workspaceView || '';
+    if (requestedWorkspaceView) {
+      event.preventDefault();
+      if (state.uiMode !== 'tenant') setUiMode('tenant');
+      setTenantWorkspaceView(requestedWorkspaceView);
+      requestAnimationFrame(() => scrollToSectionHash(hash));
     }
-    if (els.tenantFilterClearBtn) {
-      els.tenantFilterClearBtn.addEventListener('click', () => {
-        state.tenantFilters.search = '';
-        state.tenantFilters.status = 'all';
-        if (els.tenantSearchInput) els.tenantSearchInput.value = '';
-        if (els.tenantStatusFilter) els.tenantStatusFilter.value = 'all';
-        renderTenants();
-      });
-    }
+  }
+
+  function wireTenantSettingsEvents() {
     tenantSettingsTabButtons.forEach((btn) => {
       btn.addEventListener('click', () => setTenantSettingsTab(btn.dataset.tenantSettingsTab || 'branding'));
     });
@@ -4370,25 +4306,13 @@
       els.tenantSiteHomeInsightsTitle,
       els.tenantSiteHomeInsightsSubtitle,
     ].filter(Boolean).forEach((input) => {
-      input.addEventListener('input', () => {
-        setTenantSiteSectionsLocal(collectSiteSectionsFromControls(), { markSaved: false });
-      });
-      input.addEventListener('change', () => {
-        setTenantSiteSectionsLocal(collectSiteSectionsFromControls(), { markSaved: false });
-      });
+      input.addEventListener('input', () => setTenantSiteSectionsLocal(collectSiteSectionsFromControls(), { markSaved: false }));
+      input.addEventListener('change', () => setTenantSiteSectionsLocal(collectSiteSectionsFromControls(), { markSaved: false }));
     });
-    if (els.tenantModuleAccessSaveBtn) {
-      els.tenantModuleAccessSaveBtn.addEventListener('click', handleSaveTenantModuleAccess);
-    }
-    if (els.tenantModuleAccessResetBtn) {
-      els.tenantModuleAccessResetBtn.addEventListener('click', handleResetTenantModuleAccess);
-    }
-    if (els.tenantSiteSectionsSaveBtn) {
-      els.tenantSiteSectionsSaveBtn.addEventListener('click', handleSaveTenantSiteSections);
-    }
-    if (els.tenantSiteSectionsResetBtn) {
-      els.tenantSiteSectionsResetBtn.addEventListener('click', handleResetTenantSiteSections);
-    }
+    if (els.tenantModuleAccessSaveBtn) els.tenantModuleAccessSaveBtn.addEventListener('click', handleSaveTenantModuleAccess);
+    if (els.tenantModuleAccessResetBtn) els.tenantModuleAccessResetBtn.addEventListener('click', handleResetTenantModuleAccess);
+    if (els.tenantSiteSectionsSaveBtn) els.tenantSiteSectionsSaveBtn.addEventListener('click', handleSaveTenantSiteSections);
+    if (els.tenantSiteSectionsResetBtn) els.tenantSiteSectionsResetBtn.addEventListener('click', handleResetTenantSiteSections);
     if (els.tenantContextOpenDomainsTabBtn) {
       els.tenantContextOpenDomainsTabBtn.addEventListener('click', () => {
         setTenantSettingsTab('domains');
@@ -4396,24 +4320,13 @@
         if (details) details.open = true;
       });
     }
-    if (els.tenantContextOpenContentTabBtn) {
-      els.tenantContextOpenContentTabBtn.addEventListener('click', () => setTenantSettingsTab('content'));
-    }
-    if (els.tenantUsersOpenDomainsBtn) {
-      els.tenantUsersOpenDomainsBtn.addEventListener('click', () => setTenantSettingsTab('domains'));
-    }
-    if (els.tenantUserCreateBtn) {
-      els.tenantUserCreateBtn.addEventListener('click', handleCreateTenantUser);
-    }
+    if (els.tenantContextOpenContentTabBtn) els.tenantContextOpenContentTabBtn.addEventListener('click', () => setTenantSettingsTab('content'));
+    if (els.tenantUsersOpenDomainsBtn) els.tenantUsersOpenDomainsBtn.addEventListener('click', () => setTenantSettingsTab('domains'));
+    if (els.tenantUserCreateBtn) els.tenantUserCreateBtn.addEventListener('click', handleCreateTenantUser);
     if (els.tenantUserFormResetBtn) {
-      els.tenantUserFormResetBtn.addEventListener('click', () => {
-        resetTenantUserForm();
-        setNotice(els.tenantUsersNotice, '', '');
-      });
+      els.tenantUserFormResetBtn.addEventListener('click', () => { resetTenantUserForm(); setNotice(els.tenantUsersNotice, '', ''); });
     }
-    if (els.tenantUsersRefreshBtn) {
-      els.tenantUsersRefreshBtn.addEventListener('click', loadTenantUsers);
-    }
+    if (els.tenantUsersRefreshBtn) els.tenantUsersRefreshBtn.addEventListener('click', loadTenantUsers);
     if (els.tenantUsersTableBody) {
       els.tenantUsersTableBody.addEventListener('click', (event) => {
         const button = event.target.closest('button[data-tenant-user-action]');
@@ -4422,13 +4335,9 @@
         const userId = rowEl?.getAttribute('data-user-id');
         if (!userId) return;
         const action = button.dataset.tenantUserAction || '';
-        if (action === 'save') {
-          handleSaveTenantUserRow(userId, rowEl);
-        } else if (action === 'password') {
-          handleSetTenantUserPassword(userId, rowEl);
-        } else if (action === 'remove') {
-          handleRemoveTenantUser(userId, rowEl);
-        }
+        if (action === 'save') handleSaveTenantUserRow(userId, rowEl);
+        else if (action === 'password') handleSetTenantUserPassword(userId, rowEl);
+        else if (action === 'remove') handleRemoveTenantUser(userId, rowEl);
       });
     }
     if (els.tenantContentOpenArticlesBtn) {
@@ -4455,27 +4364,19 @@
         requestAnimationFrame(() => scrollToSectionHash('#section-homepage-slot'));
       });
     }
-    [
-      els.editName,
-      els.editStatus,
-      els.editPrimaryColor,
-      els.editLogoUrl,
-      els.editPublicSiteUrl,
-      els.editCmsDomain,
-      els.editSupportEmail,
-    ].filter(Boolean).forEach((field) => {
-      field.addEventListener('input', handleTenantFormChanged);
-      field.addEventListener('change', handleTenantFormChanged);
-    });
+    [els.editName, els.editStatus, els.editPrimaryColor, els.editLogoUrl, els.editPublicSiteUrl, els.editCmsDomain, els.editSupportEmail]
+      .filter(Boolean)
+      .forEach((field) => {
+        field.addEventListener('input', handleTenantFormChanged);
+        field.addEventListener('change', handleTenantFormChanged);
+      });
     if (els.editPrimaryColorPicker && els.editPrimaryColor) {
-      els.editPrimaryColorPicker.addEventListener('input', () => {
+      const syncColorPicker = () => {
         els.editPrimaryColor.value = normalizeHexColor(els.editPrimaryColorPicker.value);
         handleTenantFormChanged({ target: els.editPrimaryColor });
-      });
-      els.editPrimaryColorPicker.addEventListener('change', () => {
-        els.editPrimaryColor.value = normalizeHexColor(els.editPrimaryColorPicker.value);
-        handleTenantFormChanged({ target: els.editPrimaryColor });
-      });
+      };
+      els.editPrimaryColorPicker.addEventListener('input', syncColorPicker);
+      els.editPrimaryColorPicker.addEventListener('change', syncColorPicker);
     }
     if (Array.isArray(els.editPrimaryColorPresets)) {
       els.editPrimaryColorPresets.forEach((btn) => {
@@ -4487,6 +4388,158 @@
         });
       });
     }
+  }
+
+  async function handleCopyDnsInstructions() {
+    const text = (els.tenantDomainInstructions?.value || '').trim();
+    if (!text) {
+      setNotice(els.tenantDomainProvisionNotice, 'No DNS instructions to copy yet. Provision the domain first.', 'error');
+      return;
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        setNotice(els.tenantDomainProvisionNotice, 'DNS instructions copied to clipboard.', 'ok');
+      } else {
+        els.tenantDomainInstructions.focus();
+        els.tenantDomainInstructions.select();
+        document.execCommand('copy');
+        setNotice(els.tenantDomainProvisionNotice, 'DNS instructions copied.', 'ok');
+      }
+    } catch (err) {
+      setNotice(els.tenantDomainProvisionNotice, err.message || 'Failed to copy DNS instructions', 'error');
+    }
+  }
+
+  function wireCmsEvents() {
+    els.createContentBtn.addEventListener('click', handleCreateContentItem);
+    els.assignItemBtn.addEventListener('click', handleAssignItemToSlot);
+    els.refreshPlacementBtn.addEventListener('click', loadHomepagePlacement);
+    els.mediaFilter.addEventListener('change', renderCmsPanel);
+    els.libraryMediaBtn.addEventListener('click', () => { setTenantWorkspaceView('libraries'); els.mediaFilter.value = 'image'; renderCmsPanel(); });
+    els.libraryDocsBtn.addEventListener('click', () => { setTenantWorkspaceView('libraries'); els.mediaFilter.value = 'document'; renderCmsPanel(); });
+    els.libraryAllBtn.addEventListener('click', () => { setTenantWorkspaceView('libraries'); els.mediaFilter.value = 'all'; renderCmsPanel(); });
+    els.mediaUploadBtn.addEventListener('click', handleUploadTenantMedia);
+    els.mediaRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    els.articleRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    els.articleNewBtn.addEventListener('click', () => { setTenantWorkspaceView('articles'); clearArticleEditor(); setNotice(els.cmsNotice, 'Creating a new article.', 'ok'); });
+    els.articleSaveBtn.addEventListener('click', handleSaveArticle);
+    els.articleDeleteBtn.addEventListener('click', handleDeleteArticle);
+    els.annualRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    els.annualNewBtn.addEventListener('click', () => { setTenantWorkspaceView('annual-reports'); clearAnnualReportEditor(); setNotice(els.cmsNotice, 'Creating a new annual report entry.', 'ok'); });
+    els.annualSaveBtn.addEventListener('click', handleSaveAnnualReport);
+    els.annualDeleteBtn.addEventListener('click', handleDeleteAnnualReport);
+    els.navTabNewBtn.addEventListener('click', () => { setTenantWorkspaceView('nav-tabs'); clearNavTabEditor(); setNotice(els.cmsNotice, 'Creating a new navigation tab.', 'ok'); });
+    els.navTabsRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    els.navTabSaveBtn.addEventListener('click', handleSaveNavTab);
+    els.navTabDeleteBtn.addEventListener('click', handleDeleteNavTab);
+    if (els.siteNavAddLinkBtn) els.siteNavAddLinkBtn.addEventListener('click', () => handleAddSiteNavTop('link'));
+    if (els.siteNavAddMegaBtn) els.siteNavAddMegaBtn.addEventListener('click', () => handleAddSiteNavTop('mega'));
+    if (els.siteNavRefreshBtn) els.siteNavRefreshBtn.addEventListener('click', loadTenantCmsContent);
+    if (els.siteNavSaveBtn) els.siteNavSaveBtn.addEventListener('click', handleSaveSiteNavigation);
+    if (els.siteNavEditCtaBtn) els.siteNavEditCtaBtn.addEventListener('click', handleEditSiteNavCta);
+    if (els.siteNavClearCtaBtn) els.siteNavClearCtaBtn.addEventListener('click', handleClearSiteNavCta);
+    if (els.siteNavColumnAddBtn) els.siteNavColumnAddBtn.addEventListener('click', handleAddSiteNavColumn);
+    if (els.siteNavSubitemAddBtn) els.siteNavSubitemAddBtn.addEventListener('click', handleAddSiteNavSubItem);
+    if (els.siteNavTopList) {
+      els.siteNavTopList.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-site-nav-top-action]');
+        if (!btn) return;
+        handleSiteNavTopAction(btn.dataset.siteNavTopAction || '', btn.dataset.siteNavTopId || '');
+      });
+    }
+    if (els.siteNavColumnsList) {
+      els.siteNavColumnsList.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-site-nav-col-action]');
+        if (!btn) return;
+        handleSiteNavColumnAction(btn.dataset.siteNavColAction || '', btn.dataset.siteNavColId || '');
+      });
+    }
+    if (els.siteNavSubitemsList) {
+      els.siteNavSubitemsList.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-site-nav-sub-action]');
+        if (!btn) return;
+        handleSiteNavSubItemAction(btn.dataset.siteNavSubAction || '', btn.dataset.siteNavSubId || '');
+      });
+    }
+    els.annualMediaSelect.addEventListener('change', () => {
+      const selectedId = Number(els.annualMediaSelect.value);
+      const selected = (Array.isArray(state.cms.media) ? state.cms.media : []).find((item) => item.id === selectedId);
+      if (selected?.fileUrl) els.annualFileUrl.value = selected.fileUrl;
+    });
+    els.createSlug.addEventListener('input', () => {
+      const value = els.createSlug.value;
+      const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      if (cleaned !== value) els.createSlug.value = cleaned;
+    });
+  }
+
+  function wireEvents() {
+    normalizeWorkbenchLayout();
+    applyPlatformNavAccordionState();
+    if (els.platformNavSearchInput) {
+      els.platformNavSearchInput.addEventListener('input', () => applyPlatformNavSearch(els.platformNavSearchInput.value || ''));
+      els.platformNavSearchInput.addEventListener('search', () => applyPlatformNavSearch(els.platformNavSearchInput.value || ''));
+    }
+    applyUiMode();
+    setTenantSettingsTab(state.tenantSettingsTab || 'branding', { skipAdminNavSync: true });
+    if (els.tenantSearchInput) els.tenantSearchInput.value = state.tenantFilters.search || '';
+    if (els.tenantStatusFilter) els.tenantStatusFilter.value = state.tenantFilters.status || 'all';
+    renderTenantFormState();
+    els.loginModeAdminBtn.addEventListener('click', () => setUiMode('admin'));
+    els.loginModeTenantBtn.addEventListener('click', () => setUiMode('tenant'));
+    if (els.appModeAdminBtn && els.appModeTenantBtn) {
+      els.appModeAdminBtn.addEventListener('click', () => { setUiMode('admin'); requestAnimationFrame(() => scrollToSectionHash('#section-tenants')); });
+      els.appModeTenantBtn.addEventListener('click', () => {
+        setUiMode('tenant');
+        const view = state.tenantWorkspaceView || '';
+        const targetHash = view === 'tenant-settings' ? '#section-tenant-settings' : view === 'placements' ? '#section-homepage-slot' : '#section-tenant-cms';
+        requestAnimationFrame(() => scrollToSectionHash(targetHash));
+      });
+    }
+    platformNavMenuToggleButtons.forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const menu = btn.dataset.navMenuToggle || '';
+        if (!menu) return;
+        const block = platformNavMenuBlocks.find((item) => item.dataset.navMenu === menu);
+        const isCollapsed = block ? block.classList.contains('is-collapsed') : true;
+        setPlatformNavMenuOpen(menu, !isCollapsed ? false : true, { closeOthers: isCollapsed });
+      });
+    });
+    if (els.adminSubnavList) {
+      els.adminSubnavList.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-admin-subnav-id]');
+        if (!btn) return;
+        setAdminNav({ main: btn.dataset.adminSubnavMain || state.adminNav?.main || 'tenants', sub: btn.dataset.adminSubnavId || '' });
+      });
+    }
+    sidebarNavLinks.forEach((link) => { link.addEventListener('click', handleSidebarNavLinkClick.bind(null, link)); });
+    nonSidebarCmsHashLinks.forEach((link) => { link.addEventListener('click', handleNonSidebarHashLinkClick.bind(null, link)); });
+    window.addEventListener('scroll', syncSidebarActiveLink, { passive: true });
+    window.addEventListener('hashchange', syncSidebarActiveLink);
+
+    els.loginBtn.addEventListener('click', handleLogin);
+    els.refreshAuthBtn.addEventListener('click', async () => {
+      try { await loadAuth(); setNotice(els.loginNotice, 'Session checked.', 'ok'); }
+      catch (err) { setNotice(els.loginNotice, err.message || 'Failed to check session', 'error'); }
+    });
+    els.logoutBtn.addEventListener('click', handleLogout);
+    if (els.tenantSearchInput) els.tenantSearchInput.addEventListener('input', () => { state.tenantFilters.search = els.tenantSearchInput.value || ''; renderTenants(); });
+    if (els.tenantStatusFilter) els.tenantStatusFilter.addEventListener('change', () => { state.tenantFilters.status = els.tenantStatusFilter.value || 'all'; renderTenants(); });
+    if (els.tenantFilterClearBtn) {
+      els.tenantFilterClearBtn.addEventListener('click', () => {
+        state.tenantFilters.search = '';
+        state.tenantFilters.status = 'all';
+        if (els.tenantSearchInput) els.tenantSearchInput.value = '';
+        if (els.tenantStatusFilter) els.tenantStatusFilter.value = 'all';
+        renderTenants();
+      });
+    }
+
+    wireTenantSettingsEvents();
+
     if (els.platformBackupRefreshBtn) els.platformBackupRefreshBtn.addEventListener('click', loadPlatformBackups);
     if (els.platformBackupRunBtn) els.platformBackupRunBtn.addEventListener('click', handleRunPlatformDbBackup);
     els.tenantSwitch.addEventListener('change', async () => {
@@ -4509,126 +4562,13 @@
       await loadTenantCmsContent();
     });
     els.saveTenantBtn.addEventListener('click', handleSaveTenant);
-    if (els.discardTenantBtn) {
-      els.discardTenantBtn.addEventListener('click', handleDiscardTenantChanges);
-    }
+    if (els.discardTenantBtn) els.discardTenantBtn.addEventListener('click', handleDiscardTenantChanges);
     if (els.tenantDomainProvisionBtn) els.tenantDomainProvisionBtn.addEventListener('click', handleProvisionTenantDomain);
     if (els.tenantDomainVerifyBtn) els.tenantDomainVerifyBtn.addEventListener('click', handleVerifyTenantDomain);
     if (els.tenantDomainRefreshBtn) els.tenantDomainRefreshBtn.addEventListener('click', loadTenantDomainProvisioning);
-    if (els.tenantDomainCopyInstructionsBtn) {
-      els.tenantDomainCopyInstructionsBtn.addEventListener('click', async () => {
-        const text = (els.tenantDomainInstructions?.value || '').trim();
-        if (!text) {
-          setNotice(els.tenantDomainProvisionNotice, 'No DNS instructions to copy yet. Provision the domain first.', 'error');
-          return;
-        }
-        try {
-          if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(text);
-            setNotice(els.tenantDomainProvisionNotice, 'DNS instructions copied to clipboard.', 'ok');
-          } else {
-            els.tenantDomainInstructions.focus();
-            els.tenantDomainInstructions.select();
-            document.execCommand('copy');
-            setNotice(els.tenantDomainProvisionNotice, 'DNS instructions copied.', 'ok');
-          }
-        } catch (err) {
-          setNotice(els.tenantDomainProvisionNotice, err.message || 'Failed to copy DNS instructions', 'error');
-        }
-      });
-    }
+    if (els.tenantDomainCopyInstructionsBtn) els.tenantDomainCopyInstructionsBtn.addEventListener('click', handleCopyDnsInstructions);
 
-    els.createContentBtn.addEventListener('click', handleCreateContentItem);
-    els.assignItemBtn.addEventListener('click', handleAssignItemToSlot);
-    els.refreshPlacementBtn.addEventListener('click', loadHomepagePlacement);
-    els.mediaFilter.addEventListener('change', renderCmsPanel);
-    els.libraryMediaBtn.addEventListener('click', () => {
-      setTenantWorkspaceView('libraries');
-      els.mediaFilter.value = 'image';
-      renderCmsPanel();
-    });
-    els.libraryDocsBtn.addEventListener('click', () => {
-      setTenantWorkspaceView('libraries');
-      els.mediaFilter.value = 'document';
-      renderCmsPanel();
-    });
-    els.libraryAllBtn.addEventListener('click', () => {
-      setTenantWorkspaceView('libraries');
-      els.mediaFilter.value = 'all';
-      renderCmsPanel();
-    });
-    els.mediaUploadBtn.addEventListener('click', handleUploadTenantMedia);
-    els.mediaRefreshBtn.addEventListener('click', loadTenantCmsContent);
-    els.articleRefreshBtn.addEventListener('click', loadTenantCmsContent);
-    els.articleNewBtn.addEventListener('click', () => {
-      setTenantWorkspaceView('articles');
-      clearArticleEditor();
-      setNotice(els.cmsNotice, 'Creating a new article.', 'ok');
-    });
-    els.articleSaveBtn.addEventListener('click', handleSaveArticle);
-    els.articleDeleteBtn.addEventListener('click', handleDeleteArticle);
-    els.annualRefreshBtn.addEventListener('click', loadTenantCmsContent);
-    els.annualNewBtn.addEventListener('click', () => {
-      setTenantWorkspaceView('annual-reports');
-      clearAnnualReportEditor();
-      setNotice(els.cmsNotice, 'Creating a new annual report entry.', 'ok');
-    });
-    els.annualSaveBtn.addEventListener('click', handleSaveAnnualReport);
-    els.annualDeleteBtn.addEventListener('click', handleDeleteAnnualReport);
-    els.navTabNewBtn.addEventListener('click', () => {
-      setTenantWorkspaceView('nav-tabs');
-      clearNavTabEditor();
-      setNotice(els.cmsNotice, 'Creating a new navigation tab.', 'ok');
-    });
-    els.navTabsRefreshBtn.addEventListener('click', loadTenantCmsContent);
-    els.navTabSaveBtn.addEventListener('click', handleSaveNavTab);
-    els.navTabDeleteBtn.addEventListener('click', handleDeleteNavTab);
-    if (els.siteNavAddLinkBtn) els.siteNavAddLinkBtn.addEventListener('click', () => handleAddSiteNavTop('link'));
-    if (els.siteNavAddMegaBtn) els.siteNavAddMegaBtn.addEventListener('click', () => handleAddSiteNavTop('mega'));
-    if (els.siteNavRefreshBtn) els.siteNavRefreshBtn.addEventListener('click', loadTenantCmsContent);
-    if (els.siteNavSaveBtn) els.siteNavSaveBtn.addEventListener('click', handleSaveSiteNavigation);
-    if (els.siteNavEditCtaBtn) els.siteNavEditCtaBtn.addEventListener('click', handleEditSiteNavCta);
-    if (els.siteNavClearCtaBtn) els.siteNavClearCtaBtn.addEventListener('click', handleClearSiteNavCta);
-    if (els.siteNavColumnAddBtn) els.siteNavColumnAddBtn.addEventListener('click', handleAddSiteNavColumn);
-    if (els.siteNavSubitemAddBtn) els.siteNavSubitemAddBtn.addEventListener('click', handleAddSiteNavSubItem);
-    if (els.siteNavTopList) {
-      els.siteNavTopList.addEventListener('click', (event) => {
-        const btn = event.target.closest('button[data-site-nav-top-action]');
-        if (!btn) return;
-        handleSiteNavTopAction(btn.getAttribute('data-site-nav-top-action') || '', btn.getAttribute('data-site-nav-top-id') || '');
-      });
-    }
-    if (els.siteNavColumnsList) {
-      els.siteNavColumnsList.addEventListener('click', (event) => {
-        const btn = event.target.closest('button[data-site-nav-col-action]');
-        if (!btn) return;
-        handleSiteNavColumnAction(btn.getAttribute('data-site-nav-col-action') || '', btn.getAttribute('data-site-nav-col-id') || '');
-      });
-    }
-    if (els.siteNavSubitemsList) {
-      els.siteNavSubitemsList.addEventListener('click', (event) => {
-        const btn = event.target.closest('button[data-site-nav-sub-action]');
-        if (!btn) return;
-        handleSiteNavSubItemAction(btn.getAttribute('data-site-nav-sub-action') || '', btn.getAttribute('data-site-nav-sub-id') || '');
-      });
-    }
-    els.annualMediaSelect.addEventListener('change', () => {
-      const selectedId = Number(els.annualMediaSelect.value);
-      const selected = (Array.isArray(state.cms.media) ? state.cms.media : []).find((item) => item.id === selectedId);
-      if (selected?.fileUrl) {
-        els.annualFileUrl.value = selected.fileUrl;
-      }
-    });
-
-    els.createSlug.addEventListener('input', () => {
-      const value = els.createSlug.value;
-      const cleaned = value
-        .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-      if (cleaned !== value) els.createSlug.value = cleaned;
-    });
+    wireCmsEvents();
   }
 
   async function init() {
