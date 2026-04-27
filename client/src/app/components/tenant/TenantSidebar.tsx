@@ -23,6 +23,8 @@ import {
   DollarSign,
   Activity,
   Globe,
+  Cpu,
+  Building2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/app/components/ui/utils'
@@ -76,7 +78,9 @@ const navItems: NavItem[] = [
   { label: 'Featured Products', to: '/featured-products', icon: Star, moduleKey: 'featuredProducts' },
   { label: 'Clinical Cases', to: '/clinical-cases', icon: Activity, moduleKey: 'services' },
   { label: 'International', to: '/international', icon: Globe, moduleKey: 'services' },
+  { label: 'Technology', to: '/technology', icon: Cpu, moduleKey: 'services' },
   { label: 'Contact Info', to: '/contact', icon: MapPin, moduleKey: 'contactInfo' },
+  { label: 'Branches', to: '/branches', icon: Building2, moduleKey: 'contactInfo' },
   { label: 'Navigation', to: '/navigation', icon: Menu, moduleKey: 'navigation' },
   { label: 'Site Preview', to: '/preview', icon: Eye },
 ]
@@ -293,7 +297,7 @@ export function TenantSidebar() {
 
         {/* MARKETING section */}
         {filteredItems.some((item) =>
-          ['/testimonials', '/services', '/pricing', '/contact', '/featured-products', '/clinical-cases', '/international'].includes(item.to),
+          ['/testimonials', '/services', '/pricing', '/contact', '/featured-products', '/clinical-cases', '/international', '/technology', '/branches'].includes(item.to),
         ) && (
           <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
             Marketing
@@ -302,7 +306,7 @@ export function TenantSidebar() {
         <div className="space-y-0.5">
           {filteredItems
             .filter((item) =>
-              ['/testimonials', '/services', '/pricing', '/contact', '/featured-products', '/clinical-cases', '/international'].includes(item.to),
+              ['/testimonials', '/services', '/pricing', '/contact', '/featured-products', '/clinical-cases', '/international', '/technology', '/branches'].includes(item.to),
             )
             .map((item) => (
               <SidebarNavLink key={item.to} to={item.to} icon={item.icon}>

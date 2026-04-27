@@ -29,6 +29,8 @@ import { IntegrationSettings } from '@/app/pages/tenant/IntegrationSettings'
 import { HeroImages } from '@/app/pages/tenant/HeroImages'
 import { ClinicalCases } from '@/app/pages/tenant/ClinicalCases'
 import { International } from '@/app/pages/tenant/International'
+import { Technology } from '@/app/pages/tenant/Technology'
+import { Branches } from '@/app/pages/tenant/Branches'
 
 export const tenantRouter = createBrowserRouter(
   [
@@ -73,6 +75,8 @@ export const tenantRouter = createBrowserRouter(
         { path: 'featured-products', element: <FeaturedProducts /> },
         { path: 'clinical-cases', element: <ClinicalCases /> },
         { path: 'international', element: <International /> },
+        { path: 'technology', element: <Technology /> },
+        { path: 'branches', element: <Branches /> },
       ],
     },
   ],
