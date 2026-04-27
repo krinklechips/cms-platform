@@ -27,6 +27,8 @@ import { SerpbearDashboard } from '@/app/pages/tenant/SerpbearDashboard'
 import { LighthouseAudit } from '@/app/pages/tenant/LighthouseAudit'
 import { IntegrationSettings } from '@/app/pages/tenant/IntegrationSettings'
 import { HeroImages } from '@/app/pages/tenant/HeroImages'
+import { ClinicalCases } from '@/app/pages/tenant/ClinicalCases'
+import { International } from '@/app/pages/tenant/International'
 
 export const tenantRouter = createBrowserRouter(
   [
@@ -69,6 +71,8 @@ export const tenantRouter = createBrowserRouter(
         { path: 'pricing', element: <Pricing /> },
         { path: 'contact', element: <ContactSettings /> },
         { path: 'featured-products', element: <FeaturedProducts /> },
+        { path: 'clinical-cases', element: <ClinicalCases /> },
+        { path: 'international', element: <International /> },
       ],
     },
   ],

@@ -40,6 +40,8 @@ import tenantIntegrationsRouter from './routes/tenantIntegrations.js';
 import tenantLighthouseRouter from './routes/tenantLighthouse.js';
 import tenantSerpbearRouter from './routes/tenantSerpbear.js';
 import tenantHeroRouter from './routes/tenantHero.js';
+import tenantClinicalCasesRouter from './routes/tenantClinicalCases.js';
+import tenantInternationalRouter from './routes/tenantInternational.js';
 import platformSeedRouter from './routes/platformSeed.js';
 import {
   attachHostContext,
@@ -241,6 +243,8 @@ app.use('/api/tenant/pricing', tenantPricingRouter);
 app.use('/api/tenant/contact', tenantContactSettingsRouter);
 app.use('/api/tenant/integrations', tenantIntegrationsRouter);
 app.use('/api/tenant/hero', tenantHeroRouter);
+app.use('/api/tenant/clinical-cases', tenantClinicalCasesRouter);
+app.use('/api/tenant/international', tenantInternationalRouter);
 app.use('/api/tenant/lighthouse', tenantLighthouseRouter);
 app.use('/api/tenant/serpbear', tenantSerpbearRouter);
 app.use('/api/public', publicPagesRouter);
