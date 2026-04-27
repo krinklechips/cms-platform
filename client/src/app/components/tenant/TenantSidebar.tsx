@@ -25,6 +25,7 @@ import {
   Globe,
   Cpu,
   Building2,
+  Home,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/app/components/ui/utils'
@@ -51,6 +52,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { label: 'Homepage', to: '/homepage', icon: Home, moduleKey: 'services' },
   { label: 'Articles', to: '/articles', icon: FileText, moduleKey: 'articles' },
   { label: 'Media', to: '/media', icon: Image, moduleKey: 'mediaLibrary' },
   { label: 'Hero Images', to: '/hero-images', icon: MonitorPlay, moduleKey: 'heroImages' },
@@ -261,7 +263,7 @@ export function TenantSidebar() {
 
         {/* CONTENT section */}
         {filteredItems.some((item) =>
-          ['/articles', '/media', '/hero-images', '/annual-reports'].includes(item.to),
+          ['/homepage', '/articles', '/media', '/hero-images', '/annual-reports'].includes(item.to),
         ) && (
           <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
             Content
@@ -270,7 +272,7 @@ export function TenantSidebar() {
         <div className="space-y-0.5">
           {filteredItems
             .filter((item) =>
-              ['/articles', '/media', '/hero-images', '/annual-reports'].includes(item.to),
+              ['/homepage', '/articles', '/media', '/hero-images', '/annual-reports'].includes(item.to),
             )
             .map((item) => (
               <SidebarNavLink key={item.to} to={item.to} icon={item.icon}>
