@@ -138,7 +138,7 @@ export function RedirectManager() {
   function toggleActive(r: SeoRedirect) {
     updateMutation.mutate({
       id: r.id,
-      body: { is_active: r.is_active ? 0 : 1 },
+      body: { isActive: !r.is_active },
     })
   }
 
@@ -147,9 +147,9 @@ export function RedirectManager() {
     updateMutation.mutate({
       id: editTarget.id,
       body: {
-        source_path: form.source_path,
-        target_url: form.target_url,
-        status_code: Number(form.status_code),
+        sourcePath: form.source_path,
+        targetUrl: form.target_url,
+        statusCode: Number(form.status_code),
       },
     })
   }
