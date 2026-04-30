@@ -26,6 +26,7 @@ import {
   Cpu,
   Building2,
   Home,
+  Inbox,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/app/components/ui/utils'
@@ -52,6 +53,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { label: 'Enquiries', to: '/enquiries', icon: Inbox },
   { label: 'Homepage', to: '/homepage', icon: Home, moduleKey: 'services' },
   { label: 'Articles', to: '/articles', icon: FileText, moduleKey: 'articles' },
   { label: 'Media', to: '/media', icon: Image, moduleKey: 'mediaLibrary' },
@@ -257,6 +259,24 @@ export function TenantSidebar() {
                   </div>
                 )
               })}
+            </div>
+          </>
+        )}
+
+        {/* ENQUIRIES section */}
+        {filteredItems.some((item) => item.to === '/enquiries') && (
+          <>
+            <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase px-3 mb-1 mt-5">
+              Inbox
+            </p>
+            <div className="space-y-0.5">
+              {filteredItems
+                .filter((item) => item.to === '/enquiries')
+                .map((item) => (
+                  <SidebarNavLink key={item.to} to={item.to} icon={item.icon}>
+                    {item.label}
+                  </SidebarNavLink>
+                ))}
             </div>
           </>
         )}

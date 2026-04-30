@@ -32,6 +32,7 @@ import { International } from '@/app/pages/tenant/International'
 import { Homepage } from '@/app/pages/tenant/Homepage'
 import { Technology } from '@/app/pages/tenant/Technology'
 import { Branches } from '@/app/pages/tenant/Branches'
+import { Enquiries } from '@/app/pages/tenant/Enquiries'
 
 export const tenantRouter = createBrowserRouter(
   [
@@ -79,6 +80,7 @@ export const tenantRouter = createBrowserRouter(
         { path: 'international', element: <International /> },
         { path: 'technology', element: <Technology /> },
         { path: 'branches', element: <Branches /> },
+        { path: 'enquiries', element: <Enquiries /> },
       ],
     },
   ],

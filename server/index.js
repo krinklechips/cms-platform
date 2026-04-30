@@ -45,6 +45,7 @@ import tenantInternationalRouter from './routes/tenantInternational.js';
 import tenantHomepageRouter from './routes/tenantHomepage.js';
 import tenantTechnologyRouter from './routes/tenantTechnology.js';
 import tenantBranchesRouter from './routes/tenantBranches.js';
+import tenantEnquiriesRouter from './routes/tenantEnquiries.js';
 import platformSeedRouter from './routes/platformSeed.js';
 import {
   attachHostContext,
@@ -251,6 +252,7 @@ app.use('/api/tenant/international', tenantInternationalRouter);
 app.use('/api/tenant/homepage', tenantHomepageRouter);
 app.use('/api/tenant/technology', tenantTechnologyRouter);
 app.use('/api/tenant/branches', tenantBranchesRouter);
+app.use('/api/tenant/enquiries', tenantEnquiriesRouter);
 app.use('/api/tenant/lighthouse', tenantLighthouseRouter);
 app.use('/api/tenant/serpbear', tenantSerpbearRouter);
 app.use('/api/public', publicPagesRouter);
