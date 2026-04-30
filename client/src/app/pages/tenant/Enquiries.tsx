@@ -117,7 +117,7 @@ export function Enquiries() {
 
   const markReadMutation = useMutation({
     mutationFn: ({ id, read }: { id: string; read: boolean }) =>
-      api(`/api/tenant/enquiries/${id}/read`, { method: 'PATCH', body: { read } }),
+      api<Enquiry>(`/api/tenant/enquiries/${id}/read`, { method: 'PATCH', body: { read } }),
     onSuccess: (updated: Enquiry) => {
       queryClient.invalidateQueries({ queryKey: ['enquiries'] })
       // Keep selected in sync

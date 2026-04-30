@@ -123,6 +123,8 @@ app.use(express.static(publicDir, { index: false }));
 app.use('/platform-admin', blockPlatformAdminOnTenantHost, express.static(path.join(publicDir, 'platform-admin')));
 app.use('/tenant-login', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-login')));
 app.use('/tenant-dashboard', blockTenantLoginOnPlatformHost, express.static(path.join(publicDir, 'tenant-dashboard')));
+// Public marketing site (Serviette Labs) — served on the platform host only
+app.use('/www', blockPlatformAdminOnTenantHost, express.static(path.join(publicDir, 'www')));
 
 app.use(
   session({
@@ -274,11 +276,27 @@ app.get('/tenant-dashboard/*', blockTenantLoginOnPlatformHost, (req, res) => {
   res.sendFile(path.join(publicDir, 'tenant-dashboard', 'index.html'));
 });
 
+// Marketing site SPA fallback — /pricing, /pay, etc. all resolve to the www SPA
+app.get('/www', blockPlatformAdminOnTenantHost, (req, res) => {
+  res.sendFile(path.join(publicDir, 'www', 'index.html'));
+});
+app.get('/www/*', blockPlatformAdminOnTenantHost, (req, res) => {
+  res.sendFile(path.join(publicDir, 'www', 'index.html'));
+});
+
+// Root: show marketing site on the platform host, redirect to dashboard on tenant hosts
 app.get('/', (req, res) => {
   if (req.hostContext?.isTenantHost) {
     return res.redirect('/tenant-dashboard');
   }
-  res.redirect('/platform-admin');
+  res.sendFile(path.join(publicDir, 'www', 'index.html'));
+});
+// Top-level marketing routes: /pricing and /pay served by the www SPA
+app.get('/pricing', blockPlatformAdminOnTenantHost, (req, res) => {
+  res.sendFile(path.join(publicDir, 'www', 'index.html'));
+});
+app.get('/pay', blockPlatformAdminOnTenantHost, (req, res) => {
+  res.sendFile(path.join(publicDir, 'www', 'index.html'));
 });
 
 app.listen(env.PORT, () => {
