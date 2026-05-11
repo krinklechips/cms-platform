@@ -42,11 +42,21 @@ import {
   X,
   Settings,
   Eye,
+  Copy,
+  ExternalLink,
+  Columns2,
+  HelpCircle,
+  BarChart2,
+  Video,
+  Users,
+  Stethoscope,
+  Search,
+  Check,
 } from 'lucide-react'
 
 // ---------- Types ----------
 
-type BlockType = 'text' | 'image' | 'hero' | 'hero_slideshow' | 'cta' | 'html' | 'carousel' | 'testimonials_block' | 'pricing_block'
+type BlockType = 'text' | 'image' | 'hero' | 'hero_slideshow' | 'cta' | 'html' | 'carousel' | 'testimonials_block' | 'pricing_block' | 'two_column' | 'faq' | 'stats' | 'video' | 'team_grid' | 'services_grid'
 
 interface BlockData {
   // text
@@ -78,6 +88,31 @@ interface BlockData {
   // pricing_block
   pricingTitle?: string
   pricingCategory?: string
+  // two_column
+  leftContent?: string
+  rightContent?: string
+  leftImage?: string
+  rightImage?: string
+  columnLayout?: '50-50' | '60-40' | '40-60'
+  // faq
+  faqTitle?: string
+  faqItems?: { question: string; answer: string }[]
+  // stats
+  statsTitle?: string
+  statsItems?: { value: string; label: string; description?: string }[]
+  // video
+  videoUrl?: string
+  videoTitle?: string
+  videoCaption?: string
+  videoThumbnail?: string
+  // team_grid
+  teamTitle?: string
+  teamLimit?: number
+  teamFilter?: string
+  // services_grid
+  servicesTitle?: string
+  servicesLimit?: number
+  servicesFilter?: string
 }
 
 interface Block {
@@ -123,6 +158,7 @@ interface PageRecord {
 interface PageListItem {
   id: number
   title: string
+  slug: string
   parentId: number | null
 }
 
@@ -149,6 +185,12 @@ const BLOCK_TYPE_META: Record<BlockType, { label: string; icon: React.ComponentT
   carousel: { label: 'Carousel', icon: GalleryHorizontal },
   testimonials_block: { label: 'Testimonials', icon: Quote },
   pricing_block: { label: 'Pricing / Services', icon: DollarSign },
+  two_column: { label: 'Two Columns', icon: Columns2 },
+  faq: { label: 'FAQ', icon: HelpCircle },
+  stats: { label: 'Stats / Numbers', icon: BarChart2 },
+  video: { label: 'Video', icon: Video },
+  team_grid: { label: 'Team Grid', icon: Users },
+  services_grid: { label: 'Services Grid', icon: Stethoscope },
 }
 
 // ---------- Block Renderers ----------
@@ -170,12 +212,8 @@ function ImageBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: B
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <Label>Image URL</Label>
-        <Input
-          value={data.url || ''}
-          onChange={(e) => onChange({ ...data, url: e.target.value })}
-          placeholder="https://..."
-        />
+        <Label>Image</Label>
+        <ImageUrlInput value={data.url || ''} onChange={(v) => onChange({ ...data, url: v })} placeholder="https://..." />
       </div>
       <div className="space-y-2">
         <Label>Alt Text</Label>
@@ -190,7 +228,7 @@ function ImageBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: B
           src={data.url}
           alt={data.alt || 'Preview'}
           className="h-40 w-full rounded-lg border border-gray-200 object-cover"
-          onError={(e) => (e.currentTarget.style.display = 'none')}
+          onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
         />
       )}
     </div>
@@ -198,28 +236,6 @@ function ImageBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: B
 }
 
 function HeroBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [uploading, setUploading] = useState(false)
-
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const form = new FormData()
-      form.append('file', file)
-      form.append('folder', 'hero')
-      const result = await api<{ media: { url: string } }>('/api/tenant/media/upload', { method: 'POST', body: form })
-      onChange({ ...data, heroImage: result.media?.url ?? '' })
-      if (!data.heroImageAlt) onChange({ ...data, heroImage: result.media?.url ?? '', heroImageAlt: file.name.replace(/\.[^.]+$/, '') })
-      toast.success('Image uploaded')
-    } catch {
-      toast.error('Upload failed')
-    } finally {
-      setUploading(false)
-    }
-  }
-
   const preserveFullImage = data.heroPreserveFullImage ?? false
 
   return (
@@ -239,29 +255,12 @@ function HeroBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: Bl
             }}
           />
         )}
-        <div className="flex gap-2">
-          <Input
-            value={data.heroImage || ''}
-            onChange={(e) => onChange({ ...data, heroImage: e.target.value })}
-            placeholder="https://... or /hero/image.jpg"
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <div className="h-3.5 w-3.5 animate-spin rounded-full border border-gray-300 border-t-gray-600" />
-            ) : (
-              <Upload className="h-3.5 w-3.5" />
-            )}
-            <span className="ml-1.5">Upload</span>
-          </Button>
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-        </div>
+        <ImageUrlInput
+          value={data.heroImage || ''}
+          onChange={(v) => onChange({ ...data, heroImage: v })}
+          placeholder="https://... or /hero/image.jpg"
+          folder="hero"
+        />
       </div>
 
       {/* Eyebrow + Title */}
@@ -666,6 +665,416 @@ function PricingBlockEditor({ data, onChange }: { data: BlockData; onChange: (d:
   )
 }
 
+/* ================================================================== */
+/*  Media Picker Modal                                                  */
+/* ================================================================== */
+
+interface MediaItem {
+  id: number
+  filename: string
+  url: string
+  mime_type: string
+  size: number
+}
+
+interface MediaPickerProps {
+  open: boolean
+  onClose: () => void
+  onSelect: (url: string) => void
+}
+
+function MediaPickerModal({ open, onClose, onSelect }: MediaPickerProps) {
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<string | null>(null)
+
+  const { data, isLoading } = useQuery<{ items: MediaItem[]; folders: string[] }>({
+    queryKey: ['media-picker'],
+    queryFn: () => api('/api/tenant/media'),
+    enabled: open,
+    staleTime: 30_000,
+  })
+
+  const images = (data?.items ?? []).filter((m) => m.mime_type.startsWith('image/'))
+  const filtered = search.trim()
+    ? images.filter((m) => m.filename.toLowerCase().includes(search.toLowerCase()))
+    : images
+
+  function confirm() {
+    if (selected) { onSelect(selected); setSelected(null); onClose() }
+  }
+
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="flex h-[70vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-3.5">
+          <h2 className="text-sm font-semibold text-gray-800">Media Library</h2>
+          <button type="button" onClick={onClose} className="rounded p-1 text-gray-400 hover:text-gray-600">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="shrink-0 border-b border-gray-100 px-5 py-2.5">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-300" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search images…"
+              className="h-8 w-full rounded-lg border border-gray-200 bg-gray-50 pl-9 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400"
+            />
+          </div>
+        </div>
+
+        {/* Grid */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-violet-600" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <ImageIcon className="mb-2 h-8 w-8 text-gray-200" />
+              <p className="text-sm">{search ? 'No images match your search' : 'No images uploaded yet'}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 md:grid-cols-6">
+              {filtered.map((item) => {
+                const isSel = selected === item.url
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSelected(isSel ? null : item.url)}
+                    className={`group relative overflow-hidden rounded-lg border-2 transition-all ${isSel ? 'border-violet-500 ring-2 ring-violet-200' : 'border-gray-100 hover:border-gray-300'}`}
+                  >
+                    <img
+                      src={item.url}
+                      alt={item.filename}
+                      className="h-20 w-full object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                    />
+                    {isSel && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-violet-600/40">
+                        <Check className="h-5 w-5 text-white" />
+                      </div>
+                    )}
+                    <p className="truncate px-1 py-1 text-[9px] text-gray-500">{item.filename}</p>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex shrink-0 items-center justify-between border-t border-gray-200 px-5 py-3">
+          <p className="text-xs text-gray-400">{filtered.length} image{filtered.length !== 1 ? 's' : ''}</p>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+            <Button type="button" size="sm" disabled={!selected} onClick={confirm}>
+              Insert Image
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Helper: image-url input with media picker button ── */
+function ImageUrlInput({
+  value,
+  onChange,
+  placeholder = 'https://… or /path/to/image.jpg',
+  folder = 'pages',
+}: {
+  value: string
+  onChange: (url: string) => void
+  placeholder?: string
+  folder?: string
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('folder', folder)
+      const result = await api<{ media: { url: string } }>('/api/tenant/media/upload', { method: 'POST', body: form })
+      onChange(result.media?.url ?? '')
+      toast.success('Uploaded')
+    } catch {
+      toast.error('Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="flex gap-2">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="flex-1"
+        />
+        <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)} title="Browse media library">
+          <ImageIcon className="h-3.5 w-3.5" />
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading} title="Upload new file">
+          {uploading ? <div className="h-3.5 w-3.5 animate-spin rounded-full border border-gray-300 border-t-gray-600" /> : <Upload className="h-3.5 w-3.5" />}
+        </Button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+      </div>
+      <MediaPickerModal open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={onChange} />
+    </>
+  )
+}
+
+/* ================================================================== */
+/*  New Block Editors                                                   */
+/* ================================================================== */
+
+function TwoColumnBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Layout</Label>
+        <Select
+          value={data.columnLayout || '50-50'}
+          onValueChange={(v) => onChange({ ...data, columnLayout: v as BlockData['columnLayout'] })}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="50-50">50 / 50 (equal)</SelectItem>
+            <SelectItem value="60-40">60 / 40 (text heavy left)</SelectItem>
+            <SelectItem value="40-60">40 / 60 (text heavy right)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 p-3 space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Left Column</p>
+        <div className="space-y-2">
+          <Label>Image (optional)</Label>
+          <ImageUrlInput value={data.leftImage || ''} onChange={(v) => onChange({ ...data, leftImage: v })} />
+          {data.leftImage && <img src={data.leftImage} alt="" className="h-28 w-full rounded-lg border object-cover" />}
+        </div>
+        <div className="space-y-2">
+          <Label>Text Content</Label>
+          <RichTextEditor value={data.leftContent || ''} onChange={(v) => onChange({ ...data, leftContent: v })} placeholder="Left column content…" />
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 p-3 space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Right Column</p>
+        <div className="space-y-2">
+          <Label>Image (optional)</Label>
+          <ImageUrlInput value={data.rightImage || ''} onChange={(v) => onChange({ ...data, rightImage: v })} />
+          {data.rightImage && <img src={data.rightImage} alt="" className="h-28 w-full rounded-lg border object-cover" />}
+        </div>
+        <div className="space-y-2">
+          <Label>Text Content</Label>
+          <RichTextEditor value={data.rightContent || ''} onChange={(v) => onChange({ ...data, rightContent: v })} placeholder="Right column content…" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FaqBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  const items = data.faqItems || []
+
+  function updateItem(index: number, field: 'question' | 'answer', value: string) {
+    onChange({ ...data, faqItems: items.map((it, i) => i === index ? { ...it, [field]: value } : it) })
+  }
+
+  function addItem() {
+    onChange({ ...data, faqItems: [...items, { question: '', answer: '' }] })
+  }
+
+  function removeItem(index: number) {
+    onChange({ ...data, faqItems: items.filter((_, i) => i !== index) })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Section Title</Label>
+        <Input
+          value={data.faqTitle || ''}
+          onChange={(e) => onChange({ ...data, faqTitle: e.target.value })}
+          placeholder="Frequently Asked Questions"
+        />
+      </div>
+      {items.map((item, index) => (
+        <div key={index} className="rounded-lg border border-gray-200 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-400">Q{index + 1}</span>
+            <button type="button" onClick={() => removeItem(index)} className="rounded p-0.5 text-gray-300 hover:text-red-500">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <Input
+            value={item.question}
+            onChange={(e) => updateItem(index, 'question', e.target.value)}
+            placeholder="Question"
+          />
+          <Textarea
+            value={item.answer}
+            onChange={(e) => updateItem(index, 'answer', e.target.value)}
+            placeholder="Answer"
+            rows={2}
+          />
+        </div>
+      ))}
+      <button type="button" onClick={addItem} className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-3 text-sm text-gray-500 hover:border-gray-300">
+        <Plus className="h-4 w-4" /> Add Question
+      </button>
+    </div>
+  )
+}
+
+function StatsBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  const items = data.statsItems || []
+
+  function updateItem(index: number, field: keyof (typeof items)[0], value: string) {
+    onChange({ ...data, statsItems: items.map((it, i) => i === index ? { ...it, [field]: value } : it) })
+  }
+
+  function addItem() {
+    onChange({ ...data, statsItems: [...items, { value: '', label: '', description: '' }] })
+  }
+
+  function removeItem(index: number) {
+    onChange({ ...data, statsItems: items.filter((_, i) => i !== index) })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Section Title (optional)</Label>
+        <Input value={data.statsTitle || ''} onChange={(e) => onChange({ ...data, statsTitle: e.target.value })} placeholder="By the Numbers" />
+      </div>
+      {items.map((item, index) => (
+        <div key={index} className="rounded-lg border border-gray-200 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-400">Stat {index + 1}</span>
+            <button type="button" onClick={() => removeItem(index)} className="rounded p-0.5 text-gray-300 hover:text-red-500">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Value</Label>
+              <Input value={item.value} onChange={(e) => updateItem(index, 'value', e.target.value)} placeholder="37+" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Label</Label>
+              <Input value={item.label} onChange={(e) => updateItem(index, 'label', e.target.value)} placeholder="Specialist Dentists" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Description (optional)</Label>
+            <Input value={item.description || ''} onChange={(e) => updateItem(index, 'description', e.target.value)} placeholder="Short supporting text" />
+          </div>
+        </div>
+      ))}
+      <button type="button" onClick={addItem} className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-3 text-sm text-gray-500 hover:border-gray-300">
+        <Plus className="h-4 w-4" /> Add Stat
+      </button>
+    </div>
+  )
+}
+
+function VideoBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Video URL</Label>
+        <Input
+          value={data.videoUrl || ''}
+          onChange={(e) => onChange({ ...data, videoUrl: e.target.value })}
+          placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
+        />
+        <p className="text-[10px] text-gray-400">Supports YouTube, Vimeo, and direct mp4 URLs</p>
+      </div>
+      <div className="space-y-2">
+        <Label>Thumbnail Image (optional)</Label>
+        <ImageUrlInput value={data.videoThumbnail || ''} onChange={(v) => onChange({ ...data, videoThumbnail: v })} placeholder="Poster image before video plays" />
+        {data.videoThumbnail && <img src={data.videoThumbnail} alt="" className="h-28 w-full rounded-lg border object-cover" />}
+      </div>
+      <div className="space-y-2">
+        <Label>Title (optional)</Label>
+        <Input value={data.videoTitle || ''} onChange={(e) => onChange({ ...data, videoTitle: e.target.value })} placeholder="Video heading" />
+      </div>
+      <div className="space-y-2">
+        <Label>Caption (optional)</Label>
+        <Textarea value={data.videoCaption || ''} onChange={(e) => onChange({ ...data, videoCaption: e.target.value })} placeholder="Short description below the video" rows={2} />
+      </div>
+    </div>
+  )
+}
+
+function TeamGridBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Section Title</Label>
+        <Input value={data.teamTitle || ''} onChange={(e) => onChange({ ...data, teamTitle: e.target.value })} placeholder="Meet Our Specialists" />
+      </div>
+      <div className="space-y-2">
+        <Label>Specialty Filter (optional)</Label>
+        <Input value={data.teamFilter || ''} onChange={(e) => onChange({ ...data, teamFilter: e.target.value })} placeholder="e.g. Implantologist (leave blank for all)" />
+      </div>
+      <div className="space-y-2">
+        <Label>Max team members to show</Label>
+        <Select value={String(data.teamLimit ?? 8)} onValueChange={(v) => onChange({ ...data, teamLimit: Number(v) })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {[4, 6, 8, 12, 999].map((n) => <SelectItem key={n} value={String(n)}>{n === 999 ? 'All' : n}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <p className="text-xs text-gray-400">Displays published team members from your Team Members content.</p>
+    </div>
+  )
+}
+
+function ServicesGridBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Section Title</Label>
+        <Input value={data.servicesTitle || ''} onChange={(e) => onChange({ ...data, servicesTitle: e.target.value })} placeholder="Our Services" />
+      </div>
+      <div className="space-y-2">
+        <Label>Category Filter (optional)</Label>
+        <Input value={data.servicesFilter || ''} onChange={(e) => onChange({ ...data, servicesFilter: e.target.value })} placeholder="e.g. Cosmetic (leave blank for all)" />
+      </div>
+      <div className="space-y-2">
+        <Label>Max services to show</Label>
+        <Select value={String(data.servicesLimit ?? 6)} onValueChange={(v) => onChange({ ...data, servicesLimit: Number(v) })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {[3, 6, 9, 12, 999].map((n) => <SelectItem key={n} value={String(n)}>{n === 999 ? 'All' : n}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <p className="text-xs text-gray-400">Displays published services from your Services &amp; Pricing content.</p>
+    </div>
+  )
+}
+
 const BLOCK_EDITORS: Record<BlockType, React.ComponentType<{ data: BlockData; onChange: (d: BlockData) => void }>> = {
   text: TextBlockEditor,
   image: ImageBlockEditor,
@@ -676,6 +1085,12 @@ const BLOCK_EDITORS: Record<BlockType, React.ComponentType<{ data: BlockData; on
   carousel: CarouselBlockEditor,
   testimonials_block: TestimonialsBlockEditor,
   pricing_block: PricingBlockEditor,
+  two_column: TwoColumnBlockEditor,
+  faq: FaqBlockEditor,
+  stats: StatsBlockEditor,
+  video: VideoBlockEditor,
+  team_grid: TeamGridBlockEditor,
+  services_grid: ServicesGridBlockEditor,
 }
 
 // ---------- Visual Page Preview ----------
@@ -817,6 +1232,88 @@ function PlaceholderSectionPreview({ label, note }: { label: string; note?: stri
   )
 }
 
+function TwoColumnPreview({ data }: { data: BlockData }) {
+  const layout = data.columnLayout || '50-50'
+  const [leftW, rightW] = layout === '60-40' ? ['60%', '40%'] : layout === '40-60' ? ['40%', '60%'] : ['50%', '50%']
+  return (
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 32px', display: 'flex', gap: 32 }}>
+      <div style={{ width: leftW }}>
+        {data.leftImage && <img src={data.leftImage} alt="" style={{ width: '100%', borderRadius: 10, marginBottom: 16, maxHeight: 200, objectFit: 'cover' }} />}
+        {data.leftContent ? (
+          <div style={{ color: 'var(--text-soft)', fontSize: 13, lineHeight: 1.75 }} dangerouslySetInnerHTML={{ __html: data.leftContent }} />
+        ) : (
+          <p style={{ color: 'var(--text-soft)', opacity: 0.3, fontSize: 13, fontStyle: 'italic' }}>Left column content…</p>
+        )}
+      </div>
+      <div style={{ width: rightW }}>
+        {data.rightImage && <img src={data.rightImage} alt="" style={{ width: '100%', borderRadius: 10, marginBottom: 16, maxHeight: 200, objectFit: 'cover' }} />}
+        {data.rightContent ? (
+          <div style={{ color: 'var(--text-soft)', fontSize: 13, lineHeight: 1.75 }} dangerouslySetInnerHTML={{ __html: data.rightContent }} />
+        ) : (
+          <p style={{ color: 'var(--text-soft)', opacity: 0.3, fontSize: 13, fontStyle: 'italic' }}>Right column content…</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function FaqPreview({ data }: { data: BlockData }) {
+  const items = data.faqItems || []
+  if (items.length === 0) return <PlaceholderSectionPreview label="FAQ" note="No questions added yet" />
+  return (
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 32px' }}>
+      {data.faqTitle && <h2 style={{ color: 'var(--text-main)', fontSize: '1.8rem', fontFamily: '"Cormorant Garamond", Georgia, serif', margin: '0 0 24px' }}>{data.faqTitle}</h2>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {items.map((item, i) => (
+          <div key={i} style={{ borderBottom: '1px solid var(--border-strong)', paddingBottom: 12 }}>
+            <p style={{ color: 'var(--text-main)', fontSize: 14, fontWeight: 600, margin: '0 0 6px' }}>{item.question || <span style={{ opacity: 0.3 }}>Question…</span>}</p>
+            {item.answer && <p style={{ color: 'var(--text-soft)', fontSize: 12, lineHeight: 1.6, margin: 0 }}>{item.answer}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StatsPreview({ data }: { data: BlockData }) {
+  const items = data.statsItems || []
+  if (items.length === 0) return <PlaceholderSectionPreview label="Stats / Numbers" note="No stats added yet" />
+  return (
+    <div style={{ backgroundColor: 'var(--brand-soft)', padding: '48px 32px' }}>
+      {data.statsTitle && <h2 style={{ textAlign: 'center', color: 'var(--text-main)', fontSize: '1.6rem', fontFamily: '"Cormorant Garamond", Georgia, serif', margin: '0 0 28px' }}>{data.statsTitle}</h2>}
+      <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap' }}>
+        {items.map((item, i) => (
+          <div key={i} style={{ textAlign: 'center', minWidth: 120 }}>
+            <p style={{ color: 'var(--brand)', fontSize: '2.2rem', fontFamily: '"Cormorant Garamond", Georgia, serif', fontWeight: 700, margin: 0 }}>{item.value}</p>
+            <p style={{ color: 'var(--text-main)', fontSize: 12, fontWeight: 600, margin: '4px 0 2px' }}>{item.label}</p>
+            {item.description && <p style={{ color: 'var(--text-soft)', fontSize: 11, margin: 0 }}>{item.description}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function VideoPreview({ data }: { data: BlockData }) {
+  if (!data.videoUrl && !data.videoThumbnail) return <PlaceholderSectionPreview label="Video" note="No video URL set" />
+  return (
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 32px' }}>
+      {data.videoTitle && <h2 style={{ color: 'var(--text-main)', fontSize: '1.6rem', fontFamily: '"Cormorant Garamond", Georgia, serif', margin: '0 0 16px' }}>{data.videoTitle}</h2>}
+      <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', borderRadius: 12, overflow: 'hidden', backgroundColor: '#111', backgroundImage: data.videoThumbnail ? `url(${data.videoThumbnail})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '18px solid var(--brand)', marginLeft: 4 }} />
+          </div>
+        </div>
+        {data.videoUrl && (
+          <p style={{ position: 'absolute', bottom: 10, left: 12, color: 'rgba(255,255,255,0.7)', fontSize: 10, margin: 0, fontFamily: 'monospace', maxWidth: '80%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.videoUrl}</p>
+        )}
+      </div>
+      {data.videoCaption && <p style={{ color: 'var(--text-soft)', fontSize: 12, marginTop: 10 }}>{data.videoCaption}</p>}
+    </div>
+  )
+}
+
 function BlockPreview({ block }: { block: Block }) {
   switch (block.type) {
     case 'hero': return <HeroPreview data={block.data} />
@@ -825,9 +1322,15 @@ function BlockPreview({ block }: { block: Block }) {
     case 'cta': return <CtaPreview data={block.data} />
     case 'html': return <HtmlPreview data={block.data} />
     case 'carousel': return <CarouselPreview data={block.data} />
+    case 'two_column': return <TwoColumnPreview data={block.data} />
+    case 'faq': return <FaqPreview data={block.data} />
+    case 'stats': return <StatsPreview data={block.data} />
+    case 'video': return <VideoPreview data={block.data} />
     case 'hero_slideshow': return <PlaceholderSectionPreview label="Hero Slideshow" note="Live slides from Hero Images manager" />
     case 'testimonials_block': return <PlaceholderSectionPreview label="Testimonials" note="Pulls featured testimonials dynamically" />
     case 'pricing_block': return <PlaceholderSectionPreview label="Pricing / Services" note="Pulls published services dynamically" />
+    case 'team_grid': return <PlaceholderSectionPreview label="Team Grid" note={`Shows ${block.data.teamFilter ? block.data.teamFilter + ' · ' : ''}up to ${block.data.teamLimit ?? 8} team members`} />
+    case 'services_grid': return <PlaceholderSectionPreview label="Services Grid" note={`Shows ${block.data.servicesFilter ? block.data.servicesFilter + ' · ' : ''}up to ${block.data.servicesLimit ?? 6} services`} />
     default: return null
   }
 }
@@ -844,6 +1347,11 @@ export function PageEditor() {
   const [addBlockOpen, setAddBlockOpen] = useState(false)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [rightPanel, setRightPanel] = useState<'settings' | 'block'>('settings')
+  const [draggedId, setDraggedId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const lastSavedForm = useRef<PageFormData | null>(null)
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Form state
   const [form, setForm] = useState<PageFormData>({
@@ -889,7 +1397,7 @@ export function PageEditor() {
   // Populate form when page loads
   useEffect(() => {
     if (page) {
-      setForm({
+      const loaded: PageFormData = {
         title: page.title || '',
         slug: page.slug || '',
         status: page.status || 'draft',
@@ -909,9 +1417,48 @@ export function PageEditor() {
               data: b.blockData || {},
             }))
           : [],
-      })
+      }
+      setForm(loaded)
+      lastSavedForm.current = loaded
+      setAutoSaveStatus('idle')
     }
   }, [page])
+
+  // Autosave (debounced 4 s, edit mode only)
+  useEffect(() => {
+    if (!isEdit || !lastSavedForm.current) return
+    if (JSON.stringify(form) === JSON.stringify(lastSavedForm.current)) return
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    setAutoSaveStatus('idle')
+    autoSaveTimer.current = setTimeout(async () => {
+      setAutoSaveStatus('saving')
+      try {
+        const payload = {
+          title: form.title,
+          slug: form.slug,
+          status: form.status,
+          parentId: form.parent_id,
+          template: form.template,
+          showInNav: form.show_in_nav,
+          navLabel: form.nav_label,
+          navParentId: form.nav_parent_id,
+          sortOrder: form.sort_order,
+          seoTitle: form.seo_title,
+          seoDescription: form.seo_description,
+          seoImage: form.seo_image_url,
+          blocks: form.blocks.map((b) => ({ blockType: b.type, blockData: b.data })),
+        }
+        await api(`/api/tenant/pages/${id}`, { method: 'PUT', body: payload })
+        lastSavedForm.current = form
+        setAutoSaveStatus('saved')
+        queryClient.invalidateQueries({ queryKey: ['tenant', 'pages'] })
+      } catch {
+        setAutoSaveStatus('idle')
+      }
+    }, 4000)
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, isEdit, id])
 
   // Save mutation
   const saveMutation = useMutation({
@@ -977,6 +1524,29 @@ export function PageEditor() {
     if (newIndex < 0 || newIndex >= form.blocks.length) return
     const newBlocks = [...form.blocks]
     ;[newBlocks[index], newBlocks[newIndex]] = [newBlocks[newIndex], newBlocks[index]]
+    setField('blocks', newBlocks)
+  }
+
+  function duplicateBlock(blockId: string) {
+    const index = form.blocks.findIndex((b) => b.id === blockId)
+    if (index === -1) return
+    const original = form.blocks[index]
+    const copy: Block = { ...original, id: generateId(), data: { ...original.data } }
+    const newBlocks = [...form.blocks]
+    newBlocks.splice(index + 1, 0, copy)
+    setField('blocks', newBlocks)
+    setSelectedBlockId(copy.id)
+    setRightPanel('block')
+  }
+
+  function reorderBlock(fromId: string, toId: string) {
+    if (fromId === toId) return
+    const fromIndex = form.blocks.findIndex((b) => b.id === fromId)
+    const toIndex = form.blocks.findIndex((b) => b.id === toId)
+    if (fromIndex === -1 || toIndex === -1) return
+    const newBlocks = [...form.blocks]
+    const [moved] = newBlocks.splice(fromIndex, 1)
+    newBlocks.splice(toIndex, 0, moved)
     setField('blocks', newBlocks)
   }
 
@@ -1083,12 +1653,29 @@ export function PageEditor() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Autosave indicator */}
+          {isEdit && autoSaveStatus !== 'idle' && (
+            <span className={`text-[11px] ${autoSaveStatus === 'saving' ? 'text-gray-400' : 'text-green-600'}`}>
+              {autoSaveStatus === 'saving' ? 'Saving…' : '✓ Autosaved'}
+            </span>
+          )}
+          {/* Preview — wired for future CMS integration */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled
+            title="Preview will be available once the CMS is connected to the live site"
+          >
+            <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+            Preview
+          </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => navigate('/pages')}>
             Cancel
           </Button>
           <Button size="sm" onClick={onSubmit} disabled={saveMutation.isPending}>
             <Save className="mr-1.5 h-3.5 w-3.5" />
-            {saveMutation.isPending ? 'Saving…' : isEdit ? 'Update Page' : 'Create Page'}
+            {saveMutation.isPending ? 'Saving…' : isEdit ? 'Publish' : 'Create Page'}
           </Button>
         </div>
       </div>
@@ -1106,29 +1693,44 @@ export function PageEditor() {
               const meta = BLOCK_TYPE_META[block.type as BlockType] ?? { label: block.type, icon: Code }
               const MetaIcon = meta.icon
               const isSelected = selectedBlockId === block.id
+              const isDragging = draggedId === block.id
+              const isDragOver = dragOverId === block.id && draggedId !== block.id
               return (
-                <button
+                <div
                   key={block.id}
-                  type="button"
-                  onClick={() => selectBlock(block.id)}
-                  className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
-                    isSelected ? 'bg-violet-50 text-violet-700 ring-1 ring-violet-200' : 'text-gray-600 hover:bg-gray-100'
-                  }`}
+                  draggable
+                  onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; setDraggedId(block.id) }}
+                  onDragEnd={() => { setDraggedId(null); setDragOverId(null) }}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverId(block.id) }}
+                  onDrop={(e) => { e.preventDefault(); if (draggedId) reorderBlock(draggedId, block.id); setDraggedId(null); setDragOverId(null) }}
+                  className={`group relative rounded-md transition-all ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-violet-400 ring-offset-1' : ''}`}
                 >
-                  <MetaIcon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="flex-1 truncate">{meta.label}</span>
-                  <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
-                    <button type="button" onClick={() => moveBlock(block.id, 'up')} disabled={index === 0} className="rounded p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-20">
-                      <ArrowUp className="h-3 w-3" />
-                    </button>
-                    <button type="button" onClick={() => moveBlock(block.id, 'down')} disabled={index === form.blocks.length - 1} className="rounded p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-20">
-                      <ArrowDown className="h-3 w-3" />
-                    </button>
-                    <button type="button" onClick={() => { removeBlock(block.id); if (selectedBlockId === block.id) setSelectedBlockId(null) }} className="rounded p-0.5 text-gray-300 hover:text-red-500">
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => selectBlock(block.id)}
+                    className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
+                      isSelected ? 'bg-violet-50 text-violet-700 ring-1 ring-violet-200' : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <GripVertical className="h-3 w-3 shrink-0 cursor-grab text-gray-300 group-hover:text-gray-400" />
+                    <MetaIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="flex-1 truncate">{meta.label}</span>
+                    <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+                      <button type="button" onClick={() => moveBlock(block.id, 'up')} disabled={index === 0} className="rounded p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-20">
+                        <ArrowUp className="h-3 w-3" />
+                      </button>
+                      <button type="button" onClick={() => moveBlock(block.id, 'down')} disabled={index === form.blocks.length - 1} className="rounded p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-20">
+                        <ArrowDown className="h-3 w-3" />
+                      </button>
+                      <button type="button" onClick={() => duplicateBlock(block.id)} className="rounded p-0.5 text-gray-300 hover:text-gray-600">
+                        <Copy className="h-3 w-3" />
+                      </button>
+                      <button type="button" onClick={() => { removeBlock(block.id); if (selectedBlockId === block.id) setSelectedBlockId(null) }} className="rounded p-0.5 text-gray-300 hover:text-red-500">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </button>
+                </div>
               )
             })}
           </div>
@@ -1251,6 +1853,9 @@ export function PageEditor() {
                       </button>
                       <button type="button" onClick={() => moveBlock(selectedBlock.id, 'down')} disabled={selectedBlockIndex === form.blocks.length - 1} className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-30">
                         <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                      <button type="button" title="Duplicate block" onClick={() => duplicateBlock(selectedBlock.id)} className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                        <Copy className="h-3.5 w-3.5" />
                       </button>
                       <button type="button" onClick={() => { removeBlock(selectedBlock.id); setSelectedBlockId(null); setRightPanel('settings') }} className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600">
                         <Trash2 className="h-3.5 w-3.5" />
