@@ -56,7 +56,7 @@ import {
 
 // ---------- Types ----------
 
-type BlockType = 'text' | 'image' | 'hero' | 'hero_slideshow' | 'cta' | 'html' | 'carousel' | 'testimonials_block' | 'pricing_block' | 'two_column' | 'faq' | 'stats' | 'video' | 'team_grid' | 'services_grid'
+type BlockType = 'text' | 'image' | 'hero' | 'hero_slideshow' | 'cta' | 'html' | 'carousel' | 'testimonials_block' | 'pricing_block' | 'two_column' | 'faq' | 'stats' | 'video' | 'team_grid' | 'services_grid' | 'brands_marquee' | 'highlights' | 'featured_cards' | 'timeline' | 'clinical_results'
 
 interface BlockData {
   // text
@@ -113,6 +113,11 @@ interface BlockData {
   servicesTitle?: string
   servicesLimit?: number
   servicesFilter?: string
+  // brands_marquee — no configurable fields (data pulled from brand_logos table)
+  // highlights — no configurable fields (static shortcut tiles + featured cards)
+  // featured_cards — no configurable fields (data pulled from homepage_feature_cards table)
+  // timeline — no configurable fields (static ERAS array in section component)
+  // clinical_results — no configurable fields (data pulled from clinical_cases table)
 }
 
 interface Block {
@@ -191,6 +196,11 @@ const BLOCK_TYPE_META: Record<BlockType, { label: string; icon: React.ComponentT
   video: { label: 'Video', icon: Video },
   team_grid: { label: 'Team Grid', icon: Users },
   services_grid: { label: 'Services Grid', icon: Stethoscope },
+  brands_marquee: { label: 'Partner Brands Marquee', icon: GalleryHorizontal },
+  highlights: { label: 'Highlights / Quick Access', icon: Sparkles },
+  featured_cards: { label: 'Featured Cards', icon: ImageIcon },
+  timeline: { label: 'Clinic History Timeline', icon: BarChart2 },
+  clinical_results: { label: 'Clinical Results Gallery', icon: Stethoscope },
 }
 
 // ---------- Block Renderers ----------
@@ -388,6 +398,80 @@ interface HeroSlideData {
   imagePosition: string | null
   preserveFullImage: boolean
   published: boolean
+}
+
+interface TestimonialPreviewItem {
+  id: number
+  authorName: string
+  authorTitle?: string | null
+  quote: string
+  rating: number
+  isFeatured: boolean
+  sortOrder: number
+  status: string
+}
+
+interface PricingCategoryPreviewItem {
+  id: string
+  title: string
+  sortOrder: number
+}
+
+interface PricingItemPreviewItem {
+  id: string
+  name: string
+  price: string
+  ada: string | null
+  categoryId: string
+  sortOrder: number
+}
+
+interface ServicePreviewItem {
+  id: string
+  name: string
+  slug: string
+  description?: string | null
+  category?: string | null
+  status: string
+  sortOrder: number
+}
+
+interface TeamPreviewItem {
+  id: number
+  name: string
+  title?: string | null
+  department?: string | null
+  photoUrl?: string | null
+  status: string
+  sortOrder: number
+}
+
+interface BrandLogoPreviewItem {
+  id: number
+  name: string
+  logoUrl: string
+  sortOrder: number
+  published: boolean
+}
+
+interface FeatureCardPreviewItem {
+  id: number
+  title: string
+  description?: string | null
+  href?: string | null
+  imageUrl?: string | null
+  sortOrder: number
+  published: boolean
+}
+
+interface ClinicalCasePreviewItem {
+  id: string
+  title: string
+  category: string
+  treatment: string
+  imageUrl?: string | null
+  published: boolean
+  sortOrder: number
 }
 
 function HeroSlideshowBlockEditor({ data: _data, onChange: _onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
@@ -1075,6 +1159,49 @@ function ServicesGridBlockEditor({ data, onChange }: { data: BlockData; onChange
   )
 }
 
+function BrandsMarqueeBlockEditor(_: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <p className="text-xs text-gray-400">
+      Displays the horizontal scrolling partner-brand logos pulled automatically from the{' '}
+      <code className="rounded bg-gray-100 px-1 py-0.5 font-mono">brand_logos</code> table. No configuration needed.
+    </p>
+  )
+}
+
+function HighlightsBlockEditor(_: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <p className="text-xs text-gray-400">
+      Renders the Quick Access shortcut tiles and the three featured cards. Content is defined in the section component — no CMS fields.
+    </p>
+  )
+}
+
+function FeaturedCardsBlockEditor(_: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <p className="text-xs text-gray-400">
+      Displays featured cards pulled from the{' '}
+      <code className="rounded bg-gray-100 px-1 py-0.5 font-mono">homepage_feature_cards</code> table, falling back to built-in defaults. No configuration needed.
+    </p>
+  )
+}
+
+function TimelineBlockEditor(_: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <p className="text-xs text-gray-400">
+      Renders the full clinic history timeline (1996 → present). Content is defined in the section component — no CMS fields.
+    </p>
+  )
+}
+
+function ClinicalResultsBlockEditor(_: { data: BlockData; onChange: (d: BlockData) => void }) {
+  return (
+    <p className="text-xs text-gray-400">
+      Displays the before/after case gallery pulled from the{' '}
+      <code className="rounded bg-gray-100 px-1 py-0.5 font-mono">clinical_cases</code> table, with filterable categories. No configuration needed.
+    </p>
+  )
+}
+
 const BLOCK_EDITORS: Record<BlockType, React.ComponentType<{ data: BlockData; onChange: (d: BlockData) => void }>> = {
   text: TextBlockEditor,
   image: ImageBlockEditor,
@@ -1091,6 +1218,11 @@ const BLOCK_EDITORS: Record<BlockType, React.ComponentType<{ data: BlockData; on
   video: VideoBlockEditor,
   team_grid: TeamGridBlockEditor,
   services_grid: ServicesGridBlockEditor,
+  brands_marquee: BrandsMarqueeBlockEditor,
+  highlights: HighlightsBlockEditor,
+  featured_cards: FeaturedCardsBlockEditor,
+  timeline: TimelineBlockEditor,
+  clinical_results: ClinicalResultsBlockEditor,
 }
 
 // ---------- Visual Page Preview ----------
@@ -1143,7 +1275,10 @@ function TextPreview({ data }: { data: BlockData }) {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 32px' }}>
       {data.content ? (
-        <div style={{ color: 'var(--text-soft)', fontSize: 13, lineHeight: 1.75 }} dangerouslySetInnerHTML={{ __html: data.content }} />
+        <>
+          <PreviewHtmlStyles />
+          <div className="rc-preview-rich" style={{ color: 'var(--text-soft)', fontSize: 13, lineHeight: 1.75 }} dangerouslySetInnerHTML={{ __html: data.content }} />
+        </>
       ) : (
         <p style={{ color: 'var(--text-soft)', opacity: 0.4, fontSize: 13, fontStyle: 'italic' }}>Text content will appear here…</p>
       )}
@@ -1185,7 +1320,10 @@ function HtmlPreview({ data }: { data: BlockData }) {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 32px' }}>
       {data.html ? (
-        <div dangerouslySetInnerHTML={{ __html: data.html }} />
+        <>
+          <PreviewHtmlStyles />
+          <div className="rc-preview-rich" dangerouslySetInnerHTML={{ __html: data.html }} />
+        </>
       ) : (
         <div style={{ border: '2px dashed #e5e7eb', borderRadius: 8, padding: 24, textAlign: 'center' }}>
           <Code style={{ width: 28, height: 28, color: '#d1d5db', margin: '0 auto 8px' }} />
@@ -1193,6 +1331,83 @@ function HtmlPreview({ data }: { data: BlockData }) {
         </div>
       )}
     </div>
+  )
+}
+
+function PreviewHtmlStyles() {
+  return (
+    <style>{`
+      .rc-preview-rich {
+        color: var(--text-soft);
+        font-size: 13px;
+        line-height: 1.75;
+      }
+      .rc-preview-rich h1,
+      .rc-preview-rich h2,
+      .rc-preview-rich h3 {
+        color: var(--text-main);
+        font-family: "Cormorant Garamond", Georgia, serif;
+        line-height: 1.08;
+        margin: 0 0 12px;
+      }
+      .rc-preview-rich h2 { font-size: 30px; }
+      .rc-preview-rich h3 { font-size: 22px; }
+      .rc-preview-rich p { margin: 0 0 10px; }
+      .rc-preview-rich ul {
+        display: grid;
+        gap: 8px;
+        margin: 16px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .rc-preview-rich li {
+        margin: 0;
+        color: var(--text-soft);
+      }
+      .rc-preview-rich strong {
+        color: var(--brand-deep);
+        font-weight: 700;
+      }
+      .rc-preview-rich .stats-band {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0;
+        border-top: 1px solid var(--border-strong);
+        border-bottom: 1px solid var(--border-strong);
+        background: var(--brand);
+        margin: -24px -32px 16px;
+      }
+      .rc-preview-rich .stat {
+        min-height: 118px;
+        padding: 22px 12px;
+        text-align: center;
+        color: white;
+        border-right: 1px solid rgba(255,255,255,0.22);
+      }
+      .rc-preview-rich .stat:last-child { border-right: 0; }
+      .rc-preview-rich .stat strong {
+        display: inline;
+        color: white;
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 34px;
+        line-height: 1;
+      }
+      .rc-preview-rich .stat span {
+        color: rgba(255,255,255,0.82);
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .rc-preview-rich .stat p {
+        margin: 6px auto 0;
+        max-width: 120px;
+        color: rgba(255,255,255,0.78);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.35;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+    `}</style>
   )
 }
 
@@ -1314,6 +1529,310 @@ function VideoPreview({ data }: { data: BlockData }) {
   )
 }
 
+function HeroSlideshowPreview() {
+  const { data: slides = [], isLoading } = useQuery<HeroSlideData[]>({
+    queryKey: ['tenant', 'hero-slides', 'preview'],
+    queryFn: () => api('/api/tenant/hero/slides'),
+    staleTime: 30_000,
+  })
+  const visibleSlides = slides.filter((slide) => slide.published)
+  const slide = visibleSlides[0] ?? slides[0]
+
+  if (isLoading) return <PlaceholderSectionPreview label="Hero Slideshow" note="Loading slides…" />
+  if (!slide) return <PlaceholderSectionPreview label="Hero Slideshow" note="No slides in Hero Images yet" />
+
+  return (
+    <div style={{ position: 'relative', minHeight: 420, overflow: 'hidden', backgroundColor: 'white' }}>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url(${slide.imageSrc})`,
+          backgroundPosition: slide.imagePosition || 'center center',
+          backgroundSize: slide.preserveFullImage ? 'contain' : 'cover',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: slide.preserveFullImage ? 'white' : '#2c1a28',
+        }}
+      />
+      {!slide.preserveFullImage && (
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,249,250,0.04), rgba(44,26,40,0.28))' }} />
+      )}
+      <div style={{ position: 'absolute', left: 22, top: 22, zIndex: 1 }}>
+        <span style={{ border: '1px solid rgba(33,23,31,0.2)', borderRadius: 999, background: 'rgba(255,255,255,0.96)', padding: '7px 14px', color: 'var(--text-main)', fontSize: 10, fontWeight: 700, letterSpacing: '0.24em', textTransform: 'uppercase' }}>
+          Trusted Since 1996
+        </span>
+      </div>
+      <div style={{ position: 'absolute', left: 22, bottom: 22, display: 'flex', gap: 6 }}>
+        {visibleSlides.slice(0, 5).map((item, index) => (
+          <span key={item.id} style={{ width: index === 0 ? 28 : 8, height: 8, borderRadius: 999, background: index === 0 ? 'white' : 'rgba(255,255,255,0.45)', boxShadow: '0 1px 4px rgba(0,0,0,0.18)' }} />
+        ))}
+      </div>
+      <div style={{ position: 'absolute', insetInline: 0, bottom: 0, height: 92, background: 'linear-gradient(0deg, var(--brand-soft), rgba(255,220,235,0.45), transparent)' }} />
+    </div>
+  )
+}
+
+function TestimonialsDynamicPreview({ data }: { data: BlockData }) {
+  const take = data.testimonialsLimit ?? 3
+  const { data: testimonials = [], isLoading } = useQuery<TestimonialPreviewItem[]>({
+    queryKey: ['tenant', 'testimonials', 'preview'],
+    queryFn: () => api('/api/tenant/testimonials'),
+    staleTime: 30_000,
+  })
+  const items = testimonials
+    .filter((item) => item.status === 'published' && item.isFeatured)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice(0, take)
+
+  if (isLoading) return <PlaceholderSectionPreview label="Testimonials" note="Loading testimonials…" />
+  if (items.length === 0) return <PlaceholderSectionPreview label="Testimonials" note="No featured testimonials published yet" />
+
+  return (
+    <div style={{ background: 'var(--surface)', padding: '48px 32px' }}>
+      <h2 style={{ textAlign: 'center', color: 'var(--text-main)', fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 32, margin: '0 0 28px' }}>
+        {data.testimonialsTitle || 'What Our Patients Say'}
+      </h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+        {items.map((item) => (
+          <div key={item.id} style={{ border: '1px solid var(--border-strong)', borderRadius: 16, background: 'white', padding: 18, minHeight: 170 }}>
+            <p style={{ color: 'var(--brand)', margin: '0 0 10px', letterSpacing: 1 }}>{'★'.repeat(Math.max(0, Math.min(5, item.rating)))}</p>
+            <p style={{ color: 'var(--text-soft)', fontSize: 12, lineHeight: 1.65, margin: 0, fontStyle: 'italic' }}>&ldquo;{item.quote}&rdquo;</p>
+            <p style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700, margin: '14px 0 0' }}>{item.authorName}</p>
+            {item.authorTitle && <p style={{ color: 'var(--text-soft)', fontSize: 11, margin: '2px 0 0' }}>{item.authorTitle}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PricingDynamicPreview({ data }: { data: BlockData }) {
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<PricingCategoryPreviewItem[]>({
+    queryKey: ['tenant', 'pricing-categories', 'preview'],
+    queryFn: () => api('/api/tenant/pricing/categories'),
+    staleTime: 30_000,
+  })
+  const { data: items = [], isLoading: itemsLoading } = useQuery<PricingItemPreviewItem[]>({
+    queryKey: ['tenant', 'pricing-items', 'preview'],
+    queryFn: () => api('/api/tenant/pricing/items'),
+    staleTime: 30_000,
+  })
+  const filter = data.pricingCategory?.trim().toLowerCase()
+  const categoryMap = new Map(categories.map((category) => [category.id, category]))
+  const visibleItems = items
+    .filter((item) => {
+      if (!filter) return true
+      return categoryMap.get(item.categoryId)?.title.toLowerCase().includes(filter)
+    })
+    .sort((a, b) => {
+      const catSort = (categoryMap.get(a.categoryId)?.sortOrder ?? 0) - (categoryMap.get(b.categoryId)?.sortOrder ?? 0)
+      return catSort || a.sortOrder - b.sortOrder
+    })
+    .slice(0, 9)
+
+  if (categoriesLoading || itemsLoading) return <PlaceholderSectionPreview label="Pricing / Services" note="Loading pricing…" />
+  if (visibleItems.length === 0) return <PlaceholderSectionPreview label="Pricing / Services" note="No pricing items match this block" />
+
+  return (
+    <div style={{ padding: '48px 32px' }}>
+      <h2 style={{ textAlign: 'center', color: 'var(--text-main)', fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 32, margin: '0 0 28px' }}>
+        {data.pricingTitle || 'Our Services'}
+      </h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14 }}>
+        {visibleItems.map((item) => (
+          <div key={item.id} style={{ border: '1px solid var(--border-strong)', borderRadius: 14, padding: 16, background: 'white' }}>
+            <p style={{ color: 'var(--brand)', fontSize: 9, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', margin: '0 0 8px' }}>{categoryMap.get(item.categoryId)?.title}</p>
+            <p style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700, margin: 0 }}>{item.name}</p>
+            {item.ada && <p style={{ color: 'var(--text-soft)', fontSize: 11, margin: '6px 0 0' }}>ADA {item.ada}</p>}
+            <p style={{ color: 'var(--brand-deep)', fontSize: 14, fontWeight: 800, margin: '12px 0 0' }}>{item.price.toLowerCase() === 'free' ? 'Free' : `$${item.price}`}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TeamGridDynamicPreview({ data }: { data: BlockData }) {
+  const take = data.teamLimit ?? 8
+  const filter = data.teamFilter?.trim().toLowerCase()
+  const { data: members = [], isLoading } = useQuery<TeamPreviewItem[]>({
+    queryKey: ['tenant', 'team-members', 'preview'],
+    queryFn: () => api('/api/tenant/team-members'),
+    staleTime: 30_000,
+  })
+  const items = members
+    .filter((member) => {
+      if (member.status !== 'published') return false
+      if (!filter) return true
+      return member.department?.toLowerCase().includes(filter) || member.title?.toLowerCase().includes(filter)
+    })
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice(0, take)
+
+  if (isLoading) return <PlaceholderSectionPreview label="Team Grid" note="Loading team members…" />
+  if (items.length === 0) return <PlaceholderSectionPreview label="Team Grid" note="No published team members match this block" />
+
+  return (
+    <div style={{ padding: '48px 32px' }}>
+      {data.teamTitle && <h2 style={{ textAlign: 'center', color: 'var(--text-main)', fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 32, margin: '0 0 28px' }}>{data.teamTitle}</h2>}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 14 }}>
+        {items.map((member) => (
+          <div key={member.id} style={{ overflow: 'hidden', border: '1px solid var(--border-strong)', borderRadius: 14, background: 'white' }}>
+            <div style={{ height: 130, background: 'var(--brand-soft)', backgroundImage: member.photoUrl ? `url(${member.photoUrl})` : undefined, backgroundSize: 'cover', backgroundPosition: 'top center' }} />
+            <div style={{ padding: 12 }}>
+              <p style={{ color: 'var(--text-main)', fontSize: 12, fontWeight: 800, margin: 0 }}>{member.name}</p>
+              {member.title && <p style={{ color: 'var(--brand)', fontSize: 10, margin: '4px 0 0' }}>{member.title}</p>}
+              {member.department && <p style={{ color: 'var(--text-soft)', fontSize: 10, margin: '2px 0 0' }}>{member.department}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ServicesGridDynamicPreview({ data }: { data: BlockData }) {
+  const take = data.servicesLimit ?? 6
+  const filter = data.servicesFilter?.trim().toLowerCase()
+  const { data: services = [], isLoading } = useQuery<ServicePreviewItem[]>({
+    queryKey: ['tenant', 'services', 'preview'],
+    queryFn: () => api('/api/tenant/services'),
+    staleTime: 30_000,
+  })
+  const items = services
+    .filter((service) => {
+      if (service.status !== 'published') return false
+      if (!filter) return true
+      return service.category?.toLowerCase().includes(filter) || service.name.toLowerCase().includes(filter)
+    })
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice(0, take)
+
+  if (isLoading) return <PlaceholderSectionPreview label="Services Grid" note="Loading services…" />
+  if (items.length === 0) return <PlaceholderSectionPreview label="Services Grid" note="No published services match this block" />
+
+  return (
+    <div style={{ padding: '48px 32px' }}>
+      {data.servicesTitle && <h2 style={{ textAlign: 'center', color: 'var(--text-main)', fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 32, margin: '0 0 28px' }}>{data.servicesTitle}</h2>}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14 }}>
+        {items.map((service) => (
+          <div key={service.id} style={{ border: '1px solid var(--border-strong)', borderRadius: 14, background: 'white', padding: 16 }}>
+            {service.category && <p style={{ color: 'var(--brand)', fontSize: 9, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', margin: '0 0 8px' }}>{service.category}</p>}
+            <p style={{ color: 'var(--text-main)', fontSize: 14, fontWeight: 800, margin: 0 }}>{service.name}</p>
+            {service.description && <p style={{ color: 'var(--text-soft)', fontSize: 11, lineHeight: 1.55, margin: '8px 0 0' }}>{service.description}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function BrandsMarqueePreview() {
+  const { data: logos = [], isLoading } = useQuery<BrandLogoPreviewItem[]>({
+    queryKey: ['tenant', 'brand-logos', 'preview'],
+    queryFn: () => api('/api/tenant/homepage/brand-logos'),
+    staleTime: 30_000,
+  })
+  const items = logos.filter((logo) => logo.published).sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 8)
+  if (isLoading) return <PlaceholderSectionPreview label="Partner Brands Marquee" note="Loading partner logos…" />
+  if (items.length === 0) return <PlaceholderSectionPreview label="Partner Brands Marquee" note="No published brand logos yet" />
+  return (
+    <div style={{ borderTop: '1px solid var(--border-strong)', borderBottom: '1px solid var(--border-strong)', padding: '24px 32px', background: 'white' }}>
+      <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+        {items.map((logo) => (
+          <div key={logo.id} style={{ width: 92, height: 54, border: '1px solid var(--border-strong)', borderRadius: 12, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 10 }}>
+            <img src={logo.logoUrl} alt={logo.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FeaturedCardsPreview() {
+  const { data: cards = [], isLoading } = useQuery<FeatureCardPreviewItem[]>({
+    queryKey: ['tenant', 'feature-cards', 'preview'],
+    queryFn: () => api('/api/tenant/homepage/feature-cards'),
+    staleTime: 30_000,
+  })
+  const items = cards.filter((card) => card.published).sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 3)
+  if (isLoading) return <PlaceholderSectionPreview label="Featured Cards" note="Loading feature cards…" />
+  if (items.length === 0) return <PlaceholderSectionPreview label="Featured Cards" note="No published feature cards yet" />
+  return (
+    <div style={{ padding: '48px 32px', background: 'var(--surface)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+        {items.map((card) => (
+          <div key={card.id} style={{ overflow: 'hidden', border: '1px solid var(--border-strong)', borderRadius: 16, background: 'white' }}>
+            <div style={{ height: 120, background: 'var(--brand-soft)', backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            <div style={{ padding: 16 }}>
+              <p style={{ color: 'var(--text-main)', fontSize: 15, fontWeight: 800, margin: 0 }}>{card.title}</p>
+              {card.description && <p style={{ color: 'var(--text-soft)', fontSize: 11, lineHeight: 1.55, margin: '8px 0 0' }}>{card.description}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function HighlightsPreview() {
+  return (
+    <div style={{ padding: '44px 32px', background: 'white' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
+        {['International Patients', 'Meet Our Team', 'Clear Aligner', 'Clinical Results'].map((label) => (
+          <div key={label} style={{ border: '1px solid var(--border-strong)', borderRadius: 14, padding: 16, textAlign: 'center', background: 'var(--surface)' }}>
+            <Sparkles style={{ width: 22, height: 22, color: 'var(--brand)', margin: '0 auto 8px' }} />
+            <p style={{ color: 'var(--text-main)', fontSize: 12, fontWeight: 800, margin: 0 }}>{label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TimelinePreview() {
+  return (
+    <div style={{ padding: '48px 32px', background: 'var(--surface)' }}>
+      <h2 style={{ color: 'var(--text-main)', fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 32, margin: '0 0 26px', textAlign: 'center' }}>Roomchang Through the Years</h2>
+      <div style={{ display: 'grid', gap: 12 }}>
+        {['1996', '2008', '2018', 'Today'].map((year) => (
+          <div key={year} style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: 16, alignItems: 'center' }}>
+            <p style={{ color: 'var(--brand-deep)', fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 28, fontWeight: 800, margin: 0 }}>{year}</p>
+            <div style={{ height: 1, background: 'var(--border-strong)' }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ClinicalResultsPreview() {
+  const { data: cases = [], isLoading } = useQuery<ClinicalCasePreviewItem[]>({
+    queryKey: ['tenant', 'clinical-cases', 'preview'],
+    queryFn: () => api('/api/tenant/clinical-cases'),
+    staleTime: 30_000,
+  })
+  const items = cases.filter((item) => item.published).sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 6)
+  if (isLoading) return <PlaceholderSectionPreview label="Clinical Results Gallery" note="Loading cases…" />
+  if (items.length === 0) return <PlaceholderSectionPreview label="Clinical Results Gallery" note="No published clinical cases yet" />
+  return (
+    <div style={{ padding: '48px 32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14 }}>
+        {items.map((item) => (
+          <div key={item.id} style={{ overflow: 'hidden', border: '1px solid var(--border-strong)', borderRadius: 14, background: 'white' }}>
+            <div style={{ height: 120, background: 'var(--brand-soft)', backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            <div style={{ padding: 14 }}>
+              <p style={{ color: 'var(--brand)', fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 6px' }}>{item.category}</p>
+              <p style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 800, margin: 0 }}>{item.title}</p>
+              <p style={{ color: 'var(--text-soft)', fontSize: 11, margin: '4px 0 0' }}>{item.treatment}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function BlockPreview({ block }: { block: Block }) {
   switch (block.type) {
     case 'hero': return <HeroPreview data={block.data} />
@@ -1326,11 +1845,16 @@ function BlockPreview({ block }: { block: Block }) {
     case 'faq': return <FaqPreview data={block.data} />
     case 'stats': return <StatsPreview data={block.data} />
     case 'video': return <VideoPreview data={block.data} />
-    case 'hero_slideshow': return <PlaceholderSectionPreview label="Hero Slideshow" note="Live slides from Hero Images manager" />
-    case 'testimonials_block': return <PlaceholderSectionPreview label="Testimonials" note="Pulls featured testimonials dynamically" />
-    case 'pricing_block': return <PlaceholderSectionPreview label="Pricing / Services" note="Pulls published services dynamically" />
-    case 'team_grid': return <PlaceholderSectionPreview label="Team Grid" note={`Shows ${block.data.teamFilter ? block.data.teamFilter + ' · ' : ''}up to ${block.data.teamLimit ?? 8} team members`} />
-    case 'services_grid': return <PlaceholderSectionPreview label="Services Grid" note={`Shows ${block.data.servicesFilter ? block.data.servicesFilter + ' · ' : ''}up to ${block.data.servicesLimit ?? 6} services`} />
+    case 'hero_slideshow': return <HeroSlideshowPreview />
+    case 'testimonials_block': return <TestimonialsDynamicPreview data={block.data} />
+    case 'pricing_block': return <PricingDynamicPreview data={block.data} />
+    case 'team_grid': return <TeamGridDynamicPreview data={block.data} />
+    case 'services_grid': return <ServicesGridDynamicPreview data={block.data} />
+    case 'brands_marquee': return <BrandsMarqueePreview />
+    case 'highlights': return <HighlightsPreview />
+    case 'featured_cards': return <FeaturedCardsPreview />
+    case 'timeline': return <TimelinePreview />
+    case 'clinical_results': return <ClinicalResultsPreview />
     default: return null
   }
 }
