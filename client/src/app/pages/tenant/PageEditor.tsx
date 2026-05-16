@@ -2,10 +2,12 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { useTenantAuth } from '@/lib/tenant-context'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/components/shared/PageHeader'
 import { GooglePreview } from '@/app/components/shared/seo/GooglePreview'
 import { CharBadge } from '@/app/components/shared/seo/CharBadge'
+import { buildPagePath, buildSitePreviewUrl } from './page-preview-url'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -1865,6 +1867,7 @@ export function PageEditor() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { tenant } = useTenantAuth()
   const isEdit = !!id
 
   const [seoOpen, setSeoOpen] = useState(false)
@@ -1874,6 +1877,7 @@ export function PageEditor() {
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [previewRevision, setPreviewRevision] = useState(() => Date.now())
   const lastSavedForm = useRef<PageFormData | null>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -1975,6 +1979,7 @@ export function PageEditor() {
         await api(`/api/tenant/pages/${id}`, { method: 'PUT', body: payload })
         lastSavedForm.current = form
         setAutoSaveStatus('saved')
+        setPreviewRevision(Date.now())
         queryClient.invalidateQueries({ queryKey: ['tenant', 'pages'] })
       } catch {
         setAutoSaveStatus('idle')
@@ -2106,22 +2111,8 @@ export function PageEditor() {
     return crumbs
   })()
 
-  // Compute full URL path (e.g. /services/crowns-bridges) from the parent chain + own slug
-  const fullUrlPath = (() => {
-    const pageMap = new Map(allPages.map((p) => [p.id, p]))
-    const parts: string[] = []
-    let currentParentId = form.parent_id
-    const visited = new Set<number>()
-    while (currentParentId && !visited.has(currentParentId)) {
-      visited.add(currentParentId)
-      const parent = pageMap.get(currentParentId)
-      if (!parent) break
-      parts.unshift(parent.slug)
-      currentParentId = parent.parentId ?? null
-    }
-    if (form.slug) parts.push(form.slug)
-    return parts.length > 0 ? '/' + parts.join('/') : '/'
-  })()
+  const fullUrlPath = buildPagePath(allPages, form.slug, form.parent_id)
+  const livePreviewUrl = buildSitePreviewUrl(tenant?.branding.public_site_url, fullUrlPath, previewRevision)
 
   if (isEdit && isLoading) {
     return (
@@ -2183,17 +2174,25 @@ export function PageEditor() {
               {autoSaveStatus === 'saving' ? 'Saving…' : '✓ Autosaved'}
             </span>
           )}
-          {/* Preview — wired for future CMS integration */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled
-            title="Preview will be available once the CMS is connected to the live site"
-          >
-            <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-            Preview
-          </Button>
+          {livePreviewUrl ? (
+            <Button type="button" variant="outline" size="sm" asChild>
+              <a href={livePreviewUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                Preview
+              </a>
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled
+              title="No public site URL is configured for this tenant"
+            >
+              <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+              Preview
+            </Button>
+          )}
           <Button type="button" variant="outline" size="sm" onClick={() => navigate('/pages')}>
             Cancel
           </Button>
@@ -2281,11 +2280,11 @@ export function PageEditor() {
           </div>
         </div>
 
-        {/* ── Center: Visual page preview ── */}
+        {/* ── Center: Live site preview ── */}
         <div className="flex-1 overflow-y-auto p-6" onClick={() => { setSelectedBlockId(null); setRightPanel('settings') }}>
           <div
             className="mx-auto overflow-hidden rounded-xl shadow-xl"
-            style={{ maxWidth: 900, ...RC }}
+            style={{ maxWidth: 1180, ...RC }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Browser chrome */}
@@ -2294,44 +2293,31 @@ export function PageEditor() {
               <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
               <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
               <div className="ml-3 flex-1 rounded bg-white px-3 py-1 text-xs text-gray-400 font-mono">
-                roomchang.com{fullUrlPath || '/page-slug'}
+                {livePreviewUrl ? livePreviewUrl.replace(/^https?:\/\//, '') : `roomchang.com${fullUrlPath || '/page-slug'}`}
               </div>
             </div>
 
-            {/* Page sections */}
-            <div style={{ backgroundColor: 'white', fontFamily: 'system-ui, sans-serif' }}>
-              {form.blocks.length === 0 ? (
+            <div className="relative bg-white">
+              {livePreviewUrl ? (
+                <>
+                  <iframe
+                    key={livePreviewUrl}
+                    src={livePreviewUrl}
+                    title={`Live preview of ${form.title || 'page'}`}
+                    className="block h-[calc(100vh-190px)] min-h-[760px] w-full border-0 bg-white"
+                    sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <div className="border-t border-gray-100 bg-white/95 px-4 py-2 text-[11px] text-gray-500">
+                    This is the actual public site route. The frame refreshes after autosave; some published content can still be delayed by the live site's cache.
+                  </div>
+                </>
+              ) : (
                 <div className="flex flex-col items-center justify-center py-24 text-gray-300">
                   <Eye className="mb-3 h-10 w-10" />
-                  <p className="text-sm">Add blocks from the left panel</p>
-                  <p className="text-xs mt-1">Your page will render here</p>
+                  <p className="text-sm">No public site URL configured</p>
+                  <p className="text-xs mt-1">Set the tenant Website URL to enable live page preview.</p>
                 </div>
-              ) : (
-                form.blocks.map((block) => {
-                  const isSelected = selectedBlockId === block.id
-                  return (
-                    <div
-                      key={block.id}
-                      onClick={() => selectBlock(block.id)}
-                      style={{
-                        position: 'relative',
-                        cursor: 'pointer',
-                        outline: isSelected ? '2px solid #7c3aed' : '2px solid transparent',
-                        outlineOffset: -2,
-                        transition: 'outline-color 0.15s',
-                      }}
-                      onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.outlineColor = '#c4b5fd' }}
-                      onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.outlineColor = 'transparent' }}
-                    >
-                      {isSelected && (
-                        <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, backgroundColor: '#7c3aed', color: 'white', fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 9999 }}>
-                          Editing
-                        </div>
-                      )}
-                      <BlockPreview block={block} />
-                    </div>
-                  )
-                })
               )}
             </div>
           </div>
