@@ -2,10 +2,11 @@ import { useTenantAuth } from '@/lib/tenant-context'
 import { ExternalLink } from 'lucide-react'
 import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Button } from '@/app/components/ui/button'
+import { getTenantPublicSiteUrl } from './page-preview-url'
 
 export function SitePreview() {
   const { tenant } = useTenantAuth()
-  const siteUrl = tenant?.branding.public_site_url
+  const siteUrl = getTenantPublicSiteUrl(tenant)
 
   return (
     <div className="flex h-full flex-col">

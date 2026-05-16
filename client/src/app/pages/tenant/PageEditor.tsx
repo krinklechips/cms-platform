@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { PageHeader } from '@/app/components/shared/PageHeader'
 import { GooglePreview } from '@/app/components/shared/seo/GooglePreview'
 import { CharBadge } from '@/app/components/shared/seo/CharBadge'
-import { buildPagePath, buildSitePreviewUrl } from './page-preview-url'
+import { buildPagePath, buildSitePreviewUrl, getTenantPublicSiteUrl } from './page-preview-url'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -2112,7 +2112,7 @@ export function PageEditor() {
   })()
 
   const fullUrlPath = buildPagePath(allPages, form.slug, form.parent_id)
-  const livePreviewUrl = buildSitePreviewUrl(tenant?.branding.public_site_url, fullUrlPath, previewRevision)
+  const livePreviewUrl = buildSitePreviewUrl(getTenantPublicSiteUrl(tenant), fullUrlPath, previewRevision)
 
   if (isEdit && isLoading) {
     return (

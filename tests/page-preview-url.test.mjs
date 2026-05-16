@@ -17,7 +17,7 @@ async function importTypeScriptModule(path) {
   return import(`data:text/javascript;charset=utf-8,${encodeURIComponent(compiled)}`);
 }
 
-const { buildPagePath, buildSitePreviewUrl } = await importTypeScriptModule(
+const { buildPagePath, buildSitePreviewUrl, getTenantPublicSiteUrl } = await importTypeScriptModule(
   new URL('../client/src/app/pages/tenant/page-preview-url.ts', import.meta.url),
 );
 
@@ -57,5 +57,16 @@ test('accepts tenant site URLs stored without a protocol', () => {
   assert.equal(
     buildSitePreviewUrl('roomchang.vercel.app', '/services/dental-crowns', 8),
     'https://roomchang.vercel.app/services/dental-crowns?cmsPreview=8',
+  );
+});
+
+test('reads the public site URL from the tenant API camelCase branding shape', () => {
+  assert.equal(
+    getTenantPublicSiteUrl({
+      branding: {
+        publicSiteUrl: 'roomchang.vercel.app',
+      },
+    }),
+    'roomchang.vercel.app',
   );
 });

@@ -4,6 +4,15 @@ interface PagePathItem {
   parentId: number | null
 }
 
+type TenantWithPublicSiteUrl = {
+  branding?: {
+    publicSiteUrl?: string | null
+    public_site_url?: string | null
+  } | null
+  publicSiteUrl?: string | null
+  public_site_url?: string | null
+} | null | undefined
+
 const PUBLIC_ROUTE_OVERRIDES: Record<string, string> = {
   home: '/',
   'about-community': '/about/community',
@@ -20,6 +29,16 @@ function normalizeSiteUrl(siteUrl: string): string {
   const trimmed = siteUrl.trim()
   if (/^https?:\/\//i.test(trimmed)) return trimmed
   return `https://${trimmed}`
+}
+
+export function getTenantPublicSiteUrl(tenant: TenantWithPublicSiteUrl): string | null {
+  return (
+    tenant?.branding?.publicSiteUrl ??
+    tenant?.branding?.public_site_url ??
+    tenant?.publicSiteUrl ??
+    tenant?.public_site_url ??
+    null
+  )
 }
 
 export function buildPagePath(

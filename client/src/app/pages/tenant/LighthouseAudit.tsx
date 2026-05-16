@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { api } from '@/lib/api'
 import { useTenantAuth } from '@/lib/tenant-context'
+import { getTenantPublicSiteUrl } from './page-preview-url'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/components/shared/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
@@ -153,7 +154,7 @@ export function LighthouseAudit() {
   const { tenant } = useTenantAuth()
   const queryClient = useQueryClient()
 
-  const [url, setUrl] = useState(tenant?.branding?.public_site_url || '')
+  const [url, setUrl] = useState(getTenantPublicSiteUrl(tenant) || '')
   const [strategy, setStrategy] = useState<'mobile' | 'desktop'>('mobile')
   const [latestAudit, setLatestAudit] = useState<LighthouseAudit | null>(null)
 
