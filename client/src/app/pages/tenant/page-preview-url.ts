@@ -4,6 +4,11 @@ interface PagePathItem {
   parentId: number | null
 }
 
+const PUBLIC_ROUTE_OVERRIDES: Record<string, string> = {
+  home: '/',
+  'about-community': '/about/community',
+}
+
 function cleanPath(value: string): string {
   return value
     .trim()
@@ -18,6 +23,7 @@ export function buildPagePath(
 ): string {
   const slug = cleanPath(currentSlug)
   if (!slug) return '/'
+  if (PUBLIC_ROUTE_OVERRIDES[slug]) return PUBLIC_ROUTE_OVERRIDES[slug]
 
   const pageMap = new Map(pages.map((page) => [page.id, page]))
   const parentParts: string[] = []
