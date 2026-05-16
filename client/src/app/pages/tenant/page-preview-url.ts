@@ -16,6 +16,12 @@ function cleanPath(value: string): string {
     .replace(/\/{2,}/g, '/')
 }
 
+function normalizeSiteUrl(siteUrl: string): string {
+  const trimmed = siteUrl.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
 export function buildPagePath(
   pages: PagePathItem[],
   currentSlug: string,
@@ -55,7 +61,8 @@ export function buildSitePreviewUrl(
   if (!siteUrl) return null
 
   const normalizedPath = path === '/' ? '/' : `/${cleanPath(path)}`
-  const url = new URL(normalizedPath, siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`)
+  const normalizedSiteUrl = normalizeSiteUrl(siteUrl)
+  const url = new URL(normalizedPath, normalizedSiteUrl.endsWith('/') ? normalizedSiteUrl : `${normalizedSiteUrl}/`)
 
   if (revision !== undefined) {
     url.searchParams.set('cmsPreview', String(revision))

@@ -52,3 +52,10 @@ test('builds a public preview URL from the tenant site URL and cache-bust revisi
     'https://roomchang.com/services/dental-crowns?cmsPreview=7',
   );
 });
+
+test('accepts tenant site URLs stored without a protocol', () => {
+  assert.equal(
+    buildSitePreviewUrl('roomchang.vercel.app', '/services/dental-crowns', 8),
+    'https://roomchang.vercel.app/services/dental-crowns?cmsPreview=8',
+  );
+});
