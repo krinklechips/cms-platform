@@ -26,6 +26,8 @@ import {
 import {
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   GripVertical,
   Plus,
   Trash2,
@@ -1884,6 +1886,8 @@ export function PageEditor() {
   const [addBlockOpen, setAddBlockOpen] = useState(false)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [rightPanel, setRightPanel] = useState<'settings' | 'block'>('settings')
+  const [rightPanelPreference, setRightPanelPreference] = useState<'auto' | 'collapsed' | 'expanded'>('auto')
+  const [autoCollapseRightPanel, setAutoCollapseRightPanel] = useState(false)
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
@@ -2014,6 +2018,16 @@ export function PageEditor() {
     return () => observer.disconnect()
   }, [])
 
+  useEffect(() => {
+    const updatePanelCollapse = () => {
+      setAutoCollapseRightPanel(window.innerWidth < 1500)
+    }
+
+    updatePanelCollapse()
+    window.addEventListener('resize', updatePanelCollapse)
+    return () => window.removeEventListener('resize', updatePanelCollapse)
+  }, [])
+
   // Save mutation
   const saveMutation = useMutation({
     mutationFn: (data: PageFormData) => {
@@ -2091,6 +2105,7 @@ export function PageEditor() {
     setField('blocks', newBlocks)
     setSelectedBlockId(copy.id)
     setRightPanel('block')
+    setRightPanelPreference('expanded')
   }
 
   function reorderBlock(fromId: string, toId: string) {
@@ -2140,6 +2155,9 @@ export function PageEditor() {
   const livePreviewUrl = buildSitePreviewUrl(getTenantPublicSiteUrl(tenant), fullUrlPath, previewRevision)
   const previewScale = Math.min(1, Math.max(0.35, previewShellWidth / previewViewportWidth))
   const scaledPreviewHeight = Math.ceil((PREVIEW_FRAME_HEIGHT + PREVIEW_CHROME_HEIGHT) * previewScale)
+  const isRightPanelCollapsed = rightPanelPreference === 'auto'
+    ? autoCollapseRightPanel
+    : rightPanelPreference === 'collapsed'
 
   if (isEdit && isLoading) {
     return (
@@ -2154,6 +2172,7 @@ export function PageEditor() {
     setSelectedBlockId(blockId)
     setRightPanel('block')
     setAddBlockOpen(false)
+    setRightPanelPreference('expanded')
   }
 
   const selectedBlock = form.blocks.find((b) => b.id === selectedBlockId) ?? null
@@ -2308,10 +2327,10 @@ export function PageEditor() {
         </div>
 
         {/* ── Center: Live site preview ── */}
-        <div className="flex-1 overflow-y-auto p-6" onClick={() => { setSelectedBlockId(null); setRightPanel('settings') }}>
+        <div className="min-w-0 flex-1 overflow-y-auto p-4 xl:p-6" onClick={() => { setSelectedBlockId(null); setRightPanel('settings') }}>
           <div
             ref={previewShellRef}
-            className="mx-auto w-full max-w-[1180px]"
+            className="mx-auto w-full"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-2 flex items-center justify-between gap-3">
@@ -2385,7 +2404,48 @@ export function PageEditor() {
         </div>
 
         {/* ── Right: Context panel ── */}
-        <div className="flex w-80 shrink-0 flex-col border-l border-gray-200 bg-white">
+        <div className={`flex shrink-0 flex-col border-l border-gray-200 bg-white transition-[width] duration-200 ${isRightPanelCollapsed ? 'w-12' : 'w-80'}`}>
+          {isRightPanelCollapsed ? (
+            <div className="flex h-full flex-col items-center gap-2 py-2">
+              <button
+                type="button"
+                title="Expand inspector"
+                onClick={() => setRightPanelPreference('expanded')}
+                className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <div className="h-px w-6 bg-gray-100" />
+              <button
+                type="button"
+                title="Page settings"
+                onClick={() => {
+                  setRightPanel('settings')
+                  setSelectedBlockId(null)
+                  setRightPanelPreference('expanded')
+                }}
+                className={`rounded-md p-2 transition-colors ${
+                  rightPanel === 'settings' ? 'bg-violet-50 text-violet-700' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title="Block editor"
+                onClick={() => {
+                  setRightPanel('block')
+                  setRightPanelPreference('expanded')
+                }}
+                className={`rounded-md p-2 transition-colors ${
+                  rightPanel === 'block' ? 'bg-violet-50 text-violet-700' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+              >
+                <Type className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <>
           {/* Panel tabs */}
           <div className="flex shrink-0 border-b border-gray-200">
             <button
@@ -2406,6 +2466,14 @@ export function PageEditor() {
             >
               <Type className="h-3.5 w-3.5" />
               {selectedBlock ? BLOCK_TYPE_META[selectedBlock.type]?.label : 'Block Editor'}
+            </button>
+            <button
+              type="button"
+              title="Collapse inspector"
+              onClick={() => setRightPanelPreference('collapsed')}
+              className="flex w-10 items-center justify-center border-l border-gray-100 text-gray-400 hover:bg-gray-50 hover:text-gray-700"
+            >
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
@@ -2564,6 +2632,8 @@ export function PageEditor() {
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
       </div>
     </div>
