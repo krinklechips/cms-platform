@@ -205,6 +205,16 @@ const BLOCK_TYPE_META: Record<BlockType, { label: string; icon: React.ComponentT
   clinical_results: { label: 'Clinical Results Gallery', icon: Stethoscope },
 }
 
+const PREVIEW_VIEWPORTS = [
+  { label: 'Desktop', width: 1440 },
+  { label: 'Wide', width: 1920 },
+  { label: 'Tablet', width: 834 },
+  { label: 'Mobile', width: 390 },
+] as const
+
+const PREVIEW_FRAME_HEIGHT = 940
+const PREVIEW_CHROME_HEIGHT = 45
+
 // ---------- Block Renderers ----------
 
 function TextBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
@@ -1878,8 +1888,11 @@ export function PageEditor() {
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [previewRevision, setPreviewRevision] = useState(() => Date.now())
+  const [previewViewportWidth, setPreviewViewportWidth] = useState(1440)
+  const [previewShellWidth, setPreviewShellWidth] = useState(1180)
   const lastSavedForm = useRef<PageFormData | null>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const previewShellRef = useRef<HTMLDivElement | null>(null)
 
   // Form state
   const [form, setForm] = useState<PageFormData>({
@@ -1988,6 +2001,18 @@ export function PageEditor() {
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, isEdit, id])
+
+  useEffect(() => {
+    const node = previewShellRef.current
+    if (!node) return
+
+    const updateWidth = () => setPreviewShellWidth(node.clientWidth || 1180)
+    updateWidth()
+
+    const observer = new ResizeObserver(updateWidth)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
 
   // Save mutation
   const saveMutation = useMutation({
@@ -2113,6 +2138,8 @@ export function PageEditor() {
 
   const fullUrlPath = buildPagePath(allPages, form.slug, form.parent_id)
   const livePreviewUrl = buildSitePreviewUrl(getTenantPublicSiteUrl(tenant), fullUrlPath, previewRevision)
+  const previewScale = Math.min(1, Math.max(0.35, previewShellWidth / previewViewportWidth))
+  const scaledPreviewHeight = Math.ceil((PREVIEW_FRAME_HEIGHT + PREVIEW_CHROME_HEIGHT) * previewScale)
 
   if (isEdit && isLoading) {
     return (
@@ -2283,35 +2310,64 @@ export function PageEditor() {
         {/* ── Center: Live site preview ── */}
         <div className="flex-1 overflow-y-auto p-6" onClick={() => { setSelectedBlockId(null); setRightPanel('settings') }}>
           <div
-            className="mx-auto overflow-hidden rounded-xl shadow-xl"
-            style={{ maxWidth: 1180, ...RC }}
+            ref={previewShellRef}
+            className="mx-auto w-full max-w-[1180px]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Browser chrome */}
-            <div className="flex items-center gap-1.5 bg-gray-200 px-4 py-2.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
-              <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
-              <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
-              <div className="ml-3 flex-1 rounded bg-white px-3 py-1 text-xs text-gray-400 font-mono">
-                {livePreviewUrl ? livePreviewUrl.replace(/^https?:\/\//, '') : `roomchang.com${fullUrlPath || '/page-slug'}`}
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 text-[11px] text-gray-500">
+                {PREVIEW_VIEWPORTS.map((viewport) => (
+                  <button
+                    key={viewport.width}
+                    type="button"
+                    onClick={() => setPreviewViewportWidth(viewport.width)}
+                    className={`rounded-md px-2 py-1 transition-colors ${
+                      previewViewportWidth === viewport.width
+                        ? 'bg-gray-900 text-white'
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    {viewport.label}
+                  </button>
+                ))}
               </div>
+              <span className="text-[11px] text-gray-400">
+                Rendering {previewViewportWidth}px at {Math.round(previewScale * 100)}% zoom
+              </span>
             </div>
 
-            <div className="relative bg-white">
+            <div
+              className="relative overflow-hidden rounded-xl bg-white shadow-xl"
+              style={{ height: livePreviewUrl ? scaledPreviewHeight : undefined, ...RC }}
+            >
               {livePreviewUrl ? (
-                <>
+                <div
+                  style={{
+                    width: previewViewportWidth,
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: 'top left',
+                  }}
+                >
+                  {/* Browser chrome */}
+                  <div className="flex items-center gap-1.5 bg-gray-200 px-4 py-2.5" style={{ height: PREVIEW_CHROME_HEIGHT }}>
+                    <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                    <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
+                    <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
+                    <div className="ml-3 flex-1 rounded bg-white px-3 py-1 text-xs text-gray-400 font-mono">
+                      {livePreviewUrl.replace(/^https?:\/\//, '')}
+                    </div>
+                  </div>
+
                   <iframe
                     key={livePreviewUrl}
                     src={livePreviewUrl}
                     title={`Live preview of ${form.title || 'page'}`}
-                    className="block h-[calc(100vh-190px)] min-h-[760px] w-full border-0 bg-white"
+                    className="block border-0 bg-white"
+                    style={{ width: previewViewportWidth, height: PREVIEW_FRAME_HEIGHT }}
                     sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
                     referrerPolicy="no-referrer-when-downgrade"
                   />
-                  <div className="border-t border-gray-100 bg-white/95 px-4 py-2 text-[11px] text-gray-500">
-                    This is the actual public site route. The frame refreshes after autosave; some published content can still be delayed by the live site's cache.
-                  </div>
-                </>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-24 text-gray-300">
                   <Eye className="mb-3 h-10 w-10" />
@@ -2320,6 +2376,11 @@ export function PageEditor() {
                 </div>
               )}
             </div>
+            {livePreviewUrl && (
+              <div className="border-t border-gray-100 bg-white/95 px-4 py-2 text-[11px] text-gray-500">
+                Preview renders the actual public route at a fixed website viewport and scales it down, so responsive layout and image crop match the live site more closely.
+              </div>
+            )}
           </div>
         </div>
 
