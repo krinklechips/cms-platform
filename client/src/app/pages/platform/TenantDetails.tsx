@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api, tenantApi } from '@/lib/api'
@@ -477,15 +477,38 @@ function ConfigurationTab({ tenant }: { tenant: Tenant }) {
   const [cmsDomain, setCmsDomain] = useState(tenant.branding?.cmsDomain ?? '')
 
   const saveMutation = useTenantSaveMutation(tenant.id)
+  const savedCmsDomain = tenant.branding?.cmsDomain?.trim() ?? ''
+  const savedPublicSiteUrl = tenant.branding?.publicSiteUrl?.trim() ?? ''
+  const savedSupportEmail = tenant.branding?.supportEmail?.trim() ?? ''
+  const normalizedCmsDomain = cmsDomain.trim()
+  const normalizedPublicSiteUrl = publicSiteUrl.trim()
+  const normalizedSupportEmail = supportEmail.trim()
+  const hasChanges =
+    normalizedCmsDomain !== savedCmsDomain ||
+    normalizedPublicSiteUrl !== savedPublicSiteUrl ||
+    normalizedSupportEmail !== savedSupportEmail
+
+  useEffect(() => {
+    setCmsDomain(tenant.branding?.cmsDomain ?? '')
+    setPublicSiteUrl(tenant.branding?.publicSiteUrl ?? '')
+    setSupportEmail(tenant.branding?.supportEmail ?? '')
+  }, [
+    tenant.id,
+    tenant.branding?.cmsDomain,
+    tenant.branding?.publicSiteUrl,
+    tenant.branding?.supportEmail,
+  ])
 
   const handleSave = () => {
+    if (!hasChanges || saveMutation.isPending) return
+
     saveMutation.mutate({
       name: tenant.name,
       status: tenant.status,
       branding: {
-        supportEmail: supportEmail || null,
-        publicSiteUrl: publicSiteUrl || null,
-        cmsDomain: cmsDomain || null,
+        supportEmail: normalizedSupportEmail || null,
+        publicSiteUrl: normalizedPublicSiteUrl || null,
+        cmsDomain: normalizedCmsDomain || null,
       },
     })
   }
@@ -544,8 +567,8 @@ function ConfigurationTab({ tenant }: { tenant: Tenant }) {
         <div className="mt-8 flex items-center gap-3 border-t border-gray-200 pt-6">
           <Button
             onClick={handleSave}
-            disabled={saveMutation.isPending}
-            className="bg-[#7c3aed] hover:bg-[#6d28d9]"
+            disabled={!hasChanges || saveMutation.isPending}
+            className="bg-[#7c3aed] hover:bg-[#6d28d9] disabled:bg-gray-200 disabled:text-gray-500 disabled:hover:bg-gray-200"
           >
             {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save changes
