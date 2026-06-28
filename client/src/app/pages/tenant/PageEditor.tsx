@@ -60,7 +60,7 @@ import {
 
 // ---------- Types ----------
 
-type BlockType = 'text' | 'image' | 'hero' | 'hero_slideshow' | 'cta' | 'html' | 'carousel' | 'testimonials_block' | 'pricing_block' | 'two_column' | 'faq' | 'stats' | 'video' | 'team_grid' | 'services_grid' | 'brands_marquee' | 'highlights' | 'featured_cards' | 'timeline' | 'clinical_results'
+type BlockType = 'text' | 'image' | 'hero' | 'hero_slideshow' | 'cta' | 'html' | 'carousel' | 'testimonials_block' | 'pricing_block' | 'two_column' | 'faq' | 'stats' | 'video' | 'team_grid' | 'services_grid' | 'brands_marquee' | 'highlights' | 'featured_cards' | 'timeline' | 'clinical_results' | 'icon_card_grid'
 
 interface BlockData {
   // text
@@ -122,6 +122,10 @@ interface BlockData {
   // featured_cards — no configurable fields (data pulled from homepage_feature_cards table)
   // timeline — no configurable fields (static ERAS array in section component)
   // clinical_results — no configurable fields (data pulled from clinical_cases table)
+  // icon_card_grid
+  iconCardTitle?: string
+  iconCardColumns?: number
+  iconCardItems?: { icon?: string; title?: string; description?: string; href?: string }[]
 }
 
 interface Block {
@@ -205,6 +209,7 @@ const BLOCK_TYPE_META: Record<BlockType, { label: string; icon: React.ComponentT
   featured_cards: { label: 'Featured Cards', icon: ImageIcon },
   timeline: { label: 'Clinic History Timeline', icon: BarChart2 },
   clinical_results: { label: 'Clinical Results Gallery', icon: Stethoscope },
+  icon_card_grid: { label: 'Icon Card Grid', icon: Sparkles },
 }
 
 const PREVIEW_VIEWPORTS = [
@@ -1042,6 +1047,59 @@ function FaqBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: Blo
   )
 }
 
+function IconCardGridBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
+  const items = data.iconCardItems || []
+
+  function updateItem(index: number, field: 'icon' | 'title' | 'description' | 'href', value: string) {
+    onChange({ ...data, iconCardItems: items.map((it, i) => (i === index ? { ...it, [field]: value } : it)) })
+  }
+  function addItem() {
+    onChange({ ...data, iconCardItems: [...items, { icon: '', title: '', description: '', href: '' }] })
+  }
+  function removeItem(index: number) {
+    onChange({ ...data, iconCardItems: items.filter((_, i) => i !== index) })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Section Title</Label>
+        <Input
+          value={data.iconCardTitle || ''}
+          onChange={(e) => onChange({ ...data, iconCardTitle: e.target.value })}
+          placeholder="Optional heading above the cards"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Columns</Label>
+        <Select value={String(data.iconCardColumns ?? 3)} onValueChange={(v) => onChange({ ...data, iconCardColumns: Number(v) })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {[2, 3, 4].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      {items.map((item, index) => (
+        <div key={index} className="rounded-lg border border-gray-200 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-400">Card {index + 1}</span>
+            <button type="button" onClick={() => removeItem(index)} className="rounded p-0.5 text-gray-300 hover:text-red-500">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <Input value={item.icon || ''} onChange={(e) => updateItem(index, 'icon', e.target.value)} placeholder="Icon name (e.g. Globe, Users, Smile)" />
+          <Input value={item.title || ''} onChange={(e) => updateItem(index, 'title', e.target.value)} placeholder="Card title" />
+          <Textarea value={item.description || ''} onChange={(e) => updateItem(index, 'description', e.target.value)} placeholder="Description" rows={2} />
+          <Input value={item.href || ''} onChange={(e) => updateItem(index, 'href', e.target.value)} placeholder="Link (e.g. /international)" />
+        </div>
+      ))}
+      <button type="button" onClick={addItem} className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-3 text-sm text-gray-500 hover:border-gray-300">
+        <Plus className="h-4 w-4" /> Add Card
+      </button>
+    </div>
+  )
+}
+
 function StatsBlockEditor({ data, onChange }: { data: BlockData; onChange: (d: BlockData) => void }) {
   const items = data.statsItems || []
 
@@ -1237,6 +1295,7 @@ const BLOCK_EDITORS: Record<BlockType, React.ComponentType<{ data: BlockData; on
   featured_cards: FeaturedCardsBlockEditor,
   timeline: TimelineBlockEditor,
   clinical_results: ClinicalResultsBlockEditor,
+  icon_card_grid: IconCardGridBlockEditor,
 }
 
 // ---------- Visual Page Preview ----------
@@ -2507,6 +2566,13 @@ export function PageEditor() {
                   <div className="p-4">
                     {(() => {
                       const BlockEditor = BLOCK_EDITORS[selectedBlock.type as BlockType]
+                      if (!BlockEditor) {
+                        return (
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                            This block type (<span className="font-mono">{selectedBlock.type}</span>) isn’t editable here yet, but it still appears on your site.
+                          </div>
+                        )
+                      }
                       return <BlockEditor data={selectedBlock.data} onChange={(data) => updateBlock(selectedBlock.id, data)} />
                     })()}
                   </div>
