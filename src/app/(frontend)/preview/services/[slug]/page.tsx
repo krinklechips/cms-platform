@@ -26,7 +26,7 @@ export default async function ServicePreviewPage({
     await payload.find({
       collection: 'services',
       where: { slug: { equals: slug } },
-      locale: locale as 'en' | 'km' | 'zh',
+      locale: locale as 'en' | 'kh' | 'cn',
       limit: 1,
     })
   ).docs[0]

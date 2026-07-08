@@ -92,8 +92,10 @@ async function run() {
     const doc = existing
       ? await payload.update({ collection, id: existing.id, data: base, locale: 'en' })
       : await payload.create({ collection, data: base as never, locale: 'en' })
-    if (Object.keys(km).length) await payload.update({ collection, id: doc.id, data: km, locale: 'km' })
-    if (Object.keys(zh).length) await payload.update({ collection, id: doc.id, data: zh, locale: 'zh' })
+    // Supabase content_translations uses ISO km/zh; Payload locales follow the
+    // site's URL segments kh/cn (Enoch's convention).
+    if (Object.keys(km).length) await payload.update({ collection, id: doc.id, data: km, locale: 'kh' })
+    if (Object.keys(zh).length) await payload.update({ collection, id: doc.id, data: zh, locale: 'cn' })
     return existing ? 'updated' : 'created'
   }
 

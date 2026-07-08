@@ -36,13 +36,12 @@ export default buildConfig({
     },
     // Live Preview: edit a service and watch the REAL site render update
     // beside the form — the dummy roomchang instance (CONTENT_SOURCE=payload,
-    // :3200) refreshes on save. Locale codes map to the site's URL segments
-    // (km→kh, zh→cn). Falls back to the built-in approximation at /preview.
+    // :3200) refreshes on save. Locale codes ARE the site's URL segments
+    // (en/kh/cn), so no mapping needed.
     livePreview: {
       url: ({ data, locale }) => {
-        const seg = ({ en: 'en', km: 'kh', zh: 'cn' } as Record<string, string>)[locale?.code ?? 'en'] ?? 'en'
         const dummy = process.env.DUMMY_SITE_URL || 'http://localhost:3200'
-        return `${dummy}/${seg}/services/${(data as { slug?: string })?.slug ?? ''}`
+        return `${dummy}/${locale?.code ?? 'en'}/services/${(data as { slug?: string })?.slug ?? ''}`
       },
       collections: ['services'],
       breakpoints: [
@@ -64,11 +63,13 @@ export default buildConfig({
   }),
   sharp,
   // First-class locales — no more content_translations overlay / workbooks.
+  // Codes follow the site's country-style URL segments (per Enoch): KH / CN
+  // (not ISO km/zh) — matches roomchang.com/kh and /cn.
   localization: {
     locales: [
-      { label: 'English', code: 'en' },
-      { label: 'ខ្មែរ (Khmer)', code: 'km' },
-      { label: '中文 (Chinese)', code: 'zh' },
+      { label: 'English (EN)', code: 'en' },
+      { label: 'ខ្មែរ (KH)', code: 'kh' },
+      { label: '中文 (CN)', code: 'cn' },
     ],
     defaultLocale: 'en',
     fallback: true,
