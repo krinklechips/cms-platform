@@ -4,6 +4,7 @@ import * as migration_20260708_071914_modules_billing_branding from './20260708_
 import * as migration_20260708_073232_wave1_content from './20260708_073232_wave1_content';
 import * as migration_20260708_081120_wave2_content from './20260708_081120_wave2_content';
 import * as migration_20260708_085547_module_gating_cockpit from './20260708_085547_module_gating_cockpit';
+import * as migration_20260708_092032_wave3_inbox_publishing from './20260708_092032_wave3_inbox_publishing';
 
 export const migrations = [
   {
@@ -34,6 +35,11 @@ export const migrations = [
   {
     up: migration_20260708_085547_module_gating_cockpit.up,
     down: migration_20260708_085547_module_gating_cockpit.down,
-    name: '20260708_085547_module_gating_cockpit'
+    name: '20260708_085547_module_gating_cockpit',
+  },
+  {
+    up: migration_20260708_092032_wave3_inbox_publishing.up,
+    down: migration_20260708_092032_wave3_inbox_publishing.down,
+    name: '20260708_092032_wave3_inbox_publishing'
   },
 ];

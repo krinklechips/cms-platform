@@ -88,6 +88,13 @@ export interface Config {
     partners: Partner;
     'partner-categories': PartnerCategory;
     'faq-items': FaqItem;
+    'news-articles': NewsArticle;
+    'community-articles': CommunityArticle;
+    publications: Publication;
+    videos: Video;
+    'career-positions': CareerPosition;
+    enquiries: Enquiry;
+    'booking-slots': BookingSlot;
     media: Media;
     users: User;
     tenants: Tenant;
@@ -121,6 +128,13 @@ export interface Config {
     partners: PartnersSelect<false> | PartnersSelect<true>;
     'partner-categories': PartnerCategoriesSelect<false> | PartnerCategoriesSelect<true>;
     'faq-items': FaqItemsSelect<false> | FaqItemsSelect<true>;
+    'news-articles': NewsArticlesSelect<false> | NewsArticlesSelect<true>;
+    'community-articles': CommunityArticlesSelect<false> | CommunityArticlesSelect<true>;
+    publications: PublicationsSelect<false> | PublicationsSelect<true>;
+    videos: VideosSelect<false> | VideosSelect<true>;
+    'career-positions': CareerPositionsSelect<false> | CareerPositionsSelect<true>;
+    enquiries: EnquiriesSelect<false> | EnquiriesSelect<true>;
+    'booking-slots': BookingSlotsSelect<false> | BookingSlotsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
@@ -854,6 +868,216 @@ export interface FaqItem {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-articles".
+ */
+export interface NewsArticle {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase news_articles.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  slug: string;
+  date?: string | null;
+  title: string;
+  description?: string | null;
+  /**
+   * R2 image URL (carried from news_articles.image).
+   */
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  body?:
+    | {
+        paragraph: string;
+        id?: string | null;
+      }[]
+    | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "community-articles".
+ */
+export interface CommunityArticle {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase community_articles.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  slug: string;
+  title: string;
+  description?: string | null;
+  /**
+   * R2 image URL (carried from community_articles.image).
+   */
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  href?: string | null;
+  date?: string | null;
+  body?:
+    | {
+        paragraph: string;
+        id?: string | null;
+      }[]
+    | null;
+  images?:
+    | {
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "publications".
+ */
+export interface Publication {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase publications.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  title: string;
+  authors?: string | null;
+  journal?: string | null;
+  year?: number | null;
+  doi?: string | null;
+  url?: string | null;
+  abstract?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "videos".
+ */
+export interface Video {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase videos.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  title: string;
+  url: string;
+  thumbnail?: string | null;
+  description?: string | null;
+  category?: string | null;
+  doctor?: string | null;
+  topic?: string | null;
+  treatment?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "career-positions".
+ */
+export interface CareerPosition {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase career_positions.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  title: string;
+  slug: string;
+  department?: string | null;
+  type?: string | null;
+  location?: string | null;
+  description?: string | null;
+  requirements?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  benefits?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enquiries".
+ */
+export interface Enquiry {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase enquiries.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  country?: string | null;
+  treatment?: string | null;
+  branch?: string | null;
+  date?: string | null;
+  message?: string | null;
+  isRead?: boolean | null;
+  agentCode?: string | null;
+  doctor?: string | null;
+  wechat?: string | null;
+  patientType?: string | null;
+  receivedAt?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "booking-slots".
+ */
+export interface BookingSlot {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase booking_slots.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  date?: string | null;
+  time?: string | null;
+  durationMinutes?: number | null;
+  isAvailable?: boolean | null;
+  bookedByName?: string | null;
+  bookedByEmail?: string | null;
+  bookedByPhone?: string | null;
+  bookedByTelegram?: string | null;
+  treatment?: string | null;
+  branch?: string | null;
+  doctor?: string | null;
+  notes?: string | null;
+  status?: string | null;
+  receivedAt?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -1029,6 +1253,34 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'faq-items';
         value: number | FaqItem;
+      } | null)
+    | ({
+        relationTo: 'news-articles';
+        value: number | NewsArticle;
+      } | null)
+    | ({
+        relationTo: 'community-articles';
+        value: number | CommunityArticle;
+      } | null)
+    | ({
+        relationTo: 'publications';
+        value: number | Publication;
+      } | null)
+    | ({
+        relationTo: 'videos';
+        value: number | Video;
+      } | null)
+    | ({
+        relationTo: 'career-positions';
+        value: number | CareerPosition;
+      } | null)
+    | ({
+        relationTo: 'enquiries';
+        value: number | Enquiry;
+      } | null)
+    | ({
+        relationTo: 'booking-slots';
+        value: number | BookingSlot;
       } | null)
     | ({
         relationTo: 'media';
@@ -1475,6 +1727,182 @@ export interface FaqItemsSelect<T extends boolean = true> {
   question?: T;
   answer?: T;
   category?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-articles_select".
+ */
+export interface NewsArticlesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  slug?: T;
+  date?: T;
+  title?: T;
+  description?: T;
+  imageUrl?: T;
+  imageAlt?: T;
+  body?:
+    | T
+    | {
+        paragraph?: T;
+        id?: T;
+      };
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "community-articles_select".
+ */
+export interface CommunityArticlesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  slug?: T;
+  title?: T;
+  description?: T;
+  imageUrl?: T;
+  imageAlt?: T;
+  href?: T;
+  date?: T;
+  body?:
+    | T
+    | {
+        paragraph?: T;
+        id?: T;
+      };
+  images?:
+    | T
+    | {
+        url?: T;
+        id?: T;
+      };
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "publications_select".
+ */
+export interface PublicationsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  title?: T;
+  authors?: T;
+  journal?: T;
+  year?: T;
+  doi?: T;
+  url?: T;
+  abstract?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "videos_select".
+ */
+export interface VideosSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  title?: T;
+  url?: T;
+  thumbnail?: T;
+  description?: T;
+  category?: T;
+  doctor?: T;
+  topic?: T;
+  treatment?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "career-positions_select".
+ */
+export interface CareerPositionsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  title?: T;
+  slug?: T;
+  department?: T;
+  type?: T;
+  location?: T;
+  description?: T;
+  requirements?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  benefits?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enquiries_select".
+ */
+export interface EnquiriesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  country?: T;
+  treatment?: T;
+  branch?: T;
+  date?: T;
+  message?: T;
+  isRead?: T;
+  agentCode?: T;
+  doctor?: T;
+  wechat?: T;
+  patientType?: T;
+  receivedAt?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "booking-slots_select".
+ */
+export interface BookingSlotsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  date?: T;
+  time?: T;
+  durationMinutes?: T;
+  isAvailable?: T;
+  bookedByName?: T;
+  bookedByEmail?: T;
+  bookedByPhone?: T;
+  bookedByTelegram?: T;
+  treatment?: T;
+  branch?: T;
+  doctor?: T;
+  notes?: T;
+  status?: T;
+  receivedAt?: T;
   order?: T;
   published?: T;
   updatedAt?: T;

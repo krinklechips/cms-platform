@@ -1,15 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
 /**
- * FeatureCards — mirrors the live site's `homepage_feature_cards` table (Supabase).
- * Localized fields carry the translated homepage card copy.
+ * NewsArticles — mirrors the live site's `news_articles` table (Supabase).
+ * Title, description, and body are localized from content_translations.
  */
-export const FeatureCards: CollectionConfig = {
-  slug: 'feature-cards',
+export const NewsArticles: CollectionConfig = {
+  slug: 'news-articles',
   admin: {
-    group: 'Home Page',
+    group: 'Education & News',
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'href', 'order'],
+    defaultColumns: ['title', 'slug', 'date', 'published', 'order'],
   },
   access: {
     read: () => true,
@@ -21,7 +21,7 @@ export const FeatureCards: CollectionConfig = {
       index: true,
       admin: {
         position: 'sidebar',
-        description: 'Supabase homepage_feature_cards.id — used by the sync for idempotent upserts.',
+        description: 'Supabase news_articles.id — used by the sync for idempotent upserts.',
         readOnly: true,
       },
     },
@@ -30,6 +30,11 @@ export const FeatureCards: CollectionConfig = {
       type: 'text',
       required: true,
       index: true,
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'date',
+      type: 'text',
       admin: { position: 'sidebar' },
     },
     {
@@ -48,28 +53,29 @@ export const FeatureCards: CollectionConfig = {
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] },
-        description: 'R2 image URL (carried from the live site).',
+        description: 'R2 image URL (carried from news_articles.image).',
       },
     },
     {
       name: 'imageAlt',
       type: 'text',
-      localized: true,
     },
     {
-      name: 'href',
-      type: 'text',
-      admin: { position: 'sidebar' },
-    },
-    {
-      name: 'cta',
-      type: 'text',
+      name: 'body',
+      type: 'array',
       localized: true,
+      fields: [{ name: 'paragraph', type: 'text', required: true }],
     },
     {
       name: 'order',
       type: 'number',
       defaultValue: 0,
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'published',
+      type: 'checkbox',
+      defaultValue: true,
       admin: { position: 'sidebar' },
     },
   ],

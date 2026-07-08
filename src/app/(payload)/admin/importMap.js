@@ -1,5 +1,7 @@
 import { TenantField as TenantField_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
+import { ImageUrlPreview as ImageUrlPreview_7462301dd20d90072f654d047389192b } from '../../../components/ImageUrlPreview'
 import { AssignTenantFieldTrigger as AssignTenantFieldTrigger_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
+import { ManageTenantContent as ManageTenantContent_fe0b3df1fd6cd485c113de29fc3a000b } from '../../../components/ManageTenantContent'
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { PlatformDashboard as PlatformDashboard_49baa73202cb6c8e990eafcdb934de14 } from '../../../components/PlatformDashboard'
 import { TenantSelector as TenantSelector_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
@@ -10,7 +12,9 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 /** @type import('payload').ImportMap */
 export const importMap = {
   "@payloadcms/plugin-multi-tenant/client#TenantField": TenantField_1d0591e3cf4f332c83a86da13a0de59a,
+  "/components/ImageUrlPreview#ImageUrlPreview": ImageUrlPreview_7462301dd20d90072f654d047389192b,
   "@payloadcms/plugin-multi-tenant/client#AssignTenantFieldTrigger": AssignTenantFieldTrigger_1d0591e3cf4f332c83a86da13a0de59a,
+  "/components/ManageTenantContent#ManageTenantContent": ManageTenantContent_fe0b3df1fd6cd485c113de29fc3a000b,
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/PlatformDashboard#PlatformDashboard": PlatformDashboard_49baa73202cb6c8e990eafcdb934de14,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelector": TenantSelector_d6d5f193a167989e2ee7d14202901e62,

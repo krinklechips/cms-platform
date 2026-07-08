@@ -79,6 +79,27 @@ const CATALOG = [
     defaultMonthlyPrice: 0,
     contentCollections: ['partners', 'partner-categories'],
   },
+  {
+    key: 'publishing',
+    name: 'Education & News',
+    description: 'News, community articles, publications, and videos.',
+    defaultMonthlyPrice: 0,
+    contentCollections: ['news-articles', 'community-articles', 'publications', 'videos'],
+  },
+  {
+    key: 'careers',
+    name: 'Careers',
+    description: 'Career position listings and hiring content.',
+    defaultMonthlyPrice: 0,
+    contentCollections: ['career-positions'],
+  },
+  {
+    key: 'enquiries-inbox',
+    name: 'Enquiries Inbox',
+    description: 'Operational enquiry and booking slot snapshots.',
+    defaultMonthlyPrice: 0,
+    contentCollections: ['enquiries', 'booking-slots'],
+  },
 ]
 
 const CMS_DOMAIN = 'roomchang.serviettelab.com'

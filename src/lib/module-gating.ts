@@ -84,7 +84,12 @@ export const withModuleGating = (config: CollectionConfig): CollectionConfig => 
     const existingResult =
       typeof existingHidden === 'function' ? existingHidden(args) : Boolean(existingHidden)
 
-    if (isSuperAdmin(args.user)) return false
+    // Platform view (per Enoch): the super-admin's own nav shows ONLY the
+    // Platform group — content collections are reached through each Tenant's
+    // "Manage content" links (hidden only removes nav/dashboard entries; the
+    // list/edit views stay reachable by URL, and super-admin access is never
+    // restricted).
+    if (isSuperAdmin(args.user)) return true
     if (existingResult) return true
 
     const tenant = firstTenantValue(args.user)

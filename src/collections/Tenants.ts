@@ -85,6 +85,17 @@ export const Tenants: CollectionConfig = {
   },
   fields: [
     {
+      // Super-admin's doorway into this tenant's content: buttons that set
+      // the tenant selector and open the (nav-hidden) collection list views.
+      name: 'manageContent',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/components/ManageTenantContent#ManageTenantContent',
+        },
+      },
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,

@@ -50,6 +50,7 @@ export const HeroSlides: CollectionConfig = {
       name: 'imageUrl',
       type: 'text',
       admin: {
+        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] },
         description: 'R2 image URL (carried from the live site).',
       },
     },

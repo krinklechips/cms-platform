@@ -1,15 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
 /**
- * ClinicalCases — mirrors the live site's `clinical_cases` table (Supabase).
- * Text fields are localized from content_translations.
+ * CareerPositions — mirrors the live site's `career_positions` table (Supabase).
+ * Title, description, requirements, and benefits are localized from translations.
  */
-export const ClinicalCases: CollectionConfig = {
-  slug: 'clinical-cases',
+export const CareerPositions: CollectionConfig = {
+  slug: 'career-positions',
   admin: {
-    group: 'Clinical Results',
+    group: 'Careers',
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'category', 'published', 'order'],
+    defaultColumns: ['title', 'department', 'type', 'published', 'order'],
   },
   access: {
     read: () => true,
@@ -21,7 +21,8 @@ export const ClinicalCases: CollectionConfig = {
       index: true,
       admin: {
         position: 'sidebar',
-        description: 'Supabase clinical_cases.id — used by the sync for idempotent upserts.',
+        description:
+          'Supabase career_positions.id — used by the sync for idempotent upserts.',
         readOnly: true,
       },
     },
@@ -39,20 +40,19 @@ export const ClinicalCases: CollectionConfig = {
       admin: { position: 'sidebar' },
     },
     {
-      name: 'category',
+      name: 'department',
       type: 'text',
-      localized: true,
       admin: { position: 'sidebar' },
     },
     {
-      name: 'treatment',
+      name: 'type',
       type: 'text',
-      localized: true,
+      admin: { position: 'sidebar' },
     },
     {
-      name: 'duration',
+      name: 'location',
       type: 'text',
-      localized: true,
+      admin: { position: 'sidebar' },
     },
     {
       name: 'description',
@@ -60,29 +60,16 @@ export const ClinicalCases: CollectionConfig = {
       localized: true,
     },
     {
-      name: 'tag',
-      type: 'text',
+      name: 'requirements',
+      type: 'array',
       localized: true,
+      fields: [{ name: 'value', type: 'text', required: true }],
     },
     {
-      name: 'fullText',
-      type: 'textarea',
+      name: 'benefits',
+      type: 'array',
       localized: true,
-    },
-    {
-      name: 'imageUrl',
-      type: 'text',
-      admin: {
-        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] },
-        description: 'R2 image URL (carried from clinical_cases.imageUrl).',
-      },
-    },
-    {
-      name: 'images',
-      type: 'json',
-      admin: {
-        description: 'Clinical case images JSON — carried from the live site losslessly.',
-      },
+      fields: [{ name: 'value', type: 'text', required: true }],
     },
     {
       name: 'order',

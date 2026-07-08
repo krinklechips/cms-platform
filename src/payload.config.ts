@@ -32,6 +32,13 @@ import { TimelineEvents } from './collections/TimelineEvents'
 import { InternationalTreatments } from './collections/InternationalTreatments'
 import { InternationalSteps } from './collections/InternationalSteps'
 import { InternationalWhyItems } from './collections/InternationalWhyItems'
+import { NewsArticles } from './collections/NewsArticles'
+import { CommunityArticles } from './collections/CommunityArticles'
+import { Publications } from './collections/Publications'
+import { Videos } from './collections/Videos'
+import { CareerPositions } from './collections/CareerPositions'
+import { Enquiries } from './collections/Enquiries'
+import { BookingSlots } from './collections/BookingSlots'
 import { Modules } from './collections/Modules'
 import { Invoices } from './collections/Invoices'
 import { getTenantByHost, normalizeHost } from './lib/get-tenant-by-host'
@@ -110,6 +117,13 @@ export default buildConfig({
     withModuleGating(Partners),
     withModuleGating(PartnerCategories),
     withModuleGating(FaqItems),
+    withModuleGating(NewsArticles),
+    withModuleGating(CommunityArticles),
+    withModuleGating(Publications),
+    withModuleGating(Videos),
+    withModuleGating(CareerPositions),
+    withModuleGating(Enquiries),
+    withModuleGating(BookingSlots),
     Media,
     Users,
     Tenants,
@@ -200,6 +214,13 @@ export default buildConfig({
         'international-treatments': {},
         'international-steps': {},
         'international-why-items': {},
+        'news-articles': {},
+        'community-articles': {},
+        publications: {},
+        videos: {},
+        'career-positions': {},
+        enquiries: {},
+        'booking-slots': {},
         media: {},
       },
       tenantsSlug: 'tenants',

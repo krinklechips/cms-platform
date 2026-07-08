@@ -79,7 +79,8 @@ export const Doctors: CollectionConfig = {
     {
       name: 'photoUrl',
       type: 'text',
-      admin: { description: 'R2 photo URL (carried from the live site).' },
+      admin: {
+        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] }, description: 'R2 photo URL (carried from the live site).' },
     },
     {
       name: 'order',

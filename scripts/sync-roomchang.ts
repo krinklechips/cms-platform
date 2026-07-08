@@ -2,7 +2,7 @@
  * One-way sync: roomchang production Supabase ──▶ this Payload CMS.
  *
  * The LIVE SITE keeps reading Supabase (source of truth). This pulls the
- * current content — services, doctors, and Wave 1 content collections — into
+ * current content — services, doctors, and wave content collections — into
  * Payload so the team can edit here and the dummy site can render it.
  * Re-runnable: upserts by `sourceId`, so running it again refreshes from live.
  *
@@ -55,6 +55,13 @@ type SyncCollection =
   | 'international-treatments'
   | 'international-steps'
   | 'international-why-items'
+  | 'news-articles'
+  | 'community-articles'
+  | 'publications'
+  | 'videos'
+  | 'career-positions'
+  | 'enquiries'
+  | 'booking-slots'
 type SyncDoc = { id: string | number }
 type SyncPayload = {
   find: (args: {
@@ -856,6 +863,266 @@ async function run() {
     iwC++
   }
   console.log(`✓ international-why-items synced: ${iwC}`)
+
+  // ── news articles ──
+  const { data: newsArticles, error: naErr } = await supabase
+    .from('news_articles')
+    .select('id,slug,date,title,description,image,imageAlt,body,order,published')
+    .order('order')
+  if (naErr) throw new Error(`news_articles: ${naErr.message}`)
+  const naTr = await loadTranslations('news_article')
+  let naC = 0
+  for (const na of newsArticles!) {
+    const sourceId = String(na.id)
+    const trOf = (loc: string) => naTr.get(`${sourceId}|${loc}`) ?? {}
+    const locData = (tr: Record<string, unknown>) => {
+      const o: Record<string, unknown> = {}
+      if (typeof tr.title === 'string') o.title = tr.title
+      if (typeof tr.description === 'string') o.description = tr.description
+      const body = toArr(tr.body, 'paragraph')
+      if (body) o.body = body
+      return o
+    }
+    await upsert(
+      'news-articles',
+      sourceId,
+      {
+        slug: na.slug,
+        date: na.date ?? undefined,
+        title: na.title,
+        description: na.description ?? undefined,
+        imageUrl: na.image ?? undefined,
+        imageAlt: na.imageAlt ?? undefined,
+        body: toArr(na.body, 'paragraph'),
+        order: na.order ?? 0,
+        published: na.published ?? true,
+      },
+      locData(trOf('km')),
+      locData(trOf('zh')),
+    )
+    naC++
+  }
+  console.log(`✓ news-articles synced: ${naC}`)
+
+  // ── community articles ──
+  const { data: communityArticles, error: caErr } = await supabase
+    .from('community_articles')
+    .select('id,slug,title,description,image,imageAlt,href,date,body,images,order,published')
+    .order('order')
+  if (caErr) throw new Error(`community_articles: ${caErr.message}`)
+  const caTr = await loadTranslations('community_article')
+  let caC = 0
+  for (const ca of communityArticles!) {
+    const sourceId = String(ca.id)
+    const trOf = (loc: string) => caTr.get(`${sourceId}|${loc}`) ?? {}
+    const locData = (tr: Record<string, unknown>) => {
+      const o: Record<string, unknown> = {}
+      if (typeof tr.title === 'string') o.title = tr.title
+      if (typeof tr.description === 'string') o.description = tr.description
+      const body = toArr(tr.body, 'paragraph')
+      if (body) o.body = body
+      return o
+    }
+    await upsert(
+      'community-articles',
+      sourceId,
+      {
+        slug: ca.slug,
+        title: ca.title,
+        description: ca.description ?? undefined,
+        imageUrl: ca.image ?? undefined,
+        imageAlt: ca.imageAlt ?? undefined,
+        href: ca.href ?? undefined,
+        date: ca.date ?? undefined,
+        body: toArr(ca.body, 'paragraph'),
+        images: toArr(ca.images, 'url'),
+        order: ca.order ?? 0,
+        published: ca.published ?? true,
+      },
+      locData(trOf('km')),
+      locData(trOf('zh')),
+    )
+    caC++
+  }
+  console.log(`✓ community-articles synced: ${caC}`)
+
+  // ── publications ──
+  const { data: publications, error: pubErr } = await supabase
+    .from('publications')
+    .select('id,title,authors,journal,year,doi,url,abstract,order,published')
+    .order('order')
+  if (pubErr) throw new Error(`publications: ${pubErr.message}`)
+  let pubC = 0
+  for (const pub of publications!) {
+    await upsert(
+      'publications',
+      String(pub.id),
+      {
+        title: pub.title,
+        authors: pub.authors ?? undefined,
+        journal: pub.journal ?? undefined,
+        year: pub.year ?? undefined,
+        doi: pub.doi ?? undefined,
+        url: pub.url ?? undefined,
+        abstract: pub.abstract ?? undefined,
+        order: pub.order ?? 0,
+        published: pub.published ?? true,
+      },
+      {},
+      {},
+    )
+    pubC++
+  }
+  console.log(`✓ publications synced: ${pubC}`)
+
+  // ── videos ──
+  const { data: videos, error: vErr } = await supabase
+    .from('videos')
+    .select('id,title,url,thumbnail,description,category,doctor,topic,treatment,order,published')
+    .order('order')
+  if (vErr) throw new Error(`videos: ${vErr.message}`)
+  let vC = 0
+  for (const v of videos!) {
+    await upsert(
+      'videos',
+      String(v.id),
+      {
+        title: v.title,
+        url: v.url,
+        thumbnail: v.thumbnail ?? undefined,
+        description: v.description ?? undefined,
+        category: v.category ?? undefined,
+        doctor: v.doctor ?? undefined,
+        topic: v.topic ?? undefined,
+        treatment: v.treatment ?? undefined,
+        order: v.order ?? 0,
+        published: v.published ?? true,
+      },
+      {},
+      {},
+    )
+    vC++
+  }
+  console.log(`✓ videos synced: ${vC}`)
+
+  // ── career positions ──
+  const { data: careerPositions, error: cpErr } = await supabase
+    .from('career_positions')
+    .select('id,title,slug,department,type,location,description,requirements,benefits,order,published')
+    .order('order')
+  if (cpErr) throw new Error(`career_positions: ${cpErr.message}`)
+  const cpTr = await loadTranslations('career_position')
+  let cpC = 0
+  for (const cp of careerPositions!) {
+    const sourceId = String(cp.id)
+    const trOf = (loc: string) => cpTr.get(`${sourceId}|${loc}`) ?? {}
+    const locData = (tr: Record<string, unknown>) => {
+      const o: Record<string, unknown> = {}
+      if (typeof tr.title === 'string') o.title = tr.title
+      if (typeof tr.shortDescription === 'string') o.description = tr.shortDescription
+      const requirements = toArr(tr.requirements, 'value')
+      if (requirements) o.requirements = requirements
+      const benefits = toArr(tr.benefits, 'value')
+      if (benefits) o.benefits = benefits
+      return o
+    }
+    await upsert(
+      'career-positions',
+      sourceId,
+      {
+        title: cp.title,
+        slug: cp.slug,
+        department: cp.department ?? undefined,
+        type: cp.type ?? undefined,
+        location: cp.location ?? undefined,
+        description: cp.description ?? undefined,
+        requirements: toArr(cp.requirements, 'value'),
+        benefits: toArr(cp.benefits, 'value'),
+        order: cp.order ?? 0,
+        published: cp.published ?? true,
+      },
+      locData(trOf('km')),
+      locData(trOf('zh')),
+    )
+    cpC++
+  }
+  console.log(`✓ career-positions synced: ${cpC}`)
+
+  // ── enquiries ──
+  const { data: enquiries, error: eErr } = await supabase
+    .from('enquiries')
+    .select(
+      'id,name,email,phone,country,treatment,branch,date,message,read,agent_code,doctor,wechat,patient_type,createdAt',
+    )
+    .order('createdAt', { ascending: false })
+  if (eErr) throw new Error(`enquiries: ${eErr.message}`)
+  let eC = 0
+  for (const e of enquiries!) {
+    await upsert(
+      'enquiries',
+      String(e.id),
+      {
+        name: e.name ?? undefined,
+        email: e.email ?? undefined,
+        phone: e.phone ?? undefined,
+        country: e.country ?? undefined,
+        treatment: e.treatment ?? undefined,
+        branch: e.branch ?? undefined,
+        date: e.date ?? undefined,
+        message: e.message ?? undefined,
+        isRead: e.read ?? false,
+        agentCode: e.agent_code ?? undefined,
+        doctor: e.doctor ?? undefined,
+        wechat: e.wechat ?? undefined,
+        patientType: e.patient_type ?? undefined,
+        receivedAt: e.createdAt ?? undefined,
+        order: 0,
+        published: true,
+      },
+      {},
+      {},
+    )
+    eC++
+  }
+  console.log(`✓ enquiries synced: ${eC}`)
+
+  // ── booking slots ──
+  const { data: bookingSlots, error: bsErr } = await supabase
+    .from('booking_slots')
+    .select(
+      'id,date,time,duration_minutes,is_available,booked_by_name,booked_by_email,booked_by_phone,booked_by_telegram,treatment,branch,doctor,notes,status,created_at',
+    )
+    .order('date')
+  if (bsErr) throw new Error(`booking_slots: ${bsErr.message}`)
+  let bsC = 0
+  for (const bs of bookingSlots!) {
+    await upsert(
+      'booking-slots',
+      String(bs.id),
+      {
+        date: bs.date == null ? undefined : String(bs.date),
+        time: bs.time == null ? undefined : String(bs.time),
+        durationMinutes: bs.duration_minutes ?? undefined,
+        isAvailable: bs.is_available ?? true,
+        bookedByName: bs.booked_by_name ?? undefined,
+        bookedByEmail: bs.booked_by_email ?? undefined,
+        bookedByPhone: bs.booked_by_phone ?? undefined,
+        bookedByTelegram: bs.booked_by_telegram ?? undefined,
+        treatment: bs.treatment ?? undefined,
+        branch: bs.branch ?? undefined,
+        doctor: bs.doctor ?? undefined,
+        notes: bs.notes ?? undefined,
+        status: bs.status ?? undefined,
+        receivedAt: bs.created_at ?? undefined,
+        order: 0,
+        published: true,
+      },
+      {},
+      {},
+    )
+    bsC++
+  }
+  console.log(`✓ booking-slots synced: ${bsC}`)
 
   console.log('Done — live site untouched; Payload now mirrors Supabase content.')
   process.exit(0)
