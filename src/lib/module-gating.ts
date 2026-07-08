@@ -84,12 +84,11 @@ export const withModuleGating = (config: CollectionConfig): CollectionConfig => 
     const existingResult =
       typeof existingHidden === 'function' ? existingHidden(args) : Boolean(existingHidden)
 
-    // Platform view (per Enoch): the super-admin's own nav shows ONLY the
-    // Platform group — content collections are reached through each Tenant's
-    // "Manage content" links (hidden only removes nav/dashboard entries; the
-    // list/edit views stay reachable by URL, and super-admin access is never
-    // restricted).
-    if (isSuperAdmin(args.user)) return true
+    // Super-admins keep collections VISIBLE — hidden:true also blocks the
+    // routes (views throw not-found for non-visible entities; learned the
+    // hard way). The clean Platform-only sidebar is done in the custom Nav
+    // component (PlatformNav) instead, which doesn't affect routing.
+    if (isSuperAdmin(args.user)) return false
     if (existingResult) return true
 
     const tenant = firstTenantValue(args.user)

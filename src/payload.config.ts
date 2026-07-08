@@ -77,6 +77,10 @@ export default buildConfig({
     // auth-protected Dashboard with payload+user serverProps).
     components: {
       beforeDashboard: ['/components/PlatformDashboard#PlatformDashboard'],
+      // Super-admin gets a slim Platform-only sidebar; tenant users get the
+      // DefaultNav (their gated page groups). Done via Nav override because
+      // admin.hidden would 404 the collection routes.
+      Nav: '/components/PlatformNav#PlatformNav',
     },
     // Live Preview: edit a service and watch the REAL site render update
     // beside the form — the dummy roomchang instance (CONTENT_SOURCE=payload,

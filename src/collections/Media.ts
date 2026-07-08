@@ -14,10 +14,8 @@ export const Media: CollectionConfig = {
   admin: {
     group: 'Media Library',
     defaultColumns: ['filename', 'alt', 'prefix', 'updatedAt'],
-    // Platform view: super-admins reach Media via a tenant's "Manage content"
-    // links, not the global nav (same rule as the content collections).
-    hidden: ({ user }) =>
-      Boolean((user as { roles?: string[] } | null)?.roles?.includes('super-admin')),
+    // NOTE: not hidden — hidden:true blocks the route itself. The super-admin
+    // sidebar is slimmed by the custom PlatformNav component instead.
   },
   access: {
     read: () => true,

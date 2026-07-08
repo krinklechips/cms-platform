@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Payload } from 'payload'
+import { OpenTenantContent } from './OpenTenantContent'
 
 /**
  * Serviette Labs HQ — the platform-owner cockpit.
@@ -71,6 +72,7 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user }) => {
         slug: string
         domains?: { domain: string }[]
         subscriptions?: { module?: number | string | { id: number | string }; monthlyPrice?: number | null; active?: boolean | null }[]
+        enabledCollections?: unknown
       }
       const subs = (tenant.subscriptions ?? []).filter((s) => s.active !== false && s.module)
       const moduleNames: string[] = []
@@ -91,6 +93,9 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user }) => {
         name: tenant.name,
         slug: tenant.slug,
         domains: (tenant.domains ?? []).map((d) => d.domain),
+        enabledCollections: Array.isArray(tenant.enabledCollections)
+          ? (tenant.enabledCollections as string[])
+          : [],
         moduleNames,
         mrr,
         draft: byStatus('draft'),
@@ -116,6 +121,7 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user }) => {
               <th style={S.th}>Modules</th>
               <th style={S.th}>MRR</th>
               <th style={S.th}>Invoices (draft / sent / paid)</th>
+              <th style={S.th}>Content</th>
             </tr>
           </thead>
           <tbody>
@@ -142,6 +148,9 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user }) => {
                 <td style={S.td}>{fmtUSD(r.mrr)}</td>
                 <td style={S.td}>
                   {r.draft} / {r.sent} / {r.paid}
+                </td>
+                <td style={S.td}>
+                  <OpenTenantContent tenantId={r.id} collections={r.enabledCollections} />
                 </td>
               </tr>
             ))}
