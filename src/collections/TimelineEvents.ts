@@ -1,15 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
 /**
- * FeatureCards — mirrors the live site's `homepage_feature_cards` table (Supabase).
- * Localized fields carry the translated homepage card copy.
+ * TimelineEvents — mirrors the live site's `timeline_events` table (Supabase).
+ * Localized fields are EN-only on initial sync but editable per locale later.
  */
-export const FeatureCards: CollectionConfig = {
-  slug: 'feature-cards',
+export const TimelineEvents: CollectionConfig = {
+  slug: 'timeline-events',
   admin: {
-    group: 'Homepage',
-    useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'href', 'order'],
+    group: 'Website Content',
+    useAsTitle: 'heading',
+    defaultColumns: ['year', 'heading', 'published', 'order'],
   },
   access: {
     read: () => true,
@@ -21,25 +21,29 @@ export const FeatureCards: CollectionConfig = {
       index: true,
       admin: {
         position: 'sidebar',
-        description: 'Supabase homepage_feature_cards.id — used by the sync for idempotent upserts.',
+        description: 'Supabase timeline_events.id — used by the sync for idempotent upserts.',
         readOnly: true,
       },
     },
     {
-      name: 'slug',
+      name: 'year',
       type: 'text',
       required: true,
-      index: true,
       admin: { position: 'sidebar' },
     },
     {
-      name: 'title',
+      name: 'caption',
+      type: 'text',
+      localized: true,
+    },
+    {
+      name: 'heading',
       type: 'text',
       required: true,
       localized: true,
     },
     {
-      name: 'description',
+      name: 'body',
       type: 'textarea',
       localized: true,
     },
@@ -47,28 +51,28 @@ export const FeatureCards: CollectionConfig = {
       name: 'imageUrl',
       type: 'text',
       admin: {
-        description: 'R2 image URL (carried from the live site).',
+        description: 'R2 image URL (carried from timeline_events.imageSrc).',
       },
     },
     {
       name: 'imageAlt',
       type: 'text',
-      localized: true,
     },
     {
-      name: 'href',
+      name: 'imagePosition',
       type: 'text',
       admin: { position: 'sidebar' },
-    },
-    {
-      name: 'cta',
-      type: 'text',
-      localized: true,
     },
     {
       name: 'order',
       type: 'number',
       defaultValue: 0,
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'published',
+      type: 'checkbox',
+      defaultValue: true,
       admin: { position: 'sidebar' },
     },
   ],

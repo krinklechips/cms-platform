@@ -13,6 +13,7 @@ const isSuperAdmin = (user: unknown): boolean =>
 export const Modules: CollectionConfig = {
   slug: 'modules',
   admin: {
+    group: 'Platform',
     useAsTitle: 'name',
     hidden: ({ user }) => !isSuperAdmin(user),
     description: 'Sellable platform modules. Subscribe tenants to these on the Tenant document.',

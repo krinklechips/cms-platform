@@ -20,6 +20,18 @@ import { Branches } from './collections/Branches'
 import { SiteStats } from './collections/SiteStats'
 import { FeatureCards } from './collections/FeatureCards'
 import { BrandLogos } from './collections/BrandLogos'
+import { PricingCategories } from './collections/PricingCategories'
+import { PricingItems } from './collections/PricingItems'
+import { PricingComparisonSets } from './collections/PricingComparisonSets'
+import { PricingComparisonRows } from './collections/PricingComparisonRows'
+import { ClinicalCases } from './collections/ClinicalCases'
+import { PartnerCategories } from './collections/PartnerCategories'
+import { Partners } from './collections/Partners'
+import { FaqItems } from './collections/FaqItems'
+import { TimelineEvents } from './collections/TimelineEvents'
+import { InternationalTreatments } from './collections/InternationalTreatments'
+import { InternationalSteps } from './collections/InternationalSteps'
+import { InternationalWhyItems } from './collections/InternationalWhyItems'
 import { Modules } from './collections/Modules'
 import { Invoices } from './collections/Invoices'
 import { getTenantByHost, normalizeHost } from './lib/get-tenant-by-host'
@@ -80,6 +92,18 @@ export default buildConfig({
     SiteStats,
     FeatureCards,
     BrandLogos,
+    PricingCategories,
+    PricingItems,
+    PricingComparisonSets,
+    PricingComparisonRows,
+    ClinicalCases,
+    PartnerCategories,
+    Partners,
+    FaqItems,
+    TimelineEvents,
+    InternationalTreatments,
+    InternationalSteps,
+    InternationalWhyItems,
     Modules,
     Invoices,
   ],
@@ -155,6 +179,18 @@ export default buildConfig({
         'site-stats': {},
         'feature-cards': {},
         'brand-logos': {},
+        'pricing-categories': {},
+        'pricing-items': {},
+        'pricing-comparison-sets': {},
+        'pricing-comparison-rows': {},
+        'clinical-cases': {},
+        'partner-categories': {},
+        partners: {},
+        'faq-items': {},
+        'timeline-events': {},
+        'international-treatments': {},
+        'international-steps': {},
+        'international-why-items': {},
         media: {},
       },
       tenantsSlug: 'tenants',

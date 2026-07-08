@@ -1,15 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
 /**
- * Technology — mirrors the live site's `technology` table (Supabase).
- * Localized fields carry the translated text/content from content_translations.
+ * ClinicalCases — mirrors the live site's `clinical_cases` table (Supabase).
+ * Text fields are localized from content_translations.
  */
-export const Technology: CollectionConfig = {
-  slug: 'technology',
+export const ClinicalCases: CollectionConfig = {
+  slug: 'clinical-cases',
   admin: {
     group: 'Website Content',
-    useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'category', 'published', 'order'],
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'slug', 'category', 'published', 'order'],
   },
   access: {
     read: () => true,
@@ -21,12 +21,12 @@ export const Technology: CollectionConfig = {
       index: true,
       admin: {
         position: 'sidebar',
-        description: 'Supabase technology.id — used by the sync for idempotent upserts.',
+        description: 'Supabase clinical_cases.id — used by the sync for idempotent upserts.',
         readOnly: true,
       },
     },
     {
-      name: 'name',
+      name: 'title',
       type: 'text',
       required: true,
       localized: true,
@@ -41,7 +41,18 @@ export const Technology: CollectionConfig = {
     {
       name: 'category',
       type: 'text',
+      localized: true,
       admin: { position: 'sidebar' },
+    },
+    {
+      name: 'treatment',
+      type: 'text',
+      localized: true,
+    },
+    {
+      name: 'duration',
+      type: 'text',
+      localized: true,
     },
     {
       name: 'description',
@@ -49,24 +60,27 @@ export const Technology: CollectionConfig = {
       localized: true,
     },
     {
-      name: 'highlights',
-      type: 'array',
+      name: 'tag',
+      type: 'text',
       localized: true,
-      fields: [{ name: 'value', type: 'text', required: true }],
+    },
+    {
+      name: 'fullText',
+      type: 'textarea',
+      localized: true,
     },
     {
       name: 'imageUrl',
       type: 'text',
       admin: {
-        description: 'R2 image URL (carried from the live site).',
+        description: 'R2 image URL (carried from clinical_cases.imageUrl).',
       },
     },
     {
-      name: 'content',
+      name: 'images',
       type: 'json',
-      localized: true,
       admin: {
-        description: 'Detail-page content JSON — carried from the live site losslessly.',
+        description: 'Clinical case images JSON — carried from the live site losslessly.',
       },
     },
     {

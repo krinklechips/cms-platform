@@ -7,6 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const BrandLogos: CollectionConfig = {
   slug: 'brand-logos',
   admin: {
+    group: 'Homepage',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'order'],
   },

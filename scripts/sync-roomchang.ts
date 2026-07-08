@@ -43,6 +43,18 @@ type SyncCollection =
   | 'site-stats'
   | 'feature-cards'
   | 'brand-logos'
+  | 'pricing-categories'
+  | 'pricing-items'
+  | 'pricing-comparison-sets'
+  | 'pricing-comparison-rows'
+  | 'clinical-cases'
+  | 'partner-categories'
+  | 'partners'
+  | 'faq-items'
+  | 'timeline-events'
+  | 'international-treatments'
+  | 'international-steps'
+  | 'international-why-items'
 type SyncDoc = { id: string | number }
 type SyncPayload = {
   find: (args: {
@@ -138,7 +150,7 @@ async function run() {
     // site's URL segments kh/cn (Enoch's convention).
     if (Object.keys(km).length) await syncPayload.update({ collection, id: doc.id, data: km, locale: 'kh' })
     if (Object.keys(zh).length) await syncPayload.update({ collection, id: doc.id, data: zh, locale: 'cn' })
-    return existing ? 'updated' : 'created'
+    return doc.id
   }
 
   // ── services ──
@@ -454,6 +466,396 @@ async function run() {
     blC++
   }
   console.log(`✓ brand-logos synced: ${blC}`)
+
+  // ── pricing categories ──
+  const { data: pricingCategories, error: pcErr } = await supabase
+    .from('pricing_categories')
+    .select('id,title,icon,order')
+    .order('order')
+  if (pcErr) throw new Error(`pricing_categories: ${pcErr.message}`)
+  const pcTr = await loadTranslations('pricing_category')
+  const pricingCategoryIds = new Map<string, string | number>()
+  let pcC = 0
+  for (const pc of pricingCategories!) {
+    const sourceId = String(pc.id)
+    const trOf = (loc: string) => pcTr.get(`${sourceId}|${loc}`) ?? {}
+    const locData = (tr: Record<string, unknown>) => {
+      const o: Record<string, unknown> = {}
+      if (typeof tr.title === 'string') o.title = tr.title
+      return o
+    }
+    const docId = await upsert(
+      'pricing-categories',
+      sourceId,
+      {
+        title: pc.title,
+        icon: pc.icon ?? undefined,
+        order: pc.order ?? 0,
+      },
+      locData(trOf('km')),
+      locData(trOf('zh')),
+    )
+    pricingCategoryIds.set(sourceId, docId)
+    pcC++
+  }
+  console.log(`✓ pricing-categories synced: ${pcC}`)
+
+  // ── pricing comparison sets ──
+  const { data: pricingComparisonSets, error: pcsErr } = await supabase
+    .from('pricing_comparison_sets')
+    .select('id,slug,exchange_rate,source_note,last_updated')
+    .order('id')
+  if (pcsErr) throw new Error(`pricing_comparison_sets: ${pcsErr.message}`)
+  const pricingComparisonSetIds = new Map<string, string | number>()
+  let pcsC = 0
+  for (const pcs of pricingComparisonSets!) {
+    const sourceId = String(pcs.id)
+    const docId = await upsert(
+      'pricing-comparison-sets',
+      sourceId,
+      {
+        slug: pcs.slug,
+        exchangeRate: pcs.exchange_rate ?? undefined,
+        sourceNote: pcs.source_note ?? undefined,
+        lastUpdated: pcs.last_updated ?? undefined,
+      },
+      {},
+      {},
+    )
+    pricingComparisonSetIds.set(sourceId, docId)
+    pcsC++
+  }
+  console.log(`✓ pricing-comparison-sets synced: ${pcsC}`)
+
+  // ── partner categories ──
+  const { data: partnerCategories, error: pacErr } = await supabase
+    .from('partner_categories')
+    .select('id,name,sort_order')
+    .order('sort_order')
+  if (pacErr) throw new Error(`partner_categories: ${pacErr.message}`)
+  const partnerCategoryIds = new Map<string, string | number>()
+  let pacC = 0
+  for (const pac of partnerCategories!) {
+    const sourceId = String(pac.id)
+    const docId = await upsert(
+      'partner-categories',
+      sourceId,
+      {
+        name: pac.name,
+        order: pac.sort_order ?? 0,
+      },
+      {},
+      {},
+    )
+    partnerCategoryIds.set(sourceId, docId)
+    pacC++
+  }
+  console.log(`✓ partner-categories synced: ${pacC}`)
+
+  // ── pricing items ──
+  const { data: pricingItems, error: piErr } = await supabase
+    .from('pricing_items')
+    .select('id,name,price,ada,aus,order,categoryId,note')
+    .order('order')
+  if (piErr) throw new Error(`pricing_items: ${piErr.message}`)
+  const piTr = await loadTranslations('pricing_item')
+  let piC = 0
+  for (const pi of pricingItems!) {
+    const sourceId = String(pi.id)
+    const sourceCategoryId = pi.categoryId == null ? undefined : String(pi.categoryId)
+    const categoryId = sourceCategoryId ? pricingCategoryIds.get(sourceCategoryId) : undefined
+    if (sourceCategoryId && !categoryId) {
+      console.warn(`⚠ pricing-items ${sourceId}: missing pricing-categories sourceId ${sourceCategoryId}`)
+    }
+    const trOf = (loc: string) => piTr.get(`${sourceId}|${loc}`) ?? {}
+    const locData = (tr: Record<string, unknown>) => {
+      const o: Record<string, unknown> = {}
+      if (typeof tr.name === 'string') o.name = tr.name
+      if (typeof tr.note === 'string') o.note = tr.note
+      return o
+    }
+    await upsert(
+      'pricing-items',
+      sourceId,
+      {
+        name: pi.name,
+        price: pi.price ?? undefined,
+        ada: pi.ada ?? undefined,
+        aus: pi.aus ?? undefined,
+        note: pi.note ?? undefined,
+        order: pi.order ?? 0,
+        sourceCategoryId,
+        ...(categoryId ? { category: categoryId } : {}),
+      },
+      locData(trOf('km')),
+      locData(trOf('zh')),
+    )
+    piC++
+  }
+  console.log(`✓ pricing-items synced: ${piC}`)
+
+  // ── pricing comparison rows ──
+  const { data: pricingComparisonRows, error: pcrErr } = await supabase
+    .from('pricing_comparison_rows')
+    .select('id,set_id,ada,treatment,roomchang_price,australia_price,singapore_price,sort_order')
+    .order('sort_order')
+  if (pcrErr) throw new Error(`pricing_comparison_rows: ${pcrErr.message}`)
+  let pcrC = 0
+  for (const pcr of pricingComparisonRows!) {
+    const sourceId = String(pcr.id)
+    const sourceSetId = pcr.set_id == null ? undefined : String(pcr.set_id)
+    const setId = sourceSetId ? pricingComparisonSetIds.get(sourceSetId) : undefined
+    if (sourceSetId && !setId) {
+      console.warn(`⚠ pricing-comparison-rows ${sourceId}: missing pricing-comparison-sets sourceId ${sourceSetId}`)
+    }
+    await upsert(
+      'pricing-comparison-rows',
+      sourceId,
+      {
+        sourceSetId,
+        ada: pcr.ada ?? undefined,
+        treatment: pcr.treatment,
+        roomchangPrice: pcr.roomchang_price ?? undefined,
+        australiaPrice: pcr.australia_price ?? undefined,
+        singaporePrice: pcr.singapore_price ?? undefined,
+        order: pcr.sort_order ?? 0,
+        ...(setId ? { set: setId } : {}),
+      },
+      {},
+      {},
+    )
+    pcrC++
+  }
+  console.log(`✓ pricing-comparison-rows synced: ${pcrC}`)
+
+  // ── partners ──
+  const { data: partners, error: pErr } = await supabase
+    .from('partners')
+    .select('id,name,logo_src,website,sort_order,category_id')
+    .order('sort_order')
+  if (pErr) throw new Error(`partners: ${pErr.message}`)
+  let pC = 0
+  for (const p of partners!) {
+    const sourceId = String(p.id)
+    const sourceCategoryId = p.category_id == null ? undefined : String(p.category_id)
+    const categoryId = sourceCategoryId ? partnerCategoryIds.get(sourceCategoryId) : undefined
+    if (sourceCategoryId && !categoryId) {
+      console.warn(`⚠ partners ${sourceId}: missing partner-categories sourceId ${sourceCategoryId}`)
+    }
+    await upsert(
+      'partners',
+      sourceId,
+      {
+        name: p.name,
+        logoUrl: p.logo_src ?? undefined,
+        website: p.website ?? undefined,
+        order: p.sort_order ?? 0,
+        sourceCategoryId,
+        ...(categoryId ? { category: categoryId } : {}),
+      },
+      {},
+      {},
+    )
+    pC++
+  }
+  console.log(`✓ partners synced: ${pC}`)
+
+  // ── clinical cases ──
+  const { data: clinicalCases, error: ccErr } = await supabase
+    .from('clinical_cases')
+    .select('id,title,slug,category,treatment,duration,description,tag,fullText,imageUrl,images,order,published')
+    .order('order')
+  if (ccErr) throw new Error(`clinical_cases: ${ccErr.message}`)
+  const ccTr = await loadTranslations('clinical_case')
+  let ccC = 0
+  for (const cc of clinicalCases!) {
+    const sourceId = String(cc.id)
+    const trOf = (loc: string) => ccTr.get(`${sourceId}|${loc}`) ?? {}
+    const locData = (tr: Record<string, unknown>) => {
+      const o: Record<string, unknown> = {}
+      if (typeof tr.title === 'string') o.title = tr.title
+      if (typeof tr.category === 'string') o.category = tr.category
+      if (typeof tr.treatment === 'string') o.treatment = tr.treatment
+      if (typeof tr.duration === 'string') o.duration = tr.duration
+      if (typeof tr.description === 'string') o.description = tr.description
+      if (typeof tr.fullText === 'string') o.fullText = tr.fullText
+      if (typeof tr.tag === 'string') o.tag = tr.tag
+      return o
+    }
+    await upsert(
+      'clinical-cases',
+      sourceId,
+      {
+        title: cc.title,
+        slug: cc.slug,
+        category: cc.category ?? undefined,
+        treatment: cc.treatment ?? undefined,
+        duration: cc.duration ?? undefined,
+        description: cc.description ?? undefined,
+        tag: cc.tag ?? undefined,
+        fullText: cc.fullText ?? undefined,
+        imageUrl: cc.imageUrl ?? undefined,
+        images: toJson(cc.images),
+        order: cc.order ?? 0,
+        published: cc.published ?? true,
+      },
+      locData(trOf('km')),
+      locData(trOf('zh')),
+    )
+    ccC++
+  }
+  console.log(`✓ clinical-cases synced: ${ccC}`)
+
+  // ── faq items ──
+  const { data: faqItems, error: faqErr } = await supabase
+    .from('faq_items')
+    .select('id,question,answer,category,sort_order,published')
+    .order('sort_order')
+  if (faqErr) throw new Error(`faq_items: ${faqErr.message}`)
+  let faqC = 0
+  for (const faq of faqItems!) {
+    await upsert(
+      'faq-items',
+      String(faq.id),
+      {
+        question: faq.question,
+        answer: faq.answer ?? undefined,
+        category: faq.category ?? undefined,
+        order: faq.sort_order ?? 0,
+        published: faq.published ?? true,
+      },
+      {},
+      {},
+    )
+    faqC++
+  }
+  console.log(`✓ faq-items synced: ${faqC}`)
+
+  // ── timeline events ──
+  const { data: timelineEvents, error: teErr } = await supabase
+    .from('timeline_events')
+    .select('id,year,caption,heading,body,imageSrc,imageAlt,imagePosition,order,published')
+    .order('order')
+  if (teErr) throw new Error(`timeline_events: ${teErr.message}`)
+  let teC = 0
+  for (const te of timelineEvents!) {
+    await upsert(
+      'timeline-events',
+      String(te.id),
+      {
+        year: String(te.year),
+        caption: te.caption ?? undefined,
+        heading: te.heading,
+        body: te.body ?? undefined,
+        imageUrl: te.imageSrc ?? undefined,
+        imageAlt: te.imageAlt ?? undefined,
+        imagePosition: te.imagePosition ?? undefined,
+        order: te.order ?? 0,
+        published: te.published ?? true,
+      },
+      {},
+      {},
+    )
+    teC++
+  }
+  console.log(`✓ timeline-events synced: ${teC}`)
+
+  // ── international treatments ──
+  const { data: internationalTreatments, error: itErr } = await supabase
+    .from('international_popular_treatments')
+    .select('id,name,saving,sort_order')
+    .order('sort_order')
+  if (itErr) throw new Error(`international_popular_treatments: ${itErr.message}`)
+  const itTr = await loadTranslations('international_popular_treatment')
+  let itC = 0
+  for (const it of internationalTreatments!) {
+    const sourceId = String(it.id)
+    const trOf = (loc: string) => itTr.get(`${sourceId}|${loc}`) ?? {}
+    const locData = (tr: Record<string, unknown>) => {
+      const o: Record<string, unknown> = {}
+      if (typeof tr.name === 'string') o.name = tr.name
+      if (typeof tr.saving === 'string') o.saving = tr.saving
+      return o
+    }
+    await upsert(
+      'international-treatments',
+      sourceId,
+      {
+        name: it.name,
+        saving: it.saving ?? undefined,
+        order: it.sort_order ?? 0,
+      },
+      locData(trOf('km')),
+      locData(trOf('zh')),
+    )
+    itC++
+  }
+  console.log(`✓ international-treatments synced: ${itC}`)
+
+  // ── international steps ──
+  const { data: internationalSteps, error: isErr } = await supabase
+    .from('international_steps')
+    .select('id,step_label,title,description,sort_order')
+    .order('sort_order')
+  if (isErr) throw new Error(`international_steps: ${isErr.message}`)
+  const isTr = await loadTranslations('international_step')
+  let isC = 0
+  for (const step of internationalSteps!) {
+    const sourceId = String(step.id)
+    const trOf = (loc: string) => isTr.get(`${sourceId}|${loc}`) ?? {}
+    const locData = (tr: Record<string, unknown>) => {
+      const o: Record<string, unknown> = {}
+      if (typeof tr.title === 'string') o.title = tr.title
+      if (typeof tr.description === 'string') o.description = tr.description
+      return o
+    }
+    await upsert(
+      'international-steps',
+      sourceId,
+      {
+        stepLabel: step.step_label ?? undefined,
+        title: step.title,
+        description: step.description ?? undefined,
+        order: step.sort_order ?? 0,
+      },
+      locData(trOf('km')),
+      locData(trOf('zh')),
+    )
+    isC++
+  }
+  console.log(`✓ international-steps synced: ${isC}`)
+
+  // ── international why items ──
+  const { data: internationalWhyItems, error: iwErr } = await supabase
+    .from('international_why_items')
+    .select('id,title,description,sort_order')
+    .order('sort_order')
+  if (iwErr) throw new Error(`international_why_items: ${iwErr.message}`)
+  const iwTr = await loadTranslations('international_why_item')
+  let iwC = 0
+  for (const iw of internationalWhyItems!) {
+    const sourceId = String(iw.id)
+    const trOf = (loc: string) => iwTr.get(`${sourceId}|${loc}`) ?? {}
+    const locData = (tr: Record<string, unknown>) => {
+      const o: Record<string, unknown> = {}
+      if (typeof tr.title === 'string') o.title = tr.title
+      if (typeof tr.description === 'string') o.description = tr.description
+      return o
+    }
+    await upsert(
+      'international-why-items',
+      sourceId,
+      {
+        title: iw.title,
+        description: iw.description ?? undefined,
+        order: iw.sort_order ?? 0,
+      },
+      locData(trOf('km')),
+      locData(trOf('zh')),
+    )
+    iwC++
+  }
+  console.log(`✓ international-why-items synced: ${iwC}`)
 
   console.log('Done — live site untouched; Payload now mirrors Supabase content.')
   process.exit(0)

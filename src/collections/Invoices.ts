@@ -74,6 +74,7 @@ const buildInvoice: CollectionBeforeChangeHook = async ({ data, originalDoc, ope
 export const Invoices: CollectionConfig = {
   slug: 'invoices',
   admin: {
+    group: 'Platform',
     useAsTitle: 'id',
     hidden: ({ user }) => !isSuperAdmin(user),
     description:

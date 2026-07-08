@@ -15,6 +15,7 @@ const isSuperAdmin = (user: unknown): boolean =>
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
+    group: 'Platform',
     useAsTitle: 'email',
     hidden: ({ user }) => !isSuperAdmin(user),
   },

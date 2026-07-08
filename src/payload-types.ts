@@ -79,6 +79,18 @@ export interface Config {
     'site-stats': SiteStat;
     'feature-cards': FeatureCard;
     'brand-logos': BrandLogo;
+    'pricing-categories': PricingCategory;
+    'pricing-items': PricingItem;
+    'pricing-comparison-sets': PricingComparisonSet;
+    'pricing-comparison-rows': PricingComparisonRow;
+    'clinical-cases': ClinicalCase;
+    'partner-categories': PartnerCategory;
+    partners: Partner;
+    'faq-items': FaqItem;
+    'timeline-events': TimelineEvent;
+    'international-treatments': InternationalTreatment;
+    'international-steps': InternationalStep;
+    'international-why-items': InternationalWhyItem;
     modules: Module;
     invoices: Invoice;
     'payload-kv': PayloadKv;
@@ -100,6 +112,18 @@ export interface Config {
     'site-stats': SiteStatsSelect<false> | SiteStatsSelect<true>;
     'feature-cards': FeatureCardsSelect<false> | FeatureCardsSelect<true>;
     'brand-logos': BrandLogosSelect<false> | BrandLogosSelect<true>;
+    'pricing-categories': PricingCategoriesSelect<false> | PricingCategoriesSelect<true>;
+    'pricing-items': PricingItemsSelect<false> | PricingItemsSelect<true>;
+    'pricing-comparison-sets': PricingComparisonSetsSelect<false> | PricingComparisonSetsSelect<true>;
+    'pricing-comparison-rows': PricingComparisonRowsSelect<false> | PricingComparisonRowsSelect<true>;
+    'clinical-cases': ClinicalCasesSelect<false> | ClinicalCasesSelect<true>;
+    'partner-categories': PartnerCategoriesSelect<false> | PartnerCategoriesSelect<true>;
+    partners: PartnersSelect<false> | PartnersSelect<true>;
+    'faq-items': FaqItemsSelect<false> | FaqItemsSelect<true>;
+    'timeline-events': TimelineEventsSelect<false> | TimelineEventsSelect<true>;
+    'international-treatments': InternationalTreatmentsSelect<false> | InternationalTreatmentsSelect<true>;
+    'international-steps': InternationalStepsSelect<false> | InternationalStepsSelect<true>;
+    'international-why-items': InternationalWhyItemsSelect<false> | InternationalWhyItemsSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
     invoices: InvoicesSelect<false> | InvoicesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -585,6 +609,261 @@ export interface BrandLogo {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-categories".
+ */
+export interface PricingCategory {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase pricing_categories.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  title: string;
+  icon?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-items".
+ */
+export interface PricingItem {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase pricing_items.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  price?: string | null;
+  ada?: string | null;
+  aus?: string | null;
+  note?: string | null;
+  category?: (number | null) | PricingCategory;
+  sourceCategoryId?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-comparison-sets".
+ */
+export interface PricingComparisonSet {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase pricing_comparison_sets.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  slug: string;
+  exchangeRate?: number | null;
+  sourceNote?: string | null;
+  lastUpdated?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-comparison-rows".
+ */
+export interface PricingComparisonRow {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase pricing_comparison_rows.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  set?: (number | null) | PricingComparisonSet;
+  sourceSetId?: string | null;
+  ada?: string | null;
+  treatment: string;
+  roomchangPrice?: string | null;
+  australiaPrice?: string | null;
+  singaporePrice?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clinical-cases".
+ */
+export interface ClinicalCase {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase clinical_cases.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  title: string;
+  slug: string;
+  category?: string | null;
+  treatment?: string | null;
+  duration?: string | null;
+  description?: string | null;
+  tag?: string | null;
+  fullText?: string | null;
+  /**
+   * R2 image URL (carried from clinical_cases.imageUrl).
+   */
+  imageUrl?: string | null;
+  /**
+   * Clinical case images JSON — carried from the live site losslessly.
+   */
+  images?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-categories".
+ */
+export interface PartnerCategory {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase partner_categories.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partners".
+ */
+export interface Partner {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase partners.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  /**
+   * R2 logo URL (carried from partners.logo_src).
+   */
+  logoUrl?: string | null;
+  website?: string | null;
+  category?: (number | null) | PartnerCategory;
+  sourceCategoryId?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faq-items".
+ */
+export interface FaqItem {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase faq_items.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  question: string;
+  answer?: string | null;
+  category?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timeline-events".
+ */
+export interface TimelineEvent {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase timeline_events.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  year: string;
+  caption?: string | null;
+  heading: string;
+  body?: string | null;
+  /**
+   * R2 image URL (carried from timeline_events.imageSrc).
+   */
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  imagePosition?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "international-treatments".
+ */
+export interface InternationalTreatment {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase international_popular_treatments.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  saving?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "international-steps".
+ */
+export interface InternationalStep {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase international_steps.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  stepLabel?: string | null;
+  title: string;
+  description?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "international-why-items".
+ */
+export interface InternationalWhyItem {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase international_why_items.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  title: string;
+  description?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Create an invoice with an empty line-item list to auto-fill it from the tenant’s active subscriptions.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -692,6 +971,54 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'brand-logos';
         value: number | BrandLogo;
+      } | null)
+    | ({
+        relationTo: 'pricing-categories';
+        value: number | PricingCategory;
+      } | null)
+    | ({
+        relationTo: 'pricing-items';
+        value: number | PricingItem;
+      } | null)
+    | ({
+        relationTo: 'pricing-comparison-sets';
+        value: number | PricingComparisonSet;
+      } | null)
+    | ({
+        relationTo: 'pricing-comparison-rows';
+        value: number | PricingComparisonRow;
+      } | null)
+    | ({
+        relationTo: 'clinical-cases';
+        value: number | ClinicalCase;
+      } | null)
+    | ({
+        relationTo: 'partner-categories';
+        value: number | PartnerCategory;
+      } | null)
+    | ({
+        relationTo: 'partners';
+        value: number | Partner;
+      } | null)
+    | ({
+        relationTo: 'faq-items';
+        value: number | FaqItem;
+      } | null)
+    | ({
+        relationTo: 'timeline-events';
+        value: number | TimelineEvent;
+      } | null)
+    | ({
+        relationTo: 'international-treatments';
+        value: number | InternationalTreatment;
+      } | null)
+    | ({
+        relationTo: 'international-steps';
+        value: number | InternationalStep;
+      } | null)
+    | ({
+        relationTo: 'international-why-items';
+        value: number | InternationalWhyItem;
       } | null)
     | ({
         relationTo: 'modules';
@@ -1015,6 +1342,193 @@ export interface BrandLogosSelect<T extends boolean = true> {
   slug?: T;
   name?: T;
   logoUrl?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-categories_select".
+ */
+export interface PricingCategoriesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  title?: T;
+  icon?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-items_select".
+ */
+export interface PricingItemsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  price?: T;
+  ada?: T;
+  aus?: T;
+  note?: T;
+  category?: T;
+  sourceCategoryId?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-comparison-sets_select".
+ */
+export interface PricingComparisonSetsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  slug?: T;
+  exchangeRate?: T;
+  sourceNote?: T;
+  lastUpdated?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-comparison-rows_select".
+ */
+export interface PricingComparisonRowsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  set?: T;
+  sourceSetId?: T;
+  ada?: T;
+  treatment?: T;
+  roomchangPrice?: T;
+  australiaPrice?: T;
+  singaporePrice?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clinical-cases_select".
+ */
+export interface ClinicalCasesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  title?: T;
+  slug?: T;
+  category?: T;
+  treatment?: T;
+  duration?: T;
+  description?: T;
+  tag?: T;
+  fullText?: T;
+  imageUrl?: T;
+  images?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-categories_select".
+ */
+export interface PartnerCategoriesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partners_select".
+ */
+export interface PartnersSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  logoUrl?: T;
+  website?: T;
+  category?: T;
+  sourceCategoryId?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faq-items_select".
+ */
+export interface FaqItemsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  question?: T;
+  answer?: T;
+  category?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timeline-events_select".
+ */
+export interface TimelineEventsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  year?: T;
+  caption?: T;
+  heading?: T;
+  body?: T;
+  imageUrl?: T;
+  imageAlt?: T;
+  imagePosition?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "international-treatments_select".
+ */
+export interface InternationalTreatmentsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  saving?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "international-steps_select".
+ */
+export interface InternationalStepsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  stepLabel?: T;
+  title?: T;
+  description?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "international-why-items_select".
+ */
+export interface InternationalWhyItemsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  title?: T;
+  description?: T;
   order?: T;
   updatedAt?: T;
   createdAt?: T;

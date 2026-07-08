@@ -25,6 +25,7 @@ const userTenantIds = (user: unknown): (number | string)[] => {
 export const Tenants: CollectionConfig = {
   slug: 'tenants',
   admin: {
+    group: 'Platform',
     useAsTitle: 'name',
     hidden: ({ user }) => !isSuperAdmin(user),
   },

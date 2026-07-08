@@ -7,6 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const Testimonials: CollectionConfig = {
   slug: 'testimonials',
   admin: {
+    group: 'Website Content',
     useAsTitle: 'authorName',
     defaultColumns: ['authorName', 'authorTitle', 'isFeatured', 'published', 'order'],
   },

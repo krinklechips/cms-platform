@@ -8,6 +8,7 @@ import type { CollectionConfig } from 'payload'
 export const Doctors: CollectionConfig = {
   slug: 'doctors',
   admin: {
+    group: 'Website Content',
     useAsTitle: 'name',
     defaultColumns: ['name', 'role', 'department', 'published', 'order'],
   },
