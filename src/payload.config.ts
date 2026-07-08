@@ -87,11 +87,60 @@ export default buildConfig({
     // :3200) refreshes on save. Locale codes ARE the site's URL segments
     // (en/kh/cn), so no mapping needed.
     livePreview: {
-      url: ({ data, locale }) => {
+      // Eye icon → the REAL page on the dummy site (roomchang-sandbox on
+      // Vercel, CONTENT_SOURCE=payload), refreshed on save. Each collection
+      // maps to the page it renders on.
+      url: ({ data, locale, collectionConfig }) => {
         const dummy = process.env.DUMMY_SITE_URL || 'http://localhost:3200'
-        return `${dummy}/${locale?.code ?? 'en'}/services/${(data as { slug?: string })?.slug ?? ''}`
+        const loc = locale?.code ?? 'en'
+        const slug = (data as { slug?: string })?.slug ?? ''
+        const pageFor: Record<string, string> = {
+          services: slug ? `/services/${slug}` : '/services',
+          doctors: '/team',
+          technology: '/technology',
+          'hero-slides': '',
+          'site-stats': '',
+          'feature-cards': '',
+          'brand-logos': '',
+          testimonials: '',
+          'pricing-categories': '/pricing',
+          'pricing-items': '/pricing',
+          'pricing-comparison-sets': '/pricing',
+          'pricing-comparison-rows': '/pricing',
+          'international-treatments': '/international',
+          'international-steps': '/international',
+          'international-why-items': '/international',
+          'timeline-events': '/about',
+          branches: '/contact',
+          'clinical-cases': '/clinical-results',
+          'news-articles': slug ? `/about/news/${slug}` : '/about/news',
+          'community-articles': slug ? `/about/community/${slug}` : '/about/community',
+        }
+        const page = pageFor[collectionConfig?.slug ?? ''] ?? ''
+        return `${dummy}/${loc}${page}`
       },
-      collections: ['services'],
+      collections: [
+        'services',
+        'doctors',
+        'technology',
+        'hero-slides',
+        'site-stats',
+        'feature-cards',
+        'brand-logos',
+        'testimonials',
+        'pricing-categories',
+        'pricing-items',
+        'pricing-comparison-sets',
+        'pricing-comparison-rows',
+        'international-treatments',
+        'international-steps',
+        'international-why-items',
+        'timeline-events',
+        'branches',
+        'clinical-cases',
+        'news-articles',
+        'community-articles',
+      ],
       breakpoints: [
         { label: 'Mobile', name: 'mobile', width: 390, height: 844 },
         { label: 'Desktop', name: 'desktop', width: 1280, height: 900 },
