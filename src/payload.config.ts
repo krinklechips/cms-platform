@@ -1,3 +1,4 @@
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
 import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -56,11 +57,17 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: sqliteAdapter({
-    client: {
-      url: process.env.DATABASE_URI || 'file:./serviette-cms.db',
-    },
-  }),
+  // Adapter follows DATABASE_URI: postgres:// in production (the CMS's OWN
+  // Supabase project — never the live roomchang one), sqlite file in dev.
+  db: process.env.DATABASE_URI?.startsWith('postgres')
+    ? postgresAdapter({
+        pool: { connectionString: process.env.DATABASE_URI },
+      })
+    : sqliteAdapter({
+        client: {
+          url: process.env.DATABASE_URI || 'file:./serviette-cms.db',
+        },
+      }),
   sharp,
   // First-class locales — no more content_translations overlay / workbooks.
   // Codes follow the site's country-style URL segments (per Enoch): KH / CN

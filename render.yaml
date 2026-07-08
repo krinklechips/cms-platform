@@ -1,0 +1,24 @@
+# Render Blueprint — Serviette CMS (Payload)
+# One deployment serves BOTH domains:
+#   - the Serviette Labs admin (Enoch / super-admin)
+#   - roomchang.serviettelab.com (tenant login — scoped view)
+# Custom domains are attached in the Render dashboard after the service exists.
+services:
+  - type: web
+    name: serviette-cms
+    runtime: node
+    plan: starter
+    repo: https://github.com/krinklechips/serviette-cms
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /admin/login
+    envVars:
+      - key: NODE_VERSION
+        value: 22.12.0
+      - key: PAYLOAD_SECRET
+        sync: false # set in dashboard — generate a long random string
+      - key: DATABASE_URI
+        sync: false # set in dashboard — the CMS's own Supabase Postgres connection string (pooler URI)
+      - key: DUMMY_SITE_URL
+        sync: false # set once the dummy site is deployed (Live Preview target)
