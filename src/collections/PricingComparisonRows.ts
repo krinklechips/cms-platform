@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const PricingComparisonRows: CollectionConfig = {
   slug: 'pricing-comparison-rows',
   admin: {
-    group: 'Pricing',
+    group: 'Pricing Page',
     useAsTitle: 'treatment',
     defaultColumns: ['treatment', 'set', 'roomchangPrice', 'order'],
   },

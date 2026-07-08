@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const PricingItems: CollectionConfig = {
   slug: 'pricing-items',
   admin: {
-    group: 'Pricing',
+    group: 'Pricing Page',
     useAsTitle: 'name',
     defaultColumns: ['name', 'price', 'category', 'order'],
   },

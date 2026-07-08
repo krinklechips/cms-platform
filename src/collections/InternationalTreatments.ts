@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const InternationalTreatments: CollectionConfig = {
   slug: 'international-treatments',
   admin: {
-    group: 'International',
+    group: 'International Page',
     useAsTitle: 'name',
     defaultColumns: ['name', 'saving', 'order'],
   },

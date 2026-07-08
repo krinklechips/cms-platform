@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const InternationalWhyItems: CollectionConfig = {
   slug: 'international-why-items',
   admin: {
-    group: 'International',
+    group: 'International Page',
     useAsTitle: 'title',
     defaultColumns: ['title', 'order'],
   },

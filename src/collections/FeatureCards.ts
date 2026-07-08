@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const FeatureCards: CollectionConfig = {
   slug: 'feature-cards',
   admin: {
-    group: 'Homepage',
+    group: 'Home Page',
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'href', 'order'],
   },

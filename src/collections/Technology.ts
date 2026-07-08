@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const Technology: CollectionConfig = {
   slug: 'technology',
   admin: {
-    group: 'Website Content',
+    group: 'Technology Page',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'category', 'published', 'order'],
   },

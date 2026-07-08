@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const FaqItems: CollectionConfig = {
   slug: 'faq-items',
   admin: {
-    group: 'Website Content',
+    group: 'FAQs',
     useAsTitle: 'question',
     defaultColumns: ['question', 'category', 'published', 'order'],
   },

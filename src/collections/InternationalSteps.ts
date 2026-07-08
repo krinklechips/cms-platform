@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const InternationalSteps: CollectionConfig = {
   slug: 'international-steps',
   admin: {
-    group: 'International',
+    group: 'International Page',
     useAsTitle: 'title',
     defaultColumns: ['stepLabel', 'title', 'order'],
   },

@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const HeroSlides: CollectionConfig = {
   slug: 'hero-slides',
   admin: {
-    group: 'Homepage',
+    group: 'Home Page',
     useAsTitle: 'title',
     defaultColumns: ['title', 'imagePosition', 'published', 'order'],
   },
