@@ -47,7 +47,7 @@ const CATALOG = [
     name: 'Homepage',
     description: 'Homepage hero, stats, feature cards, and brand logo content.',
     defaultMonthlyPrice: 0,
-    contentCollections: ['hero-slides', 'site-stats', 'feature-cards', 'brand-logos'],
+    contentCollections: ['homepage', 'site-stats', 'feature-cards', 'brand-logos'],
   },
   {
     key: 'pricing',

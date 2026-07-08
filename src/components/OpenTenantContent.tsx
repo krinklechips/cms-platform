@@ -9,7 +9,7 @@ import React from 'react'
  */
 
 const LABELS: Record<string, string> = {
-  'hero-slides': 'Hero Slides',
+  homepage: 'Homepage (Hero)',
   'site-stats': 'Site Stats',
   'feature-cards': 'Feature Cards',
   'brand-logos': 'Brand Logos',

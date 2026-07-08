@@ -38,7 +38,7 @@ type SyncCollection =
   | 'doctors'
   | 'technology'
   | 'testimonials'
-  | 'hero-slides'
+  | 'homepage'
   | 'branches'
   | 'site-stats'
   | 'feature-cards'
@@ -316,35 +316,76 @@ async function run() {
   }
   console.log(`✓ testimonials synced: ${tmC}`)
 
-  // ── hero slides ──
-  const { data: heroSlides, error: hErr } = await supabase.from('hero_slides').select('*').order('order')
+  // ── homepage (hero) — ONE doc per tenant ──
+  // Slides refresh from the live hero_slides table (published only). The
+  // pill + CTA buttons are CMS-authored: seeded once on create, never
+  // clobbered on re-sync (they don't exist in Supabase).
+  const { data: heroSlides, error: hErr } = await supabase
+    .from('hero_slides')
+    .select('*')
+    .eq('published', true)
+    .order('order')
   if (hErr) throw new Error(`hero_slides: ${hErr.message}`)
-  let hC = 0
-  for (const h of heroSlides!) {
-    await upsert(
-      'hero-slides',
-      sourceIdOf(h),
-      {
-        eyebrow: h.eyebrow ?? undefined,
-        title: h.title,
-        subtitle: h.subtitle ?? undefined,
-        description: h.description ?? undefined,
-        imageUrl: h.imageSrc ?? undefined,
-        imageAlt: h.imageAlt ?? undefined,
-        imagePosition: h.imagePosition ?? undefined,
-        imageSize: h.imageSize ?? undefined,
-        preserveFullImage: h.preserveFullImage ?? false,
-        ctaText: h.ctaText ?? undefined,
-        ctaUrl: h.ctaUrl ?? undefined,
-        order: h.order ?? 0,
-        published: h.published ?? true,
-      },
-      {},
-      {},
-    )
-    hC++
+  const slides = (heroSlides ?? []).map((h) => ({
+    imageUrl: h.imageSrc ?? undefined,
+    imagePosition: h.imagePosition ?? undefined,
+    imageSize: h.imageSize ?? undefined,
+    preserveFullImage: h.preserveFullImage ?? false,
+    eyebrow: h.eyebrow ?? undefined,
+    title: h.title,
+    subtitle: h.subtitle ?? undefined,
+    description: h.description ?? undefined,
+    ctaText: h.ctaText ?? undefined,
+    ctaUrl: h.ctaUrl ?? undefined,
+  }))
+  const hpFound = await payload.find({ collection: 'homepage', where: { tenant: { equals: tenantId } }, limit: 1 })
+  if (hpFound.docs[0]) {
+    await payload.update({ collection: 'homepage', id: hpFound.docs[0].id, data: { slides } as never, locale: 'en' })
+  } else {
+    await payload.create({
+      collection: 'homepage',
+      data: {
+        tenant: tenantId,
+        slides,
+        heroPill: 'Trusted Since 1996',
+        heroButtons: [
+          { label: 'Request An Appointment', url: '/contact' },
+          { label: 'Explore Services', url: '/services' },
+          { label: 'Our Doctors', url: '/team' },
+        ],
+      } as never,
+      locale: 'en',
+    })
+    const created = await payload.find({ collection: 'homepage', where: { tenant: { equals: tenantId } }, limit: 1 })
+    const hpId = created.docs[0].id
+    await payload.update({
+      collection: 'homepage',
+      id: hpId,
+      data: {
+        heroPill: 'ទំនុកចិត្តចាប់តាំងពីឆ្នាំ ១៩៩៦',
+        heroButtons: [
+          { label: 'ស្នើសុំការណាត់ជួប', url: '/contact' },
+          { label: 'ស្វែងរកសេវាកម្ម', url: '/services' },
+          { label: 'ទន្តបណ្ឌិតរបស់យើងខ្ញុំ', url: '/team' },
+        ],
+      } as never,
+      locale: 'kh' as never,
+    })
+    await payload.update({
+      collection: 'homepage',
+      id: hpId,
+      data: {
+        heroPill: '始创于1996年',
+        heroButtons: [
+          { label: '预约挂号', url: '/contact' },
+          { label: '浏览诊疗项目', url: '/services' },
+          { label: '医生团队', url: '/team' },
+        ],
+      } as never,
+      locale: 'cn' as never,
+    })
   }
-  console.log(`✓ hero-slides synced: ${hC}`)
+  console.log(`✓ homepage hero synced: ${slides.length} slides`)
 
   // ── branches ──
   const { data: branches, error: bErr } = await supabase.from('branches').select('*').order('order')

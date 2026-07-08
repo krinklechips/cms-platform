@@ -67,7 +67,7 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    'hero-slides': HeroSlide;
+    homepage: Homepage;
     'site-stats': SiteStat;
     'feature-cards': FeatureCard;
     'brand-logos': BrandLogo;
@@ -107,7 +107,7 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    'hero-slides': HeroSlidesSelect<false> | HeroSlidesSelect<true>;
+    homepage: HomepageSelect<false> | HomepageSelect<true>;
     'site-stats': SiteStatsSelect<false> | SiteStatsSelect<true>;
     'feature-cards': FeatureCardsSelect<false> | FeatureCardsSelect<true>;
     'brand-logos': BrandLogosSelect<false> | BrandLogosSelect<true>;
@@ -180,32 +180,65 @@ export interface UserAuthOperations {
   };
 }
 /**
+ * The home page hero: slides, trust pill, and call-to-action buttons.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "hero-slides".
+ * via the `definition` "homepage".
  */
-export interface HeroSlide {
+export interface Homepage {
   id: number;
   tenant?: (number | null) | Tenant;
   /**
-   * Supabase hero_slides.id — used by the sync for idempotent upserts.
+   * The small rounded badge at the top-left of the hero (e.g. “Trusted Since 1996”).
    */
-  sourceId?: string | null;
-  eyebrow?: string | null;
-  title: string;
-  subtitle?: string | null;
-  description?: string | null;
+  heroPill?: string | null;
   /**
-   * R2 image URL (carried from the live site).
+   * The action buttons over the hero (first one is the highlighted primary).
    */
-  imageUrl?: string | null;
-  imageAlt?: string | null;
-  imagePosition?: string | null;
-  imageSize?: string | null;
-  preserveFullImage?: boolean | null;
-  ctaText?: string | null;
-  ctaUrl?: string | null;
-  order?: number | null;
-  published?: boolean | null;
+  heroButtons?:
+    | {
+        label: string;
+        /**
+         * Site-relative (e.g. /contact) or full URL.
+         */
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Drag to reorder — the carousel plays top to bottom. Add or remove freely.
+   */
+  slides?:
+    | {
+        /**
+         * Pick from the Media Library (preferred) — or paste a URL below.
+         */
+        image?: (number | null) | Media;
+        /**
+         * Fallback image URL (used only when no Media image is selected).
+         */
+        imageUrl?: string | null;
+        /**
+         * Where the image anchors, e.g. “center center”, “center top”, “bottom center”.
+         */
+        imagePosition?: string | null;
+        /**
+         * CSS background-size, e.g. “cover” or “100% auto”.
+         */
+        imageSize?: string | null;
+        /**
+         * Show the whole image without cropping (panoramas).
+         */
+        preserveFullImage?: boolean | null;
+        eyebrow?: string | null;
+        title?: string | null;
+        subtitle?: string | null;
+        description?: string | null;
+        ctaText?: string | null;
+        ctaUrl?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1171,8 +1204,8 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'hero-slides';
-        value: number | HeroSlide;
+        relationTo: 'homepage';
+        value: number | Homepage;
       } | null)
     | ({
         relationTo: 'site-stats';
@@ -1346,24 +1379,34 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "hero-slides_select".
+ * via the `definition` "homepage_select".
  */
-export interface HeroSlidesSelect<T extends boolean = true> {
+export interface HomepageSelect<T extends boolean = true> {
   tenant?: T;
-  sourceId?: T;
-  eyebrow?: T;
-  title?: T;
-  subtitle?: T;
-  description?: T;
-  imageUrl?: T;
-  imageAlt?: T;
-  imagePosition?: T;
-  imageSize?: T;
-  preserveFullImage?: T;
-  ctaText?: T;
-  ctaUrl?: T;
-  order?: T;
-  published?: T;
+  heroPill?: T;
+  heroButtons?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  slides?:
+    | T
+    | {
+        image?: T;
+        imageUrl?: T;
+        imagePosition?: T;
+        imageSize?: T;
+        preserveFullImage?: T;
+        eyebrow?: T;
+        title?: T;
+        subtitle?: T;
+        description?: T;
+        ctaText?: T;
+        ctaUrl?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

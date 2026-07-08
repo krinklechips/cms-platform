@@ -15,7 +15,7 @@ import { Services } from './collections/Services'
 import { Doctors } from './collections/Doctors'
 import { Technology } from './collections/Technology'
 import { Testimonials } from './collections/Testimonials'
-import { HeroSlides } from './collections/HeroSlides'
+import { Homepage } from './collections/Homepage'
 import { Branches } from './collections/Branches'
 import { SiteStats } from './collections/SiteStats'
 import { FeatureCards } from './collections/FeatureCards'
@@ -98,7 +98,7 @@ export default buildConfig({
           services: slug ? `/services/${slug}` : '/services',
           doctors: '/team',
           technology: '/technology',
-          'hero-slides': '',
+          homepage: '',
           'site-stats': '',
           'feature-cards': '',
           'brand-logos': '',
@@ -123,7 +123,7 @@ export default buildConfig({
         'services',
         'doctors',
         'technology',
-        'hero-slides',
+        'homepage',
         'site-stats',
         'feature-cards',
         'brand-logos',
@@ -149,7 +149,7 @@ export default buildConfig({
   },
   collections: [
     // Order defines nav-group order: site pages first, platform tools last.
-    withModuleGating(HeroSlides),
+    withModuleGating(Homepage),
     withModuleGating(SiteStats),
     withModuleGating(FeatureCards),
     withModuleGating(BrandLogos),
@@ -250,7 +250,7 @@ export default buildConfig({
         doctors: {},
         technology: {},
         testimonials: {},
-        'hero-slides': {},
+        homepage: { isGlobal: true },
         branches: {},
         'site-stats': {},
         'feature-cards': {},
