@@ -46,14 +46,11 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
-    // Host-aware branding: tenant logo on their domain (roomchang.serviettelab.com),
-    // Serviette Labs logo on the platform domain.
-    components: {
-      graphics: {
-        Logo: '/components/BrandLogo#BrandLogo',
-        Icon: '/components/BrandLogo#BrandIcon',
-      },
-    },
+    // NOTE: host-aware branding lives on the public landing page (page.tsx),
+    // NOT the admin chrome. A custom admin graphics.Logo as an async server
+    // component (DB lookup per render) white-screens the admin, so the admin
+    // keeps Payload's default mark. Revisit as a CLIENT component that takes
+    // the logo URL as a prop if we want the login screen branded per tenant.
     // Live Preview: edit a service and watch the REAL site render update
     // beside the form — the dummy roomchang instance (CONTENT_SOURCE=payload,
     // :3200) refreshes on save. Locale codes ARE the site's URL segments
