@@ -1,6 +1,7 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
 import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
+import { s3Storage } from '@payloadcms/storage-s3'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -100,5 +101,31 @@ export default buildConfig({
       userHasAccessToAllTenants: (user) =>
         Boolean((user as { roles?: string[] })?.roles?.includes('super-admin')),
     }),
+    // Media uploads → Cloudflare R2 (cms-platform bucket). Env var names match
+    // what already exists on the Render service from the old platform.
+    // Enabled only when creds are present, so local dev without them still boots.
+    ...(process.env.R2_ACCESS_KEY_ID
+      ? [
+          s3Storage({
+            collections: {
+              media: {
+                prefix: 'serviette-media',
+                generateFileURL: ({ filename, prefix }) =>
+                  `${process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, '')}/${prefix}/${filename}`,
+              },
+            },
+            bucket: process.env.R2_BUCKET_NAME || '',
+            config: {
+              endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+              region: 'auto',
+              credentials: {
+                accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+                secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+              },
+              forcePathStyle: true,
+            },
+          }),
+        ]
+      : []),
   ],
 })
