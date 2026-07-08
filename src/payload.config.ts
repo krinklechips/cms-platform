@@ -164,29 +164,30 @@ export default buildConfig({
     }),
     // Media uploads → Cloudflare R2 (cms-platform bucket). Env var names match
     // what already exists on the Render service from the old platform.
-    // Enabled only when creds are present, so local dev without them still boots.
-    ...(process.env.R2_ACCESS_KEY_ID
-      ? [
-          s3Storage({
-            collections: {
-              media: {
-                prefix: 'serviette-media',
-                generateFileURL: ({ filename, prefix }) =>
-                  `${process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, '')}/${prefix}/${filename}`,
-              },
-            },
-            bucket: process.env.R2_BUCKET_NAME || '',
-            config: {
-              endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-              region: 'auto',
-              credentials: {
-                accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
-                secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
-              },
-              forcePathStyle: true,
-            },
-          }),
-        ]
-      : []),
+    //
+    // ALWAYS registered (with `enabled` gating runtime behavior) — a
+    // conditionally-registered plugin makes the generated importMap depend on
+    // local env vars, which shipped an importMap missing
+    // S3ClientUploadHandler and white-screened the production admin.
+    s3Storage({
+      enabled: Boolean(process.env.R2_ACCESS_KEY_ID),
+      collections: {
+        media: {
+          prefix: 'serviette-media',
+          generateFileURL: ({ filename, prefix }) =>
+            `${process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, '')}/${prefix}/${filename}`,
+        },
+      },
+      bucket: process.env.R2_BUCKET_NAME || '',
+      config: {
+        endpoint: `https://${process.env.R2_ACCOUNT_ID ?? 'unset'}.r2.cloudflarestorage.com`,
+        region: 'auto',
+        credentials: {
+          accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+        },
+        forcePathStyle: true,
+      },
+    }),
   ],
 })
