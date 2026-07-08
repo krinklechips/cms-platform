@@ -57,9 +57,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "hero_slides_locales" DISABLE ROW LEVEL SECURITY;
   DROP TABLE "hero_slides" CASCADE;
   DROP TABLE "hero_slides_locales" CASCADE;
-  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_hero_slides_fk";
+  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_hero_slides_fk";
   
-  DROP INDEX "payload_locked_documents_rels_hero_slides_id_idx";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_hero_slides_id_idx";
   ALTER TABLE "payload_locked_documents_rels" ADD COLUMN "homepage_id" integer;
   ALTER TABLE "homepage_hero_buttons" ADD CONSTRAINT "homepage_hero_buttons_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."homepage"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "homepage_hero_buttons_locales" ADD CONSTRAINT "homepage_hero_buttons_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."homepage_hero_buttons"("id") ON DELETE cascade ON UPDATE no action;
