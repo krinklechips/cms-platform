@@ -39,7 +39,7 @@ export const Testimonials: CollectionConfig = {
       name: 'authorPhotoUrl',
       type: 'text',
       admin: {
-        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] },
+        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
         description: 'Author photo URL (carried from the live site).',
       },
     },

@@ -34,7 +34,7 @@ export const Partners: CollectionConfig = {
       name: 'logoUrl',
       type: 'text',
       admin: {
-        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] },
+        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
         description: 'R2 logo URL (carried from partners.logo_src).',
       },
     },

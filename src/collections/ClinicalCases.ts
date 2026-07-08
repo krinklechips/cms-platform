@@ -73,7 +73,7 @@ export const ClinicalCases: CollectionConfig = {
       name: 'imageUrl',
       type: 'text',
       admin: {
-        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] },
+        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
         description: 'R2 image URL (carried from clinical_cases.imageUrl).',
       },
     },

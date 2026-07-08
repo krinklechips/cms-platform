@@ -6,10 +6,11 @@ import type { CollectionConfig } from 'payload'
  */
 export const HeroSlides: CollectionConfig = {
   slug: 'hero-slides',
+  defaultSort: 'order',
   admin: {
     group: 'Home Page',
     useAsTitle: 'title',
-    defaultColumns: ['title', 'imagePosition', 'published', 'order'],
+    defaultColumns: ['imageUrl', 'title', 'published', 'order'],
   },
   access: {
     read: () => true,
@@ -50,7 +51,7 @@ export const HeroSlides: CollectionConfig = {
       name: 'imageUrl',
       type: 'text',
       admin: {
-        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] },
+        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
         description: 'R2 image URL (carried from the live site).',
       },
     },

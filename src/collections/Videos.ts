@@ -39,7 +39,7 @@ export const Videos: CollectionConfig = {
     {
       name: 'thumbnail',
       type: 'text',
-      admin: { components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] } },
+      admin: { components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' } },
     },
     {
       name: 'description',

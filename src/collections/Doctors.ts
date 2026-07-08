@@ -80,7 +80,7 @@ export const Doctors: CollectionConfig = {
       name: 'photoUrl',
       type: 'text',
       admin: {
-        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] }, description: 'R2 photo URL (carried from the live site).' },
+        components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' }, description: 'R2 photo URL (carried from the live site).' },
     },
     {
       name: 'order',
