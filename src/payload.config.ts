@@ -34,11 +34,16 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
-    // Live Preview: edit a service and watch the rendered page update
-    // beside the form (per-locale). The dummy site will use the same URLs.
+    // Live Preview: edit a service and watch the REAL site render update
+    // beside the form — the dummy roomchang instance (CONTENT_SOURCE=payload,
+    // :3200) refreshes on save. Locale codes map to the site's URL segments
+    // (km→kh, zh→cn). Falls back to the built-in approximation at /preview.
     livePreview: {
-      url: ({ data, locale }) =>
-        `/preview/services/${(data as { slug?: string })?.slug ?? ''}?locale=${locale?.code ?? 'en'}`,
+      url: ({ data, locale }) => {
+        const seg = ({ en: 'en', km: 'kh', zh: 'cn' } as Record<string, string>)[locale?.code ?? 'en'] ?? 'en'
+        const dummy = process.env.DUMMY_SITE_URL || 'http://localhost:3200'
+        return `${dummy}/${seg}/services/${(data as { slug?: string })?.slug ?? ''}`
+      },
       collections: ['services'],
       breakpoints: [
         { label: 'Mobile', name: 'mobile', width: 390, height: 844 },

@@ -214,6 +214,20 @@ export interface Service {
   slug: string;
   description?: string | null;
   /**
+   * Small uppercase label above the hero title.
+   */
+  eyebrow?: string | null;
+  /**
+   * Longer hero paragraph (falls back to description).
+   */
+  heroDescription?: string | null;
+  category?: string | null;
+  /**
+   * Icon name used on service cards.
+   */
+  icon?: string | null;
+  isFeatured?: boolean | null;
+  /**
    * Feature bullets shown on cards / detail page.
    */
   features?:
@@ -458,6 +472,11 @@ export interface ServicesSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   description?: T;
+  eyebrow?: T;
+  heroDescription?: T;
+  category?: T;
+  icon?: T;
+  isFeatured?: T;
   features?:
     | T
     | {

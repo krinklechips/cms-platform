@@ -108,6 +108,8 @@ async function run() {
       const d: Record<string, unknown> = {}
       if (typeof t.name === 'string') d.name = t.name
       if (typeof t.description === 'string') d.description = t.description
+      if (typeof t.eyebrow === 'string') d.eyebrow = t.eyebrow
+      if (typeof t.heroDescription === 'string') d.heroDescription = t.heroDescription
       const f = toArr(t.features, 'feature')
       if (f) d.features = f
       if (t.content && typeof t.content === 'object') d.content = t.content
@@ -120,6 +122,11 @@ async function run() {
         name: s.name,
         slug: s.slug,
         description: s.description ?? undefined,
+        eyebrow: s.eyebrow ?? undefined,
+        heroDescription: s.heroDescription ?? undefined,
+        category: s.category ?? undefined,
+        icon: s.icon ?? undefined,
+        isFeatured: s.isFeatured ?? false,
         features: toArr(s.features, 'feature'),
         imageUrl: s.imageSrc ?? undefined,
         content: s.content ?? undefined,

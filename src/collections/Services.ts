@@ -48,6 +48,34 @@ export const Services: CollectionConfig = {
       localized: true,
     },
     {
+      name: 'eyebrow',
+      type: 'text',
+      localized: true,
+      admin: { description: 'Small uppercase label above the hero title.' },
+    },
+    {
+      name: 'heroDescription',
+      type: 'textarea',
+      localized: true,
+      admin: { description: 'Longer hero paragraph (falls back to description).' },
+    },
+    {
+      name: 'category',
+      type: 'text',
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'icon',
+      type: 'text',
+      admin: { position: 'sidebar', description: 'Icon name used on service cards.' },
+    },
+    {
+      name: 'isFeatured',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { position: 'sidebar' },
+    },
+    {
       name: 'features',
       type: 'array',
       localized: true,
