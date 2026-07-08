@@ -60,17 +60,13 @@ export default buildConfig({
   // Adapter follows DATABASE_URI: postgres:// in production (the CMS's OWN
   // Supabase project — never the live roomchang one), sqlite file in dev.
   //
-  // push:true — BOOTSTRAP ONLY. The production Postgres DB starts completely
-  // empty (no migrations were ever generated/run against it), so without this
-  // every query 500s with "relation does not exist". Safe right now because
-  // there is zero data to lose. Before the CMS holds real content, switch to
-  // versioned migrations (`payload migrate:create` + `payload migrate`) and
-  // remove this flag — push can silently alter/drop columns on schema changes
-  // once real data exists, which is not something you want in production.
+  // Postgres schema is managed by versioned migrations (src/migrations),
+  // applied on deploy via `payload migrate` (see start script). `push` is
+  // dev-only — ignored under NODE_ENV=production — which is why the empty
+  // prod DB never got its tables. Migrations are the correct production fix.
   db: process.env.DATABASE_URI?.startsWith('postgres')
     ? postgresAdapter({
         pool: { connectionString: process.env.DATABASE_URI },
-        push: true,
       })
     : sqliteAdapter({
         client: {

@@ -11,8 +11,10 @@
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
-    "start": "NODE_OPTIONS=--no-deprecation next start -p ${PORT:-3100}",
-    "sync:roomchang": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/sync-roomchang.ts"
+    "start": "NODE_OPTIONS=--no-deprecation payload migrate && NODE_OPTIONS=--no-deprecation next start -p ${PORT:-3100}",
+    "sync:roomchang": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/sync-roomchang.ts",
+    "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
+    "migrate:create": "cross-env NODE_OPTIONS=--no-deprecation payload migrate:create"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.85.2",
