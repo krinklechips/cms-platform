@@ -34,6 +34,17 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    // Live Preview: edit a service and watch the rendered page update
+    // beside the form (per-locale). The dummy site will use the same URLs.
+    livePreview: {
+      url: ({ data, locale }) =>
+        `/preview/services/${(data as { slug?: string })?.slug ?? ''}?locale=${locale?.code ?? 'en'}`,
+      collections: ['services'],
+      breakpoints: [
+        { label: 'Mobile', name: 'mobile', width: 390, height: 844 },
+        { label: 'Desktop', name: 'desktop', width: 1280, height: 900 },
+      ],
+    },
   },
   collections: [Users, Media, Tenants, Services, Doctors],
   editor: lexicalEditor(),

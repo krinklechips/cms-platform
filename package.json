@@ -17,6 +17,7 @@
   "dependencies": {
     "@payloadcms/db-postgres": "3.85.2",
     "@payloadcms/db-sqlite": "3.85.2",
+    "@payloadcms/live-preview-react": "^3.85.2",
     "@payloadcms/next": "3.85.2",
     "@payloadcms/plugin-multi-tenant": "3.85.2",
     "@payloadcms/richtext-lexical": "3.85.2",
