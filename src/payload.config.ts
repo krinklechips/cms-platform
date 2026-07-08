@@ -35,6 +35,7 @@ import { InternationalWhyItems } from './collections/InternationalWhyItems'
 import { Modules } from './collections/Modules'
 import { Invoices } from './collections/Invoices'
 import { getTenantByHost, normalizeHost } from './lib/get-tenant-by-host'
+import { withModuleGating } from './lib/module-gating'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -63,6 +64,13 @@ export default buildConfig({
     // component (DB lookup per render) white-screens the admin, so the admin
     // keeps Payload's default mark. Revisit as a CLIENT component that takes
     // the logo URL as a prop if we want the login screen branded per tenant.
+    //
+    // Serviette Labs HQ cockpit — beforeDashboard IS the verified-safe slot
+    // for an async RSC with Local API access (renders inside the
+    // auth-protected Dashboard with payload+user serverProps).
+    components: {
+      beforeDashboard: ['/components/PlatformDashboard#PlatformDashboard'],
+    },
     // Live Preview: edit a service and watch the REAL site render update
     // beside the form — the dummy roomchang instance (CONTENT_SOURCE=payload,
     // :3200) refreshes on save. Locale codes ARE the site's URL segments
@@ -81,27 +89,27 @@ export default buildConfig({
   },
   collections: [
     // Order defines nav-group order: site pages first, platform tools last.
-    HeroSlides,
-    SiteStats,
-    FeatureCards,
-    BrandLogos,
-    Testimonials,
-    Services,
-    Doctors,
-    Technology,
-    PricingCategories,
-    PricingItems,
-    PricingComparisonSets,
-    PricingComparisonRows,
-    InternationalTreatments,
-    InternationalSteps,
-    InternationalWhyItems,
-    TimelineEvents,
-    Branches,
-    ClinicalCases,
-    Partners,
-    PartnerCategories,
-    FaqItems,
+    withModuleGating(HeroSlides),
+    withModuleGating(SiteStats),
+    withModuleGating(FeatureCards),
+    withModuleGating(BrandLogos),
+    withModuleGating(Testimonials),
+    withModuleGating(Services),
+    withModuleGating(Doctors),
+    withModuleGating(Technology),
+    withModuleGating(PricingCategories),
+    withModuleGating(PricingItems),
+    withModuleGating(PricingComparisonSets),
+    withModuleGating(PricingComparisonRows),
+    withModuleGating(InternationalTreatments),
+    withModuleGating(InternationalSteps),
+    withModuleGating(InternationalWhyItems),
+    withModuleGating(TimelineEvents),
+    withModuleGating(Branches),
+    withModuleGating(ClinicalCases),
+    withModuleGating(Partners),
+    withModuleGating(PartnerCategories),
+    withModuleGating(FaqItems),
     Media,
     Users,
     Tenants,

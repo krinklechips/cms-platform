@@ -1,4 +1,4 @@
-import type { CollectionConfig, Where } from 'payload'
+import type { CollectionBeforeChangeHook, CollectionConfig, Where } from 'payload'
 
 const isSuperAdmin = (user: unknown): boolean =>
   Boolean((user as { roles?: string[] } | null)?.roles?.includes('super-admin'))
@@ -10,6 +10,47 @@ const userTenantIds = (user: unknown): (number | string)[] => {
   return (rows ?? [])
     .map((r) => (typeof r.tenant === 'object' && r.tenant !== null ? r.tenant.id : r.tenant))
     .filter((v): v is number | string => v !== undefined && v !== null)
+}
+
+type SubscriptionRow = {
+  active?: boolean | null
+  module?: number | string | { id?: number | string | null } | null
+}
+
+type ModuleDoc = {
+  contentCollections?: unknown
+}
+
+const recomputeEnabledCollections: CollectionBeforeChangeHook = async ({
+  data,
+  originalDoc,
+  req,
+}) => {
+  const subscriptions =
+    ((data?.subscriptions ?? originalDoc?.subscriptions ?? []) as SubscriptionRow[]) ?? []
+  const enabled = new Set<string>()
+
+  for (const sub of subscriptions) {
+    if (sub?.active === false || !sub?.module) continue
+
+    const moduleId =
+      typeof sub.module === 'object' && sub.module !== null ? sub.module.id : sub.module
+    if (moduleId === undefined || moduleId === null) continue
+
+    const mod = (await req.payload.findByID({
+      collection: 'modules',
+      id: moduleId,
+      depth: 0,
+      overrideAccess: true,
+    })) as ModuleDoc
+
+    if (!Array.isArray(mod.contentCollections)) continue
+    for (const slug of mod.contentCollections) {
+      if (typeof slug === 'string') enabled.add(slug)
+    }
+  }
+
+  return { ...data, enabledCollections: [...enabled].sort() }
 }
 
 /**
@@ -38,6 +79,9 @@ export const Tenants: CollectionConfig = {
     create: ({ req: { user } }) => isSuperAdmin(user),
     update: ({ req: { user } }) => isSuperAdmin(user),
     delete: ({ req: { user } }) => isSuperAdmin(user),
+  },
+  hooks: {
+    beforeChange: [recomputeEnabledCollections],
   },
   fields: [
     {
@@ -122,6 +166,14 @@ export const Tenants: CollectionConfig = {
           type: 'date',
         },
       ],
+    },
+    {
+      name: 'enabledCollections',
+      type: 'json',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
     },
   ],
 }

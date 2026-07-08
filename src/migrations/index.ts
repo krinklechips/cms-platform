@@ -3,6 +3,7 @@ import * as migration_20260708_071008_media_r2_prefix from './20260708_071008_me
 import * as migration_20260708_071914_modules_billing_branding from './20260708_071914_modules_billing_branding';
 import * as migration_20260708_073232_wave1_content from './20260708_073232_wave1_content';
 import * as migration_20260708_081120_wave2_content from './20260708_081120_wave2_content';
+import * as migration_20260708_085547_module_gating_cockpit from './20260708_085547_module_gating_cockpit';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20260708_081120_wave2_content.up,
     down: migration_20260708_081120_wave2_content.down,
-    name: '20260708_081120_wave2_content'
+    name: '20260708_081120_wave2_content',
+  },
+  {
+    up: migration_20260708_085547_module_gating_cockpit.up,
+    down: migration_20260708_085547_module_gating_cockpit.down,
+    name: '20260708_085547_module_gating_cockpit'
   },
 ];

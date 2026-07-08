@@ -67,30 +67,30 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    users: User;
-    media: Media;
-    tenants: Tenant;
-    services: Service;
-    doctors: Doctor;
-    technology: Technology;
-    testimonials: Testimonial;
     'hero-slides': HeroSlide;
-    branches: Branch;
     'site-stats': SiteStat;
     'feature-cards': FeatureCard;
     'brand-logos': BrandLogo;
+    testimonials: Testimonial;
+    services: Service;
+    doctors: Doctor;
+    technology: Technology;
     'pricing-categories': PricingCategory;
     'pricing-items': PricingItem;
     'pricing-comparison-sets': PricingComparisonSet;
     'pricing-comparison-rows': PricingComparisonRow;
-    'clinical-cases': ClinicalCase;
-    'partner-categories': PartnerCategory;
-    partners: Partner;
-    'faq-items': FaqItem;
-    'timeline-events': TimelineEvent;
     'international-treatments': InternationalTreatment;
     'international-steps': InternationalStep;
     'international-why-items': InternationalWhyItem;
+    'timeline-events': TimelineEvent;
+    branches: Branch;
+    'clinical-cases': ClinicalCase;
+    partners: Partner;
+    'partner-categories': PartnerCategory;
+    'faq-items': FaqItem;
+    media: Media;
+    users: User;
+    tenants: Tenant;
     modules: Module;
     invoices: Invoice;
     'payload-kv': PayloadKv;
@@ -100,30 +100,30 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
-    tenants: TenantsSelect<false> | TenantsSelect<true>;
-    services: ServicesSelect<false> | ServicesSelect<true>;
-    doctors: DoctorsSelect<false> | DoctorsSelect<true>;
-    technology: TechnologySelect<false> | TechnologySelect<true>;
-    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     'hero-slides': HeroSlidesSelect<false> | HeroSlidesSelect<true>;
-    branches: BranchesSelect<false> | BranchesSelect<true>;
     'site-stats': SiteStatsSelect<false> | SiteStatsSelect<true>;
     'feature-cards': FeatureCardsSelect<false> | FeatureCardsSelect<true>;
     'brand-logos': BrandLogosSelect<false> | BrandLogosSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
+    services: ServicesSelect<false> | ServicesSelect<true>;
+    doctors: DoctorsSelect<false> | DoctorsSelect<true>;
+    technology: TechnologySelect<false> | TechnologySelect<true>;
     'pricing-categories': PricingCategoriesSelect<false> | PricingCategoriesSelect<true>;
     'pricing-items': PricingItemsSelect<false> | PricingItemsSelect<true>;
     'pricing-comparison-sets': PricingComparisonSetsSelect<false> | PricingComparisonSetsSelect<true>;
     'pricing-comparison-rows': PricingComparisonRowsSelect<false> | PricingComparisonRowsSelect<true>;
-    'clinical-cases': ClinicalCasesSelect<false> | ClinicalCasesSelect<true>;
-    'partner-categories': PartnerCategoriesSelect<false> | PartnerCategoriesSelect<true>;
-    partners: PartnersSelect<false> | PartnersSelect<true>;
-    'faq-items': FaqItemsSelect<false> | FaqItemsSelect<true>;
-    'timeline-events': TimelineEventsSelect<false> | TimelineEventsSelect<true>;
     'international-treatments': InternationalTreatmentsSelect<false> | InternationalTreatmentsSelect<true>;
     'international-steps': InternationalStepsSelect<false> | InternationalStepsSelect<true>;
     'international-why-items': InternationalWhyItemsSelect<false> | InternationalWhyItemsSelect<true>;
+    'timeline-events': TimelineEventsSelect<false> | TimelineEventsSelect<true>;
+    branches: BranchesSelect<false> | BranchesSelect<true>;
+    'clinical-cases': ClinicalCasesSelect<false> | ClinicalCasesSelect<true>;
+    partners: PartnersSelect<false> | PartnersSelect<true>;
+    'partner-categories': PartnerCategoriesSelect<false> | PartnerCategoriesSelect<true>;
+    'faq-items': FaqItemsSelect<false> | FaqItemsSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
+    tenants: TenantsSelect<false> | TenantsSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
     invoices: InvoicesSelect<false> | InvoicesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -167,36 +167,33 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
+ * via the `definition` "hero-slides".
  */
-export interface User {
+export interface HeroSlide {
   id: number;
-  name?: string | null;
-  roles: ('super-admin' | 'tenant-admin' | 'editor')[];
-  tenants?:
-    | {
-        tenant: number | Tenant;
-        id?: string | null;
-      }[]
-    | null;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase hero_slides.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  eyebrow?: string | null;
+  title: string;
+  subtitle?: string | null;
+  description?: string | null;
+  /**
+   * R2 image URL (carried from the live site).
+   */
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  imagePosition?: string | null;
+  imageSize?: string | null;
+  preserveFullImage?: boolean | null;
+  ctaText?: string | null;
+  ctaUrl?: string | null;
+  order?: number | null;
+  published?: boolean | null;
   updatedAt: string;
   createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -240,6 +237,15 @@ export interface Tenant {
         id?: string | null;
       }[]
     | null;
+  enabledCollections?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -251,6 +257,7 @@ export interface Media {
   id: number;
   tenant?: (number | null) | Tenant;
   alt: string;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -281,6 +288,110 @@ export interface Module {
    * USD per month. Can be overridden per tenant subscription.
    */
   defaultMonthlyPrice: number;
+  /**
+   * Array of collection slugs this module unlocks in the tenant admin, e.g. ["services","doctors"]
+   */
+  contentCollections?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-stats".
+ */
+export interface SiteStat {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase site_stats.key — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  key: string;
+  displayValue?: string | null;
+  numericValue?: number | null;
+  suffix?: string | null;
+  label?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feature-cards".
+ */
+export interface FeatureCard {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase homepage_feature_cards.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  slug: string;
+  title: string;
+  description?: string | null;
+  /**
+   * R2 image URL (carried from the live site).
+   */
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  href?: string | null;
+  cta?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-logos".
+ */
+export interface BrandLogo {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase brand_logos.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  slug: string;
+  name: string;
+  /**
+   * R2 logo URL (carried from the live site).
+   */
+  logoUrl?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase testimonials.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  authorName: string;
+  authorTitle?: string | null;
+  /**
+   * Author photo URL (carried from the live site).
+   */
+  authorPhotoUrl?: string | null;
+  quote?: string | null;
+  rating?: number | null;
+  isFeatured?: boolean | null;
+  order?: number | null;
+  published?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -440,176 +551,6 @@ export interface Technology {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "testimonials".
- */
-export interface Testimonial {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase testimonials.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  authorName: string;
-  authorTitle?: string | null;
-  /**
-   * Author photo URL (carried from the live site).
-   */
-  authorPhotoUrl?: string | null;
-  quote?: string | null;
-  rating?: number | null;
-  isFeatured?: boolean | null;
-  order?: number | null;
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "hero-slides".
- */
-export interface HeroSlide {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase hero_slides.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  eyebrow?: string | null;
-  title: string;
-  subtitle?: string | null;
-  description?: string | null;
-  /**
-   * R2 image URL (carried from the live site).
-   */
-  imageUrl?: string | null;
-  imageAlt?: string | null;
-  imagePosition?: string | null;
-  imageSize?: string | null;
-  preserveFullImage?: boolean | null;
-  ctaText?: string | null;
-  ctaUrl?: string | null;
-  order?: number | null;
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "branches".
- */
-export interface Branch {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase branches.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  name: string;
-  /**
-   * Optional — the live branches table has no slugs; the sync derives one from the name.
-   */
-  slug?: string | null;
-  shortName?: string | null;
-  badge?: string | null;
-  description?: string | null;
-  address?: string | null;
-  phone?: string | null;
-  mobile?: string | null;
-  email?: string | null;
-  hours?: string | null;
-  /**
-   * R2 image URL (carried from the live site).
-   */
-  imageUrl?: string | null;
-  mapQuery?: string | null;
-  mapUrl?: string | null;
-  mapPlaceUrl?: string | null;
-  /**
-   * Branch photos JSON — carried from the live site losslessly.
-   */
-  photos?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  order?: number | null;
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "site-stats".
- */
-export interface SiteStat {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase site_stats.key — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  key: string;
-  displayValue?: string | null;
-  numericValue?: number | null;
-  suffix?: string | null;
-  label?: string | null;
-  order?: number | null;
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "feature-cards".
- */
-export interface FeatureCard {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase homepage_feature_cards.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  slug: string;
-  title: string;
-  description?: string | null;
-  /**
-   * R2 image URL (carried from the live site).
-   */
-  imageUrl?: string | null;
-  imageAlt?: string | null;
-  href?: string | null;
-  cta?: string | null;
-  order?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "brand-logos".
- */
-export interface BrandLogo {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase brand_logos.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  slug: string;
-  name: string;
-  /**
-   * R2 logo URL (carried from the live site).
-   */
-  logoUrl?: string | null;
-  order?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pricing-categories".
  */
 export interface PricingCategory {
@@ -689,130 +630,6 @@ export interface PricingComparisonRow {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "clinical-cases".
- */
-export interface ClinicalCase {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase clinical_cases.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  title: string;
-  slug: string;
-  category?: string | null;
-  treatment?: string | null;
-  duration?: string | null;
-  description?: string | null;
-  tag?: string | null;
-  fullText?: string | null;
-  /**
-   * R2 image URL (carried from clinical_cases.imageUrl).
-   */
-  imageUrl?: string | null;
-  /**
-   * Clinical case images JSON — carried from the live site losslessly.
-   */
-  images?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  order?: number | null;
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "partner-categories".
- */
-export interface PartnerCategory {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase partner_categories.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  name: string;
-  order?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "partners".
- */
-export interface Partner {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase partners.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  name: string;
-  /**
-   * R2 logo URL (carried from partners.logo_src).
-   */
-  logoUrl?: string | null;
-  website?: string | null;
-  category?: (number | null) | PartnerCategory;
-  sourceCategoryId?: string | null;
-  order?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "faq-items".
- */
-export interface FaqItem {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase faq_items.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  question: string;
-  answer?: string | null;
-  category?: string | null;
-  order?: number | null;
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "timeline-events".
- */
-export interface TimelineEvent {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase timeline_events.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  year: string;
-  caption?: string | null;
-  heading: string;
-  body?: string | null;
-  /**
-   * R2 image URL (carried from timeline_events.imageSrc).
-   */
-  imageUrl?: string | null;
-  imageAlt?: string | null;
-  imagePosition?: string | null;
-  order?: number | null;
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "international-treatments".
  */
 export interface InternationalTreatment {
@@ -862,6 +679,211 @@ export interface InternationalWhyItem {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timeline-events".
+ */
+export interface TimelineEvent {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase timeline_events.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  year: string;
+  caption?: string | null;
+  heading: string;
+  body?: string | null;
+  /**
+   * R2 image URL (carried from timeline_events.imageSrc).
+   */
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  imagePosition?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "branches".
+ */
+export interface Branch {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase branches.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  /**
+   * Optional — the live branches table has no slugs; the sync derives one from the name.
+   */
+  slug?: string | null;
+  shortName?: string | null;
+  badge?: string | null;
+  description?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+  hours?: string | null;
+  /**
+   * R2 image URL (carried from the live site).
+   */
+  imageUrl?: string | null;
+  mapQuery?: string | null;
+  mapUrl?: string | null;
+  mapPlaceUrl?: string | null;
+  /**
+   * Branch photos JSON — carried from the live site losslessly.
+   */
+  photos?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clinical-cases".
+ */
+export interface ClinicalCase {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase clinical_cases.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  title: string;
+  slug: string;
+  category?: string | null;
+  treatment?: string | null;
+  duration?: string | null;
+  description?: string | null;
+  tag?: string | null;
+  fullText?: string | null;
+  /**
+   * R2 image URL (carried from clinical_cases.imageUrl).
+   */
+  imageUrl?: string | null;
+  /**
+   * Clinical case images JSON — carried from the live site losslessly.
+   */
+  images?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partners".
+ */
+export interface Partner {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase partners.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  /**
+   * R2 logo URL (carried from partners.logo_src).
+   */
+  logoUrl?: string | null;
+  website?: string | null;
+  category?: (number | null) | PartnerCategory;
+  sourceCategoryId?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-categories".
+ */
+export interface PartnerCategory {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase partner_categories.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faq-items".
+ */
+export interface FaqItem {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase faq_items.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  question: string;
+  answer?: string | null;
+  category?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  name?: string | null;
+  roles: ('super-admin' | 'tenant-admin' | 'editor')[];
+  tenants?:
+    | {
+        tenant: number | Tenant;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * Create an invoice with an empty line-item list to auto-fill it from the tenant’s active subscriptions.
@@ -925,40 +947,8 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
-      } | null)
-    | ({
-        relationTo: 'media';
-        value: number | Media;
-      } | null)
-    | ({
-        relationTo: 'tenants';
-        value: number | Tenant;
-      } | null)
-    | ({
-        relationTo: 'services';
-        value: number | Service;
-      } | null)
-    | ({
-        relationTo: 'doctors';
-        value: number | Doctor;
-      } | null)
-    | ({
-        relationTo: 'technology';
-        value: number | Technology;
-      } | null)
-    | ({
-        relationTo: 'testimonials';
-        value: number | Testimonial;
-      } | null)
-    | ({
         relationTo: 'hero-slides';
         value: number | HeroSlide;
-      } | null)
-    | ({
-        relationTo: 'branches';
-        value: number | Branch;
       } | null)
     | ({
         relationTo: 'site-stats';
@@ -971,6 +961,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'brand-logos';
         value: number | BrandLogo;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'services';
+        value: number | Service;
+      } | null)
+    | ({
+        relationTo: 'doctors';
+        value: number | Doctor;
+      } | null)
+    | ({
+        relationTo: 'technology';
+        value: number | Technology;
       } | null)
     | ({
         relationTo: 'pricing-categories';
@@ -989,26 +995,6 @@ export interface PayloadLockedDocument {
         value: number | PricingComparisonRow;
       } | null)
     | ({
-        relationTo: 'clinical-cases';
-        value: number | ClinicalCase;
-      } | null)
-    | ({
-        relationTo: 'partner-categories';
-        value: number | PartnerCategory;
-      } | null)
-    | ({
-        relationTo: 'partners';
-        value: number | Partner;
-      } | null)
-    | ({
-        relationTo: 'faq-items';
-        value: number | FaqItem;
-      } | null)
-    | ({
-        relationTo: 'timeline-events';
-        value: number | TimelineEvent;
-      } | null)
-    | ({
         relationTo: 'international-treatments';
         value: number | InternationalTreatment;
       } | null)
@@ -1019,6 +1005,42 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'international-why-items';
         value: number | InternationalWhyItem;
+      } | null)
+    | ({
+        relationTo: 'timeline-events';
+        value: number | TimelineEvent;
+      } | null)
+    | ({
+        relationTo: 'branches';
+        value: number | Branch;
+      } | null)
+    | ({
+        relationTo: 'clinical-cases';
+        value: number | ClinicalCase;
+      } | null)
+    | ({
+        relationTo: 'partners';
+        value: number | Partner;
+      } | null)
+    | ({
+        relationTo: 'partner-categories';
+        value: number | PartnerCategory;
+      } | null)
+    | ({
+        relationTo: 'faq-items';
+        value: number | FaqItem;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: number | User;
+      } | null)
+    | ({
+        relationTo: 'tenants';
+        value: number | Tenant;
       } | null)
     | ({
         relationTo: 'modules';
@@ -1072,76 +1094,91 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "hero-slides_select".
  */
-export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  roles?: T;
-  tenants?:
-    | T
-    | {
-        tenant?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
- */
-export interface MediaSelect<T extends boolean = true> {
+export interface HeroSlidesSelect<T extends boolean = true> {
   tenant?: T;
-  alt?: T;
+  sourceId?: T;
+  eyebrow?: T;
+  title?: T;
+  subtitle?: T;
+  description?: T;
+  imageUrl?: T;
+  imageAlt?: T;
+  imagePosition?: T;
+  imageSize?: T;
+  preserveFullImage?: T;
+  ctaText?: T;
+  ctaUrl?: T;
+  order?: T;
+  published?: T;
   updatedAt?: T;
   createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tenants_select".
+ * via the `definition` "site-stats_select".
  */
-export interface TenantsSelect<T extends boolean = true> {
-  name?: T;
+export interface SiteStatsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  key?: T;
+  displayValue?: T;
+  numericValue?: T;
+  suffix?: T;
+  label?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feature-cards_select".
+ */
+export interface FeatureCardsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
   slug?: T;
-  logo?: T;
-  domains?:
-    | T
-    | {
-        domain?: T;
-        id?: T;
-      };
-  subscriptions?:
-    | T
-    | {
-        module?: T;
-        monthlyPrice?: T;
-        active?: T;
-        startedAt?: T;
-        id?: T;
-      };
+  title?: T;
+  description?: T;
+  imageUrl?: T;
+  imageAlt?: T;
+  href?: T;
+  cta?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-logos_select".
+ */
+export interface BrandLogosSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  slug?: T;
+  name?: T;
+  logoUrl?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  authorName?: T;
+  authorTitle?: T;
+  authorPhotoUrl?: T;
+  quote?: T;
+  rating?: T;
+  isFeatured?: T;
+  order?: T;
+  published?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1231,123 +1268,6 @@ export interface TechnologySelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "testimonials_select".
- */
-export interface TestimonialsSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  authorName?: T;
-  authorTitle?: T;
-  authorPhotoUrl?: T;
-  quote?: T;
-  rating?: T;
-  isFeatured?: T;
-  order?: T;
-  published?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "hero-slides_select".
- */
-export interface HeroSlidesSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  eyebrow?: T;
-  title?: T;
-  subtitle?: T;
-  description?: T;
-  imageUrl?: T;
-  imageAlt?: T;
-  imagePosition?: T;
-  imageSize?: T;
-  preserveFullImage?: T;
-  ctaText?: T;
-  ctaUrl?: T;
-  order?: T;
-  published?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "branches_select".
- */
-export interface BranchesSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  name?: T;
-  slug?: T;
-  shortName?: T;
-  badge?: T;
-  description?: T;
-  address?: T;
-  phone?: T;
-  mobile?: T;
-  email?: T;
-  hours?: T;
-  imageUrl?: T;
-  mapQuery?: T;
-  mapUrl?: T;
-  mapPlaceUrl?: T;
-  photos?: T;
-  order?: T;
-  published?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "site-stats_select".
- */
-export interface SiteStatsSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  key?: T;
-  displayValue?: T;
-  numericValue?: T;
-  suffix?: T;
-  label?: T;
-  order?: T;
-  published?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "feature-cards_select".
- */
-export interface FeatureCardsSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  slug?: T;
-  title?: T;
-  description?: T;
-  imageUrl?: T;
-  imageAlt?: T;
-  href?: T;
-  cta?: T;
-  order?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "brand-logos_select".
- */
-export interface BrandLogosSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  slug?: T;
-  name?: T;
-  logoUrl?: T;
-  order?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pricing-categories_select".
  */
 export interface PricingCategoriesSelect<T extends boolean = true> {
@@ -1411,90 +1331,6 @@ export interface PricingComparisonRowsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "clinical-cases_select".
- */
-export interface ClinicalCasesSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  title?: T;
-  slug?: T;
-  category?: T;
-  treatment?: T;
-  duration?: T;
-  description?: T;
-  tag?: T;
-  fullText?: T;
-  imageUrl?: T;
-  images?: T;
-  order?: T;
-  published?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "partner-categories_select".
- */
-export interface PartnerCategoriesSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  name?: T;
-  order?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "partners_select".
- */
-export interface PartnersSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  name?: T;
-  logoUrl?: T;
-  website?: T;
-  category?: T;
-  sourceCategoryId?: T;
-  order?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "faq-items_select".
- */
-export interface FaqItemsSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  question?: T;
-  answer?: T;
-  category?: T;
-  order?: T;
-  published?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "timeline-events_select".
- */
-export interface TimelineEventsSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  year?: T;
-  caption?: T;
-  heading?: T;
-  body?: T;
-  imageUrl?: T;
-  imageAlt?: T;
-  imagePosition?: T;
-  order?: T;
-  published?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "international-treatments_select".
  */
 export interface InternationalTreatmentsSelect<T extends boolean = true> {
@@ -1535,6 +1371,194 @@ export interface InternationalWhyItemsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timeline-events_select".
+ */
+export interface TimelineEventsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  year?: T;
+  caption?: T;
+  heading?: T;
+  body?: T;
+  imageUrl?: T;
+  imageAlt?: T;
+  imagePosition?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "branches_select".
+ */
+export interface BranchesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  slug?: T;
+  shortName?: T;
+  badge?: T;
+  description?: T;
+  address?: T;
+  phone?: T;
+  mobile?: T;
+  email?: T;
+  hours?: T;
+  imageUrl?: T;
+  mapQuery?: T;
+  mapUrl?: T;
+  mapPlaceUrl?: T;
+  photos?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clinical-cases_select".
+ */
+export interface ClinicalCasesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  title?: T;
+  slug?: T;
+  category?: T;
+  treatment?: T;
+  duration?: T;
+  description?: T;
+  tag?: T;
+  fullText?: T;
+  imageUrl?: T;
+  images?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partners_select".
+ */
+export interface PartnersSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  logoUrl?: T;
+  website?: T;
+  category?: T;
+  sourceCategoryId?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-categories_select".
+ */
+export interface PartnerCategoriesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faq-items_select".
+ */
+export interface FaqItemsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  question?: T;
+  answer?: T;
+  category?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media_select".
+ */
+export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
+  alt?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  roles?: T;
+  tenants?:
+    | T
+    | {
+        tenant?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants_select".
+ */
+export interface TenantsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  logo?: T;
+  domains?:
+    | T
+    | {
+        domain?: T;
+        id?: T;
+      };
+  subscriptions?:
+    | T
+    | {
+        module?: T;
+        monthlyPrice?: T;
+        active?: T;
+        startedAt?: T;
+        id?: T;
+      };
+  enabledCollections?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "modules_select".
  */
 export interface ModulesSelect<T extends boolean = true> {
@@ -1542,6 +1566,7 @@ export interface ModulesSelect<T extends boolean = true> {
   key?: T;
   description?: T;
   defaultMonthlyPrice?: T;
+  contentCollections?: T;
   updatedAt?: T;
   createdAt?: T;
 }

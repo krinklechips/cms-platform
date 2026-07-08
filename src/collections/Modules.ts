@@ -53,5 +53,13 @@ export const Modules: CollectionConfig = {
         description: 'USD per month. Can be overridden per tenant subscription.',
       },
     },
+    {
+      name: 'contentCollections',
+      type: 'json',
+      admin: {
+        description:
+          'Array of collection slugs this module unlocks in the tenant admin, e.g. ["services","doctors"]',
+      },
+    },
   ],
 }

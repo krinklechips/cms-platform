@@ -19,7 +19,7 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
     hidden: ({ user }) => !isSuperAdmin(user),
   },
-  auth: true,
+  auth: { depth: 2 },
   access: {
     read: ({ req: { user } }) => (isSuperAdmin(user) ? true : { id: { equals: user?.id ?? '' } }),
     create: ({ req: { user } }) => isSuperAdmin(user),
