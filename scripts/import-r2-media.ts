@@ -90,11 +90,30 @@ async function run() {
         .replace(/\.[^.]+$/, '')
         .replace(/[-_]+/g, ' ')
         .trim()
-      await payload.create({
-        collection: 'media',
-        data: { alt: alt || filename, tenant: tenant.id, prefix } as never,
-        file: { data: buf, name: filename, mimetype: MIME[ext] || 'application/octet-stream', size: buf.length },
-      })
+      // Payload enforces collection-wide unique filenames; folders don't
+      // namespace them. On collision, suffix the LIBRARY copy (-2, -3…) —
+      // it uploads as a new object at prefix/<suffixed>; the original file
+      // and its live-site URL are untouched.
+      const base = filename.slice(0, filename.length - ext.length)
+      let attempt = 0
+      for (;;) {
+        const name = attempt === 0 ? filename : `${base}-${attempt + 1}${ext}`
+        try {
+          await payload.create({
+            collection: 'media',
+            data: { alt: alt || filename, tenant: tenant.id, prefix } as never,
+            file: { data: buf, name, mimetype: MIME[ext] || 'application/octet-stream', size: buf.length },
+          })
+          break
+        } catch (e) {
+          const msg = (e as Error).message
+          if (/filename/i.test(msg) && attempt < 5) {
+            attempt++
+            continue
+          }
+          throw e
+        }
+      }
       created++
       if (created % 25 === 0) console.log(`  … ${created} imported`)
     } catch (e) {
