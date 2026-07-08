@@ -72,6 +72,8 @@ export interface Config {
     tenants: Tenant;
     services: Service;
     doctors: Doctor;
+    modules: Module;
+    invoices: Invoice;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +86,8 @@ export interface Config {
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     doctors: DoctorsSelect<false> | DoctorsSelect<true>;
+    modules: ModulesSelect<false> | ModulesSelect<true>;
+    invoices: InvoicesSelect<false> | InvoicesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -168,11 +172,33 @@ export interface Tenant {
    */
   slug: string;
   /**
+   * Tenant logo — shown on their branded landing page and admin login (upload to the Media library first, under this tenant).
+   */
+  logo?: (number | null) | Media;
+  /**
    * Hostnames that resolve to this tenant (host-based routing).
    */
   domains?:
     | {
         domain: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Modules this tenant pays for. Price override falls back to the module’s default. Invoices auto-fill from active rows.
+   */
+  subscriptions?:
+    | {
+        module: number | Module;
+        /**
+         * USD/month for THIS tenant. Empty = module default price.
+         */
+        monthlyPrice?: number | null;
+        /**
+         * Uncheck to switch the module off for this tenant (e.g. AI Chatbot).
+         */
+        active?: boolean | null;
+        startedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -187,6 +213,7 @@ export interface Media {
   id: number;
   tenant?: (number | null) | Tenant;
   alt: string;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -198,6 +225,27 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * Sellable platform modules. Subscribe tenants to these on the Tenant document.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules".
+ */
+export interface Module {
+  id: number;
+  name: string;
+  /**
+   * Stable slug used by sites to check the feature, e.g. "ai-chatbot".
+   */
+  key: string;
+  description?: string | null;
+  /**
+   * USD per month. Can be overridden per tenant subscription.
+   */
+  defaultMonthlyPrice: number;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -312,6 +360,43 @@ export interface Doctor {
   createdAt: string;
 }
 /**
+ * Create an invoice with an empty line-item list to auto-fill it from the tenant’s active subscriptions.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invoices".
+ */
+export interface Invoice {
+  id: number;
+  tenant: number | Tenant;
+  periodStart: string;
+  periodEnd: string;
+  /**
+   * Once an invoice leaves Draft, its line items are locked.
+   */
+  status: 'draft' | 'sent' | 'paid';
+  /**
+   * Leave empty on create to auto-fill from the tenant’s active subscriptions.
+   */
+  lineItems?:
+    | {
+        /**
+         * Snapshot of the module key at invoicing time (audit trail).
+         */
+        moduleKey?: string | null;
+        description: string;
+        amount: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Computed from line items.
+   */
+  total?: number | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -354,6 +439,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'doctors';
         value: number | Doctor;
+      } | null)
+    | ({
+        relationTo: 'modules';
+        value: number | Module;
+      } | null)
+    | ({
+        relationTo: 'invoices';
+        value: number | Invoice;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -434,6 +527,7 @@ export interface UsersSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   alt?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -453,10 +547,20 @@ export interface MediaSelect<T extends boolean = true> {
 export interface TenantsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
+  logo?: T;
   domains?:
     | T
     | {
         domain?: T;
+        id?: T;
+      };
+  subscriptions?:
+    | T
+    | {
+        module?: T;
+        monthlyPrice?: T;
+        active?: T;
+        startedAt?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -519,6 +623,40 @@ export interface DoctorsSelect<T extends boolean = true> {
   photoUrl?: T;
   order?: T;
   published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules_select".
+ */
+export interface ModulesSelect<T extends boolean = true> {
+  name?: T;
+  key?: T;
+  description?: T;
+  defaultMonthlyPrice?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invoices_select".
+ */
+export interface InvoicesSelect<T extends boolean = true> {
+  tenant?: T;
+  periodStart?: T;
+  periodEnd?: T;
+  status?: T;
+  lineItems?:
+    | T
+    | {
+        moduleKey?: T;
+        description?: T;
+        amount?: T;
+        id?: T;
+      };
+  total?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

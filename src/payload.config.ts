@@ -13,6 +13,9 @@ import { Media } from './collections/Media'
 import { Tenants } from './collections/Tenants'
 import { Services } from './collections/Services'
 import { Doctors } from './collections/Doctors'
+import { Modules } from './collections/Modules'
+import { Invoices } from './collections/Invoices'
+import { getTenantByHost, normalizeHost } from './lib/get-tenant-by-host'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -36,6 +39,14 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    // Host-aware branding: tenant logo on their domain (roomchang.serviettelab.com),
+    // Serviette Labs logo on the platform domain.
+    components: {
+      graphics: {
+        Logo: '/components/BrandLogo#BrandLogo',
+        Icon: '/components/BrandLogo#BrandIcon',
+      },
+    },
     // Live Preview: edit a service and watch the REAL site render update
     // beside the form — the dummy roomchang instance (CONTENT_SOURCE=payload,
     // :3200) refreshes on save. Locale codes ARE the site's URL segments
@@ -52,7 +63,26 @@ export default buildConfig({
       ],
     },
   },
-  collections: [Users, Media, Tenants, Services, Doctors],
+  collections: [Users, Media, Tenants, Services, Doctors, Modules, Invoices],
+  endpoints: [
+    // Public feature flags for the tenants' websites (e.g. the AI chatbot
+    // only renders when its module is active). Hardened per Codex review:
+    // exact host match, active modules only, returns ONLY module keys —
+    // no prices, ids, names, or inactive modules.
+    {
+      path: '/feature-flags',
+      method: 'get',
+      handler: async (req) => {
+        const domain =
+          req.searchParams?.get('domain') ?? req.headers.get('x-forwarded-host') ?? req.headers.get('host')
+        const tenant = await getTenantByHost(req.payload, normalizeHost(domain))
+        return Response.json(
+          { modules: tenant?.moduleKeys ?? [] },
+          { headers: { 'Cache-Control': 'public, max-age=300' } },
+        )
+      },
+    },
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -68,6 +98,11 @@ export default buildConfig({
   db: process.env.DATABASE_URI?.startsWith('postgres')
     ? postgresAdapter({
         pool: { connectionString: process.env.DATABASE_URI },
+        // Never dev-push against Postgres (that's always prod or prod-like):
+        // schema changes go through migrations ONLY. Prevents local scripts
+        // from silently mutating the production schema (bit us once already
+        // — the posrestg incident).
+        push: false,
       })
     : sqliteAdapter({
         client: {

@@ -53,3 +53,4 @@ node_modules/
 *.db
 .admin-demo-password.txt
 .tenant-demo-password.txt
+.tenant-prod-password.txt
