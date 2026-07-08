@@ -13,6 +13,13 @@ import { Media } from './collections/Media'
 import { Tenants } from './collections/Tenants'
 import { Services } from './collections/Services'
 import { Doctors } from './collections/Doctors'
+import { Technology } from './collections/Technology'
+import { Testimonials } from './collections/Testimonials'
+import { HeroSlides } from './collections/HeroSlides'
+import { Branches } from './collections/Branches'
+import { SiteStats } from './collections/SiteStats'
+import { FeatureCards } from './collections/FeatureCards'
+import { BrandLogos } from './collections/BrandLogos'
 import { Modules } from './collections/Modules'
 import { Invoices } from './collections/Invoices'
 import { getTenantByHost, normalizeHost } from './lib/get-tenant-by-host'
@@ -63,7 +70,22 @@ export default buildConfig({
       ],
     },
   },
-  collections: [Users, Media, Tenants, Services, Doctors, Modules, Invoices],
+  collections: [
+    Users,
+    Media,
+    Tenants,
+    Services,
+    Doctors,
+    Technology,
+    Testimonials,
+    HeroSlides,
+    Branches,
+    SiteStats,
+    FeatureCards,
+    BrandLogos,
+    Modules,
+    Invoices,
+  ],
   endpoints: [
     // Public feature flags for the tenants' websites (e.g. the AI chatbot
     // only renders when its module is active). Hardened per Codex review:
@@ -129,6 +151,13 @@ export default buildConfig({
       collections: {
         services: {},
         doctors: {},
+        technology: {},
+        testimonials: {},
+        'hero-slides': {},
+        branches: {},
+        'site-stats': {},
+        'feature-cards': {},
+        'brand-logos': {},
         media: {},
       },
       tenantsSlug: 'tenants',

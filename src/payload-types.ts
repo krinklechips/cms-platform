@@ -72,6 +72,13 @@ export interface Config {
     tenants: Tenant;
     services: Service;
     doctors: Doctor;
+    technology: Technology;
+    testimonials: Testimonial;
+    'hero-slides': HeroSlide;
+    branches: Branch;
+    'site-stats': SiteStat;
+    'feature-cards': FeatureCard;
+    'brand-logos': BrandLogo;
     modules: Module;
     invoices: Invoice;
     'payload-kv': PayloadKv;
@@ -86,6 +93,13 @@ export interface Config {
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     doctors: DoctorsSelect<false> | DoctorsSelect<true>;
+    technology: TechnologySelect<false> | TechnologySelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
+    'hero-slides': HeroSlidesSelect<false> | HeroSlidesSelect<true>;
+    branches: BranchesSelect<false> | BranchesSelect<true>;
+    'site-stats': SiteStatsSelect<false> | SiteStatsSelect<true>;
+    'feature-cards': FeatureCardsSelect<false> | FeatureCardsSelect<true>;
+    'brand-logos': BrandLogosSelect<false> | BrandLogosSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
     invoices: InvoicesSelect<false> | InvoicesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -360,6 +374,218 @@ export interface Doctor {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "technology".
+ */
+export interface Technology {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase technology.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  slug: string;
+  category?: string | null;
+  description?: string | null;
+  highlights?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * R2 image URL (carried from the live site).
+   */
+  imageUrl?: string | null;
+  /**
+   * Detail-page content JSON — carried from the live site losslessly.
+   */
+  content?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase testimonials.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  authorName: string;
+  authorTitle?: string | null;
+  /**
+   * Author photo URL (carried from the live site).
+   */
+  authorPhotoUrl?: string | null;
+  quote?: string | null;
+  rating?: number | null;
+  isFeatured?: boolean | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "hero-slides".
+ */
+export interface HeroSlide {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase hero_slides.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  eyebrow?: string | null;
+  title: string;
+  subtitle?: string | null;
+  description?: string | null;
+  /**
+   * R2 image URL (carried from the live site).
+   */
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  imagePosition?: string | null;
+  imageSize?: string | null;
+  preserveFullImage?: boolean | null;
+  ctaText?: string | null;
+  ctaUrl?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "branches".
+ */
+export interface Branch {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase branches.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  /**
+   * Optional — the live branches table has no slugs; the sync derives one from the name.
+   */
+  slug?: string | null;
+  shortName?: string | null;
+  badge?: string | null;
+  description?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+  hours?: string | null;
+  /**
+   * R2 image URL (carried from the live site).
+   */
+  imageUrl?: string | null;
+  mapQuery?: string | null;
+  mapUrl?: string | null;
+  mapPlaceUrl?: string | null;
+  /**
+   * Branch photos JSON — carried from the live site losslessly.
+   */
+  photos?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-stats".
+ */
+export interface SiteStat {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase site_stats.key — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  key: string;
+  displayValue?: string | null;
+  numericValue?: number | null;
+  suffix?: string | null;
+  label?: string | null;
+  order?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feature-cards".
+ */
+export interface FeatureCard {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase homepage_feature_cards.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  slug: string;
+  title: string;
+  description?: string | null;
+  /**
+   * R2 image URL (carried from the live site).
+   */
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  href?: string | null;
+  cta?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-logos".
+ */
+export interface BrandLogo {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase brand_logos.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  slug: string;
+  name: string;
+  /**
+   * R2 logo URL (carried from the live site).
+   */
+  logoUrl?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Create an invoice with an empty line-item list to auto-fill it from the tenant’s active subscriptions.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -439,6 +665,34 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'doctors';
         value: number | Doctor;
+      } | null)
+    | ({
+        relationTo: 'technology';
+        value: number | Technology;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'hero-slides';
+        value: number | HeroSlide;
+      } | null)
+    | ({
+        relationTo: 'branches';
+        value: number | Branch;
+      } | null)
+    | ({
+        relationTo: 'site-stats';
+        value: number | SiteStat;
+      } | null)
+    | ({
+        relationTo: 'feature-cards';
+        value: number | FeatureCard;
+      } | null)
+    | ({
+        relationTo: 'brand-logos';
+        value: number | BrandLogo;
       } | null)
     | ({
         relationTo: 'modules';
@@ -623,6 +877,147 @@ export interface DoctorsSelect<T extends boolean = true> {
   photoUrl?: T;
   order?: T;
   published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "technology_select".
+ */
+export interface TechnologySelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  slug?: T;
+  category?: T;
+  description?: T;
+  highlights?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  imageUrl?: T;
+  content?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  authorName?: T;
+  authorTitle?: T;
+  authorPhotoUrl?: T;
+  quote?: T;
+  rating?: T;
+  isFeatured?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "hero-slides_select".
+ */
+export interface HeroSlidesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  eyebrow?: T;
+  title?: T;
+  subtitle?: T;
+  description?: T;
+  imageUrl?: T;
+  imageAlt?: T;
+  imagePosition?: T;
+  imageSize?: T;
+  preserveFullImage?: T;
+  ctaText?: T;
+  ctaUrl?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "branches_select".
+ */
+export interface BranchesSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  name?: T;
+  slug?: T;
+  shortName?: T;
+  badge?: T;
+  description?: T;
+  address?: T;
+  phone?: T;
+  mobile?: T;
+  email?: T;
+  hours?: T;
+  imageUrl?: T;
+  mapQuery?: T;
+  mapUrl?: T;
+  mapPlaceUrl?: T;
+  photos?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-stats_select".
+ */
+export interface SiteStatsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  key?: T;
+  displayValue?: T;
+  numericValue?: T;
+  suffix?: T;
+  label?: T;
+  order?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feature-cards_select".
+ */
+export interface FeatureCardsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  slug?: T;
+  title?: T;
+  description?: T;
+  imageUrl?: T;
+  imageAlt?: T;
+  href?: T;
+  cta?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-logos_select".
+ */
+export interface BrandLogosSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  slug?: T;
+  name?: T;
+  logoUrl?: T;
+  order?: T;
   updatedAt?: T;
   createdAt?: T;
 }
