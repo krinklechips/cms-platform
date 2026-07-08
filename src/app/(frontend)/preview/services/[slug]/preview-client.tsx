@@ -27,11 +27,12 @@ type Section = {
 }
 
 type ServiceDoc = {
-  name?: string
-  description?: string
-  features?: { feature?: string }[]
-  imageUrl?: string
-  content?: { sections?: Section[] } | null
+  name?: string | null
+  description?: string | null
+  features?: ({ feature?: string | null } | null)[] | null
+  imageUrl?: string | null
+  /** Payload types `json` fields loosely — normalized where used. */
+  content?: unknown
 }
 
 const BRAND = '#cc3771'
@@ -157,7 +158,8 @@ export function ServicePreviewClient({
     depth: 1,
   })
 
-  const sections = data.content?.sections ?? []
+  const sections =
+    (data.content as { sections?: Section[] | null } | null | undefined)?.sections ?? []
 
   return (
     <div style={S.page} lang={locale}>
@@ -170,7 +172,7 @@ export function ServicePreviewClient({
             <div style={S.chips}>
               {data.features.map((f, i) => (
                 <span key={i} style={S.chip}>
-                  {f.feature}
+                  {f?.feature}
                 </span>
               ))}
             </div>
