@@ -228,7 +228,7 @@ export interface Service {
   icon?: string | null;
   isFeatured?: boolean | null;
   /**
-   * Feature bullets shown on cards / detail page.
+   * The small pink tags on this service’s card on the "Services" overview page (/services) — a quick "what’s included" summary. NOT shown on this detail page, so the Live Preview won’t change when you edit these.
    */
   features?:
     | {

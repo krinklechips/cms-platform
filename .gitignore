@@ -52,3 +52,4 @@ node_modules/
 # local sqlite
 *.db
 .admin-demo-password.txt
+.tenant-demo-password.txt
