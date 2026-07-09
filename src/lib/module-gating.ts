@@ -29,7 +29,21 @@ const tenantIdFromUser = (user: unknown): number | string | null => {
   return typeof tenant === 'object' ? tenant.id ?? null : tenant
 }
 
-const isCollectionEnabled = (tenant: TenantDoc | null | undefined, slug: string): boolean => {
+// WRITE gate (fail-CLOSED, per Codex review): a tenant user may only
+// create/update/delete a collection their tenant is entitled to. If we can't
+// resolve entitlements, deny — a tenant must never edit an unentitled
+// collection. (Reads are intentionally NOT gated here — the public dummy site
+// reads the REST API anonymously, and the multi-tenant plugin already enforces
+// tenant row-isolation on reads. Module gating is an entitlement/UX layer, not
+// the tenant-isolation security boundary.)
+const isCollectionEnabledForWrite = (tenant: TenantDoc | null | undefined, slug: string): boolean => {
+  if (!Array.isArray(tenant?.enabledCollections)) return false // fail closed
+  return tenant.enabledCollections.includes(slug)
+}
+
+// NAV visibility (cosmetic): fail-OPEN so a mid-provisioning tenant sees their
+// collection rather than a blank admin. The write gate above is the real fence.
+const isCollectionVisible = (tenant: TenantDoc | null | undefined, slug: string): boolean => {
   if (!Array.isArray(tenant?.enabledCollections)) return true
   return tenant.enabledCollections.includes(slug)
 }
@@ -73,7 +87,7 @@ const composeWriteAccess =
     if (isSuperAdmin(args.req.user)) return existingResult
 
     const tenant = await getCachedTenant(args)
-    if (!isCollectionEnabled(tenant, slug)) return false
+    if (!isCollectionEnabledForWrite(tenant, slug)) return false
 
     return existingResult
   }
@@ -94,7 +108,7 @@ export const withModuleGating = (config: CollectionConfig): CollectionConfig => 
     const tenant = firstTenantValue(args.user)
     if (tenant === undefined || tenant === null || typeof tenant !== 'object') return false
 
-    return !isCollectionEnabled(tenant, config.slug)
+    return !isCollectionVisible(tenant, config.slug)
   }
 
   return {

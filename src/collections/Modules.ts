@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { CONTENT_COLLECTION_SLUGS, unknownSlugs } from '../lib/content-collections'
 
 const isSuperAdmin = (user: unknown): boolean =>
   Boolean((user as { roles?: string[] } | null)?.roles?.includes('super-admin'))
@@ -56,9 +57,19 @@ export const Modules: CollectionConfig = {
     {
       name: 'contentCollections',
       type: 'json',
+      // Kept as json (not a select) deliberately: a hasMany select on Postgres
+      // creates an enum that needs an ALTER migration for every new collection.
+      // Instead we fail loud here against the shared slug registry.
+      validate: (value: unknown) => {
+        const bad = unknownSlugs(value)
+        if (bad.length) {
+          return `Unknown collection slug(s): ${bad.join(', ')}. Valid: ${CONTENT_COLLECTION_SLUGS.join(', ')}`
+        }
+        return true
+      },
       admin: {
         description:
-          'Array of collection slugs this module unlocks in the tenant admin, e.g. ["services","doctors"]',
+          'Array of collection slugs this module unlocks in the tenant admin, e.g. ["services","doctors"]. Validated against the known content collections.',
       },
     },
   ],

@@ -336,7 +336,7 @@ export interface Module {
    */
   defaultMonthlyPrice: number;
   /**
-   * Array of collection slugs this module unlocks in the tenant admin, e.g. ["services","doctors"]
+   * Array of collection slugs this module unlocks in the tenant admin, e.g. ["services","doctors"]. Validated against the known content collections.
    */
   contentCollections?:
     | {

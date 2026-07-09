@@ -72,14 +72,16 @@ export default buildConfig({
     // keeps Payload's default mark. Revisit as a CLIENT component that takes
     // the logo URL as a prop if we want the login screen branded per tenant.
     //
-    // Serviette Labs HQ cockpit — beforeDashboard IS the verified-safe slot
-    // for an async RSC with Local API access (renders inside the
-    // auth-protected Dashboard with payload+user serverProps).
     components: {
-      beforeDashboard: ['/components/PlatformDashboard#PlatformDashboard'],
+      // Full Dashboard override (not beforeDashboard): super-admins see ONLY
+      // the Serviette HQ cockpit; tenant users get Payload's DefaultDashboard.
+      // Removes the confusing "cockpit + default collection cards" stack.
+      views: {
+        dashboard: { Component: '/components/PlatformDashboardView#PlatformDashboardView' },
+      },
       // Super-admin gets a slim Platform-only sidebar; tenant users get the
-      // DefaultNav (their gated page groups). Done via Nav override because
-      // admin.hidden would 404 the collection routes.
+      // DefaultNav (their gated page groups). Nav override because admin.hidden
+      // would 404 the collection routes.
       Nav: '/components/PlatformNav#PlatformNav',
     },
     // Live Preview: edit a service and watch the REAL site render update
@@ -250,7 +252,13 @@ export default buildConfig({
         doctors: {},
         technology: {},
         testimonials: {},
-        homepage: { isGlobal: true },
+        // NOT isGlobal: the plugin's global-doc lookup runs during Payload
+        // init — which executes inside `payload migrate` BEFORE the migration
+        // creates the table, crashing clean deploys (the chicken-and-egg that
+        // forced hand-applied SQL). Homepage is a normal tenant-scoped
+        // collection with a one-doc-per-tenant convention; the cockpit /
+        // "Open content" links deep-link straight to that doc.
+        homepage: {},
         branches: {},
         'site-stats': {},
         'feature-cards': {},

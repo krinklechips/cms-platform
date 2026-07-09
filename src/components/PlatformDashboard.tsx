@@ -105,13 +105,14 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user }) => {
     })
 
     const totalMRR = rows.reduce((sum, r) => sum + r.mrr, 0)
+    const anyPrices = totalMRR > 0
 
     return (
       <div style={S.wrap}>
         <h2 style={S.h2}>Serviette Labs — HQ</h2>
         <p style={S.sub}>
-          {rows.length} tenant{rows.length === 1 ? '' : 's'} · {fmtUSD(totalMRR)}/mo subscribed · platform view
-          (only super-admins see this)
+          {rows.length} tenant{rows.length === 1 ? '' : 's'}
+          {anyPrices ? ` · ${fmtUSD(totalMRR)}/mo subscribed` : ' · module prices not set yet'} · platform view
         </p>
         <table style={S.table}>
           <thead>
@@ -119,7 +120,7 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user }) => {
               <th style={S.th}>Tenant</th>
               <th style={S.th}>Domains</th>
               <th style={S.th}>Modules</th>
-              <th style={S.th}>MRR</th>
+              {anyPrices && <th style={S.th}>MRR</th>}
               <th style={S.th}>Invoices (draft / sent / paid)</th>
               <th style={S.th}>Content</th>
             </tr>
@@ -145,7 +146,7 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user }) => {
                     '—'
                   )}
                 </td>
-                <td style={S.td}>{fmtUSD(r.mrr)}</td>
+                {anyPrices && <td style={S.td}>{fmtUSD(r.mrr)}</td>}
                 <td style={S.td}>
                   {r.draft} / {r.sent} / {r.paid}
                 </td>
