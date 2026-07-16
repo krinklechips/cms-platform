@@ -92,6 +92,27 @@ const composeWriteAccess =
     return existingResult
   }
 
+const collectionHasPublishedField = (config: CollectionConfig): boolean =>
+  Array.isArray(config.fields) &&
+  config.fields.some((f) => 'name' in f && (f as { name?: string }).name === 'published')
+
+// READ gate: anonymous callers of a collection that has a `published` field see
+// ONLY published rows — drafts/unpublished content stays private (they were
+// queryable over the raw REST/GraphQL API before). Logged-in users keep the
+// collection's existing read (the multi-tenant plugin then scopes them to their
+// own tenant, and CMS staff can still see drafts to edit them). Collections
+// whose existing read already denies anonymous access (e.g. Enquiries) fall
+// through unchanged.
+const composeReadAccess =
+  (config: CollectionConfig, existing: AccessFn | undefined): AccessFn =>
+  async (args) => {
+    const existingResult = await passesExistingAccess(existing, args)
+    if (existingResult === false) return false
+    if (args.req.user) return existingResult
+    if (collectionHasPublishedField(config)) return { published: { equals: true } }
+    return existingResult
+  }
+
 export const withModuleGating = (config: CollectionConfig): CollectionConfig => {
   const existingHidden = config.admin?.hidden
   const gatedHidden: NonNullable<NonNullable<CollectionConfig['admin']>['hidden']> = (args) => {
@@ -119,6 +140,7 @@ export const withModuleGating = (config: CollectionConfig): CollectionConfig => 
     },
     access: {
       ...config.access,
+      read: composeReadAccess(config, config.access?.read),
       create: composeWriteAccess(config.slug, config.access?.create),
       update: composeWriteAccess(config.slug, config.access?.update),
       delete: composeWriteAccess(config.slug, config.access?.delete),

@@ -11,7 +11,10 @@ export const BookingSlots: CollectionConfig = {
     defaultColumns: ['date', 'time', 'branch', 'doctor', 'status'],
   },
   access: {
-    read: () => true,
+    // Patient booking data — NEVER public. Require a logged-in user; the
+    // multi-tenant plugin scopes reads to the user's own tenant, super-admins
+    // see all. No public consumer reads booking slots from the CMS.
+    read: ({ req: { user } }) => Boolean(user),
   },
   fields: [
     {

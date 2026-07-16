@@ -11,7 +11,11 @@ export const Enquiries: CollectionConfig = {
     defaultColumns: ['name', 'treatment', 'branch', 'isRead', 'receivedAt'],
   },
   access: {
-    read: () => true,
+    // Patient PII — NEVER public. Require a logged-in user; the multi-tenant
+    // plugin then scopes reads to the user's own tenant, and super-admins see
+    // all. No public consumer reads enquiries (the live site writes them to
+    // Supabase directly), so anonymous access was pure exposure.
+    read: ({ req: { user } }) => Boolean(user),
   },
   fields: [
     {

@@ -285,6 +285,21 @@ export default buildConfig({
         media: {},
       },
       tenantsSlug: 'tenants',
+      // Lock tenant membership: only super-admins may set/change which tenant a
+      // user belongs to. Without this the plugin-injected `tenants` array has no
+      // field access, so a tenant editor could PATCH their own user record to
+      // grant themselves another tenant's data (privilege escalation). Field
+      // access silently prevents the field from changing for non-super-admins,
+      // so it never blocks a legitimate self-update (e.g. editing your name).
+      tenantsArrayField: {
+        includeDefaultField: true,
+        arrayFieldAccess: {
+          create: ({ req }) =>
+            Boolean((req.user as { roles?: string[] } | null)?.roles?.includes('super-admin')),
+          update: ({ req }) =>
+            Boolean((req.user as { roles?: string[] } | null)?.roles?.includes('super-admin')),
+        },
+      },
       // Serviette Labs staff (super-admin) can see/manage every tenant.
       userHasAccessToAllTenants: (user) =>
         Boolean((user as { roles?: string[] })?.roles?.includes('super-admin')),
