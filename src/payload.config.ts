@@ -171,9 +171,9 @@ export default buildConfig({
     // withHostScope: on a tenant's own domain the admin lists only that
     // tenant's rows (see lib/host-scope.ts). No-op on serviettelab.com.
     withHumanLabels(withHostScope(withModuleGating(Homepage))),
+    withHumanLabels(withHostScope(withModuleGating(BrandLogos))),
     withHumanLabels(withHostScope(withModuleGating(SiteStats))),
     withHumanLabels(withHostScope(withModuleGating(FeatureCards))),
-    withHumanLabels(withHostScope(withModuleGating(BrandLogos))),
     withHumanLabels(withHostScope(withModuleGating(Testimonials))),
     withHumanLabels(withHostScope(withModuleGating(Services))),
     withHumanLabels(withHostScope(withModuleGating(Doctors))),
@@ -182,9 +182,9 @@ export default buildConfig({
     withHumanLabels(withHostScope(withModuleGating(PricingItems))),
     withHumanLabels(withHostScope(withModuleGating(PricingComparisonSets))),
     withHumanLabels(withHostScope(withModuleGating(PricingComparisonRows))),
+    withHumanLabels(withHostScope(withModuleGating(InternationalWhyItems))),
     withHumanLabels(withHostScope(withModuleGating(InternationalTreatments))),
     withHumanLabels(withHostScope(withModuleGating(InternationalSteps))),
-    withHumanLabels(withHostScope(withModuleGating(InternationalWhyItems))),
     withHumanLabels(withHostScope(withModuleGating(TimelineEvents))),
     withHumanLabels(withHostScope(withModuleGating(Branches))),
     withHumanLabels(withHostScope(withModuleGating(ClinicalCases))),

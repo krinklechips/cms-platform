@@ -14,6 +14,15 @@ export const Homepage: CollectionConfig = {
   admin: {
     group: 'Home Page',
     description: 'The home page hero: slides, trust pill, and call-to-action buttons.',
+    components: {
+      views: {
+        // ONE doc per tenant: skip the pointless one-row list ("ID: 1",
+        // Search by ID, a Create New that would make a second homepage) and
+        // open THE editor directly. Super-admin on the platform host still
+        // gets the normal list across tenants.
+        list: { Component: '/components/HomepageSingleRedirect#HomepageSingleRedirect' },
+      },
+    },
   },
   access: {
     read: () => true,

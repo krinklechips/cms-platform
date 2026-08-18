@@ -1,6 +1,7 @@
 import { TenantField as TenantField_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { ImageUrlPreview as ImageUrlPreview_7462301dd20d90072f654d047389192b } from '../../../components/ImageUrlPreview'
 import { AssignTenantFieldTrigger as AssignTenantFieldTrigger_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
+import { HomepageSingleRedirect as HomepageSingleRedirect_b28ab2a24502ab103566306601f21301 } from '../../../components/HomepageSingleRedirect'
 import { ImageCell as ImageCell_686f17e722b2f5209effbf3003fe9a1e } from '../../../components/ImageCell'
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { PlatformNav as PlatformNav_d93cd8bf9ab6123ede6430df10ac9859 } from '../../../components/PlatformNav'
@@ -19,6 +20,7 @@ export const importMap = {
   "@payloadcms/plugin-multi-tenant/client#TenantField": TenantField_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/ImageUrlPreview#ImageUrlPreview": ImageUrlPreview_7462301dd20d90072f654d047389192b,
   "@payloadcms/plugin-multi-tenant/client#AssignTenantFieldTrigger": AssignTenantFieldTrigger_1d0591e3cf4f332c83a86da13a0de59a,
+  "/components/HomepageSingleRedirect#HomepageSingleRedirect": HomepageSingleRedirect_b28ab2a24502ab103566306601f21301,
   "/components/ImageCell#ImageCell": ImageCell_686f17e722b2f5209effbf3003fe9a1e,
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/PlatformNav#PlatformNav": PlatformNav_d93cd8bf9ab6123ede6430df10ac9859,
