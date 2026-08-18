@@ -6,7 +6,9 @@ import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da1
 import { PlatformNav as PlatformNav_d93cd8bf9ab6123ede6430df10ac9859 } from '../../../components/PlatformNav'
 import { AdminIcon as AdminIcon_185d6ccbdba3821d35293b1570e8d361 } from '../../../components/AdminBrand'
 import { AdminLogo as AdminLogo_185d6ccbdba3821d35293b1570e8d361 } from '../../../components/AdminBrand'
+import { PlatformBackLink as PlatformBackLink_bbc30f84f987b4f69605dc932bf9e1ee } from '../../../components/PlatformBackLink'
 import { TenantSelector as TenantSelector_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
+import { TenantNavBanner as TenantNavBanner_304bb971b02938ef7cdd47a194b274b2 } from '../../../components/TenantNavBanner'
 import { TenantSelectionProvider as TenantSelectionProvider_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 import { PlatformDashboardView as PlatformDashboardView_7bcd8dc9bedbbcca09e7d406703d991d } from '../../../components/PlatformDashboardView'
@@ -22,7 +24,9 @@ export const importMap = {
   "/components/PlatformNav#PlatformNav": PlatformNav_d93cd8bf9ab6123ede6430df10ac9859,
   "/components/AdminBrand#AdminIcon": AdminIcon_185d6ccbdba3821d35293b1570e8d361,
   "/components/AdminBrand#AdminLogo": AdminLogo_185d6ccbdba3821d35293b1570e8d361,
+  "/components/PlatformBackLink#PlatformBackLink": PlatformBackLink_bbc30f84f987b4f69605dc932bf9e1ee,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelector": TenantSelector_d6d5f193a167989e2ee7d14202901e62,
+  "/components/TenantNavBanner#TenantNavBanner": TenantNavBanner_304bb971b02938ef7cdd47a194b274b2,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelectionProvider": TenantSelectionProvider_d6d5f193a167989e2ee7d14202901e62,
   "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
   "/components/PlatformDashboardView#PlatformDashboardView": PlatformDashboardView_7bcd8dc9bedbbcca09e7d406703d991d,

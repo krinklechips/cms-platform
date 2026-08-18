@@ -85,6 +85,11 @@ export default buildConfig({
       // DefaultNav (their gated page groups). Nav override because admin.hidden
       // would 404 the collection routes.
       Nav: '/components/PlatformNav#PlatformNav',
+      // These render INSIDE the sidebar. The Nav override itself must return a
+      // single element (a fragment there breaks the admin layout), so the
+      // tenant banner and the back-to-platform link live in these slots.
+      beforeNavLinks: ['/components/TenantNavBanner#TenantNavBanner'],
+      afterNavLinks: ['/components/PlatformBackLink#PlatformBackLink'],
       // De-Payload the chrome: host-aware CLIENT components (login screen shows
       // the tenant's own logo on their domain). MUST stay client components —
       // an async server component in graphics.Logo white-screens the admin.

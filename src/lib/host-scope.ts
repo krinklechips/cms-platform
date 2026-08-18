@@ -35,20 +35,21 @@ const HOST_TENANT_CTX = 'hostTenant'
  * same pattern as getCachedTenant in module-gating.ts.
  */
 export const getHostTenant = async (req: PayloadRequest): Promise<TenantBranding | null> => {
-  if (HOST_TENANT_CTX in req.context) {
-    return req.context[HOST_TENANT_CTX] as TenantBranding | null
-  }
-  let tenant: TenantBranding | null = null
+  // Everything here is defensive: this runs on every admin list render, and a
+  // throw would blank the whole view.
   try {
-    const host = req.headers?.get('x-forwarded-host') ?? req.headers?.get('host')
-    tenant = await getTenantByHost(req.payload, host)
+    const ctx = req?.context as Record<string, unknown> | undefined
+    if (ctx && HOST_TENANT_CTX in ctx) {
+      return ctx[HOST_TENANT_CTX] as TenantBranding | null
+    }
+    const host = req?.headers?.get('x-forwarded-host') ?? req?.headers?.get('host')
+    const tenant = req?.payload ? await getTenantByHost(req.payload, host) : null
+    if (ctx) ctx[HOST_TENANT_CTX] = tenant
+    return tenant
   } catch {
-    // Best-effort: an unresolvable host must never break the admin — it just
-    // means "no host scoping", i.e. the platform view.
-    tenant = null
+    // Unresolvable host => no host scoping (i.e. the platform view).
+    return null
   }
-  req.context[HOST_TENANT_CTX] = tenant
-  return tenant
 }
 
 /**

@@ -124,39 +124,18 @@ export const PlatformNav: React.FC<NavServerProps> = async (props) => {
         },
       } as NavServerProps
 
-      return (
-        <>
-          {/* The tenant selector would let you switch tenants while the host
-              scoping still pins lists to this domain's tenant — three parts of
-              the UI disagreeing. Hide it here; the platform host keeps it. */}
-          <style>{'.tenant-selector{display:none!important}'}</style>
-          <div style={S.tenantBanner}>
-            <p style={S.tenantLabel}>Editing site</p>
-            <p style={S.tenantName}>{hostTenant.name}</p>
-          </div>
-          <DefaultNav {...scopedProps} />
-          <div style={S.divider} />
-          <a href="https://serviettelab.com/admin" style={S.hint}>
-            ← Serviette Labs platform (all customers)
-          </a>
-        </>
-      )
+      // MUST return a SINGLE element. Returning a fragment here puts extra
+      // children into the admin template's layout container, which renders a
+      // second sidebar panel, covers the nav-collapse chevron, and pushes the
+      // main content area out of view. The "Editing site" banner and the
+      // back-to-platform link live in the beforeNavLinks / afterNavLinks slots
+      // instead, which render INSIDE the nav.
+      return <DefaultNav {...scopedProps} />
     }
   }
 
   if (!isSuperAdmin) {
-    const tenantName = tenantNameOf(props.user)
-    return (
-      <>
-        {tenantName && (
-          <div style={S.tenantBanner}>
-            <p style={S.tenantLabel}>Tenant workspace</p>
-            <p style={S.tenantName}>{tenantName}</p>
-          </div>
-        )}
-        <DefaultNav {...props} />
-      </>
-    )
+    return <DefaultNav {...props} />
   }
 
   return (
