@@ -308,7 +308,6 @@ export interface Media {
   id: number;
   tenant?: (number | null) | Tenant;
   alt: string;
-  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -464,6 +463,683 @@ export interface Service {
   id: number;
   tenant?: (number | null) | Tenant;
   /**
+   * The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.
+   */
+  sections?:
+    | (
+        | {
+            heading?: string | null;
+            body?: string | null;
+            /**
+             * Render inside a soft card background.
+             */
+            card?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'text';
+          }
+        | {
+            title?: string | null;
+            body?: string | null;
+            /**
+             * Optional — shown as a duotone icon next to the text.
+             */
+            icon?:
+              | (
+                  | 'Tooth'
+                  | 'Smile'
+                  | 'Heart'
+                  | 'Star'
+                  | 'Sparkles'
+                  | 'Check'
+                  | 'Shield'
+                  | 'Clock'
+                  | 'DollarSign'
+                  | 'Bone'
+                  | 'Dumbbell'
+                  | 'CircleDot'
+                  | 'Zap'
+                  | 'Eye'
+                  | 'FirstAidKit'
+                  | 'RotateCcw'
+                  | 'ArrowRight'
+                )
+              | null;
+            /**
+             * Optional stat chips shown under the callout.
+             */
+            stats?:
+              | {
+                  value?: string | null;
+                  label?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'callout';
+          }
+        | {
+            heading?: string | null;
+            items?:
+              | {
+                  item?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'list';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            numbered?: boolean | null;
+            /**
+             * 2, 3 or 4 (optional).
+             */
+            columns?: number | null;
+            items?:
+              | {
+                  title?: string | null;
+                  body?: string | null;
+                  /**
+                   * Optional — shown as a duotone icon next to the text.
+                   */
+                  icon?:
+                    | (
+                        | 'Tooth'
+                        | 'Smile'
+                        | 'Heart'
+                        | 'Star'
+                        | 'Sparkles'
+                        | 'Check'
+                        | 'Shield'
+                        | 'Clock'
+                        | 'DollarSign'
+                        | 'Bone'
+                        | 'Dumbbell'
+                        | 'CircleDot'
+                        | 'Zap'
+                        | 'Eye'
+                        | 'FirstAidKit'
+                        | 'RotateCcw'
+                        | 'ArrowRight'
+                      )
+                    | null;
+                  tag?: string | null;
+                  badge?: string | null;
+                  spec?: string | null;
+                  link?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cards';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            items?:
+              | {
+                  step?: string | null;
+                  detail?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'steps';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            rows?:
+              | {
+                  treatment?: string | null;
+                  price?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pricing';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            rows?:
+              | {
+                  treatment?: string | null;
+                  price?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pricetable';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            images?:
+              | {
+                  url?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'gallery';
+          }
+        | {
+            src?: string | null;
+            alt?: string | null;
+            heading?: string | null;
+            subheading?: string | null;
+            caption?: string | null;
+            size?: ('small' | 'medium' | 'large' | 'full') | null;
+            width?: number | null;
+            height?: number | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'image';
+          }
+        | {
+            /**
+             * YouTube video id.
+             */
+            videoId?: string | null;
+            heading?: string | null;
+            subheading?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'video';
+          }
+        | {
+            src?: string | null;
+            heading?: string | null;
+            caption?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'self_video';
+          }
+        | {
+            left?: {
+              src?: string | null;
+              alt?: string | null;
+              caption?: string | null;
+            };
+            right?: {
+              src?: string | null;
+              alt?: string | null;
+              caption?: string | null;
+            };
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'image_pair';
+          }
+        | {
+            /**
+             * Exactly one section for the left column.
+             */
+            left?:
+              | (
+                  | {
+                      heading?: string | null;
+                      body?: string | null;
+                      /**
+                       * Render inside a soft card background.
+                       */
+                      card?: boolean | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'text';
+                    }
+                  | {
+                      title?: string | null;
+                      body?: string | null;
+                      /**
+                       * Optional — shown as a duotone icon next to the text.
+                       */
+                      icon?:
+                        | (
+                            | 'Tooth'
+                            | 'Smile'
+                            | 'Heart'
+                            | 'Star'
+                            | 'Sparkles'
+                            | 'Check'
+                            | 'Shield'
+                            | 'Clock'
+                            | 'DollarSign'
+                            | 'Bone'
+                            | 'Dumbbell'
+                            | 'CircleDot'
+                            | 'Zap'
+                            | 'Eye'
+                            | 'FirstAidKit'
+                            | 'RotateCcw'
+                            | 'ArrowRight'
+                          )
+                        | null;
+                      /**
+                       * Optional stat chips shown under the callout.
+                       */
+                      stats?:
+                        | {
+                            value?: string | null;
+                            label?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'callout';
+                    }
+                  | {
+                      heading?: string | null;
+                      items?:
+                        | {
+                            item?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'list';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      numbered?: boolean | null;
+                      /**
+                       * 2, 3 or 4 (optional).
+                       */
+                      columns?: number | null;
+                      items?:
+                        | {
+                            title?: string | null;
+                            body?: string | null;
+                            /**
+                             * Optional — shown as a duotone icon next to the text.
+                             */
+                            icon?:
+                              | (
+                                  | 'Tooth'
+                                  | 'Smile'
+                                  | 'Heart'
+                                  | 'Star'
+                                  | 'Sparkles'
+                                  | 'Check'
+                                  | 'Shield'
+                                  | 'Clock'
+                                  | 'DollarSign'
+                                  | 'Bone'
+                                  | 'Dumbbell'
+                                  | 'CircleDot'
+                                  | 'Zap'
+                                  | 'Eye'
+                                  | 'FirstAidKit'
+                                  | 'RotateCcw'
+                                  | 'ArrowRight'
+                                )
+                              | null;
+                            tag?: string | null;
+                            badge?: string | null;
+                            spec?: string | null;
+                            link?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'cards';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      items?:
+                        | {
+                            step?: string | null;
+                            detail?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'steps';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      rows?:
+                        | {
+                            treatment?: string | null;
+                            price?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'pricing';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      rows?:
+                        | {
+                            treatment?: string | null;
+                            price?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'pricetable';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      images?:
+                        | {
+                            url?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'gallery';
+                    }
+                  | {
+                      src?: string | null;
+                      alt?: string | null;
+                      heading?: string | null;
+                      subheading?: string | null;
+                      caption?: string | null;
+                      size?: ('small' | 'medium' | 'large' | 'full') | null;
+                      width?: number | null;
+                      height?: number | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'image';
+                    }
+                  | {
+                      /**
+                       * YouTube video id.
+                       */
+                      videoId?: string | null;
+                      heading?: string | null;
+                      subheading?: string | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'video';
+                    }
+                  | {
+                      src?: string | null;
+                      heading?: string | null;
+                      caption?: string | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'self_video';
+                    }
+                  | {
+                      left?: {
+                        src?: string | null;
+                        alt?: string | null;
+                        caption?: string | null;
+                      };
+                      right?: {
+                        src?: string | null;
+                        alt?: string | null;
+                        caption?: string | null;
+                      };
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'image_pair';
+                    }
+                )[]
+              | null;
+            /**
+             * Exactly one section for the right column.
+             */
+            right?:
+              | (
+                  | {
+                      heading?: string | null;
+                      body?: string | null;
+                      /**
+                       * Render inside a soft card background.
+                       */
+                      card?: boolean | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'text';
+                    }
+                  | {
+                      title?: string | null;
+                      body?: string | null;
+                      /**
+                       * Optional — shown as a duotone icon next to the text.
+                       */
+                      icon?:
+                        | (
+                            | 'Tooth'
+                            | 'Smile'
+                            | 'Heart'
+                            | 'Star'
+                            | 'Sparkles'
+                            | 'Check'
+                            | 'Shield'
+                            | 'Clock'
+                            | 'DollarSign'
+                            | 'Bone'
+                            | 'Dumbbell'
+                            | 'CircleDot'
+                            | 'Zap'
+                            | 'Eye'
+                            | 'FirstAidKit'
+                            | 'RotateCcw'
+                            | 'ArrowRight'
+                          )
+                        | null;
+                      /**
+                       * Optional stat chips shown under the callout.
+                       */
+                      stats?:
+                        | {
+                            value?: string | null;
+                            label?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'callout';
+                    }
+                  | {
+                      heading?: string | null;
+                      items?:
+                        | {
+                            item?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'list';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      numbered?: boolean | null;
+                      /**
+                       * 2, 3 or 4 (optional).
+                       */
+                      columns?: number | null;
+                      items?:
+                        | {
+                            title?: string | null;
+                            body?: string | null;
+                            /**
+                             * Optional — shown as a duotone icon next to the text.
+                             */
+                            icon?:
+                              | (
+                                  | 'Tooth'
+                                  | 'Smile'
+                                  | 'Heart'
+                                  | 'Star'
+                                  | 'Sparkles'
+                                  | 'Check'
+                                  | 'Shield'
+                                  | 'Clock'
+                                  | 'DollarSign'
+                                  | 'Bone'
+                                  | 'Dumbbell'
+                                  | 'CircleDot'
+                                  | 'Zap'
+                                  | 'Eye'
+                                  | 'FirstAidKit'
+                                  | 'RotateCcw'
+                                  | 'ArrowRight'
+                                )
+                              | null;
+                            tag?: string | null;
+                            badge?: string | null;
+                            spec?: string | null;
+                            link?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'cards';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      items?:
+                        | {
+                            step?: string | null;
+                            detail?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'steps';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      rows?:
+                        | {
+                            treatment?: string | null;
+                            price?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'pricing';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      rows?:
+                        | {
+                            treatment?: string | null;
+                            price?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'pricetable';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      images?:
+                        | {
+                            url?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'gallery';
+                    }
+                  | {
+                      src?: string | null;
+                      alt?: string | null;
+                      heading?: string | null;
+                      subheading?: string | null;
+                      caption?: string | null;
+                      size?: ('small' | 'medium' | 'large' | 'full') | null;
+                      width?: number | null;
+                      height?: number | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'image';
+                    }
+                  | {
+                      /**
+                       * YouTube video id.
+                       */
+                      videoId?: string | null;
+                      heading?: string | null;
+                      subheading?: string | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'video';
+                    }
+                  | {
+                      src?: string | null;
+                      heading?: string | null;
+                      caption?: string | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'self_video';
+                    }
+                  | {
+                      left?: {
+                        src?: string | null;
+                        alt?: string | null;
+                        caption?: string | null;
+                      };
+                      right?: {
+                        src?: string | null;
+                        alt?: string | null;
+                        caption?: string | null;
+                      };
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'image_pair';
+                    }
+                )[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'twocol';
+          }
+      )[]
+    | null;
+  /**
+   * Detail-page sections JSON ({ sections: [...] }) — same shape the live site renders.
+   */
+  content?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
    * Supabase services.id — used by the sync for idempotent upserts.
    */
   sourceId?: string | null;
@@ -497,514 +1173,6 @@ export interface Service {
    * R2 image URL (carried from the live site).
    */
   imageUrl?: string | null;
-  /**
-   * The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.
-   */
-  sections?:
-    | (
-        | {
-            heading: string;
-            body: string;
-            /**
-             * Render inside a soft card background.
-             */
-            card?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'text';
-          }
-        | {
-            title: string;
-            body: string;
-            /**
-             * Phosphor icon name (optional).
-             */
-            icon?: string | null;
-            /**
-             * Optional stat chips shown under the callout.
-             */
-            stats?:
-              | {
-                  value: string;
-                  label: string;
-                  id?: string | null;
-                }[]
-              | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'callout';
-          }
-        | {
-            heading?: string | null;
-            items: {
-              item: string;
-              id?: string | null;
-            }[];
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'list';
-          }
-        | {
-            heading: string;
-            subheading?: string | null;
-            numbered?: boolean | null;
-            /**
-             * 2, 3 or 4 (optional).
-             */
-            columns?: number | null;
-            items: {
-              title: string;
-              body: string;
-              tag?: string | null;
-              icon?: string | null;
-              badge?: string | null;
-              spec?: string | null;
-              link?: string | null;
-              id?: string | null;
-            }[];
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'cards';
-          }
-        | {
-            heading: string;
-            subheading?: string | null;
-            items: {
-              step: string;
-              detail: string;
-              id?: string | null;
-            }[];
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'steps';
-          }
-        | {
-            heading?: string | null;
-            subheading?: string | null;
-            rows: {
-              treatment: string;
-              price: string;
-              id?: string | null;
-            }[];
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'pricing';
-          }
-        | {
-            heading?: string | null;
-            subheading?: string | null;
-            rows: {
-              treatment: string;
-              price: string;
-              id?: string | null;
-            }[];
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'pricetable';
-          }
-        | {
-            heading?: string | null;
-            subheading?: string | null;
-            images: {
-              url: string;
-              id?: string | null;
-            }[];
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'gallery';
-          }
-        | {
-            src: string;
-            alt: string;
-            heading?: string | null;
-            subheading?: string | null;
-            caption?: string | null;
-            size?: ('small' | 'medium' | 'large' | 'full') | null;
-            width?: number | null;
-            height?: number | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'image';
-          }
-        | {
-            /**
-             * YouTube video id.
-             */
-            videoId: string;
-            heading?: string | null;
-            subheading?: string | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'video';
-          }
-        | {
-            src: string;
-            heading?: string | null;
-            caption?: string | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'self_video';
-          }
-        | {
-            left: {
-              src: string;
-              alt: string;
-              caption?: string | null;
-            };
-            right: {
-              src: string;
-              alt: string;
-              caption?: string | null;
-            };
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'image_pair';
-          }
-        | {
-            /**
-             * Exactly one section for the left column.
-             */
-            left: (
-              | {
-                  heading: string;
-                  body: string;
-                  /**
-                   * Render inside a soft card background.
-                   */
-                  card?: boolean | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'text';
-                }
-              | {
-                  title: string;
-                  body: string;
-                  /**
-                   * Phosphor icon name (optional).
-                   */
-                  icon?: string | null;
-                  /**
-                   * Optional stat chips shown under the callout.
-                   */
-                  stats?:
-                    | {
-                        value: string;
-                        label: string;
-                        id?: string | null;
-                      }[]
-                    | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'callout';
-                }
-              | {
-                  heading?: string | null;
-                  items: {
-                    item: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'list';
-                }
-              | {
-                  heading: string;
-                  subheading?: string | null;
-                  numbered?: boolean | null;
-                  /**
-                   * 2, 3 or 4 (optional).
-                   */
-                  columns?: number | null;
-                  items: {
-                    title: string;
-                    body: string;
-                    tag?: string | null;
-                    icon?: string | null;
-                    badge?: string | null;
-                    spec?: string | null;
-                    link?: string | null;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'cards';
-                }
-              | {
-                  heading: string;
-                  subheading?: string | null;
-                  items: {
-                    step: string;
-                    detail: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'steps';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  rows: {
-                    treatment: string;
-                    price: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'pricing';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  rows: {
-                    treatment: string;
-                    price: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'pricetable';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  images: {
-                    url: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'gallery';
-                }
-              | {
-                  src: string;
-                  alt: string;
-                  heading?: string | null;
-                  subheading?: string | null;
-                  caption?: string | null;
-                  size?: ('small' | 'medium' | 'large' | 'full') | null;
-                  width?: number | null;
-                  height?: number | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'image';
-                }
-              | {
-                  /**
-                   * YouTube video id.
-                   */
-                  videoId: string;
-                  heading?: string | null;
-                  subheading?: string | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'video';
-                }
-              | {
-                  src: string;
-                  heading?: string | null;
-                  caption?: string | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'self_video';
-                }
-              | {
-                  left: {
-                    src: string;
-                    alt: string;
-                    caption?: string | null;
-                  };
-                  right: {
-                    src: string;
-                    alt: string;
-                    caption?: string | null;
-                  };
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'image_pair';
-                }
-            )[];
-            /**
-             * Exactly one section for the right column.
-             */
-            right: (
-              | {
-                  heading: string;
-                  body: string;
-                  /**
-                   * Render inside a soft card background.
-                   */
-                  card?: boolean | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'text';
-                }
-              | {
-                  title: string;
-                  body: string;
-                  /**
-                   * Phosphor icon name (optional).
-                   */
-                  icon?: string | null;
-                  /**
-                   * Optional stat chips shown under the callout.
-                   */
-                  stats?:
-                    | {
-                        value: string;
-                        label: string;
-                        id?: string | null;
-                      }[]
-                    | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'callout';
-                }
-              | {
-                  heading?: string | null;
-                  items: {
-                    item: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'list';
-                }
-              | {
-                  heading: string;
-                  subheading?: string | null;
-                  numbered?: boolean | null;
-                  /**
-                   * 2, 3 or 4 (optional).
-                   */
-                  columns?: number | null;
-                  items: {
-                    title: string;
-                    body: string;
-                    tag?: string | null;
-                    icon?: string | null;
-                    badge?: string | null;
-                    spec?: string | null;
-                    link?: string | null;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'cards';
-                }
-              | {
-                  heading: string;
-                  subheading?: string | null;
-                  items: {
-                    step: string;
-                    detail: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'steps';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  rows: {
-                    treatment: string;
-                    price: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'pricing';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  rows: {
-                    treatment: string;
-                    price: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'pricetable';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  images: {
-                    url: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'gallery';
-                }
-              | {
-                  src: string;
-                  alt: string;
-                  heading?: string | null;
-                  subheading?: string | null;
-                  caption?: string | null;
-                  size?: ('small' | 'medium' | 'large' | 'full') | null;
-                  width?: number | null;
-                  height?: number | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'image';
-                }
-              | {
-                  /**
-                   * YouTube video id.
-                   */
-                  videoId: string;
-                  heading?: string | null;
-                  subheading?: string | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'video';
-                }
-              | {
-                  src: string;
-                  heading?: string | null;
-                  caption?: string | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'self_video';
-                }
-              | {
-                  left: {
-                    src: string;
-                    alt: string;
-                    caption?: string | null;
-                  };
-                  right: {
-                    src: string;
-                    alt: string;
-                    caption?: string | null;
-                  };
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'image_pair';
-                }
-            )[];
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'twocol';
-          }
-      )[]
-    | null;
-  /**
-   * Detail-page sections JSON ({ sections: [...] }) — same shape the live site renders.
-   */
-  content?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
   order?: number | null;
   published?: boolean | null;
   updatedAt: string;
@@ -1076,31 +1244,13 @@ export interface Technology {
   id: number;
   tenant?: (number | null) | Tenant;
   /**
-   * Supabase technology.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  name: string;
-  slug: string;
-  category?: string | null;
-  description?: string | null;
-  highlights?:
-    | {
-        value: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * R2 image URL (carried from the live site).
-   */
-  imageUrl?: string | null;
-  /**
    * The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.
    */
   sections?:
     | (
         | {
-            heading: string;
-            body: string;
+            heading?: string | null;
+            body?: string | null;
             /**
              * Render inside a soft card background.
              */
@@ -1110,19 +1260,39 @@ export interface Technology {
             blockType: 'text';
           }
         | {
-            title: string;
-            body: string;
+            title?: string | null;
+            body?: string | null;
             /**
-             * Phosphor icon name (optional).
+             * Optional — shown as a duotone icon next to the text.
              */
-            icon?: string | null;
+            icon?:
+              | (
+                  | 'Tooth'
+                  | 'Smile'
+                  | 'Heart'
+                  | 'Star'
+                  | 'Sparkles'
+                  | 'Check'
+                  | 'Shield'
+                  | 'Clock'
+                  | 'DollarSign'
+                  | 'Bone'
+                  | 'Dumbbell'
+                  | 'CircleDot'
+                  | 'Zap'
+                  | 'Eye'
+                  | 'FirstAidKit'
+                  | 'RotateCcw'
+                  | 'ArrowRight'
+                )
+              | null;
             /**
              * Optional stat chips shown under the callout.
              */
             stats?:
               | {
-                  value: string;
-                  label: string;
+                  value?: string | null;
+                  label?: string | null;
                   id?: string | null;
                 }[]
               | null;
@@ -1132,44 +1302,73 @@ export interface Technology {
           }
         | {
             heading?: string | null;
-            items: {
-              item: string;
-              id?: string | null;
-            }[];
+            items?:
+              | {
+                  item?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'list';
           }
         | {
-            heading: string;
+            heading?: string | null;
             subheading?: string | null;
             numbered?: boolean | null;
             /**
              * 2, 3 or 4 (optional).
              */
             columns?: number | null;
-            items: {
-              title: string;
-              body: string;
-              tag?: string | null;
-              icon?: string | null;
-              badge?: string | null;
-              spec?: string | null;
-              link?: string | null;
-              id?: string | null;
-            }[];
+            items?:
+              | {
+                  title?: string | null;
+                  body?: string | null;
+                  /**
+                   * Optional — shown as a duotone icon next to the text.
+                   */
+                  icon?:
+                    | (
+                        | 'Tooth'
+                        | 'Smile'
+                        | 'Heart'
+                        | 'Star'
+                        | 'Sparkles'
+                        | 'Check'
+                        | 'Shield'
+                        | 'Clock'
+                        | 'DollarSign'
+                        | 'Bone'
+                        | 'Dumbbell'
+                        | 'CircleDot'
+                        | 'Zap'
+                        | 'Eye'
+                        | 'FirstAidKit'
+                        | 'RotateCcw'
+                        | 'ArrowRight'
+                      )
+                    | null;
+                  tag?: string | null;
+                  badge?: string | null;
+                  spec?: string | null;
+                  link?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'cards';
           }
         | {
-            heading: string;
+            heading?: string | null;
             subheading?: string | null;
-            items: {
-              step: string;
-              detail: string;
-              id?: string | null;
-            }[];
+            items?:
+              | {
+                  step?: string | null;
+                  detail?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'steps';
@@ -1177,11 +1376,13 @@ export interface Technology {
         | {
             heading?: string | null;
             subheading?: string | null;
-            rows: {
-              treatment: string;
-              price: string;
-              id?: string | null;
-            }[];
+            rows?:
+              | {
+                  treatment?: string | null;
+                  price?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'pricing';
@@ -1189,11 +1390,13 @@ export interface Technology {
         | {
             heading?: string | null;
             subheading?: string | null;
-            rows: {
-              treatment: string;
-              price: string;
-              id?: string | null;
-            }[];
+            rows?:
+              | {
+                  treatment?: string | null;
+                  price?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'pricetable';
@@ -1201,17 +1404,19 @@ export interface Technology {
         | {
             heading?: string | null;
             subheading?: string | null;
-            images: {
-              url: string;
-              id?: string | null;
-            }[];
+            images?:
+              | {
+                  url?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'gallery';
           }
         | {
-            src: string;
-            alt: string;
+            src?: string | null;
+            alt?: string | null;
             heading?: string | null;
             subheading?: string | null;
             caption?: string | null;
@@ -1226,7 +1431,7 @@ export interface Technology {
             /**
              * YouTube video id.
              */
-            videoId: string;
+            videoId?: string | null;
             heading?: string | null;
             subheading?: string | null;
             id?: string | null;
@@ -1234,7 +1439,7 @@ export interface Technology {
             blockType: 'video';
           }
         | {
-            src: string;
+            src?: string | null;
             heading?: string | null;
             caption?: string | null;
             id?: string | null;
@@ -1242,14 +1447,14 @@ export interface Technology {
             blockType: 'self_video';
           }
         | {
-            left: {
-              src: string;
-              alt: string;
+            left?: {
+              src?: string | null;
+              alt?: string | null;
               caption?: string | null;
             };
-            right: {
-              src: string;
-              alt: string;
+            right?: {
+              src?: string | null;
+              alt?: string | null;
               caption?: string | null;
             };
             id?: string | null;
@@ -1260,329 +1465,443 @@ export interface Technology {
             /**
              * Exactly one section for the left column.
              */
-            left: (
-              | {
-                  heading: string;
-                  body: string;
-                  /**
-                   * Render inside a soft card background.
-                   */
-                  card?: boolean | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'text';
-                }
-              | {
-                  title: string;
-                  body: string;
-                  /**
-                   * Phosphor icon name (optional).
-                   */
-                  icon?: string | null;
-                  /**
-                   * Optional stat chips shown under the callout.
-                   */
-                  stats?:
-                    | {
-                        value: string;
-                        label: string;
-                        id?: string | null;
-                      }[]
-                    | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'callout';
-                }
-              | {
-                  heading?: string | null;
-                  items: {
-                    item: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'list';
-                }
-              | {
-                  heading: string;
-                  subheading?: string | null;
-                  numbered?: boolean | null;
-                  /**
-                   * 2, 3 or 4 (optional).
-                   */
-                  columns?: number | null;
-                  items: {
-                    title: string;
-                    body: string;
-                    tag?: string | null;
-                    icon?: string | null;
-                    badge?: string | null;
-                    spec?: string | null;
-                    link?: string | null;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'cards';
-                }
-              | {
-                  heading: string;
-                  subheading?: string | null;
-                  items: {
-                    step: string;
-                    detail: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'steps';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  rows: {
-                    treatment: string;
-                    price: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'pricing';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  rows: {
-                    treatment: string;
-                    price: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'pricetable';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  images: {
-                    url: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'gallery';
-                }
-              | {
-                  src: string;
-                  alt: string;
-                  heading?: string | null;
-                  subheading?: string | null;
-                  caption?: string | null;
-                  size?: ('small' | 'medium' | 'large' | 'full') | null;
-                  width?: number | null;
-                  height?: number | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'image';
-                }
-              | {
-                  /**
-                   * YouTube video id.
-                   */
-                  videoId: string;
-                  heading?: string | null;
-                  subheading?: string | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'video';
-                }
-              | {
-                  src: string;
-                  heading?: string | null;
-                  caption?: string | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'self_video';
-                }
-              | {
-                  left: {
-                    src: string;
-                    alt: string;
-                    caption?: string | null;
-                  };
-                  right: {
-                    src: string;
-                    alt: string;
-                    caption?: string | null;
-                  };
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'image_pair';
-                }
-            )[];
+            left?:
+              | (
+                  | {
+                      heading?: string | null;
+                      body?: string | null;
+                      /**
+                       * Render inside a soft card background.
+                       */
+                      card?: boolean | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'text';
+                    }
+                  | {
+                      title?: string | null;
+                      body?: string | null;
+                      /**
+                       * Optional — shown as a duotone icon next to the text.
+                       */
+                      icon?:
+                        | (
+                            | 'Tooth'
+                            | 'Smile'
+                            | 'Heart'
+                            | 'Star'
+                            | 'Sparkles'
+                            | 'Check'
+                            | 'Shield'
+                            | 'Clock'
+                            | 'DollarSign'
+                            | 'Bone'
+                            | 'Dumbbell'
+                            | 'CircleDot'
+                            | 'Zap'
+                            | 'Eye'
+                            | 'FirstAidKit'
+                            | 'RotateCcw'
+                            | 'ArrowRight'
+                          )
+                        | null;
+                      /**
+                       * Optional stat chips shown under the callout.
+                       */
+                      stats?:
+                        | {
+                            value?: string | null;
+                            label?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'callout';
+                    }
+                  | {
+                      heading?: string | null;
+                      items?:
+                        | {
+                            item?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'list';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      numbered?: boolean | null;
+                      /**
+                       * 2, 3 or 4 (optional).
+                       */
+                      columns?: number | null;
+                      items?:
+                        | {
+                            title?: string | null;
+                            body?: string | null;
+                            /**
+                             * Optional — shown as a duotone icon next to the text.
+                             */
+                            icon?:
+                              | (
+                                  | 'Tooth'
+                                  | 'Smile'
+                                  | 'Heart'
+                                  | 'Star'
+                                  | 'Sparkles'
+                                  | 'Check'
+                                  | 'Shield'
+                                  | 'Clock'
+                                  | 'DollarSign'
+                                  | 'Bone'
+                                  | 'Dumbbell'
+                                  | 'CircleDot'
+                                  | 'Zap'
+                                  | 'Eye'
+                                  | 'FirstAidKit'
+                                  | 'RotateCcw'
+                                  | 'ArrowRight'
+                                )
+                              | null;
+                            tag?: string | null;
+                            badge?: string | null;
+                            spec?: string | null;
+                            link?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'cards';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      items?:
+                        | {
+                            step?: string | null;
+                            detail?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'steps';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      rows?:
+                        | {
+                            treatment?: string | null;
+                            price?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'pricing';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      rows?:
+                        | {
+                            treatment?: string | null;
+                            price?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'pricetable';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      images?:
+                        | {
+                            url?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'gallery';
+                    }
+                  | {
+                      src?: string | null;
+                      alt?: string | null;
+                      heading?: string | null;
+                      subheading?: string | null;
+                      caption?: string | null;
+                      size?: ('small' | 'medium' | 'large' | 'full') | null;
+                      width?: number | null;
+                      height?: number | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'image';
+                    }
+                  | {
+                      /**
+                       * YouTube video id.
+                       */
+                      videoId?: string | null;
+                      heading?: string | null;
+                      subheading?: string | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'video';
+                    }
+                  | {
+                      src?: string | null;
+                      heading?: string | null;
+                      caption?: string | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'self_video';
+                    }
+                  | {
+                      left?: {
+                        src?: string | null;
+                        alt?: string | null;
+                        caption?: string | null;
+                      };
+                      right?: {
+                        src?: string | null;
+                        alt?: string | null;
+                        caption?: string | null;
+                      };
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'image_pair';
+                    }
+                )[]
+              | null;
             /**
              * Exactly one section for the right column.
              */
-            right: (
-              | {
-                  heading: string;
-                  body: string;
-                  /**
-                   * Render inside a soft card background.
-                   */
-                  card?: boolean | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'text';
-                }
-              | {
-                  title: string;
-                  body: string;
-                  /**
-                   * Phosphor icon name (optional).
-                   */
-                  icon?: string | null;
-                  /**
-                   * Optional stat chips shown under the callout.
-                   */
-                  stats?:
-                    | {
-                        value: string;
-                        label: string;
-                        id?: string | null;
-                      }[]
-                    | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'callout';
-                }
-              | {
-                  heading?: string | null;
-                  items: {
-                    item: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'list';
-                }
-              | {
-                  heading: string;
-                  subheading?: string | null;
-                  numbered?: boolean | null;
-                  /**
-                   * 2, 3 or 4 (optional).
-                   */
-                  columns?: number | null;
-                  items: {
-                    title: string;
-                    body: string;
-                    tag?: string | null;
-                    icon?: string | null;
-                    badge?: string | null;
-                    spec?: string | null;
-                    link?: string | null;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'cards';
-                }
-              | {
-                  heading: string;
-                  subheading?: string | null;
-                  items: {
-                    step: string;
-                    detail: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'steps';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  rows: {
-                    treatment: string;
-                    price: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'pricing';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  rows: {
-                    treatment: string;
-                    price: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'pricetable';
-                }
-              | {
-                  heading?: string | null;
-                  subheading?: string | null;
-                  images: {
-                    url: string;
-                    id?: string | null;
-                  }[];
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'gallery';
-                }
-              | {
-                  src: string;
-                  alt: string;
-                  heading?: string | null;
-                  subheading?: string | null;
-                  caption?: string | null;
-                  size?: ('small' | 'medium' | 'large' | 'full') | null;
-                  width?: number | null;
-                  height?: number | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'image';
-                }
-              | {
-                  /**
-                   * YouTube video id.
-                   */
-                  videoId: string;
-                  heading?: string | null;
-                  subheading?: string | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'video';
-                }
-              | {
-                  src: string;
-                  heading?: string | null;
-                  caption?: string | null;
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'self_video';
-                }
-              | {
-                  left: {
-                    src: string;
-                    alt: string;
-                    caption?: string | null;
-                  };
-                  right: {
-                    src: string;
-                    alt: string;
-                    caption?: string | null;
-                  };
-                  id?: string | null;
-                  blockName?: string | null;
-                  blockType: 'image_pair';
-                }
-            )[];
+            right?:
+              | (
+                  | {
+                      heading?: string | null;
+                      body?: string | null;
+                      /**
+                       * Render inside a soft card background.
+                       */
+                      card?: boolean | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'text';
+                    }
+                  | {
+                      title?: string | null;
+                      body?: string | null;
+                      /**
+                       * Optional — shown as a duotone icon next to the text.
+                       */
+                      icon?:
+                        | (
+                            | 'Tooth'
+                            | 'Smile'
+                            | 'Heart'
+                            | 'Star'
+                            | 'Sparkles'
+                            | 'Check'
+                            | 'Shield'
+                            | 'Clock'
+                            | 'DollarSign'
+                            | 'Bone'
+                            | 'Dumbbell'
+                            | 'CircleDot'
+                            | 'Zap'
+                            | 'Eye'
+                            | 'FirstAidKit'
+                            | 'RotateCcw'
+                            | 'ArrowRight'
+                          )
+                        | null;
+                      /**
+                       * Optional stat chips shown under the callout.
+                       */
+                      stats?:
+                        | {
+                            value?: string | null;
+                            label?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'callout';
+                    }
+                  | {
+                      heading?: string | null;
+                      items?:
+                        | {
+                            item?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'list';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      numbered?: boolean | null;
+                      /**
+                       * 2, 3 or 4 (optional).
+                       */
+                      columns?: number | null;
+                      items?:
+                        | {
+                            title?: string | null;
+                            body?: string | null;
+                            /**
+                             * Optional — shown as a duotone icon next to the text.
+                             */
+                            icon?:
+                              | (
+                                  | 'Tooth'
+                                  | 'Smile'
+                                  | 'Heart'
+                                  | 'Star'
+                                  | 'Sparkles'
+                                  | 'Check'
+                                  | 'Shield'
+                                  | 'Clock'
+                                  | 'DollarSign'
+                                  | 'Bone'
+                                  | 'Dumbbell'
+                                  | 'CircleDot'
+                                  | 'Zap'
+                                  | 'Eye'
+                                  | 'FirstAidKit'
+                                  | 'RotateCcw'
+                                  | 'ArrowRight'
+                                )
+                              | null;
+                            tag?: string | null;
+                            badge?: string | null;
+                            spec?: string | null;
+                            link?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'cards';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      items?:
+                        | {
+                            step?: string | null;
+                            detail?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'steps';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      rows?:
+                        | {
+                            treatment?: string | null;
+                            price?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'pricing';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      rows?:
+                        | {
+                            treatment?: string | null;
+                            price?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'pricetable';
+                    }
+                  | {
+                      heading?: string | null;
+                      subheading?: string | null;
+                      images?:
+                        | {
+                            url?: string | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'gallery';
+                    }
+                  | {
+                      src?: string | null;
+                      alt?: string | null;
+                      heading?: string | null;
+                      subheading?: string | null;
+                      caption?: string | null;
+                      size?: ('small' | 'medium' | 'large' | 'full') | null;
+                      width?: number | null;
+                      height?: number | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'image';
+                    }
+                  | {
+                      /**
+                       * YouTube video id.
+                       */
+                      videoId?: string | null;
+                      heading?: string | null;
+                      subheading?: string | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'video';
+                    }
+                  | {
+                      src?: string | null;
+                      heading?: string | null;
+                      caption?: string | null;
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'self_video';
+                    }
+                  | {
+                      left?: {
+                        src?: string | null;
+                        alt?: string | null;
+                        caption?: string | null;
+                      };
+                      right?: {
+                        src?: string | null;
+                        alt?: string | null;
+                        caption?: string | null;
+                      };
+                      id?: string | null;
+                      blockName?: string | null;
+                      blockType: 'image_pair';
+                    }
+                )[]
+              | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'twocol';
@@ -1601,6 +1920,24 @@ export interface Technology {
     | number
     | boolean
     | null;
+  /**
+   * Supabase technology.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  name: string;
+  slug: string;
+  category?: string | null;
+  description?: string | null;
+  highlights?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * R2 image URL (carried from the live site).
+   */
+  imageUrl?: string | null;
   order?: number | null;
   published?: boolean | null;
   updatedAt: string;
@@ -2535,22 +2872,6 @@ export interface TestimonialsSelect<T extends boolean = true> {
  */
 export interface ServicesSelect<T extends boolean = true> {
   tenant?: T;
-  sourceId?: T;
-  name?: T;
-  slug?: T;
-  description?: T;
-  eyebrow?: T;
-  heroDescription?: T;
-  category?: T;
-  icon?: T;
-  isFeatured?: T;
-  features?:
-    | T
-    | {
-        feature?: T;
-        id?: T;
-      };
-  imageUrl?: T;
   sections?:
     | T
     | {
@@ -2604,8 +2925,8 @@ export interface ServicesSelect<T extends boolean = true> {
                 | {
                     title?: T;
                     body?: T;
-                    tag?: T;
                     icon?: T;
+                    tag?: T;
                     badge?: T;
                     spec?: T;
                     link?: T;
@@ -2781,8 +3102,8 @@ export interface ServicesSelect<T extends boolean = true> {
                             | {
                                 title?: T;
                                 body?: T;
-                                tag?: T;
                                 icon?: T;
+                                tag?: T;
                                 badge?: T;
                                 spec?: T;
                                 link?: T;
@@ -2956,8 +3277,8 @@ export interface ServicesSelect<T extends boolean = true> {
                             | {
                                 title?: T;
                                 body?: T;
-                                tag?: T;
                                 icon?: T;
+                                tag?: T;
                                 badge?: T;
                                 spec?: T;
                                 link?: T;
@@ -3083,6 +3404,22 @@ export interface ServicesSelect<T extends boolean = true> {
             };
       };
   content?: T;
+  sourceId?: T;
+  name?: T;
+  slug?: T;
+  description?: T;
+  eyebrow?: T;
+  heroDescription?: T;
+  category?: T;
+  icon?: T;
+  isFeatured?: T;
+  features?:
+    | T
+    | {
+        feature?: T;
+        id?: T;
+      };
+  imageUrl?: T;
   order?: T;
   published?: T;
   updatedAt?: T;
@@ -3126,18 +3463,6 @@ export interface DoctorsSelect<T extends boolean = true> {
  */
 export interface TechnologySelect<T extends boolean = true> {
   tenant?: T;
-  sourceId?: T;
-  name?: T;
-  slug?: T;
-  category?: T;
-  description?: T;
-  highlights?:
-    | T
-    | {
-        value?: T;
-        id?: T;
-      };
-  imageUrl?: T;
   sections?:
     | T
     | {
@@ -3191,8 +3516,8 @@ export interface TechnologySelect<T extends boolean = true> {
                 | {
                     title?: T;
                     body?: T;
-                    tag?: T;
                     icon?: T;
+                    tag?: T;
                     badge?: T;
                     spec?: T;
                     link?: T;
@@ -3368,8 +3693,8 @@ export interface TechnologySelect<T extends boolean = true> {
                             | {
                                 title?: T;
                                 body?: T;
-                                tag?: T;
                                 icon?: T;
+                                tag?: T;
                                 badge?: T;
                                 spec?: T;
                                 link?: T;
@@ -3543,8 +3868,8 @@ export interface TechnologySelect<T extends boolean = true> {
                             | {
                                 title?: T;
                                 body?: T;
-                                tag?: T;
                                 icon?: T;
+                                tag?: T;
                                 badge?: T;
                                 spec?: T;
                                 link?: T;
@@ -3670,6 +3995,18 @@ export interface TechnologySelect<T extends boolean = true> {
             };
       };
   content?: T;
+  sourceId?: T;
+  name?: T;
+  slug?: T;
+  category?: T;
+  description?: T;
+  highlights?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  imageUrl?: T;
   order?: T;
   published?: T;
   updatedAt?: T;
@@ -4072,7 +4409,6 @@ export interface BookingSlotsSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   alt?: T;
-  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

@@ -23,19 +23,19 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
   'brand-logos': {
     singular: "Logo Strip Item",
-    plural: "Logo Strip (scrolling logos)",
+    plural: "Logo Strip",
     description:
       "The grey band of partner logos that scrolls sideways directly under the home page hero.",
   },
   'site-stats': {
     singular: "Stat",
-    plural: "Stats Band (big numbers)",
+    plural: "Stats Band",
     description:
       "The row of big numbers under the logo strip on the home page — the same figures also appear on About Roomchang, Our Facilities and Clinical Results.",
   },
   'feature-cards': {
     singular: "Highlight Card",
-    plural: "Highlight Cards (3 image cards)",
+    plural: "Highlight Cards",
     description:
       "The three large picture cards near the bottom of the home page — photo, heading, blurb and the link button on each.",
   },
@@ -47,13 +47,13 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
   'services': {
     singular: "Service",
-    plural: "Services (cards + detail pages)",
+    plural: "Services",
     description:
       "Every treatment in the Services menu — its card on the Services page and the whole of its own detail page.",
   },
   'doctors': {
     singular: "Doctor",
-    plural: "Doctors (Our Team page)",
+    plural: "Doctors",
     description:
       "The dentist profiles shown on the Our Team page and in the doctor picker on the Contact form.",
   },
@@ -71,31 +71,31 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
   'pricing-items': {
     singular: "Price List Row",
-    plural: "Price List Rows (treatment + price)",
+    plural: "Price List Rows",
     description:
       "Each treatment line inside a Treatment Prices section — the name, the USD price and the small note underneath.",
   },
   'pricing-comparison-sets': {
     singular: "Comparison Table",
-    plural: "Comparison Tables (2 total)",
+    plural: "Comparison Tables",
     description:
       "The two price-comparison tables as a whole — the exchange rate and the source note printed under the International Price Comparison and Dental Implants Price Comparison pages.",
   },
   'pricing-comparison-rows': {
     singular: "Comparison Row",
-    plural: "Comparison Table Rows (vs Australia)",
+    plural: "Comparison Table Rows",
     description:
       "One treatment line inside a comparison table — the Roomchang, Australia and Singapore prices shown side by side.",
   },
   'international-why-items': {
     singular: "Why-Choose Card",
-    plural: "Why Choose Roomchang (cards)",
+    plural: "Why Choose Roomchang",
     description:
       "The cards under the \"Why Choose Roomchang?\" heading, the first section on the International Patients page.",
   },
   'international-treatments': {
     singular: "Cost Comparison Row",
-    plural: "Cost Comparison (treatment + saving)",
+    plural: "Cost Comparison",
     description:
       "The treatment-and-saving lines inside the \"Cost Comparison\" panel in the middle of the International Patients page.",
   },
@@ -107,7 +107,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
   'timeline-events': {
     singular: "Timeline Milestone",
-    plural: "Our Story Timeline (milestones)",
+    plural: "Our Story Timeline",
     description:
       "The year-by-year story that scrolls down the middle of the About Roomchang page — year, heading, paragraph and photo.",
   },
@@ -119,7 +119,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
   'community-articles': {
     singular: "Community Story",
-    plural: "Roomchang in the Community (stories)",
+    plural: "Roomchang in the Community",
     description:
       "The charity and outreach stories on About → Roomchang in the Community and the detail page behind each one.",
   },
@@ -143,7 +143,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
   'partner-categories': {
     singular: "Partner Group",
-    plural: "Partner Groups (page sections)",
+    plural: "Partner Groups",
     description:
       "The headed sections on the Corporate Partnerships page — Banks, International Schools, Insurance and so on — and the order they run in.",
   },
@@ -161,7 +161,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
   'branches': {
     singular: "Branch",
-    plural: "Branches (Contact page)",
+    plural: "Branches",
     description:
       "The branch panels on the Contact page — address, phone, opening hours, photo and map link for each location.",
   },
@@ -203,7 +203,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
   'modules': {
     singular: "Module",
-    plural: "Modules (sellable features)",
+    plural: "Modules",
     description:
       "The feature catalogue sold to customers; a module decides which page groups show up in that customer's sidebar.",
   },

@@ -17,6 +17,43 @@ export const Technology: CollectionConfig = {
   },
   fields: [
     {
+      // Layout-only tabs (unnamed => no schema change): the structured
+      // editor up front, the legacy raw JSON tucked away in Advanced —
+      // having both stacked on one page read as clutter (Enoch review).
+      type: 'tabs',
+      tabs: [
+        {
+          label: 'Page sections',
+          fields: [
+        {
+          name: 'sections',
+          type: 'blocks',
+          localized: true,
+          blocks: SECTION_BLOCKS,
+          admin: {
+            description:
+              'The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.',
+          },
+        },
+          ],
+        },
+        {
+          label: 'Advanced (legacy JSON)',
+          description: 'The old raw-JSON body. Ignored by the site once Page sections has any content.',
+          fields: [
+        {
+          name: 'content',
+          type: 'json',
+          localized: true,
+          admin: {
+            description: 'LEGACY raw JSON — superseded by the Sections editor above when it has any section.',
+          },
+        },
+          ],
+        },
+      ],
+    },
+    {
       name: 'sourceId',
       type: 'text',
       index: true,
@@ -61,24 +98,6 @@ export const Technology: CollectionConfig = {
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
         description: 'R2 image URL (carried from the live site).',
-      },
-    },
-    {
-      name: 'sections',
-      type: 'blocks',
-      localized: true,
-      blocks: SECTION_BLOCKS,
-      admin: {
-        description:
-          'The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.',
-      },
-    },
-    {
-      name: 'content',
-      type: 'json',
-      localized: true,
-      admin: {
-        description: 'LEGACY raw JSON — superseded by the Sections editor above when it has any section.',
       },
     },
     {

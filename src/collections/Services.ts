@@ -22,6 +22,44 @@ export const Services: CollectionConfig = {
   },
   fields: [
     {
+      // Layout-only tabs (unnamed => no schema change): the structured
+      // editor up front, the legacy raw JSON tucked away in Advanced —
+      // having both stacked on one page read as clutter (Enoch review).
+      type: 'tabs',
+      tabs: [
+        {
+          label: 'Page sections',
+          fields: [
+        {
+          name: 'sections',
+          type: 'blocks',
+          localized: true,
+          blocks: SECTION_BLOCKS,
+          admin: {
+            description:
+              'The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.',
+          },
+        },
+          ],
+        },
+        {
+          label: 'Advanced (legacy JSON)',
+          description: 'The old raw-JSON body. Ignored by the site once Page sections has any content.',
+          fields: [
+        {
+          name: 'content',
+          type: 'json',
+          localized: true,
+          admin: {
+            description:
+              'Detail-page sections JSON ({ sections: [...] }) — same shape the live site renders.',
+          },
+        },
+          ],
+        },
+      ],
+    },
+    {
       name: 'sourceId',
       type: 'text',
       index: true,
@@ -81,8 +119,9 @@ export const Services: CollectionConfig = {
       name: 'features',
       type: 'array',
       localized: true,
-      label: 'Card tags (Services overview page)',
+      label: 'Overview-card tags',
       admin: {
+        initCollapsed: true,
         description:
           'The small pink tags on this service’s card on the "Services" overview page (/services) — a quick "what’s included" summary. NOT shown on this detail page, so the Live Preview won’t change when you edit these.',
       },
@@ -100,25 +139,6 @@ export const Services: CollectionConfig = {
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
         description: 'R2 image URL (carried from the live site).',
-      },
-    },
-    {
-      name: 'sections',
-      type: 'blocks',
-      localized: true,
-      blocks: SECTION_BLOCKS,
-      admin: {
-        description:
-          'The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.',
-      },
-    },
-    {
-      name: 'content',
-      type: 'json',
-      localized: true,
-      admin: {
-        description:
-          'Detail-page sections JSON ({ sections: [...] }) — same shape the live site renders.',
       },
     },
     {
