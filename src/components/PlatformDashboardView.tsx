@@ -1,10 +1,9 @@
 import React from 'react'
-// Public, supported subpath export (not a dist/ deep import).
-import { DefaultDashboard } from '@payloadcms/next/views'
 import { headers as nextHeaders } from 'next/headers'
-import type { Payload } from 'payload'
+import type { CollectionSlug, Payload } from 'payload'
 import { PlatformDashboard } from './PlatformDashboard'
-import { SitePagesIndex } from './SitePagesIndex'
+import { SitePagesIndex, type PartCounts } from './SitePagesIndex'
+import { SITE_PAGES } from '@/lib/site-pages'
 import { getTenantByHost, type TenantBranding } from '@/lib/get-tenant-by-host'
 
 /**
@@ -38,6 +37,52 @@ const siteUrlFor = (tenant: TenantBranding | null): string | undefined => {
   return 'https://www.roomchang.com'
 }
 
+const PART_SLUGS = Array.from(new Set(SITE_PAGES.flatMap((p) => p.parts.map((pt) => pt.collection))))
+
+/**
+ * Live numbers for the page index — what turns it from a static sitemap into
+ * a status surface ("Doctors → 40 items · 3 unpublished"). Counts are scoped
+ * to the tenant; the unpublished probe is skipped for collections without a
+ * `published` field and guarded anyway (a failed count must never take down
+ * the dashboard).
+ */
+const countParts = async (payload: Payload, tenantId: number | string): Promise<PartCounts> => {
+  const entries = await Promise.all(
+    PART_SLUGS.map(async (slug) => {
+      try {
+        const where = { tenant: { equals: tenantId } }
+        const { totalDocs: total } = await payload.count({
+          collection: slug as CollectionSlug,
+          where,
+          overrideAccess: true,
+        })
+
+        let unpublished: number | undefined
+        const cfg = payload.collections[slug as CollectionSlug]?.config as
+          | { flattenedFields?: { name?: string }[]; fields?: { name?: string }[] }
+          | undefined
+        const fieldList = cfg?.flattenedFields ?? cfg?.fields ?? []
+        if (fieldList.some((f) => f?.name === 'published')) {
+          try {
+            const r = await payload.count({
+              collection: slug as CollectionSlug,
+              where: { and: [where, { published: { not_equals: true } }] },
+              overrideAccess: true,
+            })
+            unpublished = r.totalDocs
+          } catch {
+            // published not queryable after all — show the total alone.
+          }
+        }
+        return [slug, { total, unpublished }] as const
+      } catch {
+        return null
+      }
+    }),
+  )
+  return Object.fromEntries(entries.filter((e): e is NonNullable<typeof e> => e !== null))
+}
+
 export const PlatformDashboardView: React.FC<ViewProps> = async (props) => {
   const user = props?.initPageResult?.req?.user ?? null
   const payload = props?.initPageResult?.req?.payload
@@ -51,23 +96,39 @@ export const PlatformDashboardView: React.FC<ViewProps> = async (props) => {
     // Host resolution is best-effort; fall back to the platform view.
   }
 
+  let counts: PartCounts | undefined
+  if (payload && hostTenant) {
+    try {
+      counts = await countParts(payload as Payload, hostTenant.id)
+    } catch {
+      // Best-effort: the index still renders without numbers.
+    }
+  }
+
   if (user?.roles?.includes('super-admin')) {
     return (
       <>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <PlatformDashboard payload={payload as any} user={user} hostTenant={hostTenant} />
         {hostTenant && (
-          <SitePagesIndex tenantName={hostTenant.name} siteUrl={siteUrlFor(hostTenant)} />
+          <SitePagesIndex
+            tenantName={hostTenant.name}
+            siteUrl={siteUrlFor(hostTenant)}
+            counts={counts}
+          />
         )}
       </>
     )
   }
 
+  // Tenant staff get ONE coherent surface. DefaultDashboard used to render
+  // underneath, but it is just the sidebar re-drawn as cards — pure
+  // duplication ("what is the purpose of the dashboard?" — Enoch).
   return (
-    <>
-      <SitePagesIndex tenantName={hostTenant?.name ?? null} siteUrl={siteUrlFor(hostTenant)} />
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <DefaultDashboard {...(props as any)} />
-    </>
+    <SitePagesIndex
+      tenantName={hostTenant?.name ?? null}
+      siteUrl={siteUrlFor(hostTenant)}
+      counts={counts}
+    />
   )
 }

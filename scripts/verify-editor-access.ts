@@ -40,15 +40,21 @@ async function main() {
   }
 
   // NEGATIVE CONTROL: same user with memberships stripped — the pre-fix state.
-  const ghost = { ...user, tenants: [] }
-  const ghostRes = await payload.find({
-    collection: 'services',
-    overrideAccess: false,
-    user: ghost,
-    limit: 1,
-    depth: 0,
-  })
-  console.log(`READ services AS MEMBERSHIP-LESS (pre-fix state): totalDocs=${ghostRes.totalDocs}`)
+  // Expected to FAIL (the plugin denies outright): that Forbidden is what the
+  // admin rendered as "Nothing found" before the membership row existed.
+  try {
+    const ghost = { ...user, tenants: [] }
+    const ghostRes = await payload.find({
+      collection: 'services',
+      overrideAccess: false,
+      user: ghost,
+      limit: 1,
+      depth: 0,
+    })
+    console.log(`MEMBERSHIP-LESS read unexpectedly ALLOWED: totalDocs=${ghostRes.totalDocs}`)
+  } catch (err) {
+    console.log(`MEMBERSHIP-LESS read denied as expected: ${(err as Error).message}`)
+  }
 
   // WRITE: same-value update on the demo Custom Page — exercises the
   // fail-closed write gate + plugin tenant constraint end to end.

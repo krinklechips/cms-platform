@@ -14,11 +14,15 @@ import { COLLECTION_LABELS } from '@/lib/collection-labels'
  * screen that does not exist.
  */
 
+export type PartCounts = Record<string, { total: number; unpublished?: number }>
+
 type Props = {
   /** Which tenant's workspace this is (shown in the heading). */
   tenantName?: string | null
   /** Public site origin, so "view page" links go somewhere real. */
   siteUrl?: string
+  /** Live per-collection numbers (items / unpublished), tenant-scoped. */
+  counts?: PartCounts
 }
 
 const S: Record<string, React.CSSProperties> = {
@@ -46,6 +50,14 @@ const S: Record<string, React.CSSProperties> = {
   partList: { listStyle: 'none', padding: 0, margin: '10px 0 0' },
   partItem: { padding: '7px 0', borderTop: '1px solid var(--theme-elevation-100)' },
   partLink: { fontSize: 13, fontWeight: 600, color: 'var(--theme-text)', textDecoration: 'none' },
+  partCount: {
+    fontSize: 11,
+    fontWeight: 400,
+    color: 'var(--theme-elevation-500)',
+    marginLeft: 8,
+    whiteSpace: 'nowrap' as const,
+  },
+  partDrafts: { color: 'var(--theme-warning-600, #b45309)' },
   partWhat: { fontSize: 12, color: 'var(--theme-elevation-600)', margin: '2px 0 0', lineHeight: 1.45 },
   viewLink: { fontSize: 11, color: 'var(--theme-elevation-500)', textDecoration: 'none' },
   gapWrap: { marginTop: 28 },
@@ -64,7 +76,7 @@ const S: Record<string, React.CSSProperties> = {
 
 const labelFor = (slug: string): string => COLLECTION_LABELS[slug]?.plural ?? slug
 
-export const SitePagesIndex: React.FC<Props> = ({ tenantName, siteUrl }) => (
+export const SitePagesIndex: React.FC<Props> = ({ tenantName, siteUrl, counts }) => (
   <div style={S.wrap}>
     <h2 style={S.h2}>Your website, page by page</h2>
     <p style={S.sub}>
@@ -90,6 +102,18 @@ export const SitePagesIndex: React.FC<Props> = ({ tenantName, siteUrl }) => (
                 <a style={S.partLink} href={`/admin/collections/${part.collection}`}>
                   {labelFor(part.collection)} →
                 </a>
+                {counts?.[part.collection] && (
+                  <span style={S.partCount}>
+                    {counts[part.collection].total} item
+                    {counts[part.collection].total === 1 ? '' : 's'}
+                    {(counts[part.collection].unpublished ?? 0) > 0 && (
+                      <span style={S.partDrafts}>
+                        {' '}
+                        · {counts[part.collection].unpublished} unpublished
+                      </span>
+                    )}
+                  </span>
+                )}
                 <p style={S.partWhat}>{part.controls}</p>
               </li>
             ))}
