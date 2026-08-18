@@ -10,29 +10,33 @@ import React, { useEffect, useState } from 'react'
  * (async server component in that slot breaks the importMap render). This
  * version does zero server work: the brand is picked from
  * window.location.hostname after mount, so the login screen itself shows the
- * tenant's identity on their domain:
+ * tenant's identity on their domain.
  *
- *   roomchang.*  → Roomchang Dental Hospital logo
- *   anything else → Serviette Labs logo
- *
- * SSR renders a fixed-size placeholder (no hydration mismatch); the logo pops
- * in on mount. Add new tenants to BRANDS when their domain goes live.
+ * Asset rules (learned the hard way — "logos are broken", dark-mode round):
+ *   - markSrc must be a SQUARE TRANSPARENT png. White-background JPEGs read
+ *     as broken tiles on the dark theme, and a white "chip" behind them read
+ *     as broken too.
+ *   - Login = mark + tenant NAME AS TEXT (inherits --theme-text), so it is
+ *     correct in both themes for any tenant without per-theme wordmark files.
+ *   - wordmarkSrc is only for brands whose wordmark survives both themes
+ *     (Serviette's blue-on-transparent does; Roomchang's near-black text
+ *     does not).
  */
 
-type Brand = { src: string; alt: string; iconSrc?: string }
+type Brand = {
+  name: string
+  /** Square transparent mark — breadcrumb icon + login identity. */
+  markSrc?: string
+  /** Full wordmark — only when transparent AND readable on light and dark. */
+  wordmarkSrc?: string
+}
 
-const SERVIETTE: Brand = { src: '/serviette-logo.png', alt: 'Serviette Labs' }
+const SERVIETTE: Brand = { name: 'Serviette Labs', wordmarkSrc: '/serviette-logo.png' }
 
 const BRANDS: { hostPrefix: string; brand: Brand }[] = [
   {
     hostPrefix: 'roomchang.',
-    brand: {
-      src: '/roomchang-logo.png', // full wordmark — login screen
-      // Square lotus mark for the small breadcrumb/icon slot: the wordmark PNG
-      // carries big baked-in margins, so at ~26px it read as a smudge.
-      iconSrc: '/roomchang-mark.jpeg',
-      alt: 'Roomchang Dental Hospital',
-    },
+    brand: { name: 'Roomchang Dental Hospital', markSrc: '/roomchang-mark.png' },
   },
 ]
 
@@ -49,12 +53,33 @@ function useBrand(): Brand | null {
 /** Login screen / large logo slot */
 export const AdminLogo: React.FC = () => {
   const brand = useBrand()
-  if (!brand) return <div style={{ height: 80 }} aria-hidden="true" />
+  if (!brand) return <div style={{ height: 96 }} aria-hidden="true" />
+
+  if (brand.markSrc) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={brand.markSrc} alt="" style={{ height: 56, width: 56, objectFit: 'contain' }} />
+        <span
+          style={{
+            fontSize: 20,
+            fontWeight: 650,
+            letterSpacing: 0.2,
+            color: 'var(--theme-text)',
+            textAlign: 'center',
+          }}
+        >
+          {brand.name}
+        </span>
+      </div>
+    )
+  }
+
   // eslint-disable-next-line @next/next/no-img-element
   return (
     <img
-      src={brand.src}
-      alt={brand.alt}
+      src={brand.wordmarkSrc}
+      alt={brand.name}
       style={{ maxWidth: 280, maxHeight: 80, objectFit: 'contain' }}
     />
   )
@@ -67,20 +92,9 @@ export const AdminIcon: React.FC = () => {
   // eslint-disable-next-line @next/next/no-img-element
   return (
     <img
-      src={brand.iconSrc ?? brand.src}
-      alt={brand.alt}
-      // Deliberate white chip: the mark asset is a white-background JPEG,
-      // which looked like a broken tile on the dark admin theme. Framing it
-      // as a padded chip reads as intentional in both themes.
-      style={{
-        height: 30,
-        maxWidth: 120,
-        objectFit: 'contain',
-        borderRadius: 6,
-        background: '#fff',
-        padding: 3,
-        boxSizing: 'border-box',
-      }}
+      src={brand.markSrc ?? brand.wordmarkSrc}
+      alt={brand.name}
+      style={{ height: 30, maxWidth: 120, objectFit: 'contain' }}
     />
   )
 }
