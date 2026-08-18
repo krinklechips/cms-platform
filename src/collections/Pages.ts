@@ -109,6 +109,7 @@ export const Pages: CollectionConfig = {
               localized: true,
               blocks: SECTION_BLOCKS,
               admin: {
+                initCollapsed: true,
                 description: 'Build the page top-to-bottom: add, reorder and edit sections.',
               },
             },

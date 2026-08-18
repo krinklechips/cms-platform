@@ -221,12 +221,41 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
 }
 
+/** sourceId is sync plumbing (Supabase upsert key) — 27 collections carry it
+ *  in the edit sidebar, where it read as jargon to clinic editors (UX audit).
+ *  Hide it from everyone but super-admins; hidden condition fields keep their
+ *  stored value on save. Recurses because some collections nest fields in
+ *  tabs/rows. */
+type AnyField = { name?: string; admin?: Record<string, unknown>; fields?: AnyField[]; tabs?: { fields: AnyField[] }[] }
+
+const hideSourceIdFromTenants = (fields: AnyField[]): AnyField[] =>
+  fields.map((f) => {
+    if (f.name === 'sourceId') {
+      return {
+        ...f,
+        admin: {
+          ...f.admin,
+          condition: (_data: unknown, _sibling: unknown, ctx: { user?: { roles?: string[] } | null }) =>
+            Boolean(ctx?.user?.roles?.includes('super-admin')),
+        },
+      }
+    }
+    if (Array.isArray(f.fields)) return { ...f, fields: hideSourceIdFromTenants(f.fields) }
+    if (Array.isArray(f.tabs))
+      return { ...f, tabs: f.tabs.map((t) => ({ ...t, fields: hideSourceIdFromTenants(t.fields) })) }
+    return f
+  })
+
 /** Apply the human label + description for this collection, if we have one. */
 export const withHumanLabels = (config: CollectionConfig): CollectionConfig => {
   const entry = COLLECTION_LABELS[config.slug]
-  if (!entry) return config
+  const fields = Array.isArray(config.fields)
+    ? (hideSourceIdFromTenants(config.fields as AnyField[]) as CollectionConfig['fields'])
+    : config.fields
+  if (!entry) return { ...config, fields }
   return {
     ...config,
+    fields,
     labels: { singular: entry.singular, plural: entry.plural },
     admin: {
       ...config.admin,

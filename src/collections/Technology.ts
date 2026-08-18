@@ -31,6 +31,9 @@ export const Technology: CollectionConfig = {
           localized: true,
           blocks: SECTION_BLOCKS,
           admin: {
+            // A 13-section service opened as a wall of expanded forms —
+            // collapsed rows read as a tidy table of contents (UX audit).
+            initCollapsed: true,
             description:
               'The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.',
           },
