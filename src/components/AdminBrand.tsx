@@ -19,14 +19,20 @@ import React, { useEffect, useState } from 'react'
  * in on mount. Add new tenants to BRANDS when their domain goes live.
  */
 
-type Brand = { src: string; alt: string }
+type Brand = { src: string; alt: string; iconSrc?: string }
 
 const SERVIETTE: Brand = { src: '/serviette-logo.png', alt: 'Serviette Labs' }
 
 const BRANDS: { hostPrefix: string; brand: Brand }[] = [
   {
     hostPrefix: 'roomchang.',
-    brand: { src: '/roomchang-logo.png', alt: 'Roomchang Dental Hospital' },
+    brand: {
+      src: '/roomchang-logo.png', // full wordmark — login screen
+      // Square lotus mark for the small breadcrumb/icon slot: the wordmark PNG
+      // carries big baked-in margins, so at ~26px it read as a smudge.
+      iconSrc: '/roomchang-mark.jpeg',
+      alt: 'Roomchang Dental Hospital',
+    },
   },
 ]
 
@@ -57,13 +63,13 @@ export const AdminLogo: React.FC = () => {
 /** Nav header / small icon slot */
 export const AdminIcon: React.FC = () => {
   const brand = useBrand()
-  if (!brand) return <div style={{ height: 26, width: 26 }} aria-hidden="true" />
+  if (!brand) return <div style={{ height: 30, width: 30 }} aria-hidden="true" />
   // eslint-disable-next-line @next/next/no-img-element
   return (
     <img
-      src={brand.src}
+      src={brand.iconSrc ?? brand.src}
       alt={brand.alt}
-      style={{ maxHeight: 26, maxWidth: 110, objectFit: 'contain' }}
+      style={{ height: 30, maxWidth: 120, objectFit: 'contain', borderRadius: 6 }}
     />
   )
 }
