@@ -108,9 +108,18 @@ export const Services: CollectionConfig = {
       admin: { position: 'sidebar' },
     },
     {
+      // The website never reads this column: the services grid assigns icons
+      // by slug in code, and its only textual consumer is the retired legacy
+      // renderer. Editors saw a typo-fragile mystery box (UX audit) — keep it
+      // for sync fidelity, super-admin-only.
       name: 'icon',
       type: 'text',
-      admin: { position: 'sidebar', description: 'Icon name used on service cards.' },
+      admin: {
+        position: 'sidebar',
+        description: 'Not shown on the website — kept for the data sync.',
+        condition: (_data, _sibling, ctx) =>
+          Boolean((ctx?.user as { roles?: string[] } | null)?.roles?.includes('super-admin')),
+      },
     },
     {
       name: 'isFeatured',

@@ -240,6 +240,20 @@ const hideSourceIdFromTenants = (fields: AnyField[]): AnyField[] =>
         },
       }
     }
+    if (f.name === 'published' && (f as { type?: string }).type === 'checkbox') {
+      // `true` / `false` chips in list views are developer-speak — render a
+      // check / dash instead (UX audit). Deliberately not touching blocks.
+      return {
+        ...f,
+        admin: {
+          ...f.admin,
+          components: {
+            ...(f.admin?.components as Record<string, unknown> | undefined),
+            Cell: '/components/PublishedCell#PublishedCell',
+          },
+        },
+      }
+    }
     if (Array.isArray(f.fields)) return { ...f, fields: hideSourceIdFromTenants(f.fields) }
     if (Array.isArray(f.tabs))
       return { ...f, tabs: f.tabs.map((t) => ({ ...t, fields: hideSourceIdFromTenants(t.fields) })) }
