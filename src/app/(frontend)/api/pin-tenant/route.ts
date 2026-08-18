@@ -25,7 +25,13 @@ export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const nextParam = url.searchParams.get('next')
   const next = isSafeNext(nextParam) ? nextParam : '/admin'
-  const res = NextResponse.redirect(new URL(next, url.origin), 307)
+  // Behind Render's proxy request.url carries the INTERNAL origin
+  // (localhost:10000) — build the redirect from the forwarded host or the
+  // browser lands on localhost (second half of the 2026-08-18 incident).
+  const h0 = await nextHeaders()
+  const proto = h0.get('x-forwarded-proto') ?? 'https'
+  const publicHost = h0.get('x-forwarded-host') ?? h0.get('host') ?? url.host
+  const res = NextResponse.redirect(`${proto}://${publicHost}${next}`, 307)
 
   // Loop-breaker default: if we end up not pinning for ANY reason, tell the
   // proxy to stop redirecting for a while (it re-tries after expiry).
@@ -36,8 +42,8 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   try {
-    const h = await nextHeaders()
-    const host = h.get('x-forwarded-host') ?? h.get('host')
+    const h = h0
+    const host = publicHost
 
     const payload = await getPayload({ config })
     const tenant = await getTenantByHost(payload, host)
