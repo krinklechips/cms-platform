@@ -15,6 +15,12 @@ import type { CollectionConfig } from 'payload'
 type LabelEntry = { singular: string; plural: string; description: string }
 
 export const COLLECTION_LABELS: Record<string, LabelEntry> = {
+  'pages': {
+    singular: "Page",
+    plural: "Custom Pages",
+    description:
+      "Extra website pages you create yourself — title, sections, publish. Live at roomchang.com/en/<web address>.",
+  },
   'homepage': {
     singular: "Home Hero",
     plural: "Home Hero",

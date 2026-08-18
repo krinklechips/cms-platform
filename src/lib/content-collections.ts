@@ -13,6 +13,7 @@ export const CONTENT_COLLECTION_SLUGS = [
   'feature-cards',
   'brand-logos',
   'testimonials',
+  'pages',
   'services',
   'doctors',
   'technology',

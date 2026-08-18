@@ -16,6 +16,7 @@ import { Doctors } from './collections/Doctors'
 import { Technology } from './collections/Technology'
 import { Testimonials } from './collections/Testimonials'
 import { Homepage } from './collections/Homepage'
+import { Pages } from './collections/Pages'
 import { Branches } from './collections/Branches'
 import { SiteStats } from './collections/SiteStats'
 import { FeatureCards } from './collections/FeatureCards'
@@ -115,6 +116,7 @@ export default buildConfig({
         const slug = (data as { slug?: string })?.slug ?? ''
         const pageFor: Record<string, string> = {
           services: slug ? `/services/${slug}` : '/services',
+          pages: slug ? `/${slug}` : '',
           doctors: '/team',
           technology: '/technology',
           homepage: '',
@@ -139,6 +141,7 @@ export default buildConfig({
         return `${dummy}/${loc}${page}`
       },
       collections: [
+        'pages',
         'services',
         'doctors',
         'technology',
@@ -175,6 +178,7 @@ export default buildConfig({
     withHumanLabels(withHostScope(withModuleGating(SiteStats))),
     withHumanLabels(withHostScope(withModuleGating(FeatureCards))),
     withHumanLabels(withHostScope(withModuleGating(Testimonials))),
+    withHumanLabels(withHostScope(withModuleGating(Pages))),
     withHumanLabels(withHostScope(withModuleGating(Services))),
     withHumanLabels(withHostScope(withModuleGating(Doctors))),
     withHumanLabels(withHostScope(withModuleGating(Technology))),
