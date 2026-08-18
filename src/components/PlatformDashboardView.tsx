@@ -2,22 +2,25 @@ import React from 'react'
 import { headers as nextHeaders } from 'next/headers'
 import type { CollectionSlug, Payload } from 'payload'
 import { PlatformDashboard } from './PlatformDashboard'
-import { SitePagesIndex, type PartCounts } from './SitePagesIndex'
+import {
+  SiteActivityDashboard,
+  type RecentDoc,
+  type UnpublishedDoc,
+} from './SiteActivityDashboard'
 import { SITE_PAGES } from '@/lib/site-pages'
+import { COLLECTION_LABELS } from '@/lib/collection-labels'
 import { getTenantByHost, type TenantBranding } from '@/lib/get-tenant-by-host'
 
 /**
  * Dashboard VIEW override (admin.components.views.dashboard.Component).
  *
  *   - super-admin on the PLATFORM host  → Serviette HQ cockpit (all tenants)
- *   - super-admin on a TENANT host      → that tenant's cockpit row + the
- *                                          "your website, page by page" index
- *   - tenant users                      → the page index, then Payload's
- *                                          DefaultDashboard underneath
+ *   - super-admin on a TENANT host      → tenant cockpit row + activity board
+ *   - tenant users                      → the activity board alone
  *
- * The page index is the answer to "I don't know where to click to edit what
- * page": the sidebar groups collections by page, but one page is fed by up to
- * five collections, so the dashboard now maps the real site to its editors.
+ * The activity board (SiteActivityDashboard) only shows what the sidebar
+ * cannot: recent edits, unpublished drafts, quick-add. Navigation is the
+ * sidebar's job; per-collection explanations render on each list view.
  *
  * This slot is the PROVEN-safe place for async server work (unlike
  * graphics.Logo, which white-screens on async components).
@@ -31,56 +34,116 @@ type ViewProps = {
   }
 }
 
-/** Public site for "view ↗" links — the tenant's first non-CMS domain. */
+/** Public site for the "open the live website" link. */
 const siteUrlFor = (tenant: TenantBranding | null): string | undefined => {
   if (!tenant) return undefined
   return 'https://www.roomchang.com'
 }
 
-const PART_SLUGS = Array.from(new Set(SITE_PAGES.flatMap((p) => p.parts.map((pt) => pt.collection))))
+/** Content collections worth surfacing. Enquiries/bookings are an inbox, not
+ *  edits, so they stay out of "recent activity". */
+const CONTENT_SLUGS = Array.from(
+  new Set([...SITE_PAGES.flatMap((p) => p.parts.map((pt) => pt.collection)), 'pages']),
+).filter((slug) => slug !== 'enquiries' && slug !== 'booking-slots')
 
-/**
- * Live numbers for the page index — what turns it from a static sitemap into
- * a status surface ("Doctors → 40 items · 3 unpublished"). Counts are scoped
- * to the tenant; the unpublished probe is skipped for collections without a
- * `published` field and guarded anyway (a failed count must never take down
- * the dashboard).
- */
-const countParts = async (payload: Payload, tenantId: number | string): Promise<PartCounts> => {
-  const entries = await Promise.all(
-    PART_SLUGS.map(async (slug) => {
+const labelFor = (slug: string): string => COLLECTION_LABELS[slug]?.singular ?? slug
+
+const agoText = (iso: string): string => {
+  const ms = Date.now() - new Date(iso).getTime()
+  const min = Math.floor(ms / 60_000)
+  if (min < 1) return 'just now'
+  if (min < 60) return `${min} min ago`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`
+  const d = Math.floor(h / 24)
+  if (d < 30) return `${d} day${d === 1 ? '' : 's'} ago`
+  return iso.slice(0, 10)
+}
+
+type LooseDoc = { id: string | number; updatedAt?: string } & Record<string, unknown>
+
+const titleOf = (payload: Payload, slug: string, doc: LooseDoc): string => {
+  const useAsTitle = (
+    payload.collections[slug as CollectionSlug]?.config?.admin as { useAsTitle?: string } | undefined
+  )?.useAsTitle
+  const candidate =
+    (useAsTitle ? doc[useAsTitle] : undefined) ?? doc.title ?? doc.name ?? `#${doc.id}`
+  return typeof candidate === 'string' && candidate.trim() !== '' ? candidate : `#${doc.id}`
+}
+
+const hasPublishedField = (payload: Payload, slug: string): boolean => {
+  const cfg = payload.collections[slug as CollectionSlug]?.config as
+    | { flattenedFields?: { name?: string }[]; fields?: { name?: string }[] }
+    | undefined
+  const fieldList = cfg?.flattenedFields ?? cfg?.fields ?? []
+  return fieldList.some((f) => f?.name === 'published')
+}
+
+const gatherActivity = async (
+  payload: Payload,
+  tenantId: number | string,
+): Promise<{ recent: RecentDoc[]; unpublished: UnpublishedDoc[] }> => {
+  const tenantWhere = { tenant: { equals: tenantId } }
+
+  const recentNested = await Promise.all(
+    CONTENT_SLUGS.map(async (slug) => {
       try {
-        const where = { tenant: { equals: tenantId } }
-        const { totalDocs: total } = await payload.count({
+        const res = await payload.find({
           collection: slug as CollectionSlug,
-          where,
+          where: tenantWhere,
+          sort: '-updatedAt',
+          limit: 2,
+          depth: 0,
           overrideAccess: true,
         })
-
-        let unpublished: number | undefined
-        const cfg = payload.collections[slug as CollectionSlug]?.config as
-          | { flattenedFields?: { name?: string }[]; fields?: { name?: string }[] }
-          | undefined
-        const fieldList = cfg?.flattenedFields ?? cfg?.fields ?? []
-        if (fieldList.some((f) => f?.name === 'published')) {
-          try {
-            const r = await payload.count({
-              collection: slug as CollectionSlug,
-              where: { and: [where, { published: { not_equals: true } }] },
-              overrideAccess: true,
-            })
-            unpublished = r.totalDocs
-          } catch {
-            // published not queryable after all — show the total alone.
-          }
-        }
-        return [slug, { total, unpublished }] as const
+        return (res.docs as unknown as LooseDoc[]).map((doc) => ({ slug, doc }))
       } catch {
-        return null
+        return []
       }
     }),
   )
-  return Object.fromEntries(entries.filter((e): e is NonNullable<typeof e> => e !== null))
+  const recent = recentNested
+    .flat()
+    .filter((r) => typeof r.doc.updatedAt === 'string')
+    .sort((a, b) => (b.doc.updatedAt as string).localeCompare(a.doc.updatedAt as string))
+    .slice(0, 6)
+    .map((r) => ({
+      collection: r.slug,
+      id: r.doc.id,
+      title: titleOf(payload, r.slug, r.doc),
+      label: labelFor(r.slug),
+      updatedAt: r.doc.updatedAt as string,
+      agoText: agoText(r.doc.updatedAt as string),
+    }))
+
+  const unpublishedNested = await Promise.all(
+    CONTENT_SLUGS.filter((slug) => hasPublishedField(payload, slug)).map(async (slug) => {
+      try {
+        const res = await payload.find({
+          collection: slug as CollectionSlug,
+          where: { and: [tenantWhere, { published: { not_equals: true } }] },
+          sort: '-updatedAt',
+          limit: 3,
+          depth: 0,
+          overrideAccess: true,
+        })
+        return (res.docs as unknown as LooseDoc[]).map((doc) => ({ slug, doc }))
+      } catch {
+        return []
+      }
+    }),
+  )
+  const unpublished = unpublishedNested
+    .flat()
+    .slice(0, 8)
+    .map((r) => ({
+      collection: r.slug,
+      id: r.doc.id,
+      title: titleOf(payload, r.slug, r.doc),
+      label: labelFor(r.slug),
+    }))
+
+  return { recent, unpublished }
 }
 
 export const PlatformDashboardView: React.FC<ViewProps> = async (props) => {
@@ -96,39 +159,35 @@ export const PlatformDashboardView: React.FC<ViewProps> = async (props) => {
     // Host resolution is best-effort; fall back to the platform view.
   }
 
-  let counts: PartCounts | undefined
+  let recent: RecentDoc[] = []
+  let unpublished: UnpublishedDoc[] = []
   if (payload && hostTenant) {
     try {
-      counts = await countParts(payload as Payload, hostTenant.id)
+      ;({ recent, unpublished } = await gatherActivity(payload as Payload, hostTenant.id))
     } catch {
-      // Best-effort: the index still renders without numbers.
+      // Best-effort: the board still renders without activity data.
     }
   }
+
+  const board = hostTenant ? (
+    <SiteActivityDashboard
+      tenantName={hostTenant.name}
+      siteUrl={siteUrlFor(hostTenant)}
+      recent={recent}
+      unpublished={unpublished}
+    />
+  ) : null
 
   if (user?.roles?.includes('super-admin')) {
     return (
       <>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <PlatformDashboard payload={payload as any} user={user} hostTenant={hostTenant} />
-        {hostTenant && (
-          <SitePagesIndex
-            tenantName={hostTenant.name}
-            siteUrl={siteUrlFor(hostTenant)}
-            counts={counts}
-          />
-        )}
+        {board}
       </>
     )
   }
 
-  // Tenant staff get ONE coherent surface. DefaultDashboard used to render
-  // underneath, but it is just the sidebar re-drawn as cards — pure
-  // duplication ("what is the purpose of the dashboard?" — Enoch).
-  return (
-    <SitePagesIndex
-      tenantName={hostTenant?.name ?? null}
-      siteUrl={siteUrlFor(hostTenant)}
-      counts={counts}
-    />
-  )
+  // Tenant staff get ONE coherent surface — no duplicated default dashboard.
+  return board ?? <SiteActivityDashboard recent={[]} unpublished={[]} />
 }
