@@ -83,6 +83,16 @@ export default buildConfig({
       // DefaultNav (their gated page groups). Nav override because admin.hidden
       // would 404 the collection routes.
       Nav: '/components/PlatformNav#PlatformNav',
+      // De-Payload the chrome: host-aware CLIENT components (login screen shows
+      // the tenant's own logo on their domain). MUST stay client components —
+      // an async server component in graphics.Logo white-screens the admin.
+      graphics: {
+        Logo: '/components/AdminBrand#AdminLogo',
+        Icon: '/components/AdminBrand#AdminIcon',
+      },
+    },
+    meta: {
+      titleSuffix: ' · Serviette CMS',
     },
     // Live Preview: edit a service and watch the REAL site render update
     // beside the form — the dummy roomchang instance (CONTENT_SOURCE=payload,

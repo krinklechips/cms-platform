@@ -9,8 +9,20 @@ import { DefaultNav } from '@payloadcms/next/rsc'
  *  - tenant users get Payload's DefaultNav (their module-gated page groups)
  */
 
+type PopulatedTenant = { name?: string; slug?: string } | number | null
+
 type NavServerProps = React.ComponentProps<typeof DefaultNav> & {
-  user?: { roles?: string[] } | null
+  user?: {
+    roles?: string[]
+    tenants?: { tenant?: PopulatedTenant }[] | null
+  } | null
+}
+
+/** Human tenant name from the user's (depth-populated) tenant membership */
+function tenantNameOf(user: NavServerProps['user']): string | null {
+  const t = user?.tenants?.[0]?.tenant
+  if (t && typeof t === 'object') return t.name ?? t.slug ?? null
+  return null
 }
 
 const S: Record<string, React.CSSProperties> = {
@@ -33,6 +45,30 @@ const S: Record<string, React.CSSProperties> = {
   },
   divider: { height: 1, background: 'var(--theme-elevation-100)', margin: '12px 0' },
   hint: { fontSize: 11, color: 'var(--theme-elevation-400)', margin: '8px 10px 0', lineHeight: 1.5 },
+  // Tenant workspace banner — unmistakable "whose CMS am I in" marker at the
+  // top of the sidebar for tenant users.
+  tenantBanner: {
+    margin: '16px 12px 4px',
+    padding: '10px 12px',
+    borderRadius: 8,
+    background: 'var(--theme-elevation-50)',
+    border: '1px solid var(--theme-elevation-150)',
+  },
+  tenantLabel: {
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    color: 'var(--theme-elevation-450)',
+    margin: 0,
+  },
+  tenantName: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: 'var(--theme-text)',
+    margin: '2px 0 0',
+    lineHeight: 1.3,
+  },
 }
 
 const LINKS: [string, string][] = [
@@ -45,7 +81,20 @@ const LINKS: [string, string][] = [
 
 export const PlatformNav: React.FC<NavServerProps> = async (props) => {
   const isSuperAdmin = Boolean(props.user?.roles?.includes('super-admin'))
-  if (!isSuperAdmin) return <DefaultNav {...props} />
+  if (!isSuperAdmin) {
+    const tenantName = tenantNameOf(props.user)
+    return (
+      <>
+        {tenantName && (
+          <div style={S.tenantBanner}>
+            <p style={S.tenantLabel}>Tenant workspace</p>
+            <p style={S.tenantName}>{tenantName}</p>
+          </div>
+        )}
+        <DefaultNav {...props} />
+      </>
+    )
+  }
 
   return (
     <nav style={S.wrap}>
