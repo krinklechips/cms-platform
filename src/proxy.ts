@@ -32,6 +32,7 @@ export default function proxy(req: NextRequest) {
 
     if (!host || PLATFORM_HOSTS.has(host)) return // platform view: untouched
     if (req.cookies.has('payload-tenant')) return // already pinned
+    if (req.cookies.has('pt-nopin')) return // pin recently failed — do NOT loop (route sets this sentinel)
 
     const url = req.nextUrl.clone()
     url.pathname = '/api/pin-tenant'

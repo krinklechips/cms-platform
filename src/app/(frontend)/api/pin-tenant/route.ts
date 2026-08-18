@@ -1,22 +1,21 @@
-import { cookies, headers as nextHeaders } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { NextResponse } from 'next/server'
+import { headers as nextHeaders } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getTenantByHost } from '@/lib/get-tenant-by-host'
 
 /**
  * Sets the multi-tenant plugin's `payload-tenant` cookie from the request
- * host, then bounces back to the admin (see src/proxy.ts for why this must be
- * a server route: client-side writes are deleted by the plugin's provider).
+ * host, then bounces back to the admin (see src/proxy.ts).
  *
- * Lives under (frontend)/api — NOT (payload)/api — to stay clear of Payload's
- * generated [...slug] catch-all.
- *
- * Cookie contract (from the plugin source):
- *  - name `payload-tenant`, value = bare tenant id as a string
- *  - httpOnly:false (the plugin's client code reads document.cookie)
- *  - NO Domain attribute → host-only, so the pin on roomchang.serviettelab.com
- *    can never leak to serviettelab.com.
+ * INCIDENT 2026-08-18 (ERR_TOO_MANY_REDIRECTS): the first version used
+ * `cookies().set()` + thrown `redirect()` — in a Next 16 Route Handler the
+ * Set-Cookie never made it onto the redirect response, so the proxy bounced
+ * back here forever. Rules now:
+ *   1. Cookies are set ON the NextResponse we return — never via the async
+ *      cookies() store in this handler.
+ *   2. EVERY non-pinning path sets a short-lived `pt-nopin` sentinel that the
+ *      proxy also honors — no outcome can loop.
  */
 
 const isSafeNext = (n: string | null): n is string =>
@@ -26,6 +25,15 @@ export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const nextParam = url.searchParams.get('next')
   const next = isSafeNext(nextParam) ? nextParam : '/admin'
+  const res = NextResponse.redirect(new URL(next, url.origin), 307)
+
+  // Loop-breaker default: if we end up not pinning for ANY reason, tell the
+  // proxy to stop redirecting for a while (it re-tries after expiry).
+  const noPin = (why: string) => {
+    console.warn(`pin-tenant: not pinning (${why}) — setting pt-nopin sentinel`)
+    res.cookies.set('pt-nopin', '1', { path: '/', maxAge: 600, httpOnly: true, sameSite: 'lax' })
+    return res
+  }
 
   try {
     const h = await nextHeaders()
@@ -33,46 +41,38 @@ export async function GET(request: Request): Promise<Response> {
 
     const payload = await getPayload({ config })
     const tenant = await getTenantByHost(payload, host)
+    if (!tenant) return noPin(`no tenant for host ${host}`)
 
-    if (tenant) {
-      // A tenant user who is NOT a member of this host's tenant must not be
-      // pinned to it — the pin would AND with their access constraint and
-      // every list would render silently empty ("looks fine" failure mode).
-      let allowed = true
-      try {
-        const { user } = await payload.auth({ headers: h })
-        if (user && !(user.roles ?? []).includes('super-admin')) {
-          const memberships = (user.tenants ?? []).map((t) =>
-            typeof t?.tenant === 'object' && t.tenant !== null
-              ? String((t.tenant as { id?: number | string }).id)
-              : String(t?.tenant),
-          )
-          allowed = memberships.includes(String(tenant.id))
+    // A tenant user who is NOT a member of this host's tenant must not be
+    // pinned to it — the pin would AND with their access constraint and every
+    // list would render silently empty.
+    try {
+      const { user } = await payload.auth({ headers: h })
+      if (user && !(user.roles ?? []).includes('super-admin')) {
+        const memberships = (user.tenants ?? []).map((t) =>
+          typeof t?.tenant === 'object' && t.tenant !== null
+            ? String((t.tenant as { id?: number | string }).id)
+            : String(t?.tenant),
+        )
+        if (!memberships.includes(String(tenant.id))) {
+          return noPin(`user is not a member of ${tenant.slug}`)
         }
-      } catch {
-        // Not logged in yet (login page) — pinning is still correct: the
-        // cookie scopes the selector/defaults once they do log in.
       }
-
-      if (allowed) {
-        const jar = await cookies()
-        jar.set('payload-tenant', String(tenant.id), {
-          path: '/',
-          httpOnly: false,
-          sameSite: 'lax',
-          secure: true,
-          maxAge: 60 * 60 * 24 * 365,
-        })
-        payload.logger.info(`pin-tenant: ${host} -> tenant ${tenant.id} (${tenant.slug})`)
-      } else {
-        payload.logger.warn(`pin-tenant: user is not a member of host tenant ${tenant.slug} — not pinning`)
-      }
+    } catch {
+      // Not logged in yet (login page) — pinning is still correct.
     }
-    // No tenant for this host: platform view is the correct fallback — fail
-    // loud in the logs rather than inventing a tenant.
-  } catch (err) {
-    console.warn('pin-tenant: resolution failed, continuing unpinned:', err)
-  }
 
-  redirect(next) // outside try/catch — redirect() throws NEXT_REDIRECT
+    res.cookies.set('payload-tenant', String(tenant.id), {
+      path: '/',
+      httpOnly: false, // the plugin's client code reads document.cookie
+      sameSite: 'lax',
+      secure: true,
+      maxAge: 60 * 60 * 24 * 365,
+      // NO domain: host-only, so the pin never leaks across hosts.
+    })
+    payload.logger.info(`pin-tenant: ${host} -> tenant ${tenant.id} (${tenant.slug})`)
+    return res
+  } catch (err) {
+    return noPin(`resolution failed: ${(err as Error).message}`)
+  }
 }
