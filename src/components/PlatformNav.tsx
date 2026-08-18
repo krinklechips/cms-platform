@@ -1,12 +1,22 @@
 import React from 'react'
 import { DefaultNav } from '@payloadcms/next/rsc'
+import type { Payload } from 'payload'
+import { getTenantByHost, normalizeHost } from '@/lib/get-tenant-by-host'
 
 /**
- * Custom admin Nav:
- *  - super-admins get a slim Serviette Labs sidebar (Platform only — content
- *    is opened from the HQ cockpit's per-tenant dropdowns, which keeps
- *    collection routes fully functional, unlike admin.hidden which 404s them)
- *  - tenant users get Payload's DefaultNav (their module-gated page groups)
+ * Custom admin Nav — three cases:
+ *  - super-admin on a TENANT's domain (roomchang.serviettelab.com): the tenant's
+ *    own page-grouped content sidebar ("Home Page", "Services Page", …) plus a
+ *    link back to the platform. This is the fix for "I don't know where to click
+ *    to edit what page" — the owner previously got platform links only and had
+ *    to go through the dashboard's "Open content" dropdown.
+ *  - super-admin on the PLATFORM domain (serviettelab.com): the slim Serviette
+ *    Labs sidebar (unchanged).
+ *  - tenant users: Payload's DefaultNav (their module-gated page groups).
+ *
+ * Nav is a PROVEN-SAFE slot for async server work (DefaultNav is itself async;
+ * the dashboard view already resolves the host tenant this way). Do NOT move
+ * this kind of lookup into admin.components.graphics — that white-screens.
  */
 
 type PopulatedTenant = { name?: string; slug?: string } | number | null
@@ -16,7 +26,14 @@ type NavServerProps = React.ComponentProps<typeof DefaultNav> & {
     roles?: string[]
     tenants?: { tenant?: PopulatedTenant }[] | null
   } | null
+  // serverProps handed to a server Nav by @payloadcms/next Default template
+  payload?: Payload
+  req?: { headers?: Headers }
+  visibleEntities?: { collections?: string[]; globals?: string[] }
 }
+
+/** Platform-management collections — hidden from a tenant workspace sidebar. */
+const PLATFORM_COLLECTIONS = new Set(['tenants', 'modules', 'invoices', 'users'])
 
 /** Human tenant name from the user's (depth-populated) tenant membership */
 function tenantNameOf(user: NavServerProps['user']): string | null {
@@ -81,6 +98,52 @@ const LINKS: [string, string][] = [
 
 export const PlatformNav: React.FC<NavServerProps> = async (props) => {
   const isSuperAdmin = Boolean(props.user?.roles?.includes('super-admin'))
+
+  // Super-admin on a tenant's own domain → give them that tenant's workspace.
+  if (isSuperAdmin) {
+    let hostTenant: { name: string } | null = null
+    try {
+      const host = normalizeHost(
+        props.req?.headers?.get('x-forwarded-host') ?? props.req?.headers?.get('host'),
+      )
+      if (props.payload && host) hostTenant = await getTenantByHost(props.payload, host)
+    } catch {
+      // Unresolvable host → fall through to the platform sidebar.
+    }
+
+    if (hostTenant) {
+      // NEW object: props.visibleEntities is read-only under React 19 and
+      // mutating it throws ("Cannot assign to read only property").
+      const scopedProps = {
+        ...props,
+        visibleEntities: {
+          collections: (props.visibleEntities?.collections ?? []).filter(
+            (slug) => !PLATFORM_COLLECTIONS.has(slug),
+          ),
+          globals: props.visibleEntities?.globals ?? [],
+        },
+      } as NavServerProps
+
+      return (
+        <>
+          {/* The tenant selector would let you switch tenants while the host
+              scoping still pins lists to this domain's tenant — three parts of
+              the UI disagreeing. Hide it here; the platform host keeps it. */}
+          <style>{'.tenant-selector{display:none!important}'}</style>
+          <div style={S.tenantBanner}>
+            <p style={S.tenantLabel}>Editing site</p>
+            <p style={S.tenantName}>{hostTenant.name}</p>
+          </div>
+          <DefaultNav {...scopedProps} />
+          <div style={S.divider} />
+          <a href="https://serviettelab.com/admin" style={S.hint}>
+            ← Serviette Labs platform (all customers)
+          </a>
+        </>
+      )
+    }
+  }
+
   if (!isSuperAdmin) {
     const tenantName = tenantNameOf(props.user)
     return (

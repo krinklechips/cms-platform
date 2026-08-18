@@ -43,6 +43,8 @@ import { Modules } from './collections/Modules'
 import { Invoices } from './collections/Invoices'
 import { getTenantByHost, normalizeHost } from './lib/get-tenant-by-host'
 import { withModuleGating } from './lib/module-gating'
+import { withHostScope } from './lib/host-scope'
+import { withHumanLabels } from './lib/collection-labels'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -161,39 +163,41 @@ export default buildConfig({
   },
   collections: [
     // Order defines nav-group order: site pages first, platform tools last.
-    withModuleGating(Homepage),
-    withModuleGating(SiteStats),
-    withModuleGating(FeatureCards),
-    withModuleGating(BrandLogos),
-    withModuleGating(Testimonials),
-    withModuleGating(Services),
-    withModuleGating(Doctors),
-    withModuleGating(Technology),
-    withModuleGating(PricingCategories),
-    withModuleGating(PricingItems),
-    withModuleGating(PricingComparisonSets),
-    withModuleGating(PricingComparisonRows),
-    withModuleGating(InternationalTreatments),
-    withModuleGating(InternationalSteps),
-    withModuleGating(InternationalWhyItems),
-    withModuleGating(TimelineEvents),
-    withModuleGating(Branches),
-    withModuleGating(ClinicalCases),
-    withModuleGating(Partners),
-    withModuleGating(PartnerCategories),
-    withModuleGating(FaqItems),
-    withModuleGating(NewsArticles),
-    withModuleGating(CommunityArticles),
-    withModuleGating(Publications),
-    withModuleGating(Videos),
-    withModuleGating(CareerPositions),
-    withModuleGating(Enquiries),
-    withModuleGating(BookingSlots),
-    Media,
-    Users,
-    Tenants,
-    Modules,
-    Invoices,
+    // withHostScope: on a tenant's own domain the admin lists only that
+    // tenant's rows (see lib/host-scope.ts). No-op on serviettelab.com.
+    withHumanLabels(withHostScope(withModuleGating(Homepage))),
+    withHumanLabels(withHostScope(withModuleGating(SiteStats))),
+    withHumanLabels(withHostScope(withModuleGating(FeatureCards))),
+    withHumanLabels(withHostScope(withModuleGating(BrandLogos))),
+    withHumanLabels(withHostScope(withModuleGating(Testimonials))),
+    withHumanLabels(withHostScope(withModuleGating(Services))),
+    withHumanLabels(withHostScope(withModuleGating(Doctors))),
+    withHumanLabels(withHostScope(withModuleGating(Technology))),
+    withHumanLabels(withHostScope(withModuleGating(PricingCategories))),
+    withHumanLabels(withHostScope(withModuleGating(PricingItems))),
+    withHumanLabels(withHostScope(withModuleGating(PricingComparisonSets))),
+    withHumanLabels(withHostScope(withModuleGating(PricingComparisonRows))),
+    withHumanLabels(withHostScope(withModuleGating(InternationalTreatments))),
+    withHumanLabels(withHostScope(withModuleGating(InternationalSteps))),
+    withHumanLabels(withHostScope(withModuleGating(InternationalWhyItems))),
+    withHumanLabels(withHostScope(withModuleGating(TimelineEvents))),
+    withHumanLabels(withHostScope(withModuleGating(Branches))),
+    withHumanLabels(withHostScope(withModuleGating(ClinicalCases))),
+    withHumanLabels(withHostScope(withModuleGating(Partners))),
+    withHumanLabels(withHostScope(withModuleGating(PartnerCategories))),
+    withHumanLabels(withHostScope(withModuleGating(FaqItems))),
+    withHumanLabels(withHostScope(withModuleGating(NewsArticles))),
+    withHumanLabels(withHostScope(withModuleGating(CommunityArticles))),
+    withHumanLabels(withHostScope(withModuleGating(Publications))),
+    withHumanLabels(withHostScope(withModuleGating(Videos))),
+    withHumanLabels(withHostScope(withModuleGating(CareerPositions))),
+    withHumanLabels(withHostScope(withModuleGating(Enquiries))),
+    withHumanLabels(withHostScope(withModuleGating(BookingSlots))),
+    withHumanLabels(withHostScope(Media)),
+    withHumanLabels(Users),
+    withHumanLabels(Tenants),
+    withHumanLabels(Modules),
+    withHumanLabels(Invoices),
   ],
   endpoints: [
     // Public feature flags for the tenants' websites (e.g. the AI chatbot
