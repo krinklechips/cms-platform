@@ -637,6 +637,13 @@ export interface Page {
             subheading?: string | null;
             images?:
               | {
+                  /**
+                   * Pick or upload from the Media Library.
+                   */
+                  media?: (number | null) | Media;
+                  /**
+                   * Or paste an image URL.
+                   */
                   url?: string | null;
                   id?: string | null;
                 }[]
@@ -646,6 +653,13 @@ export interface Page {
             blockType: 'gallery';
           }
         | {
+            /**
+             * Pick or upload from the Media Library.
+             */
+            media?: (number | null) | Media;
+            /**
+             * Or paste an image URL — ignored when a Media Library image is picked above.
+             */
             src?: string | null;
             alt?: string | null;
             heading?: string | null;
@@ -679,11 +693,25 @@ export interface Page {
           }
         | {
             left?: {
+              /**
+               * Pick or upload from the Media Library.
+               */
+              media?: (number | null) | Media;
+              /**
+               * Or paste an image URL.
+               */
               src?: string | null;
               alt?: string | null;
               caption?: string | null;
             };
             right?: {
+              /**
+               * Pick or upload from the Media Library.
+               */
+              media?: (number | null) | Media;
+              /**
+               * Or paste an image URL.
+               */
               src?: string | null;
               alt?: string | null;
               caption?: string | null;
@@ -856,6 +884,13 @@ export interface Page {
                       subheading?: string | null;
                       images?:
                         | {
+                            /**
+                             * Pick or upload from the Media Library.
+                             */
+                            media?: (number | null) | Media;
+                            /**
+                             * Or paste an image URL.
+                             */
                             url?: string | null;
                             id?: string | null;
                           }[]
@@ -865,6 +900,13 @@ export interface Page {
                       blockType: 'gallery';
                     }
                   | {
+                      /**
+                       * Pick or upload from the Media Library.
+                       */
+                      media?: (number | null) | Media;
+                      /**
+                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       */
                       src?: string | null;
                       alt?: string | null;
                       heading?: string | null;
@@ -898,11 +940,25 @@ export interface Page {
                     }
                   | {
                       left?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
                       };
                       right?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
@@ -1076,6 +1132,13 @@ export interface Page {
                       subheading?: string | null;
                       images?:
                         | {
+                            /**
+                             * Pick or upload from the Media Library.
+                             */
+                            media?: (number | null) | Media;
+                            /**
+                             * Or paste an image URL.
+                             */
                             url?: string | null;
                             id?: string | null;
                           }[]
@@ -1085,6 +1148,13 @@ export interface Page {
                       blockType: 'gallery';
                     }
                   | {
+                      /**
+                       * Pick or upload from the Media Library.
+                       */
+                      media?: (number | null) | Media;
+                      /**
+                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       */
                       src?: string | null;
                       alt?: string | null;
                       heading?: string | null;
@@ -1118,11 +1188,25 @@ export interface Page {
                     }
                   | {
                       left?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
                       };
                       right?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
@@ -1326,6 +1410,13 @@ export interface Service {
             subheading?: string | null;
             images?:
               | {
+                  /**
+                   * Pick or upload from the Media Library.
+                   */
+                  media?: (number | null) | Media;
+                  /**
+                   * Or paste an image URL.
+                   */
                   url?: string | null;
                   id?: string | null;
                 }[]
@@ -1335,6 +1426,13 @@ export interface Service {
             blockType: 'gallery';
           }
         | {
+            /**
+             * Pick or upload from the Media Library.
+             */
+            media?: (number | null) | Media;
+            /**
+             * Or paste an image URL — ignored when a Media Library image is picked above.
+             */
             src?: string | null;
             alt?: string | null;
             heading?: string | null;
@@ -1368,11 +1466,25 @@ export interface Service {
           }
         | {
             left?: {
+              /**
+               * Pick or upload from the Media Library.
+               */
+              media?: (number | null) | Media;
+              /**
+               * Or paste an image URL.
+               */
               src?: string | null;
               alt?: string | null;
               caption?: string | null;
             };
             right?: {
+              /**
+               * Pick or upload from the Media Library.
+               */
+              media?: (number | null) | Media;
+              /**
+               * Or paste an image URL.
+               */
               src?: string | null;
               alt?: string | null;
               caption?: string | null;
@@ -1545,6 +1657,13 @@ export interface Service {
                       subheading?: string | null;
                       images?:
                         | {
+                            /**
+                             * Pick or upload from the Media Library.
+                             */
+                            media?: (number | null) | Media;
+                            /**
+                             * Or paste an image URL.
+                             */
                             url?: string | null;
                             id?: string | null;
                           }[]
@@ -1554,6 +1673,13 @@ export interface Service {
                       blockType: 'gallery';
                     }
                   | {
+                      /**
+                       * Pick or upload from the Media Library.
+                       */
+                      media?: (number | null) | Media;
+                      /**
+                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       */
                       src?: string | null;
                       alt?: string | null;
                       heading?: string | null;
@@ -1587,11 +1713,25 @@ export interface Service {
                     }
                   | {
                       left?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
                       };
                       right?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
@@ -1765,6 +1905,13 @@ export interface Service {
                       subheading?: string | null;
                       images?:
                         | {
+                            /**
+                             * Pick or upload from the Media Library.
+                             */
+                            media?: (number | null) | Media;
+                            /**
+                             * Or paste an image URL.
+                             */
                             url?: string | null;
                             id?: string | null;
                           }[]
@@ -1774,6 +1921,13 @@ export interface Service {
                       blockType: 'gallery';
                     }
                   | {
+                      /**
+                       * Pick or upload from the Media Library.
+                       */
+                      media?: (number | null) | Media;
+                      /**
+                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       */
                       src?: string | null;
                       alt?: string | null;
                       heading?: string | null;
@@ -1807,11 +1961,25 @@ export interface Service {
                     }
                   | {
                       left?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
                       };
                       right?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
@@ -1902,9 +2070,10 @@ export interface Doctor {
    */
   role?: string | null;
   /**
-   * Team grouping, e.g. ORTHODONTICS (matches the live site enum).
+   * Which heading the doctor is grouped under on the Team page.
    */
-  department?: string | null;
+  department?:
+    ('GENERAL' | 'ORTHODONTICS' | 'IMPLANTOLOGY' | 'COSMETIC' | 'PEDIATRICS' | 'SENIOR_CONSULTANT' | 'DIRECTOR') | null;
   specialty?:
     | {
         value: string;
@@ -2107,6 +2276,13 @@ export interface Technology {
             subheading?: string | null;
             images?:
               | {
+                  /**
+                   * Pick or upload from the Media Library.
+                   */
+                  media?: (number | null) | Media;
+                  /**
+                   * Or paste an image URL.
+                   */
                   url?: string | null;
                   id?: string | null;
                 }[]
@@ -2116,6 +2292,13 @@ export interface Technology {
             blockType: 'gallery';
           }
         | {
+            /**
+             * Pick or upload from the Media Library.
+             */
+            media?: (number | null) | Media;
+            /**
+             * Or paste an image URL — ignored when a Media Library image is picked above.
+             */
             src?: string | null;
             alt?: string | null;
             heading?: string | null;
@@ -2149,11 +2332,25 @@ export interface Technology {
           }
         | {
             left?: {
+              /**
+               * Pick or upload from the Media Library.
+               */
+              media?: (number | null) | Media;
+              /**
+               * Or paste an image URL.
+               */
               src?: string | null;
               alt?: string | null;
               caption?: string | null;
             };
             right?: {
+              /**
+               * Pick or upload from the Media Library.
+               */
+              media?: (number | null) | Media;
+              /**
+               * Or paste an image URL.
+               */
               src?: string | null;
               alt?: string | null;
               caption?: string | null;
@@ -2326,6 +2523,13 @@ export interface Technology {
                       subheading?: string | null;
                       images?:
                         | {
+                            /**
+                             * Pick or upload from the Media Library.
+                             */
+                            media?: (number | null) | Media;
+                            /**
+                             * Or paste an image URL.
+                             */
                             url?: string | null;
                             id?: string | null;
                           }[]
@@ -2335,6 +2539,13 @@ export interface Technology {
                       blockType: 'gallery';
                     }
                   | {
+                      /**
+                       * Pick or upload from the Media Library.
+                       */
+                      media?: (number | null) | Media;
+                      /**
+                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       */
                       src?: string | null;
                       alt?: string | null;
                       heading?: string | null;
@@ -2368,11 +2579,25 @@ export interface Technology {
                     }
                   | {
                       left?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
                       };
                       right?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
@@ -2546,6 +2771,13 @@ export interface Technology {
                       subheading?: string | null;
                       images?:
                         | {
+                            /**
+                             * Pick or upload from the Media Library.
+                             */
+                            media?: (number | null) | Media;
+                            /**
+                             * Or paste an image URL.
+                             */
                             url?: string | null;
                             id?: string | null;
                           }[]
@@ -2555,6 +2787,13 @@ export interface Technology {
                       blockType: 'gallery';
                     }
                   | {
+                      /**
+                       * Pick or upload from the Media Library.
+                       */
+                      media?: (number | null) | Media;
+                      /**
+                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       */
                       src?: string | null;
                       alt?: string | null;
                       heading?: string | null;
@@ -2588,11 +2827,25 @@ export interface Technology {
                     }
                   | {
                       left?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
                       };
                       right?: {
+                        /**
+                         * Pick or upload from the Media Library.
+                         */
+                        media?: (number | null) | Media;
+                        /**
+                         * Or paste an image URL.
+                         */
                         src?: string | null;
                         alt?: string | null;
                         caption?: string | null;
@@ -3696,6 +3949,7 @@ export interface PagesSelect<T extends boolean = true> {
               images?:
                 | T
                 | {
+                    media?: T;
                     url?: T;
                     id?: T;
                   };
@@ -3705,6 +3959,7 @@ export interface PagesSelect<T extends boolean = true> {
         image?:
           | T
           | {
+              media?: T;
               src?: T;
               alt?: T;
               heading?: T;
@@ -3740,6 +3995,7 @@ export interface PagesSelect<T extends boolean = true> {
               left?:
                 | T
                 | {
+                    media?: T;
                     src?: T;
                     alt?: T;
                     caption?: T;
@@ -3747,6 +4003,7 @@ export interface PagesSelect<T extends boolean = true> {
               right?:
                 | T
                 | {
+                    media?: T;
                     src?: T;
                     alt?: T;
                     caption?: T;
@@ -3873,6 +4130,7 @@ export interface PagesSelect<T extends boolean = true> {
                           images?:
                             | T
                             | {
+                                media?: T;
                                 url?: T;
                                 id?: T;
                               };
@@ -3882,6 +4140,7 @@ export interface PagesSelect<T extends boolean = true> {
                     image?:
                       | T
                       | {
+                          media?: T;
                           src?: T;
                           alt?: T;
                           heading?: T;
@@ -3917,6 +4176,7 @@ export interface PagesSelect<T extends boolean = true> {
                           left?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -3924,6 +4184,7 @@ export interface PagesSelect<T extends boolean = true> {
                           right?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -4048,6 +4309,7 @@ export interface PagesSelect<T extends boolean = true> {
                           images?:
                             | T
                             | {
+                                media?: T;
                                 url?: T;
                                 id?: T;
                               };
@@ -4057,6 +4319,7 @@ export interface PagesSelect<T extends boolean = true> {
                     image?:
                       | T
                       | {
+                          media?: T;
                           src?: T;
                           alt?: T;
                           heading?: T;
@@ -4092,6 +4355,7 @@ export interface PagesSelect<T extends boolean = true> {
                           left?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -4099,6 +4363,7 @@ export interface PagesSelect<T extends boolean = true> {
                           right?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -4239,6 +4504,7 @@ export interface ServicesSelect<T extends boolean = true> {
               images?:
                 | T
                 | {
+                    media?: T;
                     url?: T;
                     id?: T;
                   };
@@ -4248,6 +4514,7 @@ export interface ServicesSelect<T extends boolean = true> {
         image?:
           | T
           | {
+              media?: T;
               src?: T;
               alt?: T;
               heading?: T;
@@ -4283,6 +4550,7 @@ export interface ServicesSelect<T extends boolean = true> {
               left?:
                 | T
                 | {
+                    media?: T;
                     src?: T;
                     alt?: T;
                     caption?: T;
@@ -4290,6 +4558,7 @@ export interface ServicesSelect<T extends boolean = true> {
               right?:
                 | T
                 | {
+                    media?: T;
                     src?: T;
                     alt?: T;
                     caption?: T;
@@ -4416,6 +4685,7 @@ export interface ServicesSelect<T extends boolean = true> {
                           images?:
                             | T
                             | {
+                                media?: T;
                                 url?: T;
                                 id?: T;
                               };
@@ -4425,6 +4695,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     image?:
                       | T
                       | {
+                          media?: T;
                           src?: T;
                           alt?: T;
                           heading?: T;
@@ -4460,6 +4731,7 @@ export interface ServicesSelect<T extends boolean = true> {
                           left?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -4467,6 +4739,7 @@ export interface ServicesSelect<T extends boolean = true> {
                           right?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -4591,6 +4864,7 @@ export interface ServicesSelect<T extends boolean = true> {
                           images?:
                             | T
                             | {
+                                media?: T;
                                 url?: T;
                                 id?: T;
                               };
@@ -4600,6 +4874,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     image?:
                       | T
                       | {
+                          media?: T;
                           src?: T;
                           alt?: T;
                           heading?: T;
@@ -4635,6 +4910,7 @@ export interface ServicesSelect<T extends boolean = true> {
                           left?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -4642,6 +4918,7 @@ export interface ServicesSelect<T extends boolean = true> {
                           right?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -4830,6 +5107,7 @@ export interface TechnologySelect<T extends boolean = true> {
               images?:
                 | T
                 | {
+                    media?: T;
                     url?: T;
                     id?: T;
                   };
@@ -4839,6 +5117,7 @@ export interface TechnologySelect<T extends boolean = true> {
         image?:
           | T
           | {
+              media?: T;
               src?: T;
               alt?: T;
               heading?: T;
@@ -4874,6 +5153,7 @@ export interface TechnologySelect<T extends boolean = true> {
               left?:
                 | T
                 | {
+                    media?: T;
                     src?: T;
                     alt?: T;
                     caption?: T;
@@ -4881,6 +5161,7 @@ export interface TechnologySelect<T extends boolean = true> {
               right?:
                 | T
                 | {
+                    media?: T;
                     src?: T;
                     alt?: T;
                     caption?: T;
@@ -5007,6 +5288,7 @@ export interface TechnologySelect<T extends boolean = true> {
                           images?:
                             | T
                             | {
+                                media?: T;
                                 url?: T;
                                 id?: T;
                               };
@@ -5016,6 +5298,7 @@ export interface TechnologySelect<T extends boolean = true> {
                     image?:
                       | T
                       | {
+                          media?: T;
                           src?: T;
                           alt?: T;
                           heading?: T;
@@ -5051,6 +5334,7 @@ export interface TechnologySelect<T extends boolean = true> {
                           left?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -5058,6 +5342,7 @@ export interface TechnologySelect<T extends boolean = true> {
                           right?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -5182,6 +5467,7 @@ export interface TechnologySelect<T extends boolean = true> {
                           images?:
                             | T
                             | {
+                                media?: T;
                                 url?: T;
                                 id?: T;
                               };
@@ -5191,6 +5477,7 @@ export interface TechnologySelect<T extends boolean = true> {
                     image?:
                       | T
                       | {
+                          media?: T;
                           src?: T;
                           alt?: T;
                           heading?: T;
@@ -5226,6 +5513,7 @@ export interface TechnologySelect<T extends boolean = true> {
                           left?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;
@@ -5233,6 +5521,7 @@ export interface TechnologySelect<T extends boolean = true> {
                           right?:
                             | T
                             | {
+                                media?: T;
                                 src?: T;
                                 alt?: T;
                                 caption?: T;

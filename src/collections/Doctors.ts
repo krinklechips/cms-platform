@@ -43,10 +43,22 @@ export const Doctors: CollectionConfig = {
       admin: { description: 'e.g. "Orthodontist"' },
     },
     {
+      // Was free text: raw enum values leaked into the list view and a typo
+      // silently dropped a doctor from the Team-page grouping (UX audit).
+      // Values stay the live-site enum; labels are what editors read.
       name: 'department',
-      type: 'text',
+      type: 'select',
       index: true,
-      admin: { description: 'Team grouping, e.g. ORTHODONTICS (matches the live site enum).' },
+      options: [
+        { label: 'General', value: 'GENERAL' },
+        { label: 'Orthodontics', value: 'ORTHODONTICS' },
+        { label: 'Implantology', value: 'IMPLANTOLOGY' },
+        { label: 'Cosmetic', value: 'COSMETIC' },
+        { label: 'Pediatrics', value: 'PEDIATRICS' },
+        { label: 'Senior Consultant', value: 'SENIOR_CONSULTANT' },
+        { label: 'Director', value: 'DIRECTOR' },
+      ],
+      admin: { description: 'Which heading the doctor is grouped under on the Team page.' },
     },
     {
       name: 'specialty',

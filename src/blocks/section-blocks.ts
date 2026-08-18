@@ -28,6 +28,15 @@ import type { Block, Field } from 'payload'
 const NO_NAME = { disableBlockName: true }
 
 /** Icon names the site's renderers actually map to Phosphor icons. */
+/** Media-Library picker used beside every legacy image-URL field: editors
+ *  browse/upload instead of pasting URLs; the site prefers this when set. */
+const mediaPick = (): Field => ({
+  name: 'media',
+  type: 'upload',
+  relationTo: 'media',
+  admin: { description: 'Pick or upload from the Media Library.' },
+})
+
 const ICON_OPTIONS = [
   { label: 'Tooth', value: 'Tooth' },
   { label: 'Smile', value: 'Smile' },
@@ -189,7 +198,10 @@ const gallery: Block = {
       name: 'images',
       type: 'array',
       admin: { initCollapsed: true },
-      fields: [{ name: 'url', type: 'text' }],
+      fields: [
+        mediaPick(),
+        { name: 'url', type: 'text', admin: { description: 'Or paste an image URL.' } },
+      ],
     },
   ],
 }
@@ -199,7 +211,8 @@ const image: Block = {
   labels: { singular: 'Image', plural: 'Images' },
   admin: NO_NAME,
   fields: [
-    { name: 'src', type: 'text' },
+    mediaPick(),
+    { name: 'src', type: 'text', admin: { description: 'Or paste an image URL — ignored when a Media Library image is picked above.' } },
     { name: 'alt', type: 'text' },
     { name: 'heading', type: 'text' },
     { name: 'subheading', type: 'text' },
@@ -236,7 +249,8 @@ const imagePairSide = (name: 'left' | 'right'): Field => ({
   name,
   type: 'group',
   fields: [
-    { name: 'src', type: 'text' },
+    mediaPick(),
+    { name: 'src', type: 'text', admin: { description: 'Or paste an image URL.' } },
     { name: 'alt', type: 'text' },
     { name: 'caption', type: 'text' },
   ],

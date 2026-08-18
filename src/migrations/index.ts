@@ -11,6 +11,7 @@ import * as migration_20260818_085206_sections_blocks from './20260818_085206_se
 import * as migration_20260818_090817_sections_optional from './20260818_090817_sections_optional';
 import * as migration_20260818_100857_pages_collection from './20260818_100857_pages_collection';
 import * as migration_20260818_101628_pages_tenant_field from './20260818_101628_pages_tenant_field';
+import * as migration_20260818_180149_ux_department_enum_media_picks from './20260818_180149_ux_department_enum_media_picks';
 
 export const migrations = [
   {
@@ -76,6 +77,11 @@ export const migrations = [
   {
     up: migration_20260818_101628_pages_tenant_field.up,
     down: migration_20260818_101628_pages_tenant_field.down,
-    name: '20260818_101628_pages_tenant_field'
+    name: '20260818_101628_pages_tenant_field',
+  },
+  {
+    up: migration_20260818_180149_ux_department_enum_media_picks.up,
+    down: migration_20260818_180149_ux_department_enum_media_picks.down,
+    name: '20260818_180149_ux_department_enum_media_picks'
   },
 ];
