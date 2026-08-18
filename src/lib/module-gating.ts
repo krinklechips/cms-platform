@@ -1,4 +1,5 @@
 import type { CollectionConfig, Where } from 'payload'
+import { getHostTenant } from './host-scope'
 
 type AccessFn = NonNullable<NonNullable<CollectionConfig['access']>['create']>
 type AccessArgs = Parameters<AccessFn>[0]
@@ -96,21 +97,44 @@ const collectionHasPublishedField = (config: CollectionConfig): boolean =>
   Array.isArray(config.fields) &&
   config.fields.some((f) => 'name' in f && (f as { name?: string }).name === 'published')
 
-// READ gate: anonymous callers of a collection that has a `published` field see
-// ONLY published rows — drafts/unpublished content stays private (they were
-// queryable over the raw REST/GraphQL API before). Logged-in users keep the
-// collection's existing read (the multi-tenant plugin then scopes them to their
-// own tenant, and CMS staff can still see drafts to edit them). Collections
-// whose existing read already denies anonymous access (e.g. Enquiries) fall
-// through unchanged.
+// READ gate for anonymous callers:
+//  1. published-only — drafts/unpublished stay private (they were queryable
+//     over the raw REST/GraphQL API before the 2026-07 hardening).
+//  2. TENANT-SCOPED BY HOST — on a tenant's own domain (roomchang.serviettelab
+//     .com) anon reads return ONLY that tenant's rows. This closes the
+//     cross-tenant content bleed flagged as the Bar-A blocker in the
+//     production-readiness audit: without it, GET /api/services commingles
+//     every tenant the moment tenant #2 has content.
+//
+//     ⚠ The PLATFORM host (serviettelab.com) keeps unscoped published-only
+//     reads FOR NOW: the sandbox consumer still points PAYLOAD_API_URL at the
+//     platform host. Flip the sandbox to the tenant host, then platform-host
+//     anon reads can be closed too — until then, onboarding a second tenant
+//     with real content requires that flip first.
+//
+// Logged-in users keep the collection's existing read (the multi-tenant
+// plugin scopes them to their tenant; staff still see drafts). Collections
+// whose existing read already denies anonymous access (Enquiries,
+// BookingSlots) fall through unchanged.
 const composeReadAccess =
   (config: CollectionConfig, existing: AccessFn | undefined): AccessFn =>
   async (args) => {
     const existingResult = await passesExistingAccess(existing, args)
     if (existingResult === false) return false
     if (args.req.user) return existingResult
-    if (collectionHasPublishedField(config)) return { published: { equals: true } }
-    return existingResult
+
+    const constraints: Where[] = []
+    if (collectionHasPublishedField(config)) {
+      constraints.push({ published: { equals: true } })
+    }
+    const hostTenant = await getHostTenant(args.req)
+    if (hostTenant) {
+      constraints.push({ tenant: { equals: hostTenant.id } })
+    }
+
+    if (constraints.length === 0) return existingResult
+    if (constraints.length === 1) return constraints[0]
+    return { and: constraints }
   }
 
 export const withModuleGating = (config: CollectionConfig): CollectionConfig => {

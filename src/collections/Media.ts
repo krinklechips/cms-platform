@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { getHostTenant } from '../lib/host-scope'
 
 /**
  * Media — tenant-scoped uploads stored in Cloudflare R2 (cms-platform bucket).
@@ -18,7 +19,17 @@ export const Media: CollectionConfig = {
     // sidebar is slimmed by the custom PlatformNav component instead.
   },
   access: {
-    read: () => true,
+    // Anon reads on a TENANT host are scoped to that tenant's files (Bar-A
+    // audit: read () => true exposed every tenant's media, including
+    // unpublished uploads, to any caller). Platform host stays open for now —
+    // the sandbox consumer + homepage slide population read via
+    // serviettelab.com; close it when consumers move to tenant hosts.
+    read: async ({ req }) => {
+      if (req.user) return true // plugin + admin handle authed scoping
+      const hostTenant = await getHostTenant(req)
+      if (hostTenant) return { tenant: { equals: hostTenant.id } }
+      return true
+    },
   },
   hooks: {
     beforeValidate: [
