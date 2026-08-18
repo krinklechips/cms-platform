@@ -70,9 +70,17 @@ export const TenantNavBanner: React.FC<ServerProps> = async ({ payload, user }) 
   if (!name) return null
 
   return (
-    <div style={S.banner}>
-      <p style={S.label}>Editing site</p>
-      <p style={S.name}>{name}</p>
-    </div>
+    <>
+      {/* Safe here (inside the nav, not the layout slot): hide the plugin's
+          "Filter by Tenant" selector on a pinned host. Leaving it visible lets
+          you switch tenants while host scoping still pins the lists to this
+          domain's tenant — banner, sidebar and rows would disagree. The
+          platform host renders no banner, so it keeps its selector. */}
+      <style>{'.tenant-selector{display:none!important}'}</style>
+      <div style={S.banner}>
+        <p style={S.label}>Editing site</p>
+        <p style={S.name}>{name}</p>
+      </div>
+    </>
   )
 }
