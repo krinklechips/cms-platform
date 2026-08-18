@@ -69,7 +69,18 @@ export const AdminIcon: React.FC = () => {
     <img
       src={brand.iconSrc ?? brand.src}
       alt={brand.alt}
-      style={{ height: 30, maxWidth: 120, objectFit: 'contain', borderRadius: 6 }}
+      // Deliberate white chip: the mark asset is a white-background JPEG,
+      // which looked like a broken tile on the dark admin theme. Framing it
+      // as a padded chip reads as intentional in both themes.
+      style={{
+        height: 30,
+        maxWidth: 120,
+        objectFit: 'contain',
+        borderRadius: 6,
+        background: '#fff',
+        padding: 3,
+        boxSizing: 'border-box',
+      }}
     />
   )
 }

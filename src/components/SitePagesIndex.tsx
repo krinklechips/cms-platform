@@ -29,6 +29,10 @@ const S: Record<string, React.CSSProperties> = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
     gap: 16,
+    // Cards must hug their own content — default grid stretch made a
+    // one-item card inherit its tallest neighbour's height, which read as
+    // broken padding (Enoch, dark-mode review).
+    alignItems: 'start',
   },
   card: {
     border: '1px solid var(--theme-elevation-150)',
