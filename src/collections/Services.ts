@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { SECTION_BLOCKS } from '../blocks/section-blocks'
 
 /**
  * Services — mirrors the live site's `services` table (Supabase).
@@ -99,6 +100,16 @@ export const Services: CollectionConfig = {
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
         description: 'R2 image URL (carried from the live site).',
+      },
+    },
+    {
+      name: 'sections',
+      type: 'blocks',
+      localized: true,
+      blocks: SECTION_BLOCKS,
+      admin: {
+        description:
+          'The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.',
       },
     },
     {

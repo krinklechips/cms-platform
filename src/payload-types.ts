@@ -68,9 +68,9 @@ export interface Config {
   blocks: {};
   collections: {
     homepage: Homepage;
+    'brand-logos': BrandLogo;
     'site-stats': SiteStat;
     'feature-cards': FeatureCard;
-    'brand-logos': BrandLogo;
     testimonials: Testimonial;
     services: Service;
     doctors: Doctor;
@@ -79,9 +79,9 @@ export interface Config {
     'pricing-items': PricingItem;
     'pricing-comparison-sets': PricingComparisonSet;
     'pricing-comparison-rows': PricingComparisonRow;
+    'international-why-items': InternationalWhyItem;
     'international-treatments': InternationalTreatment;
     'international-steps': InternationalStep;
-    'international-why-items': InternationalWhyItem;
     'timeline-events': TimelineEvent;
     branches: Branch;
     'clinical-cases': ClinicalCase;
@@ -108,9 +108,9 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     homepage: HomepageSelect<false> | HomepageSelect<true>;
+    'brand-logos': BrandLogosSelect<false> | BrandLogosSelect<true>;
     'site-stats': SiteStatsSelect<false> | SiteStatsSelect<true>;
     'feature-cards': FeatureCardsSelect<false> | FeatureCardsSelect<true>;
-    'brand-logos': BrandLogosSelect<false> | BrandLogosSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     doctors: DoctorsSelect<false> | DoctorsSelect<true>;
@@ -119,9 +119,9 @@ export interface Config {
     'pricing-items': PricingItemsSelect<false> | PricingItemsSelect<true>;
     'pricing-comparison-sets': PricingComparisonSetsSelect<false> | PricingComparisonSetsSelect<true>;
     'pricing-comparison-rows': PricingComparisonRowsSelect<false> | PricingComparisonRowsSelect<true>;
+    'international-why-items': InternationalWhyItemsSelect<false> | InternationalWhyItemsSelect<true>;
     'international-treatments': InternationalTreatmentsSelect<false> | InternationalTreatmentsSelect<true>;
     'international-steps': InternationalStepsSelect<false> | InternationalStepsSelect<true>;
-    'international-why-items': InternationalWhyItemsSelect<false> | InternationalWhyItemsSelect<true>;
     'timeline-events': TimelineEventsSelect<false> | TimelineEventsSelect<true>;
     branches: BranchesSelect<false> | BranchesSelect<true>;
     'clinical-cases': ClinicalCasesSelect<false> | ClinicalCasesSelect<true>;
@@ -197,7 +197,7 @@ export interface Homepage {
    */
   heroButtons?:
     | {
-        label: string;
+        label?: string | null;
         /**
          * Site-relative (e.g. /contact) or full URL.
          */
@@ -243,6 +243,8 @@ export interface Homepage {
   createdAt: string;
 }
 /**
+ * Each customer whose website this CMS runs — their domains, logo, and which modules they subscribe to.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tenants".
  */
@@ -297,6 +299,8 @@ export interface Tenant {
   createdAt: string;
 }
 /**
+ * Every photo and file you upload for use elsewhere on the site — upload here first, then pick the image from the page you are editing.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
@@ -304,7 +308,6 @@ export interface Media {
   id: number;
   tenant?: (number | null) | Tenant;
   alt: string;
-  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -351,6 +354,31 @@ export interface Module {
   createdAt: string;
 }
 /**
+ * The grey band of partner logos that scrolls sideways directly under the home page hero.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-logos".
+ */
+export interface BrandLogo {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase brand_logos.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  slug: string;
+  name: string;
+  /**
+   * R2 logo URL (carried from the live site).
+   */
+  logoUrl?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * The row of big numbers under the logo strip on the home page — the same figures also appear on About Roomchang, Our Facilities and Clinical Results.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-stats".
  */
@@ -372,6 +400,8 @@ export interface SiteStat {
   createdAt: string;
 }
 /**
+ * The three large picture cards near the bottom of the home page — photo, heading, blurb and the link button on each.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "feature-cards".
  */
@@ -397,27 +427,8 @@ export interface FeatureCard {
   createdAt: string;
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "brand-logos".
- */
-export interface BrandLogo {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase brand_logos.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  slug: string;
-  name: string;
-  /**
-   * R2 logo URL (carried from the live site).
-   */
-  logoUrl?: string | null;
-  order?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
+ * The patient quotes in the carousel at the foot of the home page and the full list on the Patient Testimonials page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "testimonials".
  */
@@ -443,6 +454,8 @@ export interface Testimonial {
   createdAt: string;
 }
 /**
+ * Every treatment in the Services menu — its card on the Services page and the whole of its own detail page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "services".
  */
@@ -484,6 +497,502 @@ export interface Service {
    */
   imageUrl?: string | null;
   /**
+   * The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.
+   */
+  sections?:
+    | (
+        | {
+            heading: string;
+            body: string;
+            /**
+             * Render inside a soft card background.
+             */
+            card?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'text';
+          }
+        | {
+            title: string;
+            body: string;
+            /**
+             * Phosphor icon name (optional).
+             */
+            icon?: string | null;
+            /**
+             * Optional stat chips shown under the callout.
+             */
+            stats?:
+              | {
+                  value: string;
+                  label: string;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'callout';
+          }
+        | {
+            heading?: string | null;
+            items: {
+              item: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'list';
+          }
+        | {
+            heading: string;
+            subheading?: string | null;
+            numbered?: boolean | null;
+            /**
+             * 2, 3 or 4 (optional).
+             */
+            columns?: number | null;
+            items: {
+              title: string;
+              body: string;
+              tag?: string | null;
+              icon?: string | null;
+              badge?: string | null;
+              spec?: string | null;
+              link?: string | null;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cards';
+          }
+        | {
+            heading: string;
+            subheading?: string | null;
+            items: {
+              step: string;
+              detail: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'steps';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            rows: {
+              treatment: string;
+              price: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pricing';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            rows: {
+              treatment: string;
+              price: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pricetable';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            images: {
+              url: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'gallery';
+          }
+        | {
+            src: string;
+            alt: string;
+            heading?: string | null;
+            subheading?: string | null;
+            caption?: string | null;
+            size?: ('small' | 'medium' | 'large' | 'full') | null;
+            width?: number | null;
+            height?: number | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'image';
+          }
+        | {
+            /**
+             * YouTube video id.
+             */
+            videoId: string;
+            heading?: string | null;
+            subheading?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'video';
+          }
+        | {
+            src: string;
+            heading?: string | null;
+            caption?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'self_video';
+          }
+        | {
+            left: {
+              src: string;
+              alt: string;
+              caption?: string | null;
+            };
+            right: {
+              src: string;
+              alt: string;
+              caption?: string | null;
+            };
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'image_pair';
+          }
+        | {
+            /**
+             * Exactly one section for the left column.
+             */
+            left: (
+              | {
+                  heading: string;
+                  body: string;
+                  /**
+                   * Render inside a soft card background.
+                   */
+                  card?: boolean | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'text';
+                }
+              | {
+                  title: string;
+                  body: string;
+                  /**
+                   * Phosphor icon name (optional).
+                   */
+                  icon?: string | null;
+                  /**
+                   * Optional stat chips shown under the callout.
+                   */
+                  stats?:
+                    | {
+                        value: string;
+                        label: string;
+                        id?: string | null;
+                      }[]
+                    | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'callout';
+                }
+              | {
+                  heading?: string | null;
+                  items: {
+                    item: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'list';
+                }
+              | {
+                  heading: string;
+                  subheading?: string | null;
+                  numbered?: boolean | null;
+                  /**
+                   * 2, 3 or 4 (optional).
+                   */
+                  columns?: number | null;
+                  items: {
+                    title: string;
+                    body: string;
+                    tag?: string | null;
+                    icon?: string | null;
+                    badge?: string | null;
+                    spec?: string | null;
+                    link?: string | null;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'cards';
+                }
+              | {
+                  heading: string;
+                  subheading?: string | null;
+                  items: {
+                    step: string;
+                    detail: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'steps';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  rows: {
+                    treatment: string;
+                    price: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'pricing';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  rows: {
+                    treatment: string;
+                    price: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'pricetable';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  images: {
+                    url: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'gallery';
+                }
+              | {
+                  src: string;
+                  alt: string;
+                  heading?: string | null;
+                  subheading?: string | null;
+                  caption?: string | null;
+                  size?: ('small' | 'medium' | 'large' | 'full') | null;
+                  width?: number | null;
+                  height?: number | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'image';
+                }
+              | {
+                  /**
+                   * YouTube video id.
+                   */
+                  videoId: string;
+                  heading?: string | null;
+                  subheading?: string | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'video';
+                }
+              | {
+                  src: string;
+                  heading?: string | null;
+                  caption?: string | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'self_video';
+                }
+              | {
+                  left: {
+                    src: string;
+                    alt: string;
+                    caption?: string | null;
+                  };
+                  right: {
+                    src: string;
+                    alt: string;
+                    caption?: string | null;
+                  };
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'image_pair';
+                }
+            )[];
+            /**
+             * Exactly one section for the right column.
+             */
+            right: (
+              | {
+                  heading: string;
+                  body: string;
+                  /**
+                   * Render inside a soft card background.
+                   */
+                  card?: boolean | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'text';
+                }
+              | {
+                  title: string;
+                  body: string;
+                  /**
+                   * Phosphor icon name (optional).
+                   */
+                  icon?: string | null;
+                  /**
+                   * Optional stat chips shown under the callout.
+                   */
+                  stats?:
+                    | {
+                        value: string;
+                        label: string;
+                        id?: string | null;
+                      }[]
+                    | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'callout';
+                }
+              | {
+                  heading?: string | null;
+                  items: {
+                    item: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'list';
+                }
+              | {
+                  heading: string;
+                  subheading?: string | null;
+                  numbered?: boolean | null;
+                  /**
+                   * 2, 3 or 4 (optional).
+                   */
+                  columns?: number | null;
+                  items: {
+                    title: string;
+                    body: string;
+                    tag?: string | null;
+                    icon?: string | null;
+                    badge?: string | null;
+                    spec?: string | null;
+                    link?: string | null;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'cards';
+                }
+              | {
+                  heading: string;
+                  subheading?: string | null;
+                  items: {
+                    step: string;
+                    detail: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'steps';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  rows: {
+                    treatment: string;
+                    price: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'pricing';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  rows: {
+                    treatment: string;
+                    price: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'pricetable';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  images: {
+                    url: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'gallery';
+                }
+              | {
+                  src: string;
+                  alt: string;
+                  heading?: string | null;
+                  subheading?: string | null;
+                  caption?: string | null;
+                  size?: ('small' | 'medium' | 'large' | 'full') | null;
+                  width?: number | null;
+                  height?: number | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'image';
+                }
+              | {
+                  /**
+                   * YouTube video id.
+                   */
+                  videoId: string;
+                  heading?: string | null;
+                  subheading?: string | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'video';
+                }
+              | {
+                  src: string;
+                  heading?: string | null;
+                  caption?: string | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'self_video';
+                }
+              | {
+                  left: {
+                    src: string;
+                    alt: string;
+                    caption?: string | null;
+                  };
+                  right: {
+                    src: string;
+                    alt: string;
+                    caption?: string | null;
+                  };
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'image_pair';
+                }
+            )[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'twocol';
+          }
+      )[]
+    | null;
+  /**
    * Detail-page sections JSON ({ sections: [...] }) — same shape the live site renders.
    */
   content?:
@@ -501,6 +1010,8 @@ export interface Service {
   createdAt: string;
 }
 /**
+ * The dentist profiles shown on the Our Team page and in the doctor picker on the Contact form.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "doctors".
  */
@@ -555,6 +1066,8 @@ export interface Doctor {
   createdAt: string;
 }
 /**
+ * Every item in the Technology menu — its card on the Technology page and its own detail page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "technology".
  */
@@ -580,7 +1093,503 @@ export interface Technology {
    */
   imageUrl?: string | null;
   /**
-   * Detail-page content JSON — carried from the live site losslessly.
+   * The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.
+   */
+  sections?:
+    | (
+        | {
+            heading: string;
+            body: string;
+            /**
+             * Render inside a soft card background.
+             */
+            card?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'text';
+          }
+        | {
+            title: string;
+            body: string;
+            /**
+             * Phosphor icon name (optional).
+             */
+            icon?: string | null;
+            /**
+             * Optional stat chips shown under the callout.
+             */
+            stats?:
+              | {
+                  value: string;
+                  label: string;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'callout';
+          }
+        | {
+            heading?: string | null;
+            items: {
+              item: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'list';
+          }
+        | {
+            heading: string;
+            subheading?: string | null;
+            numbered?: boolean | null;
+            /**
+             * 2, 3 or 4 (optional).
+             */
+            columns?: number | null;
+            items: {
+              title: string;
+              body: string;
+              tag?: string | null;
+              icon?: string | null;
+              badge?: string | null;
+              spec?: string | null;
+              link?: string | null;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cards';
+          }
+        | {
+            heading: string;
+            subheading?: string | null;
+            items: {
+              step: string;
+              detail: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'steps';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            rows: {
+              treatment: string;
+              price: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pricing';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            rows: {
+              treatment: string;
+              price: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pricetable';
+          }
+        | {
+            heading?: string | null;
+            subheading?: string | null;
+            images: {
+              url: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'gallery';
+          }
+        | {
+            src: string;
+            alt: string;
+            heading?: string | null;
+            subheading?: string | null;
+            caption?: string | null;
+            size?: ('small' | 'medium' | 'large' | 'full') | null;
+            width?: number | null;
+            height?: number | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'image';
+          }
+        | {
+            /**
+             * YouTube video id.
+             */
+            videoId: string;
+            heading?: string | null;
+            subheading?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'video';
+          }
+        | {
+            src: string;
+            heading?: string | null;
+            caption?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'self_video';
+          }
+        | {
+            left: {
+              src: string;
+              alt: string;
+              caption?: string | null;
+            };
+            right: {
+              src: string;
+              alt: string;
+              caption?: string | null;
+            };
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'image_pair';
+          }
+        | {
+            /**
+             * Exactly one section for the left column.
+             */
+            left: (
+              | {
+                  heading: string;
+                  body: string;
+                  /**
+                   * Render inside a soft card background.
+                   */
+                  card?: boolean | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'text';
+                }
+              | {
+                  title: string;
+                  body: string;
+                  /**
+                   * Phosphor icon name (optional).
+                   */
+                  icon?: string | null;
+                  /**
+                   * Optional stat chips shown under the callout.
+                   */
+                  stats?:
+                    | {
+                        value: string;
+                        label: string;
+                        id?: string | null;
+                      }[]
+                    | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'callout';
+                }
+              | {
+                  heading?: string | null;
+                  items: {
+                    item: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'list';
+                }
+              | {
+                  heading: string;
+                  subheading?: string | null;
+                  numbered?: boolean | null;
+                  /**
+                   * 2, 3 or 4 (optional).
+                   */
+                  columns?: number | null;
+                  items: {
+                    title: string;
+                    body: string;
+                    tag?: string | null;
+                    icon?: string | null;
+                    badge?: string | null;
+                    spec?: string | null;
+                    link?: string | null;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'cards';
+                }
+              | {
+                  heading: string;
+                  subheading?: string | null;
+                  items: {
+                    step: string;
+                    detail: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'steps';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  rows: {
+                    treatment: string;
+                    price: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'pricing';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  rows: {
+                    treatment: string;
+                    price: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'pricetable';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  images: {
+                    url: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'gallery';
+                }
+              | {
+                  src: string;
+                  alt: string;
+                  heading?: string | null;
+                  subheading?: string | null;
+                  caption?: string | null;
+                  size?: ('small' | 'medium' | 'large' | 'full') | null;
+                  width?: number | null;
+                  height?: number | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'image';
+                }
+              | {
+                  /**
+                   * YouTube video id.
+                   */
+                  videoId: string;
+                  heading?: string | null;
+                  subheading?: string | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'video';
+                }
+              | {
+                  src: string;
+                  heading?: string | null;
+                  caption?: string | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'self_video';
+                }
+              | {
+                  left: {
+                    src: string;
+                    alt: string;
+                    caption?: string | null;
+                  };
+                  right: {
+                    src: string;
+                    alt: string;
+                    caption?: string | null;
+                  };
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'image_pair';
+                }
+            )[];
+            /**
+             * Exactly one section for the right column.
+             */
+            right: (
+              | {
+                  heading: string;
+                  body: string;
+                  /**
+                   * Render inside a soft card background.
+                   */
+                  card?: boolean | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'text';
+                }
+              | {
+                  title: string;
+                  body: string;
+                  /**
+                   * Phosphor icon name (optional).
+                   */
+                  icon?: string | null;
+                  /**
+                   * Optional stat chips shown under the callout.
+                   */
+                  stats?:
+                    | {
+                        value: string;
+                        label: string;
+                        id?: string | null;
+                      }[]
+                    | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'callout';
+                }
+              | {
+                  heading?: string | null;
+                  items: {
+                    item: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'list';
+                }
+              | {
+                  heading: string;
+                  subheading?: string | null;
+                  numbered?: boolean | null;
+                  /**
+                   * 2, 3 or 4 (optional).
+                   */
+                  columns?: number | null;
+                  items: {
+                    title: string;
+                    body: string;
+                    tag?: string | null;
+                    icon?: string | null;
+                    badge?: string | null;
+                    spec?: string | null;
+                    link?: string | null;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'cards';
+                }
+              | {
+                  heading: string;
+                  subheading?: string | null;
+                  items: {
+                    step: string;
+                    detail: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'steps';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  rows: {
+                    treatment: string;
+                    price: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'pricing';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  rows: {
+                    treatment: string;
+                    price: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'pricetable';
+                }
+              | {
+                  heading?: string | null;
+                  subheading?: string | null;
+                  images: {
+                    url: string;
+                    id?: string | null;
+                  }[];
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'gallery';
+                }
+              | {
+                  src: string;
+                  alt: string;
+                  heading?: string | null;
+                  subheading?: string | null;
+                  caption?: string | null;
+                  size?: ('small' | 'medium' | 'large' | 'full') | null;
+                  width?: number | null;
+                  height?: number | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'image';
+                }
+              | {
+                  /**
+                   * YouTube video id.
+                   */
+                  videoId: string;
+                  heading?: string | null;
+                  subheading?: string | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'video';
+                }
+              | {
+                  src: string;
+                  heading?: string | null;
+                  caption?: string | null;
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'self_video';
+                }
+              | {
+                  left: {
+                    src: string;
+                    alt: string;
+                    caption?: string | null;
+                  };
+                  right: {
+                    src: string;
+                    alt: string;
+                    caption?: string | null;
+                  };
+                  id?: string | null;
+                  blockName?: string | null;
+                  blockType: 'image_pair';
+                }
+            )[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'twocol';
+          }
+      )[]
+    | null;
+  /**
+   * LEGACY raw JSON — superseded by the Sections editor above when it has any section.
    */
   content?:
     | {
@@ -597,6 +1606,8 @@ export interface Technology {
   createdAt: string;
 }
 /**
+ * The headed groups on the Treatment Prices page (Implants, Crowns, Orthodontics…), their icons and the order they appear in.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pricing-categories".
  */
@@ -614,6 +1625,8 @@ export interface PricingCategory {
   createdAt: string;
 }
 /**
+ * Each treatment line inside a Treatment Prices section — the name, the USD price and the small note underneath.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pricing-items".
  */
@@ -636,6 +1649,8 @@ export interface PricingItem {
   createdAt: string;
 }
 /**
+ * The two price-comparison tables as a whole — the exchange rate and the source note printed under the International Price Comparison and Dental Implants Price Comparison pages.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pricing-comparison-sets".
  */
@@ -654,6 +1669,8 @@ export interface PricingComparisonSet {
   createdAt: string;
 }
 /**
+ * One treatment line inside a comparison table — the Roomchang, Australia and Singapore prices shown side by side.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pricing-comparison-rows".
  */
@@ -676,6 +1693,27 @@ export interface PricingComparisonRow {
   createdAt: string;
 }
 /**
+ * The cards under the "Why Choose Roomchang?" heading, the first section on the International Patients page.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "international-why-items".
+ */
+export interface InternationalWhyItem {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Supabase international_why_items.id — used by the sync for idempotent upserts.
+   */
+  sourceId?: string | null;
+  title: string;
+  description?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * The treatment-and-saving lines inside the "Cost Comparison" panel in the middle of the International Patients page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "international-treatments".
  */
@@ -693,6 +1731,8 @@ export interface InternationalTreatment {
   createdAt: string;
 }
 /**
+ * The numbered steps under "How It Works" near the bottom of the International Patients page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "international-steps".
  */
@@ -711,23 +1751,8 @@ export interface InternationalStep {
   createdAt: string;
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "international-why-items".
- */
-export interface InternationalWhyItem {
-  id: number;
-  tenant?: (number | null) | Tenant;
-  /**
-   * Supabase international_why_items.id — used by the sync for idempotent upserts.
-   */
-  sourceId?: string | null;
-  title: string;
-  description?: string | null;
-  order?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
+ * The year-by-year story that scrolls down the middle of the About Roomchang page — year, heading, paragraph and photo.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "timeline-events".
  */
@@ -754,6 +1779,8 @@ export interface TimelineEvent {
   createdAt: string;
 }
 /**
+ * The branch panels on the Contact page — address, phone, opening hours, photo and map link for each location.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "branches".
  */
@@ -802,6 +1829,8 @@ export interface Branch {
   createdAt: string;
 }
 /**
+ * The before-and-after cases on the Clinical Results page and the full case page each card opens.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "clinical-cases".
  */
@@ -842,6 +1871,8 @@ export interface ClinicalCase {
   createdAt: string;
 }
 /**
+ * Each partner logo tile on the Corporate Partnerships page and which group section it sits inside.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "partners".
  */
@@ -865,6 +1896,8 @@ export interface Partner {
   createdAt: string;
 }
 /**
+ * The headed sections on the Corporate Partnerships page — Banks, International Schools, Insurance and so on — and the order they run in.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "partner-categories".
  */
@@ -881,6 +1914,8 @@ export interface PartnerCategory {
   createdAt: string;
 }
 /**
+ * The question-and-answer list on the Frequently Asked Questions page, grouped under whatever category you type on each one.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "faq-items".
  */
@@ -900,6 +1935,8 @@ export interface FaqItem {
   createdAt: string;
 }
 /**
+ * The articles listed on About → News & Events and the full article page each one opens.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "news-articles".
  */
@@ -931,6 +1968,8 @@ export interface NewsArticle {
   createdAt: string;
 }
 /**
+ * The charity and outreach stories on About → Roomchang in the Community and the detail page behind each one.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "community-articles".
  */
@@ -969,6 +2008,8 @@ export interface CommunityArticle {
   createdAt: string;
 }
 /**
+ * The peer-reviewed papers listed on the Publication & Research page under the Education Blog.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "publications".
  */
@@ -992,6 +2033,8 @@ export interface Publication {
   createdAt: string;
 }
 /**
+ * The video cards on the Dentist Talks page — title, thumbnail and the YouTube link each card opens.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "videos".
  */
@@ -1016,6 +2059,8 @@ export interface Video {
   createdAt: string;
 }
 /**
+ * The vacancies listed on About → Employment Opportunities, plus the requirements and benefits shown on each opening's own page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "career-positions".
  */
@@ -1050,6 +2095,8 @@ export interface CareerPosition {
   createdAt: string;
 }
 /**
+ * Messages patients sent through the Contact page form — a read-only inbox; nothing here is published on the website.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "enquiries".
  */
@@ -1080,6 +2127,8 @@ export interface Enquiry {
   createdAt: string;
 }
 /**
+ * Appointment requests made through the online booking widget — a read-only list; nothing here is published on the website.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "booking-slots".
  */
@@ -1110,6 +2159,8 @@ export interface BookingSlot {
   createdAt: string;
 }
 /**
+ * Who can sign in to this CMS and what they are allowed to edit — changes nothing on the public website.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -1208,16 +2259,16 @@ export interface PayloadLockedDocument {
         value: number | Homepage;
       } | null)
     | ({
+        relationTo: 'brand-logos';
+        value: number | BrandLogo;
+      } | null)
+    | ({
         relationTo: 'site-stats';
         value: number | SiteStat;
       } | null)
     | ({
         relationTo: 'feature-cards';
         value: number | FeatureCard;
-      } | null)
-    | ({
-        relationTo: 'brand-logos';
-        value: number | BrandLogo;
       } | null)
     | ({
         relationTo: 'testimonials';
@@ -1252,16 +2303,16 @@ export interface PayloadLockedDocument {
         value: number | PricingComparisonRow;
       } | null)
     | ({
+        relationTo: 'international-why-items';
+        value: number | InternationalWhyItem;
+      } | null)
+    | ({
         relationTo: 'international-treatments';
         value: number | InternationalTreatment;
       } | null)
     | ({
         relationTo: 'international-steps';
         value: number | InternationalStep;
-      } | null)
-    | ({
-        relationTo: 'international-why-items';
-        value: number | InternationalWhyItem;
       } | null)
     | ({
         relationTo: 'timeline-events';
@@ -1412,6 +2463,20 @@ export interface HomepageSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-logos_select".
+ */
+export interface BrandLogosSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  slug?: T;
+  name?: T;
+  logoUrl?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-stats_select".
  */
 export interface SiteStatsSelect<T extends boolean = true> {
@@ -1441,20 +2506,6 @@ export interface FeatureCardsSelect<T extends boolean = true> {
   imageAlt?: T;
   href?: T;
   cta?: T;
-  order?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "brand-logos_select".
- */
-export interface BrandLogosSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
-  slug?: T;
-  name?: T;
-  logoUrl?: T;
   order?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1499,6 +2550,537 @@ export interface ServicesSelect<T extends boolean = true> {
         id?: T;
       };
   imageUrl?: T;
+  sections?:
+    | T
+    | {
+        text?:
+          | T
+          | {
+              heading?: T;
+              body?: T;
+              card?: T;
+              id?: T;
+              blockName?: T;
+            };
+        callout?:
+          | T
+          | {
+              title?: T;
+              body?: T;
+              icon?: T;
+              stats?:
+                | T
+                | {
+                    value?: T;
+                    label?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        list?:
+          | T
+          | {
+              heading?: T;
+              items?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        cards?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              numbered?: T;
+              columns?: T;
+              items?:
+                | T
+                | {
+                    title?: T;
+                    body?: T;
+                    tag?: T;
+                    icon?: T;
+                    badge?: T;
+                    spec?: T;
+                    link?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        steps?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              items?:
+                | T
+                | {
+                    step?: T;
+                    detail?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        pricing?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              rows?:
+                | T
+                | {
+                    treatment?: T;
+                    price?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        pricetable?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              rows?:
+                | T
+                | {
+                    treatment?: T;
+                    price?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        gallery?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              images?:
+                | T
+                | {
+                    url?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        image?:
+          | T
+          | {
+              src?: T;
+              alt?: T;
+              heading?: T;
+              subheading?: T;
+              caption?: T;
+              size?: T;
+              width?: T;
+              height?: T;
+              id?: T;
+              blockName?: T;
+            };
+        video?:
+          | T
+          | {
+              videoId?: T;
+              heading?: T;
+              subheading?: T;
+              id?: T;
+              blockName?: T;
+            };
+        self_video?:
+          | T
+          | {
+              src?: T;
+              heading?: T;
+              caption?: T;
+              id?: T;
+              blockName?: T;
+            };
+        image_pair?:
+          | T
+          | {
+              left?:
+                | T
+                | {
+                    src?: T;
+                    alt?: T;
+                    caption?: T;
+                  };
+              right?:
+                | T
+                | {
+                    src?: T;
+                    alt?: T;
+                    caption?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        twocol?:
+          | T
+          | {
+              left?:
+                | T
+                | {
+                    text?:
+                      | T
+                      | {
+                          heading?: T;
+                          body?: T;
+                          card?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    callout?:
+                      | T
+                      | {
+                          title?: T;
+                          body?: T;
+                          icon?: T;
+                          stats?:
+                            | T
+                            | {
+                                value?: T;
+                                label?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    list?:
+                      | T
+                      | {
+                          heading?: T;
+                          items?:
+                            | T
+                            | {
+                                item?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    cards?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          numbered?: T;
+                          columns?: T;
+                          items?:
+                            | T
+                            | {
+                                title?: T;
+                                body?: T;
+                                tag?: T;
+                                icon?: T;
+                                badge?: T;
+                                spec?: T;
+                                link?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    steps?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          items?:
+                            | T
+                            | {
+                                step?: T;
+                                detail?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    pricing?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          rows?:
+                            | T
+                            | {
+                                treatment?: T;
+                                price?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    pricetable?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          rows?:
+                            | T
+                            | {
+                                treatment?: T;
+                                price?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    gallery?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          images?:
+                            | T
+                            | {
+                                url?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    image?:
+                      | T
+                      | {
+                          src?: T;
+                          alt?: T;
+                          heading?: T;
+                          subheading?: T;
+                          caption?: T;
+                          size?: T;
+                          width?: T;
+                          height?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    video?:
+                      | T
+                      | {
+                          videoId?: T;
+                          heading?: T;
+                          subheading?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    self_video?:
+                      | T
+                      | {
+                          src?: T;
+                          heading?: T;
+                          caption?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    image_pair?:
+                      | T
+                      | {
+                          left?:
+                            | T
+                            | {
+                                src?: T;
+                                alt?: T;
+                                caption?: T;
+                              };
+                          right?:
+                            | T
+                            | {
+                                src?: T;
+                                alt?: T;
+                                caption?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                  };
+              right?:
+                | T
+                | {
+                    text?:
+                      | T
+                      | {
+                          heading?: T;
+                          body?: T;
+                          card?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    callout?:
+                      | T
+                      | {
+                          title?: T;
+                          body?: T;
+                          icon?: T;
+                          stats?:
+                            | T
+                            | {
+                                value?: T;
+                                label?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    list?:
+                      | T
+                      | {
+                          heading?: T;
+                          items?:
+                            | T
+                            | {
+                                item?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    cards?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          numbered?: T;
+                          columns?: T;
+                          items?:
+                            | T
+                            | {
+                                title?: T;
+                                body?: T;
+                                tag?: T;
+                                icon?: T;
+                                badge?: T;
+                                spec?: T;
+                                link?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    steps?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          items?:
+                            | T
+                            | {
+                                step?: T;
+                                detail?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    pricing?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          rows?:
+                            | T
+                            | {
+                                treatment?: T;
+                                price?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    pricetable?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          rows?:
+                            | T
+                            | {
+                                treatment?: T;
+                                price?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    gallery?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          images?:
+                            | T
+                            | {
+                                url?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    image?:
+                      | T
+                      | {
+                          src?: T;
+                          alt?: T;
+                          heading?: T;
+                          subheading?: T;
+                          caption?: T;
+                          size?: T;
+                          width?: T;
+                          height?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    video?:
+                      | T
+                      | {
+                          videoId?: T;
+                          heading?: T;
+                          subheading?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    self_video?:
+                      | T
+                      | {
+                          src?: T;
+                          heading?: T;
+                          caption?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    image_pair?:
+                      | T
+                      | {
+                          left?:
+                            | T
+                            | {
+                                src?: T;
+                                alt?: T;
+                                caption?: T;
+                              };
+                          right?:
+                            | T
+                            | {
+                                src?: T;
+                                alt?: T;
+                                caption?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                  };
+              id?: T;
+              blockName?: T;
+            };
+      };
   content?: T;
   order?: T;
   published?: T;
@@ -1555,6 +3137,537 @@ export interface TechnologySelect<T extends boolean = true> {
         id?: T;
       };
   imageUrl?: T;
+  sections?:
+    | T
+    | {
+        text?:
+          | T
+          | {
+              heading?: T;
+              body?: T;
+              card?: T;
+              id?: T;
+              blockName?: T;
+            };
+        callout?:
+          | T
+          | {
+              title?: T;
+              body?: T;
+              icon?: T;
+              stats?:
+                | T
+                | {
+                    value?: T;
+                    label?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        list?:
+          | T
+          | {
+              heading?: T;
+              items?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        cards?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              numbered?: T;
+              columns?: T;
+              items?:
+                | T
+                | {
+                    title?: T;
+                    body?: T;
+                    tag?: T;
+                    icon?: T;
+                    badge?: T;
+                    spec?: T;
+                    link?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        steps?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              items?:
+                | T
+                | {
+                    step?: T;
+                    detail?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        pricing?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              rows?:
+                | T
+                | {
+                    treatment?: T;
+                    price?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        pricetable?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              rows?:
+                | T
+                | {
+                    treatment?: T;
+                    price?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        gallery?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              images?:
+                | T
+                | {
+                    url?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        image?:
+          | T
+          | {
+              src?: T;
+              alt?: T;
+              heading?: T;
+              subheading?: T;
+              caption?: T;
+              size?: T;
+              width?: T;
+              height?: T;
+              id?: T;
+              blockName?: T;
+            };
+        video?:
+          | T
+          | {
+              videoId?: T;
+              heading?: T;
+              subheading?: T;
+              id?: T;
+              blockName?: T;
+            };
+        self_video?:
+          | T
+          | {
+              src?: T;
+              heading?: T;
+              caption?: T;
+              id?: T;
+              blockName?: T;
+            };
+        image_pair?:
+          | T
+          | {
+              left?:
+                | T
+                | {
+                    src?: T;
+                    alt?: T;
+                    caption?: T;
+                  };
+              right?:
+                | T
+                | {
+                    src?: T;
+                    alt?: T;
+                    caption?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        twocol?:
+          | T
+          | {
+              left?:
+                | T
+                | {
+                    text?:
+                      | T
+                      | {
+                          heading?: T;
+                          body?: T;
+                          card?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    callout?:
+                      | T
+                      | {
+                          title?: T;
+                          body?: T;
+                          icon?: T;
+                          stats?:
+                            | T
+                            | {
+                                value?: T;
+                                label?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    list?:
+                      | T
+                      | {
+                          heading?: T;
+                          items?:
+                            | T
+                            | {
+                                item?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    cards?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          numbered?: T;
+                          columns?: T;
+                          items?:
+                            | T
+                            | {
+                                title?: T;
+                                body?: T;
+                                tag?: T;
+                                icon?: T;
+                                badge?: T;
+                                spec?: T;
+                                link?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    steps?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          items?:
+                            | T
+                            | {
+                                step?: T;
+                                detail?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    pricing?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          rows?:
+                            | T
+                            | {
+                                treatment?: T;
+                                price?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    pricetable?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          rows?:
+                            | T
+                            | {
+                                treatment?: T;
+                                price?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    gallery?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          images?:
+                            | T
+                            | {
+                                url?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    image?:
+                      | T
+                      | {
+                          src?: T;
+                          alt?: T;
+                          heading?: T;
+                          subheading?: T;
+                          caption?: T;
+                          size?: T;
+                          width?: T;
+                          height?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    video?:
+                      | T
+                      | {
+                          videoId?: T;
+                          heading?: T;
+                          subheading?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    self_video?:
+                      | T
+                      | {
+                          src?: T;
+                          heading?: T;
+                          caption?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    image_pair?:
+                      | T
+                      | {
+                          left?:
+                            | T
+                            | {
+                                src?: T;
+                                alt?: T;
+                                caption?: T;
+                              };
+                          right?:
+                            | T
+                            | {
+                                src?: T;
+                                alt?: T;
+                                caption?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                  };
+              right?:
+                | T
+                | {
+                    text?:
+                      | T
+                      | {
+                          heading?: T;
+                          body?: T;
+                          card?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    callout?:
+                      | T
+                      | {
+                          title?: T;
+                          body?: T;
+                          icon?: T;
+                          stats?:
+                            | T
+                            | {
+                                value?: T;
+                                label?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    list?:
+                      | T
+                      | {
+                          heading?: T;
+                          items?:
+                            | T
+                            | {
+                                item?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    cards?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          numbered?: T;
+                          columns?: T;
+                          items?:
+                            | T
+                            | {
+                                title?: T;
+                                body?: T;
+                                tag?: T;
+                                icon?: T;
+                                badge?: T;
+                                spec?: T;
+                                link?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    steps?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          items?:
+                            | T
+                            | {
+                                step?: T;
+                                detail?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    pricing?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          rows?:
+                            | T
+                            | {
+                                treatment?: T;
+                                price?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    pricetable?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          rows?:
+                            | T
+                            | {
+                                treatment?: T;
+                                price?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    gallery?:
+                      | T
+                      | {
+                          heading?: T;
+                          subheading?: T;
+                          images?:
+                            | T
+                            | {
+                                url?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    image?:
+                      | T
+                      | {
+                          src?: T;
+                          alt?: T;
+                          heading?: T;
+                          subheading?: T;
+                          caption?: T;
+                          size?: T;
+                          width?: T;
+                          height?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    video?:
+                      | T
+                      | {
+                          videoId?: T;
+                          heading?: T;
+                          subheading?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    self_video?:
+                      | T
+                      | {
+                          src?: T;
+                          heading?: T;
+                          caption?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    image_pair?:
+                      | T
+                      | {
+                          left?:
+                            | T
+                            | {
+                                src?: T;
+                                alt?: T;
+                                caption?: T;
+                              };
+                          right?:
+                            | T
+                            | {
+                                src?: T;
+                                alt?: T;
+                                caption?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                  };
+              id?: T;
+              blockName?: T;
+            };
+      };
   content?: T;
   order?: T;
   published?: T;
@@ -1626,6 +3739,19 @@ export interface PricingComparisonRowsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "international-why-items_select".
+ */
+export interface InternationalWhyItemsSelect<T extends boolean = true> {
+  tenant?: T;
+  sourceId?: T;
+  title?: T;
+  description?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "international-treatments_select".
  */
 export interface InternationalTreatmentsSelect<T extends boolean = true> {
@@ -1645,19 +3771,6 @@ export interface InternationalStepsSelect<T extends boolean = true> {
   tenant?: T;
   sourceId?: T;
   stepLabel?: T;
-  title?: T;
-  description?: T;
-  order?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "international-why-items_select".
- */
-export interface InternationalWhyItemsSelect<T extends boolean = true> {
-  tenant?: T;
-  sourceId?: T;
   title?: T;
   description?: T;
   order?: T;
@@ -1958,7 +4071,6 @@ export interface BookingSlotsSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   alt?: T;
-  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { SECTION_BLOCKS } from '../blocks/section-blocks'
 
 /**
  * Technology — mirrors the live site's `technology` table (Supabase).
@@ -63,11 +64,21 @@ export const Technology: CollectionConfig = {
       },
     },
     {
+      name: 'sections',
+      type: 'blocks',
+      localized: true,
+      blocks: SECTION_BLOCKS,
+      admin: {
+        description:
+          'The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.',
+      },
+    },
+    {
       name: 'content',
       type: 'json',
       localized: true,
       admin: {
-        description: 'Detail-page content JSON — carried from the live site losslessly.',
+        description: 'LEGACY raw JSON — superseded by the Sections editor above when it has any section.',
       },
     },
     {

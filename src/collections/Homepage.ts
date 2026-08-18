@@ -13,6 +13,7 @@ export const Homepage: CollectionConfig = {
   labels: { singular: 'Homepage', plural: 'Homepage' },
   admin: {
     group: 'Home Page',
+    useAsTitle: 'heroPill',
     description: 'The home page hero: slides, trust pill, and call-to-action buttons.',
     components: {
       views: {
