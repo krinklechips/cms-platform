@@ -75,8 +75,16 @@ export const TenantNavBanner: React.FC<ServerProps> = async ({ payload, user }) 
           "Filter by Tenant" selector on a pinned host. Leaving it visible lets
           you switch tenants while host scoping still pins the lists to this
           domain's tenant — banner, sidebar and rows would disagree. The
-          platform host renders no banner, so it keeps its selector. */}
-      <style>{'.tenant-selector{display:none!important}'}</style>
+          platform host renders no banner, so it keeps its selector.
+
+          Also a sidebar density pass ("make the menu cleaner" — Enoch):
+          group headers become small muted caps so the ITEMS carry the visual
+          weight, and link spacing tightens a notch. */}
+      <style>{`
+        .tenant-selector{display:none!important}
+        .nav-group__toggle{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--theme-elevation-500)}
+        .nav__link{font-size:13px}
+      `}</style>
       <div style={S.banner}>
         <p style={S.label}>Editing site</p>
         <p style={S.name}>{name}</p>

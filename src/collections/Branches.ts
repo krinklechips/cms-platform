@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const Branches: CollectionConfig = {
   slug: 'branches',
   admin: {
-    group: 'Contact & Branches',
+    group: 'Main Pages',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'phone', 'published', 'order'],
   },

@@ -13,7 +13,7 @@ import { SECTION_BLOCKS } from '../blocks/section-blocks'
 export const Services: CollectionConfig = {
   slug: 'services',
   admin: {
-    group: 'Services Page',
+    group: 'Main Pages',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'published', 'order'],
   },

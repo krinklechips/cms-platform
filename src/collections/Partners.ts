@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const Partners: CollectionConfig = {
   slug: 'partners',
   admin: {
-    group: 'Partnerships',
+    group: 'About Pages',
     useAsTitle: 'name',
     defaultColumns: ['name', 'category', 'website', 'order'],
   },

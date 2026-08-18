@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const CareerPositions: CollectionConfig = {
   slug: 'career-positions',
   admin: {
-    group: 'Careers',
+    group: 'About Pages',
     useAsTitle: 'title',
     defaultColumns: ['title', 'department', 'type', 'published', 'order'],
   },

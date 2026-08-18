@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const TimelineEvents: CollectionConfig = {
   slug: 'timeline-events',
   admin: {
-    group: 'About Page',
+    group: 'About Pages',
     useAsTitle: 'heading',
     defaultColumns: ['year', 'heading', 'published', 'order'],
   },

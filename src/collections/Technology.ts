@@ -8,7 +8,7 @@ import { SECTION_BLOCKS } from '../blocks/section-blocks'
 export const Technology: CollectionConfig = {
   slug: 'technology',
   admin: {
-    group: 'Technology Page',
+    group: 'Main Pages',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'category', 'published', 'order'],
   },

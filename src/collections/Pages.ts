@@ -29,7 +29,7 @@ export const Pages: CollectionConfig = {
   slug: 'pages',
   labels: { singular: 'Page', plural: 'Custom Pages' },
   admin: {
-    group: 'Custom Pages',
+    group: 'Main Pages',
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'published', 'updatedAt'],
     description:

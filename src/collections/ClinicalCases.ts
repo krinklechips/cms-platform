@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const ClinicalCases: CollectionConfig = {
   slug: 'clinical-cases',
   admin: {
-    group: 'Clinical Results',
+    group: 'Main Pages',
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'category', 'published', 'order'],
   },
