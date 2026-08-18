@@ -14,6 +14,9 @@ import { OpenTenantContent } from './OpenTenantContent'
 type Props = {
   payload?: Payload
   user?: { roles?: string[] } | null
+  /** When the admin is opened on a tenant's own domain, scope the cockpit to
+   *  that tenant — other tenants must not appear there (Enoch, 2026-08-18). */
+  hostTenant?: { id: number | string; name: string } | null
 }
 
 const fmtUSD = (n: number) =>
@@ -51,15 +54,20 @@ const S: Record<string, React.CSSProperties> = {
   link: { color: 'inherit' },
 }
 
-export const PlatformDashboard: React.FC<Props> = async ({ payload, user }) => {
+export const PlatformDashboard: React.FC<Props> = async ({ payload, user, hostTenant }) => {
   if (!payload || !user?.roles?.includes('super-admin')) return null
 
   try {
-    const [tenants, modules, invoices] = await Promise.all([
+    const [allTenants, modules, invoices] = await Promise.all([
       payload.find({ collection: 'tenants', limit: 100, depth: 0, overrideAccess: true }),
       payload.find({ collection: 'modules', limit: 100, depth: 0, overrideAccess: true }),
       payload.find({ collection: 'invoices', limit: 500, depth: 0, overrideAccess: true }),
     ])
+
+    // Tenant-domain visit → cockpit shows ONLY that tenant.
+    const tenants = hostTenant
+      ? { ...allTenants, docs: allTenants.docs.filter((t) => String(t.id) === String(hostTenant.id)) }
+      : allTenants
 
     const modById = new Map(
       modules.docs.map((m) => [String(m.id), m as { name?: string; defaultMonthlyPrice?: number }]),
@@ -109,10 +117,21 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user }) => {
 
     return (
       <div style={S.wrap}>
-        <h2 style={S.h2}>Serviette Labs — HQ</h2>
+        <h2 style={S.h2}>{hostTenant ? `${hostTenant.name} — workspace` : 'Serviette Labs — HQ'}</h2>
         <p style={S.sub}>
-          {rows.length} tenant{rows.length === 1 ? '' : 's'}
-          {anyPrices ? ` · ${fmtUSD(totalMRR)}/mo subscribed` : ' · module prices not set yet'} · platform view
+          {hostTenant ? (
+            <>
+              tenant workspace (this domain) · full platform view at{' '}
+              <a href="https://serviettelab.com/admin" style={S.link}>
+                serviettelab.com/admin
+              </a>
+            </>
+          ) : (
+            <>
+              {rows.length} tenant{rows.length === 1 ? '' : 's'}
+              {anyPrices ? ` · ${fmtUSD(totalMRR)}/mo subscribed` : ' · module prices not set yet'} · platform view
+            </>
+          )}
         </p>
         <table style={S.table}>
           <thead>

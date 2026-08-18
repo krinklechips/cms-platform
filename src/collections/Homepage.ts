@@ -37,7 +37,12 @@ export const Homepage: CollectionConfig = {
         description: 'The action buttons over the hero (first one is the highlighted primary).',
       },
       fields: [
-        { name: 'label', type: 'text', localized: true, required: true },
+        // NOT required — same lesson as slide.title: the doc shipped with
+        // empty EN labels, and a required localized field on pre-existing
+        // invalid data silently blocks EVERY save of the whole document
+        // (validation fails on fields the editor never touched). The site
+        // falls back to its bundled strings when a label is empty.
+        { name: 'label', type: 'text', localized: true },
         {
           name: 'url',
           type: 'text',

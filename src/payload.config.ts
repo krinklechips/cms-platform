@@ -245,10 +245,12 @@ export default buildConfig({
   // Codes follow the site's country-style URL segments (per Enoch): KH / CN
   // (not ISO km/zh) — matches roomchang.com/kh and /cn.
   localization: {
+    // Labels WITHOUT the code suffix — the admin locale selector appends the
+    // code itself, so 'ខ្មែរ (KH)' rendered as a doubled "…(KH) KH".
     locales: [
-      { label: 'English (EN)', code: 'en' },
-      { label: 'ខ្មែរ (KH)', code: 'kh' },
-      { label: '中文 (CN)', code: 'cn' },
+      { label: 'English', code: 'en' },
+      { label: 'ខ្មែរ', code: 'kh' },
+      { label: '中文', code: 'cn' },
     ],
     defaultLocale: 'en',
     fallback: true,
