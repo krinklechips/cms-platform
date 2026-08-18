@@ -1,4 +1,5 @@
 import React from 'react'
+import { Gutter } from '@payloadcms/ui'
 import { UNMODELED_PAGES } from '@/lib/site-pages'
 
 /**
@@ -47,7 +48,10 @@ const QUICK_ADD: { collection: string; label: string }[] = [
 ]
 
 const S: Record<string, React.CSSProperties> = {
-  wrap: { padding: '24px 0 8px' },
+  // Horizontal inset comes from Payload's <Gutter> (60px, same as every list
+  // view) — without it the panels sat flush against the window edge
+  // ("padding is wrong" — Enoch, QA round).
+  wrap: { padding: '24px 0 40px' },
   h2: { fontSize: 20, margin: '0 0 4px' },
   sub: { fontSize: 13, color: 'var(--theme-elevation-600)', margin: '0 0 20px' },
   subLink: { color: 'var(--theme-text)', textDecoration: 'underline' },
@@ -105,7 +109,8 @@ export const SiteActivityDashboard: React.FC<Props> = ({
   recent,
   unpublished,
 }) => (
-  <div style={S.wrap}>
+  <Gutter>
+    <div style={S.wrap}>
     <h2 style={S.h2}>{tenantName ?? 'Your website'}</h2>
     <p style={S.sub}>
       Pages and sections are in the menu on the left — each one explains itself when opened.
@@ -184,5 +189,6 @@ export const SiteActivityDashboard: React.FC<Props> = ({
         </ul>
       </div>
     )}
-  </div>
+    </div>
+  </Gutter>
 )

@@ -32,6 +32,11 @@ type ViewProps = {
       payload?: unknown
     }
   }
+  // Payload also spreads serverProps at the TOP level of view overrides (the
+  // HomepageSingleRedirect lesson). The cockpit silently vanished because we
+  // only read initPageResult — accept both shapes.
+  user?: { roles?: string[] } | null
+  payload?: unknown
 }
 
 /** Public site for the "open the live website" link. */
@@ -147,8 +152,8 @@ const gatherActivity = async (
 }
 
 export const PlatformDashboardView: React.FC<ViewProps> = async (props) => {
-  const user = props?.initPageResult?.req?.user ?? null
-  const payload = props?.initPageResult?.req?.payload
+  const user = props?.initPageResult?.req?.user ?? props?.user ?? null
+  const payload = props?.initPageResult?.req?.payload ?? props?.payload
 
   let hostTenant: TenantBranding | null = null
   try {

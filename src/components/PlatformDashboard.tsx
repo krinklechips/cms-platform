@@ -1,4 +1,5 @@
 import React from 'react'
+import { Gutter } from '@payloadcms/ui'
 import type { Payload } from 'payload'
 import { OpenTenantContent } from './OpenTenantContent'
 
@@ -116,6 +117,7 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user, hostTe
     const anyPrices = totalMRR > 0
 
     return (
+      <Gutter>
       <div style={S.wrap}>
         <h2 style={S.h2}>{hostTenant ? `${hostTenant.name} — workspace` : 'Serviette Labs — HQ'}</h2>
         <p style={S.sub}>
@@ -183,14 +185,17 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user, hostTe
           <a href="/admin/collections/users" style={S.link}>Users</a>
         </div>
       </div>
+      </Gutter>
     )
   } catch (e) {
     // Fail loud but small: never take the dashboard down with us.
     return (
-      <div style={S.wrap}>
-        <h2 style={S.h2}>Serviette Labs — HQ</h2>
-        <p style={S.sub}>Cockpit failed to load: {(e as Error).message}</p>
-      </div>
+      <Gutter>
+        <div style={S.wrap}>
+          <h2 style={S.h2}>Serviette Labs — HQ</h2>
+          <p style={S.sub}>Cockpit failed to load: {(e as Error).message}</p>
+        </div>
+      </Gutter>
     )
   }
 }
