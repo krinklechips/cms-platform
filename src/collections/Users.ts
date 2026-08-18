@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import { APIError, type CollectionConfig } from 'payload'
 
 const isSuperAdmin = (user: unknown): boolean =>
   Boolean((user as { roles?: string[] } | null)?.roles?.includes('super-admin'))
@@ -20,6 +20,30 @@ export const Users: CollectionConfig = {
     hidden: ({ user }) => !isSuperAdmin(user),
   },
   auth: { depth: 2 },
+  hooks: {
+    beforeValidate: [
+      // INCIDENT 2026-08-18: an "editor" account saved with no tenant
+      // membership passes every form check, then sees "Nothing found" on
+      // every screen (plugin scopes reads to tenant-in-[], write gate fails
+      // closed, pin-tenant refuses the cookie). Refuse to save such an
+      // account at all rather than let it exist broken.
+      ({ data, originalDoc }) => {
+        const roles: string[] =
+          (data?.roles as string[] | undefined) ?? (originalDoc?.roles as string[] | undefined) ?? []
+        const tenants: unknown[] =
+          (data?.tenants as unknown[] | undefined) ??
+          (originalDoc?.tenants as unknown[] | undefined) ??
+          []
+        if (!roles.includes('super-admin') && tenants.length === 0) {
+          throw new APIError(
+            'This user has no site: add them to a tenant under "Tenants" below, or they will be able to see and edit nothing.',
+            400,
+          )
+        }
+        return data
+      },
+    ],
+  },
   access: {
     read: ({ req: { user } }) => (isSuperAdmin(user) ? true : { id: { equals: user?.id ?? '' } }),
     create: ({ req: { user } }) => isSuperAdmin(user),
