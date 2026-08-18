@@ -273,6 +273,7 @@ export default buildConfig({
       // Tenant-scoped collections. Roomchang is tenant #1; future customers
       // get their own tenant and see only their own content.
       collections: {
+        pages: {},
         services: {},
         doctors: {},
         technology: {},

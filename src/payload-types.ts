@@ -310,6 +310,7 @@ export interface Media {
   id: number;
   tenant?: (number | null) | Tenant;
   alt: string;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -463,6 +464,7 @@ export interface Testimonial {
  */
 export interface Page {
   id: number;
+  tenant?: (number | null) | Tenant;
   /**
    * The page heading. The web address is created from this automatically.
    */
@@ -3574,6 +3576,7 @@ export interface TestimonialsSelect<T extends boolean = true> {
  * via the `definition` "pages_select".
  */
 export interface PagesSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   slug?: T;
   published?: T;
@@ -5657,6 +5660,7 @@ export interface BookingSlotsSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   alt?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
