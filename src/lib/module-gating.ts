@@ -106,11 +106,12 @@ const collectionHasPublishedField = (config: CollectionConfig): boolean =>
 //     production-readiness audit: without it, GET /api/services commingles
 //     every tenant the moment tenant #2 has content.
 //
-//     ⚠ The PLATFORM host (serviettelab.com) keeps unscoped published-only
-//     reads FOR NOW: the sandbox consumer still points PAYLOAD_API_URL at the
-//     platform host. Flip the sandbox to the tenant host, then platform-host
-//     anon reads can be closed too — until then, onboarding a second tenant
-//     with real content requires that flip first.
+//     ⚠ PLATFORM HOST CLOSED (2026-08-31): the last anonymous consumer (the
+//     sandbox site) now reads the tenant host, so anonymous calls on a host
+//     that maps to NO tenant are denied outright in production — a second
+//     tenant's content can never bleed through serviettelab.com. Local dev
+//     keeps published-only reads (localhost maps to no tenant and the dummy
+//     site reads the API anonymously).
 //
 // Logged-in users keep the collection's existing read (the multi-tenant
 // plugin scopes them to their tenant; staff still see drafts). Collections
@@ -123,11 +124,13 @@ const composeReadAccess =
     if (existingResult === false) return false
     if (args.req.user) return existingResult
 
+    const hostTenant = await getHostTenant(args.req)
+    if (!hostTenant && process.env.NODE_ENV === 'production') return false
+
     const constraints: Where[] = []
     if (collectionHasPublishedField(config)) {
       constraints.push({ published: { equals: true } })
     }
-    const hostTenant = await getHostTenant(args.req)
     if (hostTenant) {
       constraints.push({ tenant: { equals: hostTenant.id } })
     }

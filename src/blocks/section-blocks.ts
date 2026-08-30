@@ -67,6 +67,7 @@ const iconField = (): Field => ({
 const text: Block = {
   slug: 'text',
   labels: { singular: 'Text section', plural: 'Text sections' },
+  imageURL: '/block-previews/text.svg',
   admin: NO_NAME,
   fields: [
     { name: 'heading', type: 'text' },
@@ -82,6 +83,7 @@ const text: Block = {
 const callout: Block = {
   slug: 'callout',
   labels: { singular: 'Callout', plural: 'Callouts' },
+  imageURL: '/block-previews/callout.svg',
   admin: NO_NAME,
   fields: [
     { name: 'title', type: 'text' },
@@ -102,6 +104,7 @@ const callout: Block = {
 const list: Block = {
   slug: 'list',
   labels: { singular: 'Bullet list', plural: 'Bullet lists' },
+  imageURL: '/block-previews/list.svg',
   admin: NO_NAME,
   fields: [
     { name: 'heading', type: 'text' },
@@ -117,6 +120,7 @@ const list: Block = {
 const cards: Block = {
   slug: 'cards',
   labels: { singular: 'Card grid', plural: 'Card grids' },
+  imageURL: '/block-previews/cards.svg',
   admin: NO_NAME,
   fields: [
     { name: 'heading', type: 'text' },
@@ -143,6 +147,7 @@ const cards: Block = {
 const steps: Block = {
   slug: 'steps',
   labels: { singular: 'Step list', plural: 'Step lists' },
+  imageURL: '/block-previews/steps.svg',
   admin: NO_NAME,
   fields: [
     { name: 'heading', type: 'text' },
@@ -176,6 +181,7 @@ const priceRows: Field[] = [
 const pricing: Block = {
   slug: 'pricing',
   labels: { singular: 'Price list', plural: 'Price lists' },
+  imageURL: '/block-previews/pricing.svg',
   admin: NO_NAME,
   fields: priceRows,
 }
@@ -183,6 +189,7 @@ const pricing: Block = {
 const pricetable: Block = {
   slug: 'pricetable',
   labels: { singular: 'Price table', plural: 'Price tables' },
+  imageURL: '/block-previews/pricetable.svg',
   admin: NO_NAME,
   fields: priceRows,
 }
@@ -190,6 +197,7 @@ const pricetable: Block = {
 const gallery: Block = {
   slug: 'gallery',
   labels: { singular: 'Image gallery', plural: 'Image galleries' },
+  imageURL: '/block-previews/gallery.svg',
   admin: NO_NAME,
   fields: [
     { name: 'heading', type: 'text' },
@@ -209,6 +217,7 @@ const gallery: Block = {
 const image: Block = {
   slug: 'image',
   labels: { singular: 'Image', plural: 'Images' },
+  imageURL: '/block-previews/image.svg',
   admin: NO_NAME,
   fields: [
     mediaPick(),
@@ -226,6 +235,7 @@ const image: Block = {
 const video: Block = {
   slug: 'video',
   labels: { singular: 'YouTube video', plural: 'YouTube videos' },
+  imageURL: '/block-previews/video.svg',
   admin: NO_NAME,
   fields: [
     { name: 'videoId', type: 'text', admin: { description: 'YouTube video id.' } },
@@ -237,6 +247,7 @@ const video: Block = {
 const selfVideo: Block = {
   slug: 'self_video',
   labels: { singular: 'Hosted video', plural: 'Hosted videos' },
+  imageURL: '/block-previews/self_video.svg',
   admin: NO_NAME,
   fields: [
     { name: 'src', type: 'text' },
@@ -259,6 +270,7 @@ const imagePairSide = (name: 'left' | 'right'): Field => ({
 const imagePair: Block = {
   slug: 'image_pair',
   labels: { singular: 'Image pair', plural: 'Image pairs' },
+  imageURL: '/block-previews/image_pair.svg',
   admin: NO_NAME,
   fields: [imagePairSide('left'), imagePairSide('right')],
 }
@@ -282,6 +294,7 @@ const LEAF_BLOCKS: Block[] = [
 const twocol: Block = {
   slug: 'twocol',
   labels: { singular: 'Two columns', plural: 'Two columns' },
+  imageURL: '/block-previews/twocol.svg',
   admin: NO_NAME,
   fields: [
     {

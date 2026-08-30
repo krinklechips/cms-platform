@@ -21,14 +21,14 @@ export const Media: CollectionConfig = {
   access: {
     // Anon reads on a TENANT host are scoped to that tenant's files (Bar-A
     // audit: read () => true exposed every tenant's media, including
-    // unpublished uploads, to any caller). Platform host stays open for now —
-    // the sandbox consumer + homepage slide population read via
-    // serviettelab.com; close it when consumers move to tenant hosts.
+    // unpublished uploads, to any caller). PLATFORM HOST CLOSED 2026-08-31 —
+    // every anonymous consumer now reads a tenant host; localhost dev keeps
+    // open reads (it maps to no tenant).
     read: async ({ req }) => {
       if (req.user) return true // plugin + admin handle authed scoping
       const hostTenant = await getHostTenant(req)
       if (hostTenant) return { tenant: { equals: hostTenant.id } }
-      return true
+      return process.env.NODE_ENV !== 'production'
     },
   },
   hooks: {
