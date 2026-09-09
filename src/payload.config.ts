@@ -46,6 +46,7 @@ import { getTenantByHost, normalizeHost } from './lib/get-tenant-by-host'
 import { withModuleGating } from './lib/module-gating'
 import { withHostScope } from './lib/host-scope'
 import { withHumanLabels } from './lib/collection-labels'
+import { withDrafts } from './lib/with-drafts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -138,7 +139,14 @@ export default buildConfig({
           'community-articles': slug ? `/about/community/${slug}` : '/about/community',
         }
         const page = pageFor[collectionConfig?.slug ?? ''] ?? ''
-        return `${dummy}/${loc}${page}`
+        const target = `/${loc}${page}`
+        // Drafts: route the preview through the sandbox's draft-mode endpoint
+        // so unpublished edits render in the iframe (see roomchang
+        // src/app/api/preview/route.ts). Without a secret, plain page.
+        const secret = process.env.PREVIEW_SECRET
+        return secret
+          ? `${dummy}/api/preview?secret=${encodeURIComponent(secret)}&redirect=${encodeURIComponent(target)}`
+          : `${dummy}${target}`
       },
       collections: [
         'pages',
@@ -173,33 +181,33 @@ export default buildConfig({
     // Order defines nav-group order: site pages first, platform tools last.
     // withHostScope: on a tenant's own domain the admin lists only that
     // tenant's rows (see lib/host-scope.ts). No-op on serviettelab.com.
-    withHumanLabels(withHostScope(withModuleGating(Homepage))),
-    withHumanLabels(withHostScope(withModuleGating(BrandLogos))),
-    withHumanLabels(withHostScope(withModuleGating(SiteStats))),
-    withHumanLabels(withHostScope(withModuleGating(FeatureCards))),
-    withHumanLabels(withHostScope(withModuleGating(Testimonials))),
-    withHumanLabels(withHostScope(withModuleGating(Pages))),
-    withHumanLabels(withHostScope(withModuleGating(Services))),
-    withHumanLabels(withHostScope(withModuleGating(Doctors))),
-    withHumanLabels(withHostScope(withModuleGating(Technology))),
-    withHumanLabels(withHostScope(withModuleGating(PricingCategories))),
-    withHumanLabels(withHostScope(withModuleGating(PricingItems))),
-    withHumanLabels(withHostScope(withModuleGating(PricingComparisonSets))),
-    withHumanLabels(withHostScope(withModuleGating(PricingComparisonRows))),
-    withHumanLabels(withHostScope(withModuleGating(InternationalWhyItems))),
-    withHumanLabels(withHostScope(withModuleGating(InternationalTreatments))),
-    withHumanLabels(withHostScope(withModuleGating(InternationalSteps))),
-    withHumanLabels(withHostScope(withModuleGating(TimelineEvents))),
-    withHumanLabels(withHostScope(withModuleGating(Branches))),
-    withHumanLabels(withHostScope(withModuleGating(ClinicalCases))),
-    withHumanLabels(withHostScope(withModuleGating(Partners))),
-    withHumanLabels(withHostScope(withModuleGating(PartnerCategories))),
-    withHumanLabels(withHostScope(withModuleGating(FaqItems))),
-    withHumanLabels(withHostScope(withModuleGating(NewsArticles))),
-    withHumanLabels(withHostScope(withModuleGating(CommunityArticles))),
-    withHumanLabels(withHostScope(withModuleGating(Publications))),
-    withHumanLabels(withHostScope(withModuleGating(Videos))),
-    withHumanLabels(withHostScope(withModuleGating(CareerPositions))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Homepage)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(BrandLogos)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(SiteStats)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(FeatureCards)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Testimonials)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Pages)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Services)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Doctors)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Technology)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(PricingCategories)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(PricingItems)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(PricingComparisonSets)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(PricingComparisonRows)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(InternationalWhyItems)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(InternationalTreatments)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(InternationalSteps)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(TimelineEvents)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Branches)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(ClinicalCases)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Partners)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(PartnerCategories)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(FaqItems)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(NewsArticles)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(CommunityArticles)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Publications)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(Videos)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(CareerPositions)))),
     withHumanLabels(withHostScope(withModuleGating(Enquiries))),
     withHumanLabels(withHostScope(withModuleGating(BookingSlots))),
     withHumanLabels(withHostScope(Media)),

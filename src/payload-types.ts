@@ -243,6 +243,7 @@ export interface Homepage {
     | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Each customer whose website this CMS runs — their domains, logo, and which modules they subscribe to.
@@ -378,6 +379,7 @@ export interface BrandLogo {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The row of big numbers under the logo strip on the home page — the same figures also appear on About Roomchang, Our Facilities and Clinical Results.
@@ -401,6 +403,7 @@ export interface SiteStat {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The three large picture cards near the bottom of the home page — photo, heading, blurb and the link button on each.
@@ -428,6 +431,7 @@ export interface FeatureCard {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The patient quotes in the carousel at the foot of the home page and the full list on the Patient Testimonials page.
@@ -455,6 +459,7 @@ export interface Testimonial {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Extra website pages. Give it a title, build it from sections, tick Published — it goes live at the web address shown.
@@ -1237,6 +1242,7 @@ export interface Page {
   seoImage?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Every treatment in the Services menu — its card on the Services page and the whole of its own detail page.
@@ -2025,7 +2031,7 @@ export interface Service {
   heroDescription?: string | null;
   category?: string | null;
   /**
-   * Icon name used on service cards.
+   * Not shown on the website — kept for the data sync.
    */
   icon?: string | null;
   isFeatured?: boolean | null;
@@ -2046,6 +2052,7 @@ export interface Service {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The dentist profiles shown on the Our Team page and in the doctor picker on the Contact form.
@@ -2103,6 +2110,7 @@ export interface Doctor {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Every item in the Technology menu — its card on the Technology page and its own detail page.
@@ -2896,6 +2904,7 @@ export interface Technology {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The headed groups on the Treatment Prices page (Implants, Crowns, Orthodontics…), their icons and the order they appear in.
@@ -2915,6 +2924,7 @@ export interface PricingCategory {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Each treatment line inside a Treatment Prices section — the name, the USD price and the small note underneath.
@@ -2939,6 +2949,7 @@ export interface PricingItem {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The two price-comparison tables as a whole — the exchange rate and the source note printed under the International Price Comparison and Dental Implants Price Comparison pages.
@@ -2959,6 +2970,7 @@ export interface PricingComparisonSet {
   lastUpdated?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * One treatment line inside a comparison table — the Roomchang, Australia and Singapore prices shown side by side.
@@ -2983,6 +2995,7 @@ export interface PricingComparisonRow {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The cards under the "Why Choose Roomchang?" heading, the first section on the International Patients page.
@@ -3002,6 +3015,7 @@ export interface InternationalWhyItem {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The treatment-and-saving lines inside the "Cost Comparison" panel in the middle of the International Patients page.
@@ -3021,6 +3035,7 @@ export interface InternationalTreatment {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The numbered steps under "How It Works" near the bottom of the International Patients page.
@@ -3041,6 +3056,7 @@ export interface InternationalStep {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The year-by-year story that scrolls down the middle of the About Roomchang page — year, heading, paragraph and photo.
@@ -3069,6 +3085,7 @@ export interface TimelineEvent {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The branch panels on the Contact page — address, phone, opening hours, photo and map link for each location.
@@ -3119,6 +3136,7 @@ export interface Branch {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The before-and-after cases on the Clinical Results page and the full case page each card opens.
@@ -3161,6 +3179,7 @@ export interface ClinicalCase {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Each partner logo tile on the Corporate Partnerships page and which group section it sits inside.
@@ -3186,6 +3205,7 @@ export interface Partner {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The headed sections on the Corporate Partnerships page — Banks, International Schools, Insurance and so on — and the order they run in.
@@ -3204,6 +3224,7 @@ export interface PartnerCategory {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The question-and-answer list on the Frequently Asked Questions page, grouped under whatever category you type on each one.
@@ -3225,6 +3246,7 @@ export interface FaqItem {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The articles listed on About → News & Events and the full article page each one opens.
@@ -3258,6 +3280,7 @@ export interface NewsArticle {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The charity and outreach stories on About → Roomchang in the Community and the detail page behind each one.
@@ -3298,6 +3321,7 @@ export interface CommunityArticle {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The peer-reviewed papers listed on the Publication & Research page under the Education Blog.
@@ -3323,6 +3347,7 @@ export interface Publication {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The video cards on the Dentist Talks page — title, thumbnail and the YouTube link each card opens.
@@ -3349,6 +3374,7 @@ export interface Video {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The vacancies listed on About → Employment Opportunities, plus the requirements and benefits shown on each opening's own page.
@@ -3385,6 +3411,7 @@ export interface CareerPosition {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Messages patients sent through the Contact page form — a read-only inbox; nothing here is published on the website.
@@ -3468,6 +3495,9 @@ export interface User {
     | null;
   updatedAt: string;
   createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
   email: string;
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;
@@ -3756,6 +3786,7 @@ export interface HomepageSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3770,6 +3801,7 @@ export interface BrandLogosSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3787,6 +3819,7 @@ export interface SiteStatsSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3805,6 +3838,7 @@ export interface FeatureCardsSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3823,6 +3857,7 @@ export interface TestimonialsSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4381,6 +4416,7 @@ export interface PagesSelect<T extends boolean = true> {
   seoImage?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4952,6 +4988,7 @@ export interface ServicesSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4984,6 +5021,7 @@ export interface DoctorsSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5551,6 +5589,7 @@ export interface TechnologySelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5564,6 +5603,7 @@ export interface PricingCategoriesSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5582,6 +5622,7 @@ export interface PricingItemsSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5596,6 +5637,7 @@ export interface PricingComparisonSetsSelect<T extends boolean = true> {
   lastUpdated?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5614,6 +5656,7 @@ export interface PricingComparisonRowsSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5627,6 +5670,7 @@ export interface InternationalWhyItemsSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5640,6 +5684,7 @@ export interface InternationalTreatmentsSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5654,6 +5699,7 @@ export interface InternationalStepsSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5673,6 +5719,7 @@ export interface TimelineEventsSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5700,6 +5747,7 @@ export interface BranchesSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5722,6 +5770,7 @@ export interface ClinicalCasesSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5738,6 +5787,7 @@ export interface PartnersSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5750,6 +5800,7 @@ export interface PartnerCategoriesSelect<T extends boolean = true> {
   order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5765,6 +5816,7 @@ export interface FaqItemsSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5789,6 +5841,7 @@ export interface NewsArticlesSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5820,6 +5873,7 @@ export interface CommunityArticlesSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5839,6 +5893,7 @@ export interface PublicationsSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5859,6 +5914,7 @@ export interface VideosSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5889,6 +5945,7 @@ export interface CareerPositionsSelect<T extends boolean = true> {
   published?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5977,6 +6034,9 @@ export interface UsersSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
   email?: T;
   resetPasswordToken?: T;
   resetPasswordExpiration?: T;

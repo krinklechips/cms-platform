@@ -19,7 +19,9 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
     hidden: ({ user }) => !isSuperAdmin(user),
   },
-  auth: { depth: 2 },
+  // useAPIKey: the sandbox's draft-preview fetches authenticate as a service
+  // user (tenant member) via `Authorization: users API-Key <key>`.
+  auth: { depth: 2, useAPIKey: true },
   hooks: {
     beforeValidate: [
       // INCIDENT 2026-08-18: an "editor" account saved with no tenant

@@ -73,12 +73,14 @@ type SyncPayload = {
     collection: SyncCollection
     data: Record<string, unknown>
     locale: PayloadLocale
+    draft?: boolean
   }) => Promise<SyncDoc>
   update: (args: {
     collection: SyncCollection
     id: string | number
     data: Record<string, unknown>
     locale: PayloadLocale
+    draft?: boolean
   }) => Promise<SyncDoc>
 }
 
@@ -150,9 +152,15 @@ async function run() {
       await syncPayload.find({ collection, where: { sourceId: { equals: sourceId } }, limit: 1 })
     ).docs[0]
     const base = { ...en, sourceId, tenant: tenantId }
+    // Drafts model: `published` from Supabase decides the version state.
+    // draft:false = publish (parent row updated); draft:true = create as a
+    // draft. Edge (documented): an already-published CMS doc that later
+    // flips to unpublished upstream only gains a draft version here — it
+    // stays live until someone unpublishes it in the admin.
+    const draft = (base as { published?: boolean }).published === false
     const doc = existing
-      ? await syncPayload.update({ collection, id: existing.id, data: base, locale: 'en' })
-      : await syncPayload.create({ collection, data: base, locale: 'en' })
+      ? await syncPayload.update({ collection, id: existing.id, data: base, locale: 'en', draft })
+      : await syncPayload.create({ collection, data: base, locale: 'en', draft })
     // Supabase content_translations uses ISO km/zh; Payload locales follow the
     // site's URL segments kh/cn (Enoch's convention).
     if (Object.keys(km).length) await syncPayload.update({ collection, id: doc.id, data: km, locale: 'kh' })

@@ -76,13 +76,11 @@ const titleOf = (payload: Payload, slug: string, doc: LooseDoc): string => {
   return typeof candidate === 'string' && candidate.trim() !== '' ? candidate : `#${doc.id}`
 }
 
-const hasPublishedField = (payload: Payload, slug: string): boolean => {
-  const cfg = payload.collections[slug as CollectionSlug]?.config as
-    | { flattenedFields?: { name?: string }[]; fields?: { name?: string }[] }
-    | undefined
-  const fieldList = cfg?.flattenedFields ?? cfg?.fields ?? []
-  return fieldList.some((f) => f?.name === 'published')
-}
+const hasDrafts = (payload: Payload, slug: string): boolean =>
+  Boolean(
+    (payload.collections[slug as CollectionSlug]?.config as { versions?: { drafts?: unknown } } | undefined)
+      ?.versions?.drafts,
+  )
 
 const gatherActivity = async (
   payload: Payload,
@@ -122,11 +120,11 @@ const gatherActivity = async (
     }))
 
   const unpublishedNested = await Promise.all(
-    CONTENT_SLUGS.filter((slug) => hasPublishedField(payload, slug)).map(async (slug) => {
+    CONTENT_SLUGS.filter((slug) => hasDrafts(payload, slug)).map(async (slug) => {
       try {
         const res = await payload.find({
           collection: slug as CollectionSlug,
-          where: { and: [tenantWhere, { published: { not_equals: true } }] },
+          where: { and: [tenantWhere, { _status: { equals: 'draft' } }] },
           sort: '-updatedAt',
           limit: 3,
           depth: 0,

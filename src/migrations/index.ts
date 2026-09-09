@@ -12,6 +12,7 @@ import * as migration_20260818_090817_sections_optional from './20260818_090817_
 import * as migration_20260818_100857_pages_collection from './20260818_100857_pages_collection';
 import * as migration_20260818_101628_pages_tenant_field from './20260818_101628_pages_tenant_field';
 import * as migration_20260818_180149_ux_department_enum_media_picks from './20260818_180149_ux_department_enum_media_picks';
+import * as migration_20260909_163449_drafts_versions_and_api_keys from './20260909_163449_drafts_versions_and_api_keys';
 
 export const migrations = [
   {
@@ -82,6 +83,11 @@ export const migrations = [
   {
     up: migration_20260818_180149_ux_department_enum_media_picks.up,
     down: migration_20260818_180149_ux_department_enum_media_picks.down,
-    name: '20260818_180149_ux_department_enum_media_picks'
+    name: '20260818_180149_ux_department_enum_media_picks',
+  },
+  {
+    up: migration_20260909_163449_drafts_versions_and_api_keys.up,
+    down: migration_20260909_163449_drafts_versions_and_api_keys.down,
+    name: '20260909_163449_drafts_versions_and_api_keys'
   },
 ];

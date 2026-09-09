@@ -156,7 +156,7 @@ export const SiteActivityDashboard: React.FC<Props> = ({
                 <a style={S.rowLink} href={docHref(d)}>
                   {d.title} →
                 </a>
-                <p style={S.rowMeta}>{d.label} — open it and tick Published to put it live</p>
+                <p style={S.rowMeta}>{d.label} — open it and press Publish to put it live</p>
               </li>
             ))}
           </ul>

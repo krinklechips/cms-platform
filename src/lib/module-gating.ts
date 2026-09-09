@@ -93,6 +93,9 @@ const composeWriteAccess =
     return existingResult
   }
 
+const collectionHasDrafts = (config: CollectionConfig): boolean =>
+  Boolean((config.versions as { drafts?: unknown } | undefined)?.drafts)
+
 const collectionHasPublishedField = (config: CollectionConfig): boolean =>
   Array.isArray(config.fields) &&
   config.fields.some((f) => 'name' in f && (f as { name?: string }).name === 'published')
@@ -128,7 +131,12 @@ const composeReadAccess =
     if (!hostTenant && process.env.NODE_ENV === 'production') return false
 
     const constraints: Where[] = []
-    if (collectionHasPublishedField(config)) {
+    if (collectionHasDrafts(config)) {
+      // Parent rows of never-published docs carry _status 'draft'; Payload does
+      // NOT exclude them from non-draft reads by itself (checked in 3.85's
+      // find operation) — this is where the public gets published-only.
+      constraints.push({ _status: { equals: 'published' } })
+    } else if (collectionHasPublishedField(config)) {
       constraints.push({ published: { equals: true } })
     }
     if (hostTenant) {
