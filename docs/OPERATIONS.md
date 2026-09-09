@@ -83,10 +83,30 @@ everywhere; enforced after the Borin lockout).
 - `get_advisors(security)` on both Supabase projects: WARN-free; the many
   `rls_enabled_no_policy` INFOs on CMS tables are the deny-all design.
 
+## Drafts & publishing (since 2026-09-09)
+
+- Every editorial collection has Payload versions with drafts. **Save draft**
+  writes a version only; the parent row keeps the last published content, so
+  the public API and sandbox keep serving what was published. **Publish**
+  updates the parent (`_status = published`). Never-published docs have
+  `_status = draft` and are filtered out for anonymous readers in
+  `module-gating` — Payload does not do this by itself.
+- The legacy `published` checkbox is hidden, not dropped; its values were
+  backfilled into `_status`. Backfill lesson: the migration adds `_status`
+  with **DEFAULT 'draft'** — backfill ALL rows, never `WHERE _status IS NULL`.
+- Draft preview on the sandbox: the CMS Live Preview URL goes through
+  `roomchang-sandbox.vercel.app/api/preview?secret=…&redirect=…` (Next draft
+  mode). The site then fetches with `draft=true` as the service user
+  `preview@serviettelab.com` (API key, tenant-1 editor). Secrets:
+  `PREVIEW_SECRET` on Render = `PAYLOAD_PREVIEW_SECRET` on the sandbox;
+  `PAYLOAD_PREVIEW_API_KEY` on the sandbox. Rotate the key with
+  `scripts/create-preview-user.ts` (prints once), then update the Vercel env.
+- Smoke-test the whole flow without a password:
+  `DATABASE_URI="$DATABASE_URI_PROD" npx tsx scripts/verify-editor-access.ts`
+  (impersonates the editor through the real access stack).
+
 ## Known deliberate limits (v1)
 
-- No drafts/preview-before-publish: `published` is the only gate; the
-  sandbox site is the preview. Payload versions are the v2 path.
 - Enquiries/Bookings in the CMS are stale snapshots from the last sync —
   the live inbox stays in the clinic dashboard.
 - Media serves from `r2.dev` (rate-limited dev domain) — move to a custom
