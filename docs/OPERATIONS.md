@@ -101,6 +101,12 @@ everywhere; enforced after the Borin lockout).
   `PREVIEW_SECRET` on Render = `PAYLOAD_PREVIEW_SECRET` on the sandbox;
   `PAYLOAD_PREVIEW_API_KEY` on the sandbox. Rotate the key with
   `scripts/create-preview-user.ts` (prints once), then update the Vercel env.
+- After enabling drafts on an existing collection, run
+  `scripts/seed-initial-versions.ts` once: draft-mode reads come from the
+  versions tables and documents without a version simply vanish from preview.
+- API keys are hashed with `PAYLOAD_SECRET`. A key issued from a machine whose
+  `.env` secret differs from Render's never authenticates — issue keys with
+  `PAYLOAD_SECRET` set to the production value.
 - Smoke-test the whole flow without a password:
   `DATABASE_URI="$DATABASE_URI_PROD" npx tsx scripts/verify-editor-access.ts`
   (impersonates the editor through the real access stack).
