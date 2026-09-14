@@ -2067,7 +2067,7 @@ export interface Doctor {
    * Supabase doctors.id (e.g. "dr-tak") — sync upsert key.
    */
   sourceId?: string | null;
-  name: string;
+  name?: string | null;
   /**
    * e.g. "DDS, MSc."
    */

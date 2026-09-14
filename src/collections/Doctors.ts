@@ -29,7 +29,11 @@ export const Doctors: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
-      required: true,
+      // not `required`: per-locale validation would block saving a doctor in a
+      // locale that simply falls back to the English name.
+      // Khmer doctor names are real content on the live site (content_translations);
+      // localized so /kh/team can show them while EN/CN keep the Latin names.
+      localized: true,
     },
     {
       name: 'credentials',

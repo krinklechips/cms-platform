@@ -474,7 +474,8 @@ async function run() {
   let fC = 0
   for (const f of featureCards!) {
     const sourceId = String(f.id)
-    const trOf = (loc: string) => fTr.get(`${sourceId}|${loc}`) ?? {}
+    // content_translations keys homepage_feature_card rows by the card SLUG, not its id
+    const trOf = (loc: string) => fTr.get(`${f.slug}|${loc}`) ?? fTr.get(`${sourceId}|${loc}`) ?? {}
     const locData = (tr: Record<string, unknown>) => {
       const o: Record<string, unknown> = {}
       if (typeof tr.title === 'string') o.title = tr.title
