@@ -220,6 +220,7 @@ async function run() {
     const trOf = (loc: string) => dTr.get(`${d.id}|${loc}`) ?? {}
     const locData = (t: Record<string, unknown>) => {
       const o: Record<string, unknown> = {}
+      if (typeof t.name === 'string') o.name = t.name // Khmer doctor names live in content_translations too
       if (typeof t.role === 'string') o.role = t.role
       if (typeof t.bio === 'string') o.bio = t.bio
       if (typeof t.note === 'string') o.note = t.note

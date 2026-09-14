@@ -71,8 +71,8 @@ async function run() {
             continue
           }
           const existing = localized?.sections as unknown[] | undefined
-          if (Array.isArray(existing) && existing.length > 0) {
-            skipped++ // already converted — idempotent re-runs
+          if (Array.isArray(existing) && existing.length > 0 && !process.argv.includes('--force')) {
+            skipped++ // already converted — idempotent re-runs (--force rebuilds from the refreshed JSON)
             continue
           }
           const blocks = sections.map(sectionToBlock)
