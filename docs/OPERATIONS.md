@@ -73,6 +73,34 @@ Users: a non-super-admin **must** belong to a tenant — saving one without a
 membership is refused (an account with no tenant sees "Nothing found"
 everywhere; enforced after the Borin lockout).
 
+## Reconciling content from live (before any cutover)
+
+The sync is one-way (live → CMS) and idempotent, but it never deletes and it
+predates some collections' translation keys. The full pass, in order:
+
+1. `npx tsx scripts/sync-roomchang.ts` (READS live, WRITES CMS; ~25 min —
+   every doc publishes in three locales and gets version rows).
+2. `npx tsx scripts/reconcile-live.ts` (dry run) → review → `--apply`:
+   prunes CMS docs whose live row is gone, refreshes drifted prices.
+3. `npx tsx scripts/convert-sections-to-blocks.ts --force` — rebuild the
+   section blocks from the refreshed JSON. Only safe while no editor has
+   hand-edited blocks in the CMS; otherwise reconcile per document.
+4. `npx tsx scripts/align-feature-cards-locales.ts` — the home highlight
+   cards' Khmer/Chinese come from the live DB (`content_translations`,
+   entity `homepage_feature_card`, keyed by SLUG), not from messages/*.json.
+5. `npx tsx scripts/align-homepage-locales.ts` — hero pill + buttons from
+   messages/{km,zh}.json (that IS what live renders for those).
+6. Re-run the parity audit (scratch script: crawl sitemap EN + kh/cn twins,
+   diff `<main>` text). Target: identical everywhere except the deliberate
+   `HIDDEN_FROM_GRID` services.
+
+Making a field localized on an existing collection: the generated migration
+DROPS the old column before adding the locales column — hand-insert
+`UPDATE locales SET col = parent.col … WHERE _locale='en'` (plus INSERT for
+missing rows) ahead of the drops, for the `_v` tables too
+(20260914_043717 is the template). Push the code in the SAME step as
+applying the migration: between the two, the API for that collection is down.
+
 ## Verifying after a deploy
 
 - `https://<tenant>.serviettelab.com/admin/login` → 200/307, tenant-branded.
