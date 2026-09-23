@@ -20,7 +20,10 @@ export const Modules: CollectionConfig = {
     description: 'Sellable platform modules. Subscribe tenants to these on the Tenant document.',
   },
   access: {
-    read: ({ req: { user } }) => Boolean(user),
+    // The module catalogue (names, prices) is for platform staff and tenant
+    // admins choosing subscriptions — not for editors.
+    read: ({ req: { user } }) =>
+      isSuperAdmin(user) || Boolean((user as { roles?: string[] } | null)?.roles?.includes('tenant-admin')),
     create: ({ req: { user } }) => isSuperAdmin(user),
     update: ({ req: { user } }) => isSuperAdmin(user),
     delete: ({ req: { user } }) => isSuperAdmin(user),

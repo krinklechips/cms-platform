@@ -79,6 +79,12 @@ const passesExistingAccess = async (
   return existing(args)
 }
 
+// Cross-cutting collections every tenant needs regardless of which modules
+// they subscribe to. Media is not a sellable module: without this, an editor
+// could pick existing images but NOT upload new ones (functional battery,
+// 2026-09-23 — "You are not allowed to perform this action").
+const ALWAYS_ENTITLED = new Set(['media'])
+
 const composeWriteAccess =
   (slug: string, existing: AccessFn | undefined): AccessFn =>
   async (args) => {
@@ -86,6 +92,7 @@ const composeWriteAccess =
     if (existingResult === false) return false
 
     if (isSuperAdmin(args.req.user)) return existingResult
+    if (ALWAYS_ENTITLED.has(slug)) return existingResult
 
     const tenant = await getCachedTenant(args)
     if (!isCollectionEnabledForWrite(tenant, slug)) return false

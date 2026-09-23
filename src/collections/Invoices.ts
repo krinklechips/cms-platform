@@ -84,6 +84,10 @@ export const Invoices: CollectionConfig = {
   access: {
     read: ({ req: { user } }): boolean | Where => {
       if (isSuperAdmin(user)) return true
+      // Billing is tenant-ADMIN business: editors have no reason to see it
+      // (functional battery, 2026-09-23).
+      const roles = (user as { roles?: string[] } | null)?.roles ?? []
+      if (!roles.includes('tenant-admin')) return false
       const ids = userTenantIds(user)
       return ids.length ? { tenant: { in: ids } } : false
     },

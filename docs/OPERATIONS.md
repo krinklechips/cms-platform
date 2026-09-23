@@ -103,6 +103,12 @@ applying the migration: between the two, the API for that collection is down.
 
 ## Verifying after a deploy
 
+- **Functional battery** (the standard check — every editor flow through the
+  real access stack, self-cleaning):
+  `DATABASE_URI="$DATABASE_URI_PROD" npx tsx scripts/functional-battery.ts`
+  Local API has no tenant cookie, so the script passes `tenant: 1` on creates;
+  the admin assigns it from the login. Expect all PASS.
+
 - `https://<tenant>.serviettelab.com/admin/login` → 200/307, tenant-branded.
 - Anonymous isolation: tenant host `/api/services?limit=1` returns docs;
   `https://serviettelab.com/api/services` returns a 403-style refusal.
