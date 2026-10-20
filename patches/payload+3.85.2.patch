@@ -1,0 +1,121 @@
+diff --git a/node_modules/payload/dist/collections/operations/restoreVersion.js b/node_modules/payload/dist/collections/operations/restoreVersion.js
+index 576e901..a140ce7 100644
+--- a/node_modules/payload/dist/collections/operations/restoreVersion.js
++++ b/node_modules/payload/dist/collections/operations/restoreVersion.js
+@@ -18,7 +18,8 @@ import { saveVersion } from '../../versions/saveVersion.js';
+ import { buildAfterOperation } from './utilities/buildAfterOperation.js';
+ import { buildBeforeOperation } from './utilities/buildBeforeOperation.js';
+ export const restoreVersionOperation = async (args)=>{
+-    const { id, collection: { config: collectionConfig }, depth, draft: draftArg = false, overrideAccess = false, populate, req, req: { fallbackLocale, locale, payload }, select: incomingSelect, showHiddenFields } = args;
++    const { id, collection: { config: collectionConfig }, depth, overrideAccess = false, populate, req, req: { fallbackLocale, locale, payload }, select: incomingSelect, showHiddenFields } = args;
++    const previousRestoringVersion = req.context.isRestoringVersion;
+     try {
+         const shouldCommit = !args.disableTransaction && await initTransaction(args.req);
+         // /////////////////////////////////////
+@@ -30,6 +31,12 @@ export const restoreVersionOperation = async (args)=>{
+             operation: 'restoreVersion',
+             overrideAccess
+         });
++        // Opt-in collections prepare a bounded all-locale snapshot in their application hook.
++        const scopedRestore = collectionConfig.custom?.localeScopedRestore ? req.context.localeScopedRestore : undefined;
++        if (collectionConfig.custom?.localeScopedRestore && (typeof scopedRestore?.prepareSnapshot !== 'function' || scopedRestore.collection !== collectionConfig.slug || scopedRestore.versionID !== String(id) || scopedRestore.locale !== locale)) {
++            throw new APIError('Missing safe locale restore snapshot.', httpStatus.BAD_REQUEST);
++        }
++        const draftArg = scopedRestore ? true : (args.draft ?? false);
+         if (!id) {
+             throw new APIError('Missing ID of version to restore.', httpStatus.BAD_REQUEST);
+         }
+@@ -52,7 +59,10 @@ export const restoreVersionOperation = async (args)=>{
+         if (!rawVersionToRestore) {
+             throw new NotFound(req.t);
+         }
+-        const { parent: parentDocID, version: versionToRestoreWithLocales } = rawVersionToRestore;
++        const { parent: parentDocID } = rawVersionToRestore;
++        if (scopedRestore && scopedRestore.parentID !== String(parentDocID)) {
++            throw new APIError('Locale restore snapshot parent mismatch.', httpStatus.BAD_REQUEST);
++        }
+         // /////////////////////////////////////
+         // Access
+         // /////////////////////////////////////
+@@ -95,8 +105,12 @@ export const restoreVersionOperation = async (args)=>{
+             query: findOneArgs,
+             req
+         });
++        // Preserve unfiltered stored values, but only after the native parent update policy succeeds.
++        const versionToRestoreWithLocales = scopedRestore
++            ? scopedRestore.prepareSnapshot(prevDocWithLocales, rawVersionToRestore.version)
++            : rawVersionToRestore.version;
+         // originalDoc with hoisted localized data
+-        const validationLocale = payload.config.localization ? payload.config.localization.defaultLocale : locale;
++        const validationLocale = scopedRestore?.locale ?? (payload.config.localization ? payload.config.localization.defaultLocale : locale);
+         const originalDoc = await afterRead({
+             collection: collectionConfig,
+             context: req.context,
+@@ -115,7 +129,7 @@ export const restoreVersionOperation = async (args)=>{
+             collection: collectionConfig,
+             context: req.context,
+             depth: 0,
+-            doc: deepCopyObjectSimple(rawVersionToRestore.version),
++            doc: deepCopyObjectSimple(versionToRestoreWithLocales),
+             draft: draftArg,
+             fallbackLocale: null,
+             global: null,
+@@ -127,7 +141,8 @@ export const restoreVersionOperation = async (args)=>{
+         // /////////////////////////////////////
+         // beforeValidate - Fields
+         // /////////////////////////////////////
+-        req.context.isRestoringVersion = true;
++        // A scoped restore is a partial update: denied fields must fall back to their CURRENT values.
++        req.context.isRestoringVersion = !scopedRestore;
+         const reqWithValidationLocale = Object.assign(Object.create(req), req, {
+             fallbackLocale: null,
+             locale: validationLocale
+@@ -307,6 +322,12 @@ export const restoreVersionOperation = async (args)=>{
+     } catch (error) {
+         await killTransaction(req);
+         throw error;
++    } finally {
++        if (collectionConfig.custom?.localeScopedRestore) {
++            delete req.context.localeScopedRestore;
++            if (previousRestoringVersion === undefined) delete req.context.isRestoringVersion;
++            else req.context.isRestoringVersion = previousRestoringVersion;
++        }
+     }
+ };
+ 
+diff --git a/node_modules/payload/dist/utilities/mergeLocalizedData.js b/node_modules/payload/dist/utilities/mergeLocalizedData.js
+index 97f4381..c38a79d 100644
+--- a/node_modules/payload/dist/utilities/mergeLocalizedData.js
++++ b/node_modules/payload/dist/utilities/mergeLocalizedData.js
+@@ -1,4 +1,12 @@
+ import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/config/types.js';
++// Shared rows can move while only one locale is published. Match their identity,
++// never another row's position, when preserving the unpublished locales.
++function existingRow(rows, row, index) {
++    if (!Array.isArray(rows)) return {};
++    if (row?.id != null) return rows.find((existing)=>existing?.id != null && String(existing.id) === String(row.id)) || {};
++    const candidate = rows[index];
++    return candidate?.id == null ? candidate || {} : {};
++}
+ /**
+  * Collects field names at the current data level, recursing through pass-through fields
+  * (row, collapsible, unnamed group, unnamed tab) but stopping at named fields.
+@@ -74,7 +82,7 @@ import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/
+                             } else if (Array.isArray(newValue)) {
+                                 // Non-localized array - still process children for any localized fields
+                                 result[field.name] = newValue.map((newItem, index)=>{
+-                                    const existingItem = existingValue?.[index] || {};
++                                    const existingItem = existingRow(existingValue, newItem, index);
+                                     return mergeLocalizedData({
+                                         configBlockReferences,
+                                         dataWithLocales: newItem,
+@@ -125,7 +133,8 @@ import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/
+                                         block = field.blocks.find((b)=>b.slug === newBlockData.blockType);
+                                     }
+                                     if (block) {
+-                                        const blockData = Array.isArray(existingValue) && existingValue[index] ? existingValue[index] : {};
++                                        const previousBlock = existingRow(existingValue, newBlockData, index);
++                                        const blockData = previousBlock.blockType === newBlockData.blockType ? previousBlock : {};
+                                         const merged = mergeLocalizedData({
+                                             configBlockReferences,
+                                             dataWithLocales: newBlockData,

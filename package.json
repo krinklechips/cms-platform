@@ -5,6 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "postinstall": "patch-package --error-on-fail",
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --port 3100",
     "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev --port 3100",
@@ -30,6 +31,7 @@
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
     "next": "16.2.7",
+    "patch-package": "8.0.1",
     "payload": "3.85.2",
     "react": "19.2.6",
     "react-dom": "19.2.6",

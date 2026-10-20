@@ -27,7 +27,7 @@
 
 ## Tasks
 
-- [ ] 1. Preservation: write failing real-Payload tests for array identity and locale restore; implement minimal fixes; package version-pinned patches; run all CMS tests and TypeScript checks; commit.
+- [x] 1. Preservation: write failing real-Payload tests for array identity and locale restore; implement minimal fixes; package version-pinned patches; run all CMS tests and TypeScript checks; commit.
 - [ ] 2. Mapping/schema: add stable clinical category keys and localize visitor-copy omissions with additive, version-preserving migrations; use a disposable PostgreSQL fixture to prove preservation; commit.
 - [ ] 3. Website reads: make category filters use keys, wire branches/timeline to Payload in sandbox mode, prefer localized CMS stat labels consistently; add behavioral tests; commit only scoped website files.
 - [ ] 4. Safe live import: compare live data, existing CMS values, history and drafts; produce a guarded field-level manifest; apply only proven-safe changes, preserving conflicts; verify all existing work and history.
@@ -38,4 +38,8 @@
 
 - Baseline: CMS 212d90e, website a4fe70a; remote branches match; CMS tree clean; website has existing untracked docs/cms/ only.
 - Baseline tests from approved review: 23 CMS and 6 focused website tests pass; standalone test typing errors are known and will be addressed where touched.
-- Task 1 in progress: parent owns array-identity patch and packaging; bounded worker owns locale-restore implementation and tests. No hosted writes performed.
+- Task 1 verified: stable row-identity merges, active-locale draft restore, field-access preservation, and transaction-scoped PostgreSQL serialization. Real concurrent writers use equivalent numeric IDs; rollback releases locks. All 101 pre-import CMS unit tests passed, focused preservation tests and real fixtures pass. Clean npm ci applies both pinned patches; restricted-field restore passes on that clean installation. Type checking passed before the independent import files were introduced; full checks will run again at integration.
+- Task 1 independent review found hidden/read-restricted and update-protected fields could be cleared; fixed using raw snapshots only after native authorization and current-value fallback for denied updates. Regression fixtures now pass; numeric/UUID lock identity is canonicalized.
+- Task 2 local verification complete: 63 schema/key tests, real SQLite and PostgreSQL locale/draft/history writes across all 12 affected collections. Independent review found no actionable migration defects.
+- Full hosted-schema backup restored locally: all 490 tables / 57,314 rows match by hash. Applying the new migration to a separate clone preserves every original column/row, adds 300 EN-only recovery rows, and maps all 11 clinical cases. Hosted database is still unchanged.
+- Live refresh comparison: 148 missing FAQ/career scalar translations are candidates; another 70 FAQ category cells require the new schema and a fresh blank-history check. Nonblank differences and all pre-existing drafts stay protected; no blanket sync is permitted.

@@ -67,7 +67,7 @@ try {
   assert.deepEqual(await payload.findByID({ collection: 'pages', id: page.id, draft: true, locale: 'all', depth: 0 }), draftBefore, 'Blocked tools must preserve the saved draft in every locale')
   assert.deepEqual(await payload.findVersions({ collection: 'pages', where: { parent: { equals: page.id } }, limit: 100 }), versionsBefore, 'Blocked tools must not alter or prune version history')
 
-  await payload.restoreVersion({ collection: 'pages', id: original.id, overrideAccess: false, user, locale: 'en' })
+  await payload.restoreVersion({ collection: 'pages', id: original.id, overrideAccess: false, user, locale: 'en', req: { query: { locale: 'en' } } })
   const restored = await payload.findByID({ collection: 'pages', id: page.id, draft: true, overrideAccess: false, user, locale: 'en' })
   assert.equal(restored.title, 'Approved editorial content', 'An editor can restore the retained older revision')
 

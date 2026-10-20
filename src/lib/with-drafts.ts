@@ -1,4 +1,6 @@
 import type { CollectionConfig, Field } from 'payload'
+import { serializeEditorialUpdate } from './editorial-lock'
+import { prepareLocaleRestore } from './locale-restore'
 
 /**
  * Drafts & preview-before-publish for every editorial collection.
@@ -29,6 +31,11 @@ export const withDrafts = (config: CollectionConfig): CollectionConfig => {
   if (columns.length > 0 && !columns.includes('_status')) columns.push('_status')
   return {
     ...config,
+    custom: { ...config.custom, localeScopedRestore: true },
+    hooks: {
+      ...config.hooks,
+      beforeOperation: [serializeEditorialUpdate, ...(config.hooks?.beforeOperation ?? []), prepareLocaleRestore],
+    },
     versions: { drafts: true, maxPerDoc: 100 },
     admin: {
       ...config.admin,

@@ -1,0 +1,93 @@
+diff --git a/node_modules/@payloadcms/next/dist/views/Version/Restore/index.js b/node_modules/@payloadcms/next/dist/views/Version/Restore/index.js
+index c30aade..ecbabdc 100644
+--- a/node_modules/@payloadcms/next/dist/views/Version/Restore/index.js
++++ b/node_modules/@payloadcms/next/dist/views/Version/Restore/index.js
+@@ -2,11 +2,11 @@
+ 
+ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+ import { getTranslation } from '@payloadcms/translations';
+-import { Button, ConfirmationModal, PopupList, toast, useConfig, useModal, useRouteTransition, useTranslation } from '@payloadcms/ui';
++import { Button, ConfirmationModal, toast, useConfig, useLocale, useModal, useRouteTransition, useTranslation } from '@payloadcms/ui';
+ import { requests } from '@payloadcms/ui/shared';
+ import { useRouter } from 'next/navigation.js';
+ import { formatAdminURL } from 'payload/shared';
+-import React, { Fragment, useCallback, useState } from 'react';
++import React, { Fragment, useCallback } from 'react';
+ const baseClass = 'restore-version';
+ const modalSlug = 'restore-version';
+ export const Restore = ({
+@@ -35,7 +35,7 @@ export const Restore = ({
+     i18n,
+     t
+   } = useTranslation();
+-  const [draft, setDraft] = useState(false);
++  const locale = useLocale();
+   const {
+     startRouteTransition
+   } = useRouteTransition();
+@@ -43,25 +43,29 @@ export const Restore = ({
+     label: getTranslation(label, i18n),
+     versionDate: versionDateFormatted
+   });
+-  const canRestoreAsDraft = status !== 'draft' && collectionConfig?.versions?.drafts;
++  const restoreLabel = `${t('version:restoreAsDraft')} (${locale?.code?.toUpperCase() || '?'})`;
+   const handleRestore = useCallback(async () => {
++    if (!locale?.code || locale.code === 'all' || locale.code === '*') {
++      toast.error(t('version:problemRestoringVersion'));
++      return;
++    }
+     let fetchURL = formatAdminURL({
+       apiRoute,
+       path: ''
+     });
+     let redirectURL;
+     if (collectionConfig) {
+-      fetchURL = `${fetchURL}/${collectionConfig.slug}/versions/${versionID}?draft=${draft}`;
++      fetchURL = `${fetchURL}/${collectionConfig.slug}/versions/${versionID}?draft=true&locale=${encodeURIComponent(locale.code)}`;
+       redirectURL = formatAdminURL({
+         adminRoute,
+-        path: `/collections/${collectionConfig.slug}/${originalDocID}`
++        path: `/collections/${collectionConfig.slug}/${originalDocID}?locale=${encodeURIComponent(locale.code)}`
+       });
+     }
+     if (globalConfig) {
+-      fetchURL = `${fetchURL}/globals/${globalConfig.slug}/versions/${versionID}?draft=${draft}`;
++      fetchURL = `${fetchURL}/globals/${globalConfig.slug}/versions/${versionID}?draft=true&locale=${encodeURIComponent(locale.code)}`;
+       redirectURL = formatAdminURL({
+         adminRoute,
+-        path: `/globals/${globalConfig.slug}`
++        path: `/globals/${globalConfig.slug}?locale=${encodeURIComponent(locale.code)}`
+       });
+     }
+     const res = await requests.post(fetchURL, {
+@@ -76,27 +80,20 @@ export const Restore = ({
+     } else {
+       toast.error(t('version:problemRestoringVersion'));
+     }
+-  }, [apiRoute, collectionConfig, globalConfig, i18n.language, versionID, draft, adminRoute, originalDocID, startRouteTransition, router, t]);
++  }, [apiRoute, collectionConfig, globalConfig, i18n.language, versionID, locale?.code, adminRoute, originalDocID, startRouteTransition, router, t]);
+   return /*#__PURE__*/_jsxs(Fragment, {
+     children: [/*#__PURE__*/_jsx("div", {
+       className: [baseClass, className].filter(Boolean).join(' '),
+       children: /*#__PURE__*/_jsx(Button, {
+         buttonStyle: "primary",
+-        className: [canRestoreAsDraft && `${baseClass}__restore-as-draft-button`].filter(Boolean).join(' '),
+         onClick: () => toggleModal(modalSlug),
+         size: "xsmall",
+-        SubMenuPopupContent: canRestoreAsDraft ? () => /*#__PURE__*/_jsx(PopupList.ButtonGroup, {
+-          children: /*#__PURE__*/_jsx(PopupList.Button, {
+-            onClick: () => [setDraft(true), toggleModal(modalSlug)],
+-            children: t('version:restoreAsDraft')
+-          })
+-        }) : null,
+-        children: t('version:restoreThisVersion')
++        children: restoreLabel
+       })
+     }), /*#__PURE__*/_jsx(ConfirmationModal, {
+       body: restoreMessage,
+       confirmingLabel: t('version:restoring'),
+-      heading: t('version:confirmVersionRestoration'),
++      heading: restoreLabel,
+       modalSlug: modalSlug,
+       onConfirm: handleRestore
+     })]
