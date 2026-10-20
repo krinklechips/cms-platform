@@ -47,6 +47,7 @@ import { withModuleGating } from './lib/module-gating'
 import { withHostScope } from './lib/host-scope'
 import { withHumanLabels } from './lib/collection-labels'
 import { withDrafts } from './lib/with-drafts'
+import { getStatPages } from './lib/stat-pages'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -126,13 +127,15 @@ export default buildConfig({
         const dummy = process.env.DUMMY_SITE_URL || 'http://localhost:3200'
         const loc = locale?.code ?? 'en'
         const slug = (data as { slug?: string })?.slug ?? ''
+        const statPages = getStatPages((data as { key?: string })?.key ?? '')
+        if (collectionConfig?.slug === 'site-stats' && statPages.length === 0) return null
         const pageFor: Record<string, string> = {
           services: slug ? `/services/${slug}` : '/services',
           pages: slug ? `/${slug}` : '',
           doctors: '/team',
           technology: '/technology',
           homepage: '',
-          'site-stats': '',
+          'site-stats': statPages[0]?.path ?? '',
           'feature-cards': '',
           'brand-logos': '',
           testimonials: '',
@@ -277,6 +280,7 @@ export default buildConfig({
   // Codes follow the site's country-style URL segments (per Enoch): KH / CN
   // (not ISO km/zh) — matches roomchang.com/kh and /cn.
   localization: {
+    defaultLocalePublishOption: 'active',
     // Labels WITHOUT the code suffix — the admin locale selector appends the
     // code itself, so 'ខ្មែរ (KH)' rendered as a doubled "…(KH) KH".
     locales: [

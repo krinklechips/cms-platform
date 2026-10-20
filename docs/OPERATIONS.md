@@ -167,6 +167,42 @@ applying the migration: between the two, the API for that collection is down.
 - Test draft/save/publish/restore with the isolated fixtures above, not by
   impersonating an editor and writing to their existing documents.
 
+## Localized statistics (2026-10-20)
+
+`site-stats.displayValue`, `suffix` and `label` are language-specific; the
+numeric count remains shared. A record's Appears on field and preview target
+come from `src/lib/stat-pages.ts`. Clinical experience belongs to Clinical
+Results, not the home page; homepage years of experience is a separate record.
+Publishing defaults to the active language rather than publishing saved drafts
+from other languages. Publishing all languages remains an explicit submenu action.
+
+Migration `20261020_095018_stat_values_localized` copies each existing parent
+and version's own display value/suffix into all locales, without changing
+labels, statuses, IDs or timestamps. It retains the original global columns
+as recovery data. `originalDisplayValue` records pre-migration formatting so
+the homepage continues its existing count-up output until a localized display
+value changes. The raw legacy columns are not used for future editing.
+
+Do not run migration down or roll back to old code after staff start using
+localized values: that would hide their newer edits. The down function refuses
+destructive removal. Use a reviewed forward recovery instead. New schema
+snapshots describe the active schema; do not manually drop the retained columns
+as incidental cleanup.
+
+Verification fixtures refuse shared destinations:
+
+```sh
+DATABASE_URI=file:./stat-locales-demo.db PAYLOAD_SECRET=local-test-only \
+  npx tsx scripts/verify-stat-locales.ts
+MIGRATION_TEST_DATABASE_URI=postgres://cms_fixture@127.0.0.1:55438/postgres \
+  npx tsx scripts/verify-stat-migration.ts
+```
+
+The Postgres fixture requires a disposable local server with that test user;
+it creates/removes only `stat_migration_fixture`. For hosted tests, use a
+record with no saved draft, capture the published baseline, publish a temporary
+change in one locale, verify other locales, then restore only that locale.
+
 ## Known deliberate limits (v1)
 
 - Enquiries/Bookings in the CMS are stale snapshots from the last sync —

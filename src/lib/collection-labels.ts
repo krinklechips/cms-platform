@@ -37,7 +37,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
     singular: "Stat",
     plural: "Stats Band",
     description:
-      "The row of big numbers under the logo strip on the home page — the same figures also appear on About Roomchang, Our Facilities and Clinical Results.",
+      "Website statistics. Each record lists the pages where it appears.",
   },
   'feature-cards': {
     singular: "Highlight Card",

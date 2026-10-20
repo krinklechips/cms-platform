@@ -16,6 +16,11 @@ export const SiteStats: CollectionConfig = {
   },
   fields: [
     {
+      name: 'statUsage',
+      type: 'ui',
+      admin: { components: { Field: '/components/StatUsage#StatUsage' } },
+    },
+    {
       name: 'sourceId',
       type: 'text',
       index: true,
@@ -35,15 +40,25 @@ export const SiteStats: CollectionConfig = {
     {
       name: 'displayValue',
       type: 'text',
+      localized: true,
+    },
+    {
+      name: 'originalDisplayValue',
+      type: 'text',
+      localized: true,
+      admin: { hidden: true },
+      access: { create: () => false, update: () => false },
     },
     {
       name: 'numericValue',
+      label: 'Number (all languages)',
       type: 'number',
       admin: { position: 'sidebar' },
     },
     {
       name: 'suffix',
       type: 'text',
+      localized: true,
       admin: { position: 'sidebar' },
     },
     {

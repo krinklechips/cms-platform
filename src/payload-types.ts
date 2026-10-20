@@ -382,7 +382,7 @@ export interface BrandLogo {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * The row of big numbers under the logo strip on the home page — the same figures also appear on About Roomchang, Our Facilities and Clinical Results.
+ * Website statistics. Each record lists the pages where it appears.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-stats".
@@ -396,6 +396,7 @@ export interface SiteStat {
   sourceId?: string | null;
   key: string;
   displayValue?: string | null;
+  originalDisplayValue?: string | null;
   numericValue?: number | null;
   suffix?: string | null;
   label?: string | null;
@@ -3812,6 +3813,7 @@ export interface SiteStatsSelect<T extends boolean = true> {
   sourceId?: T;
   key?: T;
   displayValue?: T;
+  originalDisplayValue?: T;
   numericValue?: T;
   suffix?: T;
   label?: T;
