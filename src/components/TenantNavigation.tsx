@@ -19,7 +19,7 @@ export const TenantNavigation = ({ groups, identity, footer }: {
   const { navOpen, navRef, hydrated, shouldAnimate, setNavOpen } = useNav()
   const isActive = (href: string) => isNavigationItemActive(pathname, href)
   return (
-    <aside className={`nav cms-tenant-nav${navOpen ? ' nav--nav-open' : ''}${hydrated ? ' nav--nav-hydrated' : ''}${shouldAnimate ? ' nav--nav-animate' : ''}`} inert={!navOpen || undefined}>
+    <aside id="cms-tenant-navigation" className={`nav cms-tenant-nav${navOpen ? ' nav--nav-open' : ''}${hydrated ? ' nav--nav-hydrated' : ''}${shouldAnimate ? ' nav--nav-animate' : ''}`} inert={!navOpen || undefined}>
       <button className="cms-nav-dismiss" type="button" onClick={() => setNavOpen(false)} aria-label="Close navigation" title="Close navigation"><XIcon /></button>
       <div className="nav__scroll" ref={navRef}>
         <nav className="nav__wrap" aria-label="Website content">

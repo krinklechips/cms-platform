@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { getPayload } from 'payload'
+import { createLocalReq, getPayload } from 'payload'
+import { handleStaleDataCheck } from '../node_modules/@payloadcms/ui/dist/utilities/handleStaleDataCheck.js'
 import config from '../src/payload.config'
 import { CONTENT_COLLECTION_SLUGS } from '../src/lib/content-collections'
 import { gatherActivity } from '../src/lib/site-activity'
@@ -63,13 +64,21 @@ try {
   assert.ok(pending.unpublished.some((doc) => doc.collection === 'pages' && doc.id === page.id), 'Previously published page with a saved draft must appear in queue')
   assert.equal(pending.unpublishedTotal, 1)
 
+  // Characterize the native guard: our current draft is fresh, an older tab is not.
+  const latestDraft = await payload.findByID({ collection: 'pages', id: page.id, draft: true, overrideAccess: false, user })
+  const req = await createLocalReq({ user }, payload)
+  const fresh = await handleStaleDataCheck({ id: page.id, collectionSlug: 'pages', originalUpdatedAt: latestDraft.updatedAt, req })
+  assert.equal(fresh.isStale, false, 'The latest saved draft must not be mistaken for another edit')
+  const olderTab = await handleStaleDataCheck({ id: page.id, collectionSlug: 'pages', originalUpdatedAt: page.updatedAt, req })
+  assert.equal(olderTab.isStale, true, 'An editor holding an older version must still be protected')
+
   await payload.update({ collection: 'pages', id: page.id, data: { title: page.title, _status: 'published' }, overrideAccess: false, user })
   const published = await gatherActivity(payload, tenant.id, user)
   assert.equal(published.unpublishedTotal, 0, 'Publishing must clear the latest draft from the queue')
 
   // Leave one pending change for the local browser walkthrough.
   await payload.update({ collection: 'pages', id: page.id, draft: true, data: { title: 'Patient information - updated' }, overrideAccess: false, user })
-  console.log('PASS: editor draft/save/publish queue round-trip in isolated SQLite database')
+  console.log('PASS: editor draft/save/publish queue and stale-tab protection in isolated SQLite database')
   console.log(`Local editor: /admin/collections/pages/${page.id}`)
 } finally {
   await payload.destroy()

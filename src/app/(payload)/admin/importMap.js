@@ -7,6 +7,7 @@ import { HomepageSingleRedirect as HomepageSingleRedirect_b28ab2a24502ab10356630
 import { ImageCell as ImageCell_686f17e722b2f5209effbf3003fe9a1e } from '../../../components/ImageCell'
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { PlatformNav as PlatformNav_d93cd8bf9ab6123ede6430df10ac9859 } from '../../../components/PlatformNav'
+import { SidebarControl as SidebarControl_6c1b9eb2d35079715d8e96016057ce39 } from '../../../components/SidebarControl'
 import { AdminIcon as AdminIcon_185d6ccbdba3821d35293b1570e8d361 } from '../../../components/AdminBrand'
 import { AdminLogo as AdminLogo_185d6ccbdba3821d35293b1570e8d361 } from '../../../components/AdminBrand'
 import { PlatformBackLink as PlatformBackLink_bbc30f84f987b4f69605dc932bf9e1ee } from '../../../components/PlatformBackLink'
@@ -28,6 +29,7 @@ export const importMap = {
   "/components/ImageCell#ImageCell": ImageCell_686f17e722b2f5209effbf3003fe9a1e,
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/PlatformNav#PlatformNav": PlatformNav_d93cd8bf9ab6123ede6430df10ac9859,
+  "/components/SidebarControl#SidebarControl": SidebarControl_6c1b9eb2d35079715d8e96016057ce39,
   "/components/AdminBrand#AdminIcon": AdminIcon_185d6ccbdba3821d35293b1570e8d361,
   "/components/AdminBrand#AdminLogo": AdminLogo_185d6ccbdba3821d35293b1570e8d361,
   "/components/PlatformBackLink#PlatformBackLink": PlatformBackLink_bbc30f84f987b4f69605dc932bf9e1ee,

@@ -65,6 +65,16 @@ const dirname = path.dirname(filename)
  * installed) and set DATABASE_URL in .env.
  */
 export default buildConfig({
+  i18n: {
+    translations: {
+      en: {
+        general: {
+          documentModified: 'A newer saved version is available',
+          documentOutOfDate: 'This page was saved in another tab or by another editor. Reloading opens the latest saved version and discards unsaved changes in this tab.',
+        },
+      },
+    },
+  },
   admin: {
     user: Users.slug,
     importMap: {
@@ -77,6 +87,7 @@ export default buildConfig({
     // the logo URL as a prop if we want the login screen branded per tenant.
     //
     components: {
+      header: ['/components/SidebarControl#SidebarControl'],
       // Full Dashboard override (not beforeDashboard): super-admins see ONLY
       // the Serviette HQ cockpit; tenant users get Payload's DefaultDashboard.
       // Removes the confusing "cockpit + default collection cards" stack.
