@@ -1,6 +1,9 @@
 import { getPayload } from 'payload'
 import { sql } from '@payloadcms/db-postgres'
 import config from '../src/payload.config'
+import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
+
+assertLegacyContentWritesAllowed('seed-initial-versions.ts')
 
 /**
  * One-time after enabling drafts: Payload serves draft-mode reads (draft=true,

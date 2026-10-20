@@ -2,10 +2,14 @@
  * Functional battery — every editor flow through the REAL access stack (Local
  * API, overrideAccess:false, impersonating the editor account). Hard assertions,
  * self-cleaning. Local API has no tenant cookie, so creates pass tenant:1
- * explicitly (the admin assigns it from the login). Run: DATABASE_URI="$DATABASE_URI_PROD" npx tsx scripts/functional-battery.ts
+ * explicitly (the admin assigns it from the login). Retired on shared databases:
+ * use verify-publishing-ux.ts for an isolated, self-contained fixture instead.
  */
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
+import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
+
+assertLegacyContentWritesAllowed('functional-battery.ts')
 
 const results: { test: string; ok: boolean; note: string }[] = []
 const record = (test: string, ok: boolean, note = '') => { results.push({ test, ok, note }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${test}${note ? ' — ' + note : ''}`) }

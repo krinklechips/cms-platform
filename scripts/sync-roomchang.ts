@@ -16,6 +16,9 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { createClient } from '@supabase/supabase-js'
 import { getPayload } from 'payload'
+import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
+
+assertLegacyContentWritesAllowed('sync-roomchang.ts')
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 // Load env BEFORE importing payload.config (which reads PAYLOAD_SECRET at

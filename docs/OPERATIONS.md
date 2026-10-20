@@ -6,9 +6,8 @@ absence broke something once.
 ## Architecture (one-way, by design)
 
 ```
-LIVE SITE (roomchang.com ← clinic Supabase, source of truth)
-   │  one-way manual sync (scripts/sync-roomchang.ts — CLOBBERS CMS edits)
-   ▼
+LIVE SITE (roomchang.com ← clinic Supabase, current public content)
+   X  legacy live→CMS imports blocked once staff editing has begun
 CMS (this app, Render: serviettelab.com + <tenant>.serviettelab.com, own Supabase DB)
    │  REST API, anonymous reads TENANT-HOST ONLY (published, tenant-scoped)
    ▼
@@ -18,6 +17,9 @@ SANDBOX / UAT (roomchang-sandbox.vercel.app, CONTENT_SOURCE=payload)
 - **Nothing the CMS does can touch the live site.** There is no CMS→live path
   until an explicit cutover is built. Never point the live Vercel project at
   `CONTENT_SOURCE=payload`.
+- **The CMS owns staff editorial work.** The separate live-site database is
+  not a safe source for replacing CMS records after Borin starts editing.
+  Database separation alone does not prevent an import from overwriting edits.
 - Anonymous API access: a host that maps to **no tenant** (serviettelab.com
   included) is **denied** in production. Consumers must call their tenant
   host. Local dev (`localhost`) keeps published-only reads.
@@ -73,26 +75,34 @@ Users: a non-super-admin **must** belong to a tenant — saving one without a
 membership is refused (an account with no tenant sees "Nothing found"
 everywhere; enforced after the Borin lockout).
 
-## Reconciling content from live (before any cutover)
+## Protecting staff edits (since 2026-10-20)
 
-The sync is one-way (live → CMS) and idempotent, but it never deletes and it
-predates some collections' translation keys. The full pass, in order:
+Legacy bulk writes are retired on shared databases. The guard runs before
+Payload opens the destination database. `--apply` and `--force` do not bypass it.
+Protected commands:
 
-1. `npx tsx scripts/sync-roomchang.ts` (READS live, WRITES CMS; ~25 min —
-   every doc publishes in three locales and gets version rows).
-2. `npx tsx scripts/reconcile-live.ts` (dry run) → review → `--apply`:
-   prunes CMS docs whose live row is gone, refreshes drifted prices.
-3. `npx tsx scripts/convert-sections-to-blocks.ts --force` — rebuild the
-   section blocks from the refreshed JSON. Only safe while no editor has
-   hand-edited blocks in the CMS; otherwise reconcile per document.
-4. `npx tsx scripts/align-feature-cards-locales.ts` — the home highlight
-   cards' Khmer/Chinese come from the live DB (`content_translations`,
-   entity `homepage_feature_card`, keyed by SLUG), not from messages/*.json.
-5. `npx tsx scripts/align-homepage-locales.ts` — hero pill + buttons from
-   messages/{km,zh}.json (that IS what live renders for those).
-6. Re-run the parity audit (scratch script: crawl sitemap EN + kh/cn twins,
-   diff `<main>` text). Target: identical everywhere except the deliberate
-   `HIDDEN_FROM_GRID` services.
+- `sync-roomchang.ts`, `seed-homepage.ts`, `reconcile-live.ts --apply`
+- `convert-sections-to-blocks.ts`, `align-feature-cards-locales.ts`,
+  `align-homepage-locales.ts`, `copy-doctor-names.ts`, `restore-doctor-names-en.ts`
+- `seed-initial-versions.ts`, `verify-editor-access.ts`, `functional-battery.ts`
+
+`npx tsx scripts/reconcile-live.ts` remains available as a read-only dry run.
+Review differences per document with the content owner; do not replace the CMS
+from the older live-site snapshot. Any migration/cutover that changes content
+needs a reviewed plan, a verified backup and the content owner's approval.
+
+For deliberately disposable local SQLite fixtures only, a legacy command can
+be unlocked explicitly (never use a shared or valuable file):
+
+```sh
+DATABASE_URI=file:./disposable-import.db NODE_ENV=development \
+  npx tsx scripts/convert-sections-to-blocks.ts --allow-local-content-overwrite
+```
+
+The override requires an explicit `file:` destination and a non-production
+environment. It cannot unlock PostgreSQL or remote libSQL destinations. This
+CLI policy does not protect against arbitrary SQL, older checkouts or new
+unguarded scripts; normal access controls and migration review still apply.
 
 Making a field localized on an existing collection: the generated migration
 DROPS the old column before adding the locales column — hand-insert
@@ -103,11 +113,19 @@ applying the migration: between the two, the API for that collection is down.
 
 ## Verifying after a deploy
 
-- **Functional battery** (the standard check — every editor flow through the
-  real access stack, self-cleaning):
-  `DATABASE_URI="$DATABASE_URI_PROD" npx tsx scripts/functional-battery.ts`
-  Local API has no tenant cookie, so the script passes `tenant: 1` on creates;
-  the admin assigns it from the login. Expect all PASS.
+- Run the regression tests and isolated, self-cleaning editorial fixtures:
+
+  ```sh
+  npx tsx --test tests/*.test.ts
+  DATABASE_URI=file:./content-protection-demo.db PAYLOAD_SECRET=local-test-only \
+    npx tsx scripts/verify-content-protection.ts
+  DATABASE_URI=file:./publishing-ux-demo.db PAYLOAD_SECRET=local-test-only \
+    npx tsx scripts/verify-publishing-ux.ts
+  ```
+
+  Each fixture refuses other database destinations. Do not use the retired
+  production smoke-test commands: their updates to existing records can
+  replace a saved draft even if they subsequently restore the published title.
 
 - `https://<tenant>.serviettelab.com/admin/login` → 200/307, tenant-branded.
 - Anonymous isolation: tenant host `/api/services?limit=1` returns docs;
@@ -125,6 +143,11 @@ applying the migration: between the two, the API for that collection is down.
   updates the parent (`_status = published`). Never-published docs have
   `_status = draft` and are filtered out for anonymous readers in
   `module-gating` — Payload does not do this by itself.
+- Each document retains **up to 100 revisions**, including draft and published
+  saves. Editors can inspect and restore them through Versions. This is bounded
+  history, not an independent backup; raising the cap cannot recover revisions
+  already pruned under the old limit of 20. Database and media backup/restore
+  must be verified separately before a production cutover.
 - The legacy `published` checkbox is hidden, not dropped; its values were
   backfilled into `_status`. Backfill lesson: the migration adds `_status`
   with **DEFAULT 'draft'** — backfill ALL rows, never `WHERE _status IS NULL`.
@@ -135,15 +158,14 @@ applying the migration: between the two, the API for that collection is down.
   `PREVIEW_SECRET` on Render = `PAYLOAD_PREVIEW_SECRET` on the sandbox;
   `PAYLOAD_PREVIEW_API_KEY` on the sandbox. Rotate the key with
   `scripts/create-preview-user.ts` (prints once), then update the Vercel env.
-- After enabling drafts on an existing collection, run
-  `scripts/seed-initial-versions.ts` once: draft-mode reads come from the
-  versions tables and documents without a version simply vanish from preview.
+- Draft-mode reads come from the versions tables. Historical initial-version
+  seeding is now guarded; enabling drafts on another collection requires a
+  reviewed migration that preserves existing drafts and published content.
 - API keys are hashed with `PAYLOAD_SECRET`. A key issued from a machine whose
   `.env` secret differs from Render's never authenticates — issue keys with
   `PAYLOAD_SECRET` set to the production value.
-- Smoke-test the whole flow without a password:
-  `DATABASE_URI="$DATABASE_URI_PROD" npx tsx scripts/verify-editor-access.ts`
-  (impersonates the editor through the real access stack).
+- Test draft/save/publish/restore with the isolated fixtures above, not by
+  impersonating an editor and writing to their existing documents.
 
 ## Known deliberate limits (v1)
 

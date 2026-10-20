@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
+import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
+
+assertLegacyContentWritesAllowed('align-feature-cards-locales.ts')
 
 /**
  * The live home highlight cards take their Khmer/Chinese text from the live

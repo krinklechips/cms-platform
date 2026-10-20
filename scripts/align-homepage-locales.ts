@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
+import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
+
+assertLegacyContentWritesAllowed('align-homepage-locales.ts')
 
 /**
  * The live site's hero copy in Khmer/Chinese comes from messages/{km,zh}.json;

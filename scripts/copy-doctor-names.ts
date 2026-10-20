@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
+import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
+
+assertLegacyContentWritesAllowed('copy-doctor-names.ts')
 
 /** Copy localized doctor names (live content_translations) into CMS doctors — READS live, WRITES CMS. */
 async function main() {

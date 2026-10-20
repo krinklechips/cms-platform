@@ -3,6 +3,9 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { createClient } from '@supabase/supabase-js'
 import { getPayload } from 'payload'
+import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
+
+assertLegacyContentWritesAllowed('seed-homepage.ts')
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.resolve(dirname, '../.env') })

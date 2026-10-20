@@ -29,7 +29,7 @@ export const withDrafts = (config: CollectionConfig): CollectionConfig => {
   if (columns.length > 0 && !columns.includes('_status')) columns.push('_status')
   return {
     ...config,
-    versions: { drafts: true, maxPerDoc: 20 },
+    versions: { drafts: true, maxPerDoc: 100 },
     admin: {
       ...config.admin,
       hideAPIURL: config.admin?.hideAPIURL ?? true,

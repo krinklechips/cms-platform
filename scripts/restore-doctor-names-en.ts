@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
+import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
+
+assertLegacyContentWritesAllowed('restore-doctor-names-en.ts')
 async function main() {
   const live = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
   const payload = await getPayload({ config })

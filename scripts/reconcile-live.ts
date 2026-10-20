@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
+import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
 
 /**
  * Reconciliation the one-way sync cannot do on its own (READS live, WRITES CMS):
@@ -9,6 +10,7 @@ import config from '../src/payload.config'
  * Dry-run by default; pass --apply to execute.
  */
 const APPLY = process.argv.includes('--apply')
+if (APPLY) assertLegacyContentWritesAllowed('reconcile-live.ts --apply')
 type Row = Record<string, unknown> & { id: number | string }
 
 const PRUNE: { collection: string; table: string }[] = [
