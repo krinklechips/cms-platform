@@ -28,7 +28,7 @@
 ## Tasks
 
 - [x] 1. Preservation: write failing real-Payload tests for array identity and locale restore; implement minimal fixes; package version-pinned patches; run all CMS tests and TypeScript checks; commit.
-- [ ] 2. Mapping/schema: add stable clinical category keys and localize visitor-copy omissions with additive, version-preserving migrations; use a disposable PostgreSQL fixture to prove preservation; commit.
+- [x] 2. Mapping/schema: add stable clinical category keys and localize visitor-copy omissions with additive, version-preserving migrations; use a disposable PostgreSQL fixture to prove preservation; commit.
 - [ ] 3. Website reads: make category filters use keys, wire branches/timeline to Payload in sandbox mode, prefer localized CMS stat labels consistently; add behavioral tests; commit only scoped website files.
 - [ ] 4. Safe live import: compare live data, existing CMS values, history and drafts; produce a guarded field-level manifest; apply only proven-safe changes, preserving conflicts; verify all existing work and history.
 - [ ] 5. Verify and deploy: focused and full tests, builds, independent review; push CMS main and website cms-sandbox only; verify hosted deployments.
@@ -43,3 +43,4 @@
 - Task 2 local verification complete: 63 schema/key tests, real SQLite and PostgreSQL locale/draft/history writes across all 12 affected collections. Independent review found no actionable migration defects.
 - Full hosted-schema backup restored locally: all 490 tables / 57,314 rows match by hash. Applying the new migration to a separate clone preserves every original column/row, adds 300 EN-only recovery rows, and maps all 11 clinical cases. Hosted database is still unchanged.
 - Live refresh comparison: 148 missing FAQ/career scalar translations are candidates; another 70 FAQ category cells require the new schema and a fresh blank-history check. Nonblank differences and all pre-existing drafts stay protected; no blanket sync is permitted.
+- CMS production build passed after schema/type generation. Website production build passed with its existing environment (257 pages); focused language tests pass. Website review is addressing four follow-ups: publication-page provider bypass, shared numeric stat fallback, authoritative branch slug matching, and timeline live-preview row observation.

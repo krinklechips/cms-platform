@@ -15,6 +15,7 @@ import * as migration_20260818_180149_ux_department_enum_media_picks from './202
 import * as migration_20260909_163449_drafts_versions_and_api_keys from './20260909_163449_drafts_versions_and_api_keys';
 import * as migration_20260914_043717_doctors_name_localized from './20260914_043717_doctors_name_localized';
 import * as migration_20261020_095018_stat_values_localized from './20261020_095018_stat_values_localized';
+import * as migration_20261020_105541_cms_localized_field_coverage from './20261020_105541_cms_localized_field_coverage';
 
 export const migrations = [
   {
@@ -101,5 +102,10 @@ export const migrations = [
     up: migration_20261020_095018_stat_values_localized.up,
     down: migration_20261020_095018_stat_values_localized.down,
     name: '20261020_095018_stat_values_localized',
+  },
+  {
+    up: migration_20261020_105541_cms_localized_field_coverage.up,
+    down: migration_20261020_105541_cms_localized_field_coverage.down,
+    name: '20261020_105541_cms_localized_field_coverage'
   },
 ];

@@ -55,6 +55,7 @@ export const CommunityArticles: CollectionConfig = {
     {
       name: 'imageAlt',
       type: 'text',
+      localized: true,
     },
     {
       name: 'href',

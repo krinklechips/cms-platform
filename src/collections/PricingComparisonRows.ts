@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 /**
  * PricingComparisonRows — mirrors the live site's `pricing_comparison_rows` table (Supabase).
- * Nothing is localized in the source table.
+ * Treatment labels are localized; prices and source identifiers remain shared.
  */
 export const PricingComparisonRows: CollectionConfig = {
   slug: 'pricing-comparison-rows',
@@ -45,6 +45,7 @@ export const PricingComparisonRows: CollectionConfig = {
       name: 'treatment',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'roomchangPrice',

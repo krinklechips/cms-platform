@@ -30,6 +30,11 @@ export const Publications: CollectionConfig = {
       required: true,
     },
     {
+      name: 'displayTitle',
+      type: 'text',
+      localized: true,
+    },
+    {
       name: 'authors',
       type: 'text',
     },
@@ -53,6 +58,7 @@ export const Publications: CollectionConfig = {
     {
       name: 'abstract',
       type: 'textarea',
+      localized: true,
     },
     {
       name: 'order',

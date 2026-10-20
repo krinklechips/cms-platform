@@ -45,6 +45,16 @@ export const Branches: CollectionConfig = {
       admin: { position: 'sidebar' },
     },
     {
+      name: 'displayName',
+      type: 'text',
+      localized: true,
+    },
+    {
+      name: 'shortDisplayName',
+      type: 'text',
+      localized: true,
+    },
+    {
       name: 'badge',
       type: 'text',
       localized: true,

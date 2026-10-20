@@ -59,11 +59,13 @@ export const Videos: CollectionConfig = {
     {
       name: 'topic',
       type: 'text',
+      localized: true,
       admin: { position: 'sidebar' },
     },
     {
       name: 'treatment',
       type: 'text',
+      localized: true,
       admin: { position: 'sidebar' },
     },
     {

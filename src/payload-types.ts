@@ -3107,6 +3107,8 @@ export interface Branch {
    */
   slug?: string | null;
   shortName?: string | null;
+  displayName?: string | null;
+  shortDisplayName?: string | null;
   badge?: string | null;
   description?: string | null;
   address?: string | null;
@@ -3154,6 +3156,9 @@ export interface ClinicalCase {
   sourceId?: string | null;
   title: string;
   slug: string;
+  categoryKey?:
+    | ('full-mouth-reconstruction' | 'implants-and-crowns' | 'implant-bridges' | 'orthodontics' | 'cosmetic-and-emax')
+    | null;
   category?: string | null;
   treatment?: string | null;
   duration?: string | null;
@@ -3338,6 +3343,7 @@ export interface Publication {
    */
   sourceId?: string | null;
   title: string;
+  displayTitle?: string | null;
   authors?: string | null;
   journal?: string | null;
   year?: number | null;
@@ -5733,6 +5739,8 @@ export interface BranchesSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   shortName?: T;
+  displayName?: T;
+  shortDisplayName?: T;
   badge?: T;
   description?: T;
   address?: T;
@@ -5760,6 +5768,7 @@ export interface ClinicalCasesSelect<T extends boolean = true> {
   sourceId?: T;
   title?: T;
   slug?: T;
+  categoryKey?: T;
   category?: T;
   treatment?: T;
   duration?: T;
@@ -5885,6 +5894,7 @@ export interface PublicationsSelect<T extends boolean = true> {
   tenant?: T;
   sourceId?: T;
   title?: T;
+  displayTitle?: T;
   authors?: T;
   journal?: T;
   year?: T;

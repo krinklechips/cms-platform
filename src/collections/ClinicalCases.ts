@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { clinicalCategoryOptions } from '../lib/clinical-category-keys'
 
 /**
  * ClinicalCases — mirrors the live site's `clinical_cases` table (Supabase).
@@ -36,6 +37,13 @@ export const ClinicalCases: CollectionConfig = {
       type: 'text',
       required: true,
       index: true,
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'categoryKey',
+      label: 'Case category (all languages)',
+      type: 'select',
+      options: clinicalCategoryOptions,
       admin: { position: 'sidebar' },
     },
     {

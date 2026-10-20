@@ -58,6 +58,7 @@ export const TimelineEvents: CollectionConfig = {
     {
       name: 'imageAlt',
       type: 'text',
+      localized: true,
     },
     {
       name: 'imagePosition',

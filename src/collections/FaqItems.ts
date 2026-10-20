@@ -39,6 +39,7 @@ export const FaqItems: CollectionConfig = {
     {
       name: 'category',
       type: 'text',
+      localized: true,
       admin: { position: 'sidebar' },
     },
     {

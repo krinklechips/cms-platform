@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 /**
  * PartnerCategories — mirrors the live site's `partner_categories` table (Supabase).
- * Nothing is localized in the source table.
+ * Category display names are localized; source identity remains shared.
  */
 export const PartnerCategories: CollectionConfig = {
   slug: 'partner-categories',
@@ -29,6 +29,7 @@ export const PartnerCategories: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'order',

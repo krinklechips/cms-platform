@@ -28,6 +28,7 @@ export const InternationalSteps: CollectionConfig = {
     {
       name: 'stepLabel',
       type: 'text',
+      localized: true,
       admin: { position: 'sidebar' },
     },
     {

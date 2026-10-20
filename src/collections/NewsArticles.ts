@@ -59,6 +59,7 @@ export const NewsArticles: CollectionConfig = {
     {
       name: 'imageAlt',
       type: 'text',
+      localized: true,
     },
     {
       name: 'body',

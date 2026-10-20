@@ -42,16 +42,19 @@ export const CareerPositions: CollectionConfig = {
     {
       name: 'department',
       type: 'text',
+      localized: true,
       admin: { position: 'sidebar' },
     },
     {
       name: 'type',
       type: 'text',
+      localized: true,
       admin: { position: 'sidebar' },
     },
     {
       name: 'location',
       type: 'text',
+      localized: true,
       admin: { position: 'sidebar' },
     },
     {

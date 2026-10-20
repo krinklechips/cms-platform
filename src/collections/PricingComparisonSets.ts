@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 /**
  * PricingComparisonSets — mirrors the live site's `pricing_comparison_sets` table (Supabase).
- * Nothing is localized in the source table.
+ * Source notes are localized; comparison keys and rates remain shared.
  */
 export const PricingComparisonSets: CollectionConfig = {
   slug: 'pricing-comparison-sets',
@@ -40,6 +40,7 @@ export const PricingComparisonSets: CollectionConfig = {
     {
       name: 'sourceNote',
       type: 'text',
+      localized: true,
     },
     {
       name: 'lastUpdated',
