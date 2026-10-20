@@ -64,7 +64,7 @@ export const AdminLogo: React.FC = () => {
           style={{
             fontSize: 20,
             fontWeight: 650,
-            letterSpacing: 0.2,
+            letterSpacing: 0,
             color: 'var(--theme-text)',
             textAlign: 'center',
           }}
@@ -88,13 +88,18 @@ export const AdminLogo: React.FC = () => {
 /** Nav header / small icon slot */
 export const AdminIcon: React.FC = () => {
   const brand = useBrand()
-  if (!brand) return <div style={{ height: 30, width: 30 }} aria-hidden="true" />
+  if (!brand) return <span style={{ height: 18, width: 18 }} aria-hidden="true" />
   // eslint-disable-next-line @next/next/no-img-element
   return (
     <img
       src={brand.markSrc ?? brand.wordmarkSrc}
       alt={brand.name}
-      style={{ height: 30, maxWidth: 120, objectFit: 'contain' }}
+      width={18}
+      height={18}
+      style={{
+        display: 'block', width: '100%', height: '100%',
+        objectFit: brand.markSrc ? 'contain' : 'cover', objectPosition: 'left',
+      }}
     />
   )
 }

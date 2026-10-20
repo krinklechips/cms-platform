@@ -33,7 +33,7 @@ export const Pages: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'published', 'updatedAt'],
     description:
-      'Extra website pages. Give it a title, build it from sections, tick Published — it goes live at the web address shown.',
+      'Custom website pages and their saved drafts.',
   },
   access: {
     read: () => true, // withModuleGating narrows anon to published + host tenant
@@ -79,18 +79,6 @@ export const Pages: CollectionConfig = {
       admin: { description: 'The page heading. The web address is created from this automatically.' },
     },
     {
-      name: 'slug',
-      type: 'text',
-      label: 'Web address',
-      index: true,
-      admin: {
-        readOnly: true,
-        position: 'sidebar',
-        description:
-          'Created automatically from the title, e.g. “Smile Makeover” → roomchang.com/en/smile-makeover. Stays the same even if the title changes.',
-      },
-    },
-    {
       name: 'published',
       type: 'checkbox',
       defaultValue: false,
@@ -119,6 +107,16 @@ export const Pages: CollectionConfig = {
           label: 'Search & sharing (SEO)',
           description: 'Optional — how this page appears on Google and when shared.',
           fields: [
+            {
+              name: 'slug',
+              type: 'text',
+              label: 'Web address',
+              index: true,
+              admin: {
+                readOnly: true,
+                description: 'Created automatically from the title. Stays the same even if the title changes.',
+              },
+            },
             {
               name: 'seoTitle',
               type: 'text',

@@ -1,14 +1,11 @@
 import React from 'react'
 import { headers as nextHeaders } from 'next/headers'
-import type { CollectionSlug, Payload } from 'payload'
+import type { Payload, TypedUser } from 'payload'
 import { PlatformDashboard } from './PlatformDashboard'
 import {
   SiteActivityDashboard,
-  type RecentDoc,
-  type UnpublishedDoc,
 } from './SiteActivityDashboard'
-import { SITE_PAGES } from '@/lib/site-pages'
-import { COLLECTION_LABELS } from '@/lib/collection-labels'
+import { gatherActivity } from '@/lib/site-activity'
 import { getTenantByHost, type TenantBranding } from '@/lib/get-tenant-by-host'
 
 /**
@@ -28,125 +25,21 @@ import { getTenantByHost, type TenantBranding } from '@/lib/get-tenant-by-host'
 type ViewProps = {
   initPageResult?: {
     req?: {
-      user?: { roles?: string[] } | null
+      user?: TypedUser | null
       payload?: unknown
     }
   }
   // Payload also spreads serverProps at the TOP level of view overrides (the
   // HomepageSingleRedirect lesson). The cockpit silently vanished because we
   // only read initPageResult — accept both shapes.
-  user?: { roles?: string[] } | null
+  user?: TypedUser | null
   payload?: unknown
 }
 
 /** Public site for the "open the live website" link. */
 const siteUrlFor = (tenant: TenantBranding | null): string | undefined => {
   if (!tenant) return undefined
-  return 'https://www.roomchang.com'
-}
-
-/** Content collections worth surfacing. Enquiries/bookings are an inbox, not
- *  edits, so they stay out of "recent activity". */
-const CONTENT_SLUGS = Array.from(
-  new Set([...SITE_PAGES.flatMap((p) => p.parts.map((pt) => pt.collection)), 'pages']),
-).filter((slug) => slug !== 'enquiries' && slug !== 'booking-slots')
-
-const labelFor = (slug: string): string => COLLECTION_LABELS[slug]?.singular ?? slug
-
-const agoText = (iso: string): string => {
-  const ms = Date.now() - new Date(iso).getTime()
-  const min = Math.floor(ms / 60_000)
-  if (min < 1) return 'just now'
-  if (min < 60) return `${min} min ago`
-  const h = Math.floor(min / 60)
-  if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`
-  const d = Math.floor(h / 24)
-  if (d < 30) return `${d} day${d === 1 ? '' : 's'} ago`
-  return iso.slice(0, 10)
-}
-
-type LooseDoc = { id: string | number; updatedAt?: string } & Record<string, unknown>
-
-const titleOf = (payload: Payload, slug: string, doc: LooseDoc): string => {
-  const useAsTitle = (
-    payload.collections[slug as CollectionSlug]?.config?.admin as { useAsTitle?: string } | undefined
-  )?.useAsTitle
-  const candidate =
-    (useAsTitle ? doc[useAsTitle] : undefined) ?? doc.title ?? doc.name ?? `#${doc.id}`
-  return typeof candidate === 'string' && candidate.trim() !== '' ? candidate : `#${doc.id}`
-}
-
-const hasDrafts = (payload: Payload, slug: string): boolean =>
-  Boolean(
-    (payload.collections[slug as CollectionSlug]?.config as { versions?: { drafts?: unknown } } | undefined)
-      ?.versions?.drafts,
-  )
-
-const gatherActivity = async (
-  payload: Payload,
-  tenantId: number | string,
-): Promise<{ recent: RecentDoc[]; unpublished: UnpublishedDoc[] }> => {
-  const tenantWhere = { tenant: { equals: tenantId } }
-
-  const recentNested = await Promise.all(
-    CONTENT_SLUGS.map(async (slug) => {
-      try {
-        const res = await payload.find({
-          collection: slug as CollectionSlug,
-          where: tenantWhere,
-          sort: '-updatedAt',
-          limit: 2,
-          depth: 0,
-          overrideAccess: true,
-        })
-        return (res.docs as unknown as LooseDoc[]).map((doc) => ({ slug, doc }))
-      } catch {
-        return []
-      }
-    }),
-  )
-  const recent = recentNested
-    .flat()
-    .filter((r) => typeof r.doc.updatedAt === 'string')
-    .sort((a, b) => (b.doc.updatedAt as string).localeCompare(a.doc.updatedAt as string))
-    .slice(0, 6)
-    .map((r) => ({
-      collection: r.slug,
-      id: r.doc.id,
-      title: titleOf(payload, r.slug, r.doc),
-      label: labelFor(r.slug),
-      updatedAt: r.doc.updatedAt as string,
-      agoText: agoText(r.doc.updatedAt as string),
-    }))
-
-  const unpublishedNested = await Promise.all(
-    CONTENT_SLUGS.filter((slug) => hasDrafts(payload, slug)).map(async (slug) => {
-      try {
-        const res = await payload.find({
-          collection: slug as CollectionSlug,
-          where: { and: [tenantWhere, { _status: { equals: 'draft' } }] },
-          sort: '-updatedAt',
-          limit: 3,
-          depth: 0,
-          overrideAccess: true,
-        })
-        return (res.docs as unknown as LooseDoc[]).map((doc) => ({ slug, doc }))
-      } catch {
-        return []
-      }
-    }),
-  )
-  const unpublished = unpublishedNested
-    .flat()
-    .slice(0, 8)
-    .map((r) => ({
-      collection: r.slug,
-      id: r.doc.id,
-      title: titleOf(payload, r.slug, r.doc),
-      label: labelFor(r.slug),
-    }))
-
-  return { recent, unpublished }
+  return tenant.slug === 'roomchang' ? 'https://www.roomchang.com' : undefined
 }
 
 export const PlatformDashboardView: React.FC<ViewProps> = async (props) => {
@@ -162,11 +55,12 @@ export const PlatformDashboardView: React.FC<ViewProps> = async (props) => {
     // Host resolution is best-effort; fall back to the platform view.
   }
 
-  let recent: RecentDoc[] = []
-  let unpublished: UnpublishedDoc[] = []
+  let activity: Awaited<ReturnType<typeof gatherActivity>> = {
+    recent: [], unpublished: [], unpublishedTotal: 0, incomplete: true,
+  }
   if (payload && hostTenant) {
     try {
-      ;({ recent, unpublished } = await gatherActivity(payload as Payload, hostTenant.id))
+      activity = await gatherActivity(payload as Payload, hostTenant.id, user)
     } catch {
       // Best-effort: the board still renders without activity data.
     }
@@ -176,8 +70,8 @@ export const PlatformDashboardView: React.FC<ViewProps> = async (props) => {
     <SiteActivityDashboard
       tenantName={hostTenant.name}
       siteUrl={siteUrlFor(hostTenant)}
-      recent={recent}
-      unpublished={unpublished}
+      previewUrl={process.env.DUMMY_SITE_URL || 'http://localhost:3200'}
+      {...activity}
     />
   ) : null
 
@@ -192,5 +86,5 @@ export const PlatformDashboardView: React.FC<ViewProps> = async (props) => {
   }
 
   // Tenant staff get ONE coherent surface — no duplicated default dashboard.
-  return board ?? <SiteActivityDashboard recent={[]} unpublished={[]} />
+  return board ?? <SiteActivityDashboard previewUrl={process.env.DUMMY_SITE_URL || 'http://localhost:3200'} {...activity} />
 }

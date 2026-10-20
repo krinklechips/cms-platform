@@ -1,7 +1,12 @@
 import React from 'react'
 import { DefaultNav } from '@payloadcms/next/rsc'
+import { EntityType, groupNavItems } from '@payloadcms/ui/shared'
+import { getTranslation } from '@payloadcms/translations'
 import type { Payload } from 'payload'
 import { getTenantByHost, normalizeHost } from '@/lib/get-tenant-by-host'
+import { TenantNavigation, type TenantNavigationGroup } from './TenantNavigation'
+import { TenantNavBanner } from './TenantNavBanner'
+import { PlatformBackLink } from './PlatformBackLink'
 
 /**
  * Custom admin Nav — three cases:
@@ -98,6 +103,23 @@ const LINKS: [string, string][] = [
 
 export const PlatformNav: React.FC<NavServerProps> = async (props) => {
   const isSuperAdmin = Boolean(props.user?.roles?.includes('super-admin'))
+  const tenantNav = (visibleCollections: string[]) => {
+    if (!props.payload || !props.i18n || !props.permissions) return <DefaultNav {...props} />
+    // Use the same visibility AND read-permission filtering as DefaultNav.
+    const groups = groupNavItems([
+      ...props.payload.config.collections.filter((collection) => visibleCollections.includes(collection.slug)).map((entity) => ({ type: EntityType.collection as const, entity })),
+      ...props.payload.config.globals.filter((global) => props.visibleEntities?.globals?.includes(global.slug)).map((entity) => ({ type: EntityType.global as const, entity })),
+    ], props.permissions, props.i18n)
+    const navigation: TenantNavigationGroup[] = groups.map((group) => ({
+      label: group.label,
+      items: group.entities.map((entity) => ({
+        label: getTranslation(entity.label, props.i18n),
+        href: `${props.payload!.config.routes.admin}/${entity.type}/${entity.slug}`,
+        id: `nav-${entity.slug}`,
+      })),
+    }))
+    return <TenantNavigation groups={navigation} identity={<TenantNavBanner payload={props.payload} user={props.user} />} footer={<PlatformBackLink payload={props.payload} user={props.user} />} />
+  }
 
   // Super-admin on a tenant's own domain → give them that tenant's workspace.
   if (isSuperAdmin) {
@@ -130,12 +152,12 @@ export const PlatformNav: React.FC<NavServerProps> = async (props) => {
       // main content area out of view. The "Editing site" banner and the
       // back-to-platform link live in the beforeNavLinks / afterNavLinks slots
       // instead, which render INSIDE the nav.
-      return <DefaultNav {...scopedProps} />
+      return tenantNav(scopedProps.visibleEntities?.collections ?? [])
     }
   }
 
   if (!isSuperAdmin) {
-    return <DefaultNav {...props} />
+    return tenantNav(props.visibleEntities?.collections ?? [])
   }
 
   return (

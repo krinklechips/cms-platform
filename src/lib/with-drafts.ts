@@ -18,7 +18,7 @@ import type { CollectionConfig, Field } from 'payload'
 const hideLegacyPublished = (fields: Field[]): Field[] =>
   fields.map((f) =>
     'name' in f && f.name === 'published' && f.type === 'checkbox'
-      ? { ...f, admin: { ...f.admin, hidden: true } }
+      ? { ...f, admin: { ...f.admin, hidden: true, position: undefined } }
       : f,
   )
 
@@ -30,7 +30,23 @@ export const withDrafts = (config: CollectionConfig): CollectionConfig => {
   return {
     ...config,
     versions: { drafts: true, maxPerDoc: 20 },
-    admin: { ...config.admin, ...(columns.length > 0 ? { defaultColumns: columns } : {}) },
+    admin: {
+      ...config.admin,
+      hideAPIURL: config.admin?.hideAPIURL ?? true,
+      ...(columns.length > 0 ? { defaultColumns: columns } : {}),
+      components: {
+        ...config.admin?.components,
+        edit: {
+          ...config.admin?.components?.edit,
+          beforeDocumentControls: [
+            ...(config.admin?.components?.edit?.beforeDocumentControls ?? []),
+            '/components/PublishingStatus#PublishingStatus',
+          ],
+          PublishButton: config.admin?.components?.edit?.PublishButton ??
+            '/components/PreviewPublishButton#PreviewPublishButton',
+        },
+      },
+    },
     fields: hideLegacyPublished(config.fields),
   }
 }

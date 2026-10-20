@@ -462,7 +462,7 @@ export interface Testimonial {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Extra website pages. Give it a title, build it from sections, tick Published — it goes live at the web address shown.
+ * Custom website pages and their saved drafts.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
@@ -474,10 +474,6 @@ export interface Page {
    * The page heading. The web address is created from this automatically.
    */
   title?: string | null;
-  /**
-   * Created automatically from the title, e.g. “Smile Makeover” → roomchang.com/en/smile-makeover. Stays the same even if the title changes.
-   */
-  slug?: string | null;
   published?: boolean | null;
   /**
    * Build the page top-to-bottom: add, reorder and edit sections.
@@ -1228,6 +1224,10 @@ export interface Page {
           }
       )[]
     | null;
+  /**
+   * Created automatically from the title. Stays the same even if the title changes.
+   */
+  slug?: string | null;
   /**
    * Title shown in Google results (defaults to the page title).
    */
@@ -3866,7 +3866,6 @@ export interface TestimonialsSelect<T extends boolean = true> {
 export interface PagesSelect<T extends boolean = true> {
   tenant?: T;
   title?: T;
-  slug?: T;
   published?: T;
   sections?:
     | T
@@ -4411,6 +4410,7 @@ export interface PagesSelect<T extends boolean = true> {
               blockName?: T;
             };
       };
+  slug?: T;
   seoTitle?: T;
   seoDescription?: T;
   seoImage?: T;

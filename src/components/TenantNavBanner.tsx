@@ -17,31 +17,6 @@ type ServerProps = {
   user?: { roles?: string[]; tenants?: { tenant?: unknown }[] | null } | null
 }
 
-const S: Record<string, React.CSSProperties> = {
-  banner: {
-    margin: '0 0 14px',
-    padding: '10px 12px',
-    borderRadius: 8,
-    background: 'var(--theme-elevation-50)',
-    border: '1px solid var(--theme-elevation-150)',
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: 600,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    color: 'var(--theme-elevation-450)',
-    margin: 0,
-  },
-  name: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: 'var(--theme-text)',
-    margin: '2px 0 0',
-    lineHeight: 1.3,
-  },
-}
-
 /** Tenant name from a user's own membership (for tenant users on any host). */
 const ownTenantName = (user: ServerProps['user']): string | null => {
   const t = user?.tenants?.[0]?.tenant
@@ -54,13 +29,19 @@ const ownTenantName = (user: ServerProps['user']): string | null => {
 
 export const TenantNavBanner: React.FC<ServerProps> = async ({ payload, user }) => {
   let name: string | null = null
+  let logoUrl: string | null = null
+  let isRoomchang = false
 
   try {
     const h = await nextHeaders()
     const host = h.get('x-forwarded-host') ?? h.get('host')
     if (payload) {
       const hostTenant = await getTenantByHost(payload, host)
-      if (hostTenant) name = hostTenant.name
+      if (hostTenant) {
+        name = hostTenant.name
+        logoUrl = hostTenant.logoUrl
+        isRoomchang = hostTenant.slug === 'roomchang'
+      }
     }
   } catch {
     // fall through to the user's own tenant
@@ -71,23 +52,21 @@ export const TenantNavBanner: React.FC<ServerProps> = async ({ payload, user }) 
 
   return (
     <>
-      {/* Safe here (inside the nav, not the layout slot): hide the plugin's
-          "Filter by Tenant" selector on a pinned host. Leaving it visible lets
-          you switch tenants while host scoping still pins the lists to this
-          domain's tenant — banner, sidebar and rows would disagree. The
-          platform host renders no banner, so it keeps its selector.
-
-          Also a sidebar density pass ("make the menu cleaner" — Enoch):
-          group headers become small muted caps so the ITEMS carry the visual
-          weight, and link spacing tightens a notch. */}
-      <style>{`
-        .tenant-selector{display:none!important}
-        .nav-group__toggle{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--theme-elevation-500)}
-        .nav__link{font-size:13px}
-      `}</style>
-      <div style={S.banner}>
-        <p style={S.label}>Editing site</p>
-        <p style={S.name}>{name}</p>
+      <div className="tenant-identity">
+        <a href="/admin" aria-label={`${name} dashboard`}>
+          {logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className={isRoomchang ? 'tenant-identity__wordmark' : 'tenant-identity__logo'} src={logoUrl} alt={isRoomchang ? 'Roomchang Dental Hospital' : name} width={isRoomchang ? 144 : 180} height={isRoomchang ? 75 : 72} />
+          )}
+          <span className={isRoomchang ? 'tenant-identity__dark' : logoUrl ? 'tenant-identity__name' : ''}>
+            {isRoomchang && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src="/roomchang-mark.png" alt="" width={28} height={28} />
+            )}
+            <strong>{isRoomchang ? 'Roomchang' : name}</strong>
+          </span>
+        </a>
+        <span className="tenant-identity__environment" title="CMS publishing updates the preview website, not roomchang.com.">Preview workspace</span>
       </div>
     </>
   )

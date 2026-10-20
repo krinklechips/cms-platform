@@ -1,6 +1,7 @@
 import React from 'react'
 import { Gutter } from '@payloadcms/ui'
 import { UNMODELED_PAGES } from '@/lib/site-pages'
+import type { RecentDoc, UnpublishedDoc } from '@/lib/site-activity'
 
 /**
  * The dashboard, take three — and this time it is NOT navigation.
@@ -17,27 +18,14 @@ import { UNMODELED_PAGES } from '@/lib/site-pages'
  * Navigation lives in the sidebar; explanations live on each list view.
  */
 
-export type RecentDoc = {
-  collection: string
-  id: string | number
-  title: string
-  label: string
-  updatedAt: string
-  agoText: string
-}
-
-export type UnpublishedDoc = {
-  collection: string
-  id: string | number
-  title: string
-  label: string
-}
-
 type Props = {
   tenantName?: string | null
   siteUrl?: string
+  previewUrl: string
   recent: RecentDoc[]
   unpublished: UnpublishedDoc[]
+  unpublishedTotal: number
+  incomplete: boolean
 }
 
 const QUICK_ADD: { collection: string; label: string }[] = [
@@ -57,23 +45,22 @@ const S: Record<string, React.CSSProperties> = {
   subLink: { color: 'var(--theme-text)', textDecoration: 'underline' },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
     gap: 16,
     alignItems: 'start',
   },
   panel: {
     border: '1px solid var(--theme-elevation-150)',
-    borderRadius: 10,
+    borderRadius: 8,
     padding: '14px 16px',
     background: 'var(--theme-elevation-0)',
   },
-  panelTitle: { fontSize: 13, fontWeight: 700, margin: 0, letterSpacing: 0.2 },
+  panelTitle: { fontSize: 14, fontWeight: 700, margin: 0, letterSpacing: 0 },
   list: { listStyle: 'none', padding: 0, margin: '8px 0 0' },
   row: { padding: '8px 0', borderTop: '1px solid var(--theme-elevation-100)' },
   rowLink: { fontSize: 13, fontWeight: 600, color: 'var(--theme-text)', textDecoration: 'none' },
   rowMeta: { fontSize: 11, color: 'var(--theme-elevation-500)', margin: '2px 0 0' },
   empty: { fontSize: 12, color: 'var(--theme-elevation-500)', margin: '10px 0 2px' },
-  allLive: { fontSize: 12, color: 'var(--theme-success-600, #15803d)', margin: '10px 0 2px' },
   addBtn: {
     display: 'block',
     fontSize: 13,
@@ -106,29 +93,37 @@ const docHref = (d: { collection: string; id: string | number }): string =>
 export const SiteActivityDashboard: React.FC<Props> = ({
   tenantName,
   siteUrl,
+  previewUrl,
   recent,
   unpublished,
+  unpublishedTotal,
+  incomplete,
 }) => (
   <Gutter>
     <div style={S.wrap}>
     <h2 style={S.h2}>{tenantName ?? 'Your website'}</h2>
-    <p style={S.sub}>
-      Pages and sections are in the menu on the left — each one explains itself when opened.
+    <div className="publishing-destination">
+      <div>
+        <strong>Publishing: Preview only</strong>
+        <p>Public website: not connected to CMS publishing</p>
+      </div>
+      <a style={S.subLink} href={previewUrl} target="_blank" rel="noreferrer">View preview website</a>
       {siteUrl && (
         <>
           {' '}
           <a style={S.subLink} href={siteUrl} target="_blank" rel="noreferrer">
-            Open the live website ↗
+            View public website
           </a>
         </>
       )}
-    </p>
+    </div>
+    {incomplete && <p role="alert" className="publishing-error">Activity could not be fully loaded. Publishing status is not verified. <a href="/admin">Retry</a></p>}
 
     <div style={S.grid}>
       <section style={S.panel}>
-        <h3 style={S.panelTitle}>Pick up where you left off</h3>
+        <h3 style={S.panelTitle}>Recent edits</h3>
         {recent.length === 0 ? (
-          <p style={S.empty}>Nothing edited yet — changes will show up here.</p>
+          <p style={S.empty}>{incomplete ? 'Recent edits unavailable.' : 'No recent edits.'}</p>
         ) : (
           <ul style={S.list}>
             {recent.map((d) => (
@@ -146,9 +141,9 @@ export const SiteActivityDashboard: React.FC<Props> = ({
       </section>
 
       <section style={S.panel}>
-        <h3 style={S.panelTitle}>Not on the website yet</h3>
+        <h3 style={S.panelTitle}>Saved drafts{!incomplete && ` (${unpublishedTotal})`}</h3>
         {unpublished.length === 0 ? (
-          <p style={S.allLive}>Everything is published and live.</p>
+          <p style={S.empty}>{incomplete ? 'Draft status unavailable.' : 'No saved drafts waiting to publish.'}</p>
         ) : (
           <ul style={S.list}>
             {unpublished.map((d) => (
@@ -156,11 +151,12 @@ export const SiteActivityDashboard: React.FC<Props> = ({
                 <a style={S.rowLink} href={docHref(d)}>
                   {d.title} →
                 </a>
-                <p style={S.rowMeta}>{d.label} — open it and press Publish to put it live</p>
+                <p style={S.rowMeta}>{d.label} · Draft saved</p>
               </li>
             ))}
           </ul>
         )}
+        {unpublishedTotal > unpublished.length && <p style={S.empty}>Showing the {unpublished.length} most recent drafts.</p>}
       </section>
 
       <section style={S.panel}>
@@ -174,12 +170,8 @@ export const SiteActivityDashboard: React.FC<Props> = ({
     </div>
 
     {UNMODELED_PAGES.length > 0 && (
-      <div style={S.gapWrap}>
-        <h3 style={S.gapTitle}>Not editable in the CMS yet</h3>
-        <p style={S.gapNote}>
-          These parts of the website still live in the site code or the clinic database — listed so
-          you are not hunting for a screen that does not exist.
-        </p>
+      <details style={S.gapWrap}>
+        <summary style={S.gapTitle}>Not yet editable ({UNMODELED_PAGES.length} website sections)</summary>
         <ul style={S.gapList}>
           {UNMODELED_PAGES.map((u) => (
             <li key={u.path} style={S.gapItem} title={`${u.whatsThere} — currently: ${u.source}`}>
@@ -187,7 +179,7 @@ export const SiteActivityDashboard: React.FC<Props> = ({
             </li>
           ))}
         </ul>
-      </div>
+      </details>
     )}
     </div>
   </Gutter>
