@@ -10,6 +10,7 @@ import { StatUsage as StatUsage_e76f63958c0e6f6da6b1741c5e710bba } from '../../.
 import { StatNameCell as StatNameCell_e76f63958c0e6f6da6b1741c5e710bba } from '../../../components/StatUsage'
 import { SectionImageUrlPreview as SectionImageUrlPreview_7462301dd20d90072f654d047389192b } from '../../../components/ImageUrlPreview'
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
+import { AuditChanges as AuditChanges_7e9623af6577f0c39e521fa072d3a2d3 } from '../../../components/AuditChanges'
 import { PlatformNav as PlatformNav_d93cd8bf9ab6123ede6430df10ac9859 } from '../../../components/PlatformNav'
 import { SidebarControl as SidebarControl_6c1b9eb2d35079715d8e96016057ce39 } from '../../../components/SidebarControl'
 import { CmsContentTypography as CmsContentTypography_bae71cde7ba653b314d0652b644d3b75 } from '../../../components/CmsContentTypography'
@@ -37,6 +38,7 @@ export const importMap = {
   "/components/StatUsage#StatNameCell": StatNameCell_e76f63958c0e6f6da6b1741c5e710bba,
   "/components/ImageUrlPreview#SectionImageUrlPreview": SectionImageUrlPreview_7462301dd20d90072f654d047389192b,
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
+  "/components/AuditChanges#AuditChanges": AuditChanges_7e9623af6577f0c39e521fa072d3a2d3,
   "/components/PlatformNav#PlatformNav": PlatformNav_d93cd8bf9ab6123ede6430df10ac9859,
   "/components/SidebarControl#SidebarControl": SidebarControl_6c1b9eb2d35079715d8e96016057ce39,
   "/components/CmsContentTypography#CmsContentTypography": CmsContentTypography_bae71cde7ba653b314d0652b644d3b75,

@@ -19,7 +19,7 @@ test('native SQLite draft/publish guards preserve existing values, drafts, local
   const dir = await mkdtemp(path.join(os.tmpdir(), 'cms-media-native-'))
   const payload = await getPayload({ key: randomUUID(), config: {
     ...config, telemetry: false, typescript: { ...config.typescript, autoGenerate: false },
-    db: sqliteAdapter({ client: { url: `file:${path.join(dir, 'fixture.db')}` } }) as typeof config.db,
+    db: sqliteAdapter({ client: { url: `file:${path.join(dir, 'fixture.db')}` }, transactionOptions: {} }) as typeof config.db,
   } })
   try {
     const tenant = await payload.db.create({ collection: 'tenants', data: { name: 'Roomchang', slug: 'roomchang' } })
@@ -40,8 +40,10 @@ test('native SQLite draft/publish guards preserve existing values, drafts, local
     }
     await snapshotPage()
     const read = (locale: 'en' | 'kh' | 'cn', draft = false) => payload.findByID({ collection: 'pages', id: page.id, locale, draft, fallbackLocale: false, depth: 0 })
-    const update = (data: Record<string, unknown>, draft: boolean, locale: 'en' | 'kh' | 'cn' = 'en') => payload.update({
-      collection: 'pages', id: page.id, data: data as never, draft, locale, user, overrideLock: true,
+    const revision = async (collection: 'pages' | 'homepage', id: number, locale: 'en' | 'kh' | 'cn' = 'en') =>
+      (await payload.findByID({ collection, id, locale, draft: true, fallbackLocale: false, depth: 0, user }))._editorialRevision
+    const update = async (data: Record<string, unknown>, draft: boolean, locale: 'en' | 'kh' | 'cn' = 'en') => payload.update({
+      collection: 'pages', id: page.id, data: { _status: draft ? 'draft' : 'published', ...data, _editorialRevision: await revision('pages', page.id, locale) } as never, draft, locale, user, overrideLock: true,
       publishSpecificLocale: draft ? undefined : locale, publishAllLocales: false,
     })
 
@@ -96,8 +98,8 @@ test('native SQLite draft/publish guards preserve existing values, drafts, local
       const localized = await payload.db.create({ collection: 'pages', data: { tenant: tenant.id, slug: 'ownership-locales', _status: 'published',
         sections: { en: [{ id: '123456789012345678901234', blockType: 'image', src: '/images/english.png' }],
           kh: [{ id: '234567890123456789012345', blockType: 'image', media: image.id }] } } })
-      await assert.rejects(() => payload.update({ collection: 'pages', id: localized.id, draft: true, locale: 'en', user, overrideLock: true,
-        data: { tenant: other.id, title: 'Owner changed' } as never }), rejectsMedia)
+      await assert.rejects(async () => payload.update({ collection: 'pages', id: localized.id, draft: true, locale: 'en', user, overrideLock: true,
+        data: { tenant: other.id, title: 'Owner changed', _editorialRevision: await revision('pages', localized.id) } as never }), rejectsMedia)
     })
 
     await t.test('native refs reject cross-tenant images for drafts and retain unchanged legacy refs on unrelated publish', async () => {
@@ -106,11 +108,11 @@ test('native SQLite draft/publish guards preserve existing values, drafts, local
         await assert.rejects(() => payload.create({ collection: 'homepage', draft, user, data: { tenant: tenant.id, slides: [{ image: foreign.id }] } as never }), rejectsMedia)
       }
       const homepage = await payload.db.create({ collection: 'homepage', data: { tenant: tenant.id, _status: 'published', slides: [{ id: '999999999999999999999999', image: foreign.id }] } })
-      await payload.update({ collection: 'homepage', id: homepage.id, user, data: { heroPill: 'Unrelated metadata' }, overrideLock: true })
+      await payload.update({ collection: 'homepage', id: homepage.id, user, data: { heroPill: 'Unrelated metadata', _status: 'published', _editorialRevision: await revision('homepage', homepage.id) }, overrideLock: true })
       assert.equal((await payload.findByID({ collection: 'homepage', id: homepage.id, depth: 0 })).slides?.[0]?.image, foreign.id)
-      await payload.update({ collection: 'homepage', id: homepage.id, user, draft: true, data: { tenant: other.id }, overrideLock: true })
-      await assert.rejects(() => payload.update({ collection: 'homepage', id: homepage.id, user, draft: true,
-        data: { tenant: tenant.id }, overrideLock: true }), rejectsMedia)
+      await payload.update({ collection: 'homepage', id: homepage.id, user, draft: true, data: { tenant: other.id, _editorialRevision: await revision('homepage', homepage.id) }, overrideLock: true })
+      await assert.rejects(async () => payload.update({ collection: 'homepage', id: homepage.id, user, draft: true,
+        data: { tenant: tenant.id, _editorialRevision: await revision('homepage', homepage.id) }, overrideLock: true }), rejectsMedia)
     })
   } finally {
     await payload.destroy()

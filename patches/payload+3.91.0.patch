@@ -64,7 +64,7 @@ index 178d444..621e2e7 100644
          const reqWithValidationLocale = isolateObjectProperty(req, [
              'fallbackLocale',
              'locale'
-@@ -341,7 +352,13 @@ export const restoreVersionOperation = async (args)=>{
+@@ -341,6 +352,12 @@ export const restoreVersionOperation = async (args)=>{
      } catch (error) {
          await killTransaction(req);
          throw error;
@@ -77,9 +77,20 @@ index 178d444..621e2e7 100644
      }
  };
  
--//# sourceMappingURL=restoreVersion.js.map
-\ No newline at end of file
-+//# sourceMappingURL=restoreVersion.js.map
+diff --git a/node_modules/payload/dist/collections/operations/utilities/update.js b/node_modules/payload/dist/collections/operations/utilities/update.js
+index 34139a6..205d149 100644
+--- a/node_modules/payload/dist/collections/operations/utilities/update.js
++++ b/node_modules/payload/dist/collections/operations/utilities/update.js
+@@ -308,7 +308,8 @@ import { buildAllLocalesPublicationHookDoc, getAllLocalesPublicationStatus, hasA
+     // /////////////////////////////////////
+     if (!isSavingDraft) {
+         // Ensure updatedAt date is always updated
+-        dataToUpdate.updatedAt = new Date().toISOString();
++        dataToUpdate.updatedAt = collectionConfig.custom?.editorialConcurrency && typeof req.context.editorialWriteTimestamp === 'string'
++            ? req.context.editorialWriteTimestamp : new Date().toISOString();
+         result = await req.payload.db.updateOne({
+             id,
+             collection: collectionConfig.slug,
 diff --git a/node_modules/payload/dist/utilities/mergeLocalizedData.js b/node_modules/payload/dist/utilities/mergeLocalizedData.js
 index 97f4381..e28c9e6 100644
 --- a/node_modules/payload/dist/utilities/mergeLocalizedData.js
@@ -114,18 +125,61 @@ index 97f4381..e28c9e6 100644
                                          const merged = mergeLocalizedData({
                                              configBlockReferences,
                                              dataWithLocales: newBlockData,
-@@ -309,4 +316,4 @@ import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/
-     return result;
- }
- 
--//# sourceMappingURL=mergeLocalizedData.js.map
-\ No newline at end of file
-+//# sourceMappingURL=mergeLocalizedData.js.map
+diff --git a/node_modules/payload/dist/versions/saveSnapshot.js b/node_modules/payload/dist/versions/saveSnapshot.js
+index 27227dd..9394319 100644
+--- a/node_modules/payload/dist/versions/saveSnapshot.js
++++ b/node_modules/payload/dist/versions/saveSnapshot.js
+@@ -5,7 +5,11 @@ export const saveSnapshot = async ({ id, autosave, collection, data, global, pay
+     if (docData._id) {
+         delete docData._id;
+     }
+-    const snapshotDate = new Date().toISOString();
++    const protectedSnapshot = collection?.custom?.editorialConcurrency === true;
++    const snapshotDate = protectedSnapshot
++        ? new Date(Math.max(Date.now(), Date.parse(docData.updatedAt) || 0) + 1).toISOString()
++        : new Date().toISOString();
++    if (protectedSnapshot) docData.updatedAt = snapshotDate;
+     const sharedCreateVersionArgs = {
+         autosave: Boolean(autosave),
+         createdAt: snapshotDate,
+@@ -19,12 +23,13 @@ export const saveSnapshot = async ({ id, autosave, collection, data, global, pay
+         versionData: docData
+     };
+     if (collection && id) {
+-        return payload.db.createVersion({
++        const saved = await payload.db.createVersion({
+             ...sharedCreateVersionArgs,
+             collectionSlug: collection.slug,
+             parent: id,
+             snapshot: true
+         });
++        return protectedSnapshot ? snapshotDate : saved;
+     }
+     if (global) {
+         return payload.db.createGlobalVersion({
 diff --git a/node_modules/payload/dist/versions/saveVersion.js b/node_modules/payload/dist/versions/saveVersion.js
-index 898b667..bafe9f4 100644
+index 898b667..0ea5632 100644
 --- a/node_modules/payload/dist/versions/saveVersion.js
 +++ b/node_modules/payload/dist/versions/saveVersion.js
-@@ -59,7 +59,10 @@ export async function saveVersion({ id, autosave, collection, docWithLocales, dr
+@@ -8,9 +8,10 @@ import { updateLatestVersion } from './updateLatestVersion.js';
+ export async function saveVersion({ id, autosave, collection, docWithLocales, draft, global, operation, payload, publishSpecificLocale, req, returning, select, snapshot, unpublish }) {
+     let result;
+     let createdNewVersion = false;
+-    const now = new Date().toISOString();
++    const now = collection?.custom?.editorialConcurrency && typeof req.context.editorialWriteTimestamp === 'string'
++        ? req.context.editorialWriteTimestamp : new Date().toISOString();
+     const versionData = deepCopyObjectSimple(docWithLocales);
+-    if ((collection?.timestamps || global) && draft) {
++    if ((collection?.timestamps || global) && (draft || collection?.custom?.editorialConcurrency)) {
+         versionData.updatedAt = now;
+     }
+     if (versionData._id) {
+@@ -55,17 +56,23 @@ export async function saveVersion({ id, autosave, collection, docWithLocales, dr
+                 result = await payload.db.createGlobalVersion(createVersionArgs);
+             }
+             if (snapshot) {
+-                await saveSnapshot({
++                const snapshotTimestamp = await saveSnapshot({
                      id,
                      autosave,
                      collection,
@@ -137,10 +191,12 @@ index 898b667..bafe9f4 100644
                      global,
                      payload,
                      publishSpecificLocale,
-@@ -102,4 +105,4 @@ export async function saveVersion({ id, autosave, collection, docWithLocales, dr
-     return createdVersion;
- }
- 
--//# sourceMappingURL=saveVersion.js.map
-\ No newline at end of file
-+//# sourceMappingURL=saveVersion.js.map
+                     req,
+                     select
+                 });
++                if (collection?.custom?.editorialConcurrency && result?.version && typeof snapshotTimestamp === 'string') {
++                    result.version.updatedAt = snapshotTimestamp;
++                }
+             }
+         }
+     } catch (err) {

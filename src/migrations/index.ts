@@ -17,6 +17,7 @@ import * as migration_20260914_043717_doctors_name_localized from './20260914_04
 import * as migration_20261020_095018_stat_values_localized from './20261020_095018_stat_values_localized';
 import * as migration_20261020_105541_cms_localized_field_coverage from './20261020_105541_cms_localized_field_coverage';
 import * as migration_20261021_120000_payload_391_schema from './20261021_120000_payload_391_schema';
+import * as migration_20261021_180000_editorial_audit from './20261021_180000_editorial_audit';
 
 export const migrations = [
   {
@@ -107,11 +108,16 @@ export const migrations = [
   {
     up: migration_20261020_105541_cms_localized_field_coverage.up,
     down: migration_20261020_105541_cms_localized_field_coverage.down,
-    name: '20261020_105541_cms_localized_field_coverage'
+    name: '20261020_105541_cms_localized_field_coverage',
   },
   {
     up: migration_20261021_120000_payload_391_schema.up,
     down: migration_20261021_120000_payload_391_schema.down,
     name: '20261021_120000_payload_391_schema',
+  },
+  {
+    up: migration_20261021_180000_editorial_audit.up,
+    down: migration_20261021_180000_editorial_audit.down,
+    name: '20261021_180000_editorial_audit'
   },
 ];

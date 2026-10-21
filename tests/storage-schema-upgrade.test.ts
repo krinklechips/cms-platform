@@ -40,7 +40,8 @@ async function withR2Config(run: (config: SanitizedConfig) => Promise<void>) {
 test('the registered storage upgrade preserves data on downgrade', async () => {
   const migration = migrations.find(({ name }) => name === migrationName)
   assert.ok(migration, 'Register an additive migration for the R2 media storage key')
-  assert.equal(migrations.at(-1), migration, 'Apply the storage upgrade after all existing migrations')
+  assert.ok(migrations.indexOf(migration) > migrations.findIndex(({ name }) => name === '20261020_105541_cms_localized_field_coverage'),
+    'Apply the storage upgrade after its schema predecessor, before later additive migrations')
   await assert.rejects(() => migration.down({} as never), /refus|recovery|discard/i)
 })
 
@@ -211,7 +212,7 @@ test('PG18 storage upgrade preserves every old row and supports the full R2 sche
       assert.equal(visibleUser.email, 'storage-fixture@example.invalid')
       assert.equal(Object.hasOwn(visibleUser, 'resetPasswordRequestedAt'), false, 'The new auth state remains hidden')
       const read = (id: number, locale: 'en' | 'kh' | 'cn') => payload!.findByID({ collection: 'media', id, depth: 0, locale,
-        overrideAccess: false, user }) as unknown as Promise<Record<string, unknown>>
+        fallbackLocale: false, overrideAccess: false, user }) as unknown as Promise<Record<string, unknown>>
       const keyedURL = `${assetBase}/roomchang/client-files/existing-client-object/new-file.png`
       const keyedID = (await client.query(`INSERT INTO media (tenant_id,prefix,_objectkey,filename,url,mime_type,filesize)
         VALUES ($1,'roomchang/client-files','existing-client-object','new-file.png',$2,'image/png',5678) RETURNING id`, [tenantID, keyedURL])).rows[0].id
@@ -224,7 +225,7 @@ test('PG18 storage upgrade preserves every old row and supports the full R2 sche
         assert.equal(original._objectKey, expectedKey)
         for (const locale of ['en', 'kh', 'cn'] as const) {
           await payload!.update({ collection: 'media', id, locale, depth: 0, overrideLock: true, overrideAccess: false, user,
-            data: { alt: `${locale} edited alt`, _objectKey: 'must-not-replace-object' } as never })
+            data: { alt: `${locale} edited alt`, _objectKey: 'must-not-replace-object', _editorialRevision: (await read(id, locale))._editorialRevision } as never })
           const current = await read(id, locale)
           assert.equal(current.alt, `${locale} edited alt`)
           assert.deepEqual(identity(current), identity(original), `${locale} metadata edits retain null or existing keyed object identity`)

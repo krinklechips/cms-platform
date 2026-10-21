@@ -1,0 +1,43 @@
+diff --git a/node_modules/@payloadcms/ui/dist/forms/Form/index.js b/node_modules/@payloadcms/ui/dist/forms/Form/index.js
+index 0a4d512..2ce3f37 100644
+--- a/node_modules/@payloadcms/ui/dist/forms/Form/index.js
++++ b/node_modules/@payloadcms/ui/dist/forms/Form/index.js
+@@ -327,7 +327,7 @@ export const Form = props => {
+       } else if (typeof action === 'function') {
+         res = await action(formData);
+       }
+-      if (!modifiedWhileProcessingRef.current) {
++      if (res.ok && !modifiedWhileProcessingRef.current) {
+         setModified(false);
+       } else {
+         modifiedWhileProcessingRef.current = false;
+diff --git a/node_modules/@payloadcms/ui/dist/elements/PublishButton/index.js b/node_modules/@payloadcms/ui/dist/elements/PublishButton/index.js
+index d2c7d96..d23e12d 100644
+--- a/node_modules/@payloadcms/ui/dist/elements/PublishButton/index.js
++++ b/node_modules/@payloadcms/ui/dist/elements/PublishButton/index.js
+@@ -137,6 +137,7 @@ export function PublishButton({
+     }
+   });
+   const localizeStatusEnabled = hasLocalizeStatusEnabled(entityConfig);
++  const editorialConcurrencyEnabled = entityConfig?.custom?.editorialConcurrency === true;
+   const publish = useCallback(async () => {
+     if (uploadStatus === 'uploading') {
+       return;
+@@ -144,7 +145,7 @@ export function PublishButton({
+     const params_0 = qs.stringify({
+       depth: 0,
+       locale: localeCode,
+-      ...(localizeStatusEnabled && {
++      ...((localizeStatusEnabled || editorialConcurrencyEnabled) && {
+         publishAllLocales: true
+       })
+     }, {
+@@ -165,7 +166,7 @@ export function PublishButton({
+       setMostRecentVersionIsAutosaved(false);
+       setHasPublishedDoc(true);
+     }
+-  }, [localeCode, localizeStatusEnabled, api, collectionSlug, globalSlug, id, setHasPublishedDoc, submit, setUnpublishedVersionCount, uploadStatus, setMostRecentVersionIsAutosaved]);
++  }, [localeCode, localizeStatusEnabled, editorialConcurrencyEnabled, api, collectionSlug, globalSlug, id, setHasPublishedDoc, submit, setUnpublishedVersionCount, uploadStatus, setMostRecentVersionIsAutosaved]);
+   const publishSpecificLocale = useCallback(async locale => {
+     if (uploadStatus === 'uploading') {
+       return;

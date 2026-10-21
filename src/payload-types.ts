@@ -101,6 +101,7 @@ export interface Config {
     tenants: Tenant;
     modules: Module;
     invoices: Invoice;
+    'editorial-audit': EditorialAudit;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -142,6 +143,7 @@ export interface Config {
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
     invoices: InvoicesSelect<false> | InvoicesSelect<true>;
+    'editorial-audit': EditorialAuditSelect<false> | EditorialAuditSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -241,6 +243,7 @@ export interface Homepage {
         id?: string | null;
       }[]
     | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -302,7 +305,7 @@ export interface Tenant {
   createdAt: string;
 }
 /**
- * Every photo and file you upload for use elsewhere on the site — upload here first, then pick the image from the page you are editing.
+ * Public website files. Upload a new file to replace an image, then select it on the page. Existing files are kept to protect published pages. Do not upload private patient records.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
@@ -311,7 +314,11 @@ export interface Media {
   id: number;
   tenant?: (number | null) | Tenant;
   alt: string;
+  focalX?: number | null;
+  focalY?: number | null;
+  _editorialRevision?: string | null;
   prefix?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -321,8 +328,6 @@ export interface Media {
   filesize?: number | null;
   width?: number | null;
   height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * Sellable platform modules. Subscribe tenants to these on the Tenant document.
@@ -377,12 +382,13 @@ export interface BrandLogo {
    */
   logoUrl?: string | null;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Website statistics. Each record lists the pages where it appears.
+ * Statistics for Home page, Our Team, About Roomchang, Our Facilities and Clinical Results.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-stats".
@@ -402,6 +408,7 @@ export interface SiteStat {
   label?: string | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -430,6 +437,7 @@ export interface FeatureCard {
   href?: string | null;
   cta?: string | null;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -458,6 +466,7 @@ export interface Testimonial {
   isFeatured?: boolean | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -644,7 +653,7 @@ export interface Page {
                    */
                   media?: (number | null) | Media;
                   /**
-                   * Or paste an image URL.
+                   * Fallback URL, used only when no Media Library image is selected.
                    */
                   url?: string | null;
                   id?: string | null;
@@ -660,7 +669,7 @@ export interface Page {
              */
             media?: (number | null) | Media;
             /**
-             * Or paste an image URL — ignored when a Media Library image is picked above.
+             * Fallback URL, used only when no Media Library image is selected.
              */
             src?: string | null;
             alt?: string | null;
@@ -700,7 +709,7 @@ export interface Page {
                */
               media?: (number | null) | Media;
               /**
-               * Or paste an image URL.
+               * Fallback URL, used only when no Media Library image is selected.
                */
               src?: string | null;
               alt?: string | null;
@@ -712,7 +721,7 @@ export interface Page {
                */
               media?: (number | null) | Media;
               /**
-               * Or paste an image URL.
+               * Fallback URL, used only when no Media Library image is selected.
                */
               src?: string | null;
               alt?: string | null;
@@ -891,7 +900,7 @@ export interface Page {
                              */
                             media?: (number | null) | Media;
                             /**
-                             * Or paste an image URL.
+                             * Fallback URL, used only when no Media Library image is selected.
                              */
                             url?: string | null;
                             id?: string | null;
@@ -907,7 +916,7 @@ export interface Page {
                        */
                       media?: (number | null) | Media;
                       /**
-                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       * Fallback URL, used only when no Media Library image is selected.
                        */
                       src?: string | null;
                       alt?: string | null;
@@ -947,7 +956,7 @@ export interface Page {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -959,7 +968,7 @@ export interface Page {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -1139,7 +1148,7 @@ export interface Page {
                              */
                             media?: (number | null) | Media;
                             /**
-                             * Or paste an image URL.
+                             * Fallback URL, used only when no Media Library image is selected.
                              */
                             url?: string | null;
                             id?: string | null;
@@ -1155,7 +1164,7 @@ export interface Page {
                        */
                       media?: (number | null) | Media;
                       /**
-                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       * Fallback URL, used only when no Media Library image is selected.
                        */
                       src?: string | null;
                       alt?: string | null;
@@ -1195,7 +1204,7 @@ export interface Page {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -1207,7 +1216,7 @@ export interface Page {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -1241,6 +1250,7 @@ export interface Page {
    * Image URL used when the page is shared (Facebook/Telegram).
    */
   seoImage?: string | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1422,7 +1432,7 @@ export interface Service {
                    */
                   media?: (number | null) | Media;
                   /**
-                   * Or paste an image URL.
+                   * Fallback URL, used only when no Media Library image is selected.
                    */
                   url?: string | null;
                   id?: string | null;
@@ -1438,7 +1448,7 @@ export interface Service {
              */
             media?: (number | null) | Media;
             /**
-             * Or paste an image URL — ignored when a Media Library image is picked above.
+             * Fallback URL, used only when no Media Library image is selected.
              */
             src?: string | null;
             alt?: string | null;
@@ -1478,7 +1488,7 @@ export interface Service {
                */
               media?: (number | null) | Media;
               /**
-               * Or paste an image URL.
+               * Fallback URL, used only when no Media Library image is selected.
                */
               src?: string | null;
               alt?: string | null;
@@ -1490,7 +1500,7 @@ export interface Service {
                */
               media?: (number | null) | Media;
               /**
-               * Or paste an image URL.
+               * Fallback URL, used only when no Media Library image is selected.
                */
               src?: string | null;
               alt?: string | null;
@@ -1669,7 +1679,7 @@ export interface Service {
                              */
                             media?: (number | null) | Media;
                             /**
-                             * Or paste an image URL.
+                             * Fallback URL, used only when no Media Library image is selected.
                              */
                             url?: string | null;
                             id?: string | null;
@@ -1685,7 +1695,7 @@ export interface Service {
                        */
                       media?: (number | null) | Media;
                       /**
-                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       * Fallback URL, used only when no Media Library image is selected.
                        */
                       src?: string | null;
                       alt?: string | null;
@@ -1725,7 +1735,7 @@ export interface Service {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -1737,7 +1747,7 @@ export interface Service {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -1917,7 +1927,7 @@ export interface Service {
                              */
                             media?: (number | null) | Media;
                             /**
-                             * Or paste an image URL.
+                             * Fallback URL, used only when no Media Library image is selected.
                              */
                             url?: string | null;
                             id?: string | null;
@@ -1933,7 +1943,7 @@ export interface Service {
                        */
                       media?: (number | null) | Media;
                       /**
-                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       * Fallback URL, used only when no Media Library image is selected.
                        */
                       src?: string | null;
                       alt?: string | null;
@@ -1973,7 +1983,7 @@ export interface Service {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -1985,7 +1995,7 @@ export interface Service {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -2051,6 +2061,7 @@ export interface Service {
   imageUrl?: string | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -2109,6 +2120,7 @@ export interface Doctor {
   photoUrl?: string | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -2290,7 +2302,7 @@ export interface Technology {
                    */
                   media?: (number | null) | Media;
                   /**
-                   * Or paste an image URL.
+                   * Fallback URL, used only when no Media Library image is selected.
                    */
                   url?: string | null;
                   id?: string | null;
@@ -2306,7 +2318,7 @@ export interface Technology {
              */
             media?: (number | null) | Media;
             /**
-             * Or paste an image URL — ignored when a Media Library image is picked above.
+             * Fallback URL, used only when no Media Library image is selected.
              */
             src?: string | null;
             alt?: string | null;
@@ -2346,7 +2358,7 @@ export interface Technology {
                */
               media?: (number | null) | Media;
               /**
-               * Or paste an image URL.
+               * Fallback URL, used only when no Media Library image is selected.
                */
               src?: string | null;
               alt?: string | null;
@@ -2358,7 +2370,7 @@ export interface Technology {
                */
               media?: (number | null) | Media;
               /**
-               * Or paste an image URL.
+               * Fallback URL, used only when no Media Library image is selected.
                */
               src?: string | null;
               alt?: string | null;
@@ -2537,7 +2549,7 @@ export interface Technology {
                              */
                             media?: (number | null) | Media;
                             /**
-                             * Or paste an image URL.
+                             * Fallback URL, used only when no Media Library image is selected.
                              */
                             url?: string | null;
                             id?: string | null;
@@ -2553,7 +2565,7 @@ export interface Technology {
                        */
                       media?: (number | null) | Media;
                       /**
-                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       * Fallback URL, used only when no Media Library image is selected.
                        */
                       src?: string | null;
                       alt?: string | null;
@@ -2593,7 +2605,7 @@ export interface Technology {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -2605,7 +2617,7 @@ export interface Technology {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -2785,7 +2797,7 @@ export interface Technology {
                              */
                             media?: (number | null) | Media;
                             /**
-                             * Or paste an image URL.
+                             * Fallback URL, used only when no Media Library image is selected.
                              */
                             url?: string | null;
                             id?: string | null;
@@ -2801,7 +2813,7 @@ export interface Technology {
                        */
                       media?: (number | null) | Media;
                       /**
-                       * Or paste an image URL — ignored when a Media Library image is picked above.
+                       * Fallback URL, used only when no Media Library image is selected.
                        */
                       src?: string | null;
                       alt?: string | null;
@@ -2841,7 +2853,7 @@ export interface Technology {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -2853,7 +2865,7 @@ export interface Technology {
                          */
                         media?: (number | null) | Media;
                         /**
-                         * Or paste an image URL.
+                         * Fallback URL, used only when no Media Library image is selected.
                          */
                         src?: string | null;
                         alt?: string | null;
@@ -2903,6 +2915,7 @@ export interface Technology {
   imageUrl?: string | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -2923,6 +2936,7 @@ export interface PricingCategory {
   title: string;
   icon?: string | null;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -2948,6 +2962,7 @@ export interface PricingItem {
   category?: (number | null) | PricingCategory;
   sourceCategoryId?: string | null;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -2969,6 +2984,7 @@ export interface PricingComparisonSet {
   exchangeRate?: number | null;
   sourceNote?: string | null;
   lastUpdated?: string | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -2994,6 +3010,7 @@ export interface PricingComparisonRow {
   australiaPrice?: string | null;
   singaporePrice?: string | null;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3014,6 +3031,7 @@ export interface InternationalWhyItem {
   title: string;
   description?: string | null;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3034,6 +3052,7 @@ export interface InternationalTreatment {
   name: string;
   saving?: string | null;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3055,6 +3074,7 @@ export interface InternationalStep {
   title: string;
   description?: string | null;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3084,6 +3104,7 @@ export interface TimelineEvent {
   imagePosition?: string | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3137,6 +3158,7 @@ export interface Branch {
     | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3183,6 +3205,7 @@ export interface ClinicalCase {
     | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3209,6 +3232,7 @@ export interface Partner {
   category?: (number | null) | PartnerCategory;
   sourceCategoryId?: string | null;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3228,6 +3252,7 @@ export interface PartnerCategory {
   sourceId?: string | null;
   name: string;
   order?: number | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3250,6 +3275,7 @@ export interface FaqItem {
   category?: string | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3284,6 +3310,7 @@ export interface NewsArticle {
     | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3325,6 +3352,7 @@ export interface CommunityArticle {
     | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3352,6 +3380,7 @@ export interface Publication {
   abstract?: string | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3379,6 +3408,7 @@ export interface Video {
   treatment?: string | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -3416,12 +3446,13 @@ export interface CareerPosition {
     | null;
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Messages patients sent through the Contact page form — a read-only inbox; nothing here is published on the website.
+ * Read-only snapshot from the last approved import, not a live inbox. New enquiries and read-status changes remain in the clinic dashboard (Supabase). CMS records may be stale; no changes here are sent back.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "enquiries".
@@ -3453,7 +3484,7 @@ export interface Enquiry {
   createdAt: string;
 }
 /**
- * Appointment requests made through the online booking widget — a read-only list; nothing here is published on the website.
+ * Read-only snapshot from the last approved import, not live availability or booking management. Bookings, cancellations and slot changes remain in the clinic dashboard (Supabase). CMS records may be stale; no changes here are sent back.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "booking-slots".
@@ -3505,11 +3536,13 @@ export interface User {
   enableAPIKey?: boolean | null;
   apiKey?: string | null;
   apiKeyIndex?: string | null;
+  hasAPIKey?: boolean | null;
   email: string;
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;
   salt?: string | null;
   hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   sessions?:
@@ -3558,6 +3591,45 @@ export interface Invoice {
   notes?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * Editorial activity recorded since audit logging was deployed. Earlier actor identities are not inferred.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "editorial-audit".
+ */
+export interface EditorialAudit {
+  id: number;
+  tenant: number | Tenant;
+  actorLabel: string;
+  actorID: string;
+  action: 'create' | 'update' | 'draft' | 'publish' | 'unpublish' | 'restore' | 'delete';
+  locale: string;
+  docCollection: string;
+  documentID: string;
+  docLabel: string;
+  timestamp: string;
+  changedFields:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  diffs:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  truncated?: boolean | null;
+  versionID?: string | null;
+  restoredFromVersionID?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3791,6 +3863,7 @@ export interface HomepageSelect<T extends boolean = true> {
         ctaUrl?: T;
         id?: T;
       };
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -3806,6 +3879,7 @@ export interface BrandLogosSelect<T extends boolean = true> {
   name?: T;
   logoUrl?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -3825,6 +3899,7 @@ export interface SiteStatsSelect<T extends boolean = true> {
   label?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -3844,6 +3919,7 @@ export interface FeatureCardsSelect<T extends boolean = true> {
   href?: T;
   cta?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -3863,6 +3939,7 @@ export interface TestimonialsSelect<T extends boolean = true> {
   isFeatured?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -4422,6 +4499,7 @@ export interface PagesSelect<T extends boolean = true> {
   seoTitle?: T;
   seoDescription?: T;
   seoImage?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -4994,6 +5072,7 @@ export interface ServicesSelect<T extends boolean = true> {
   imageUrl?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5027,6 +5106,7 @@ export interface DoctorsSelect<T extends boolean = true> {
   photoUrl?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5595,6 +5675,7 @@ export interface TechnologySelect<T extends boolean = true> {
   imageUrl?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5609,6 +5690,7 @@ export interface PricingCategoriesSelect<T extends boolean = true> {
   title?: T;
   icon?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5628,6 +5710,7 @@ export interface PricingItemsSelect<T extends boolean = true> {
   category?: T;
   sourceCategoryId?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5643,6 +5726,7 @@ export interface PricingComparisonSetsSelect<T extends boolean = true> {
   exchangeRate?: T;
   sourceNote?: T;
   lastUpdated?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5662,6 +5746,7 @@ export interface PricingComparisonRowsSelect<T extends boolean = true> {
   australiaPrice?: T;
   singaporePrice?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5676,6 +5761,7 @@ export interface InternationalWhyItemsSelect<T extends boolean = true> {
   title?: T;
   description?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5690,6 +5776,7 @@ export interface InternationalTreatmentsSelect<T extends boolean = true> {
   name?: T;
   saving?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5705,6 +5792,7 @@ export interface InternationalStepsSelect<T extends boolean = true> {
   title?: T;
   description?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5725,6 +5813,7 @@ export interface TimelineEventsSelect<T extends boolean = true> {
   imagePosition?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5755,6 +5844,7 @@ export interface BranchesSelect<T extends boolean = true> {
   photos?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5779,6 +5869,7 @@ export interface ClinicalCasesSelect<T extends boolean = true> {
   images?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5796,6 +5887,7 @@ export interface PartnersSelect<T extends boolean = true> {
   category?: T;
   sourceCategoryId?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5809,6 +5901,7 @@ export interface PartnerCategoriesSelect<T extends boolean = true> {
   sourceId?: T;
   name?: T;
   order?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5825,6 +5918,7 @@ export interface FaqItemsSelect<T extends boolean = true> {
   category?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5850,6 +5944,7 @@ export interface NewsArticlesSelect<T extends boolean = true> {
       };
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5882,6 +5977,7 @@ export interface CommunityArticlesSelect<T extends boolean = true> {
       };
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5903,6 +5999,7 @@ export interface PublicationsSelect<T extends boolean = true> {
   abstract?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5924,6 +6021,7 @@ export interface VideosSelect<T extends boolean = true> {
   treatment?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -5955,6 +6053,7 @@ export interface CareerPositionsSelect<T extends boolean = true> {
       };
   order?: T;
   published?: T;
+  _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -6018,7 +6117,11 @@ export interface BookingSlotsSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   alt?: T;
+  focalX?: T;
+  focalY?: T;
+  _editorialRevision?: T;
   prefix?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -6028,8 +6131,6 @@ export interface MediaSelect<T extends boolean = true> {
   filesize?: T;
   width?: T;
   height?: T;
-  focalX?: T;
-  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -6049,11 +6150,13 @@ export interface UsersSelect<T extends boolean = true> {
   enableAPIKey?: T;
   apiKey?: T;
   apiKeyIndex?: T;
+  hasAPIKey?: T;
   email?: T;
   resetPasswordToken?: T;
   resetPasswordExpiration?: T;
   salt?: T;
   hash?: T;
+  resetPasswordRequestedAt?: T;
   loginAttempts?: T;
   lockUntil?: T;
   sessions?:
@@ -6125,6 +6228,26 @@ export interface InvoicesSelect<T extends boolean = true> {
   notes?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "editorial-audit_select".
+ */
+export interface EditorialAuditSelect<T extends boolean = true> {
+  tenant?: T;
+  actorLabel?: T;
+  actorID?: T;
+  action?: T;
+  locale?: T;
+  docCollection?: T;
+  documentID?: T;
+  docLabel?: T;
+  timestamp?: T;
+  changedFields?: T;
+  diffs?: T;
+  truncated?: T;
+  versionID?: T;
+  restoredFromVersionID?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

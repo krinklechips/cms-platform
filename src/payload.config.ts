@@ -42,12 +42,15 @@ import { Enquiries } from './collections/Enquiries'
 import { BookingSlots } from './collections/BookingSlots'
 import { Modules } from './collections/Modules'
 import { Invoices } from './collections/Invoices'
+import { EditorialAudit } from './collections/EditorialAudit'
 import { getTenantByHost, normalizeHost } from './lib/get-tenant-by-host'
 import { withModuleGating } from './lib/module-gating'
 import { withHostScope } from './lib/host-scope'
 import { withHumanLabels } from './lib/collection-labels'
 import { withDrafts } from './lib/with-drafts'
 import { withMediaValidation } from './lib/with-media-validation'
+import { withEditorialConcurrency } from './lib/with-editorial-concurrency'
+import { withEditorialAudit } from './lib/editorial-audit'
 import { cmsEmailAdapter } from './lib/cms-email'
 import { getPreviewUrl, PREVIEW_COLLECTIONS } from './lib/preview-routes'
 
@@ -172,7 +175,8 @@ export default buildConfig({
     withHumanLabels(Tenants),
     withHumanLabels(Modules),
     withHumanLabels(Invoices),
-  ].map(withMediaValidation),
+    EditorialAudit,
+  ].map(withMediaValidation).map(withEditorialConcurrency).map(withEditorialAudit),
   endpoints: [
     // Public feature flags for the tenants' websites (e.g. the AI chatbot
     // only renders when its module is active). Hardened per Codex review:
@@ -214,6 +218,7 @@ export default buildConfig({
         push: false,
       })
     : sqliteAdapter({
+        transactionOptions: {},
         client: {
           url: process.env.DATABASE_URI || 'file:./serviette-cms.db',
         },
