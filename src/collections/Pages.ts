@@ -131,8 +131,12 @@ export const Pages: CollectionConfig = {
             },
             {
               name: 'seoImage',
+              label: 'SEO image (All languages)',
               type: 'text',
-              admin: { description: 'Image URL used when the page is shared (Facebook/Telegram).' },
+              admin: {
+                description: 'Image URL used when the page is shared (Facebook/Telegram).',
+                components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] },
+              },
             },
           ],
         },

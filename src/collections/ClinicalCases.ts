@@ -79,6 +79,7 @@ export const ClinicalCases: CollectionConfig = {
     },
     {
       name: 'imageUrl',
+      label: 'Image URL (All languages)',
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
@@ -87,6 +88,7 @@ export const ClinicalCases: CollectionConfig = {
     },
     {
       name: 'images',
+      label: 'Images (All languages)',
       type: 'json',
       admin: {
         description: 'Clinical case images JSON — carried from the live site losslessly.',

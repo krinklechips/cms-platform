@@ -38,6 +38,7 @@ export const Videos: CollectionConfig = {
     },
     {
       name: 'thumbnail',
+      label: 'Thumbnail (All languages)',
       type: 'text',
       admin: { components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' } },
     },

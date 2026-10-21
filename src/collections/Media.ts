@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { APIError, type CollectionConfig } from 'payload'
 import { getHostTenant } from '../lib/host-scope'
+import { resolveMediaTenant } from '../lib/media-validation'
 
 /**
  * Media — tenant-scoped uploads stored in Cloudflare R2 (cms-platform bucket).
@@ -77,51 +78,19 @@ export const Media: CollectionConfig = {
           return data
         }
 
-        const resolveSlug = async (tenantId: unknown): Promise<string | undefined> => {
-          if (!tenantId) return undefined
-          try {
-            const tenant = (await req.payload.findByID({
-              collection: 'tenants',
-              id: tenantId as number | string,
-              depth: 0,
-              overrideAccess: true,
-            })) as { slug?: string }
-            return tenant?.slug
-          } catch {
-            req.payload.logger.warn('media prefix hook: could not resolve tenant')
-            return undefined
-          }
-        }
-
         const roles = (req.user as { roles?: string[] } | null)?.roles
         const isSuperAdmin = Boolean(roles?.includes('super-admin'))
         const isRegularTenantUser = Boolean(req.user) && !isSuperAdmin
-
-        if (isRegularTenantUser) {
-          // SECURITY: a tenant user may ONLY upload into their own tenant's R2
-          // folder. Ignore any client-supplied `prefix` (which could target
-          // another tenant's namespace) and derive it from the user's tenant.
-          const ownTenant = (req.user as { tenants?: { tenant?: unknown }[] } | null)?.tenants?.[0]?.tenant
-          const ownTenantId =
-            typeof ownTenant === 'object' && ownTenant !== null
-              ? (ownTenant as { id?: number | string }).id
-              : ownTenant
-          const slug = await resolveSlug(ownTenantId)
-          if (!slug) throw new APIError('The upload tenant folder could not be resolved. Please retry.', 503)
-          data.prefix = slug
-          return data
-        }
-
-        // Super-admin or server scripts (overrideAccess, no user): honor an
-        // explicit prefix (e.g. the R2 import's `roomchang/doctors`); otherwise
-        // derive the folder from the document's own tenant.
-        if (!data.prefix || data.prefix === 'serviette-media') {
-          const tenantId =
-            typeof data.tenant === 'object' && data.tenant !== null
-              ? (data.tenant as { id: number | string }).id
-              : data.tenant
-          const slug = await resolveSlug(tenantId)
-          if (slug) data.prefix = slug
+        try {
+          const { slug } = await resolveMediaTenant(data.tenant, req)
+          if (isRegularTenantUser || !data.prefix || data.prefix === 'serviette-media') data.prefix = slug
+          else if (typeof data.prefix !== 'string' ||
+            !(data.prefix === slug || data.prefix.startsWith(`${slug}/`)) ||
+            !data.prefix.split('/').every((part: string) => /^[a-zA-Z0-9_-][a-zA-Z0-9._-]*$/.test(part) && part !== '..')) {
+            throw new Error('The explicit upload prefix must remain inside the document tenant folder.')
+          }
+        } catch (error) {
+          throw new APIError(error instanceof Error ? error.message : 'The upload tenant folder could not be resolved.', 400)
         }
         return data
       },
@@ -134,6 +103,11 @@ export const Media: CollectionConfig = {
       required: true,
       localized: true,
     },
+    // Exact Payload 3.91 generated definitions: keep the existing DB columns when focal editing is disabled.
+    ...['focalX', 'focalY'].map(name => ({
+      name, type: 'number' as const,
+      admin: { disableGroupBy: true, disableListColumn: true, disableListFilter: true, hidden: true },
+    })),
   ],
-  upload: { hideRemoveFile: true },
+  upload: { hideRemoveFile: true, crop: false, focalPoint: false },
 }

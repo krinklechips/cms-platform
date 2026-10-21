@@ -36,6 +36,11 @@ if (!Window) {
   let selectedTenantID: number | string | undefined
   let locale = 'en'
   let disabled = false
+  let formInitializing = false
+  let formProcessing = false
+  let hasSavePermission = true
+  let currentPath: string | undefined
+  let siblingFields: Record<string, { value: unknown }> = {}
   let canRead = true
   let canCreate = true
   let listArgs: any
@@ -56,12 +61,14 @@ if (!Window) {
   const ui = {
     useField: (args: any) => ({
       value,
-      path: args.potentiallyStalePath,
+      path: currentPath ?? args.potentiallyStalePath,
       setValue: (next: unknown) => writes.push(next),
       disabled,
+      formInitializing,
+      formProcessing,
     }),
-    useFormFields: (select: any) => select([{ tenant: { value: tenant } }]),
-    useDocumentInfo: () => ({ data: { tenant }, hasSavePermission: true }),
+    useFormFields: (select: any) => select([{ ...siblingFields, tenant: { value: tenant } }]),
+    useDocumentInfo: () => ({ data: { tenant }, hasSavePermission }),
     useLocale: () => ({ code: locale }),
     useAuth: () => ({ permissions: { collections: { media: { create: canCreate, read: canRead } } } }),
     useListDrawer: (args: any) => {
@@ -119,8 +126,12 @@ if (!Window) {
     output.exports,
   )
   const { ImageUrlPreview } = output.exports
+  const hero = output.exports.HeroImageUrlPreview ?? ImageUrlPreview
+  const section = output.exports.SectionImageUrlPreview ?? ImageUrlPreview
   const render = async (props = {}) =>
     act(() => root.render(React.createElement(ImageUrlPreview, { path: 'slides.0.imageUrl', ...props })))
+  const renderSource = async (component: React.FC<any>, path = 'slides.0.imageUrl', props = {}) =>
+    act(() => root.render(React.createElement(component, { path, ...props })))
   const button = (label: string) => {
     const result = Array.from(container.querySelectorAll('button')).find((node) => node.textContent?.includes(label))
     assert.ok(result, `Missing button: ${label}`)
@@ -142,6 +153,10 @@ if (!Window) {
     selectedTenantID = 2
     locale = 'en'
     disabled = false
+    formInitializing = formProcessing = false
+    hasSavePermission = true
+    currentPath = undefined
+    siblingFields = {}
     canRead = canCreate = true
     listArgs = listProps = uploadProps = undefined
     listsClosed = uploadsClosed = 0
@@ -314,5 +329,129 @@ if (!Window) {
     assert.match(container.textContent ?? '', /loading/i)
     assert.equal(container.querySelector('img')?.getAttribute('src'), value)
     assert.deepEqual(writes, [])
+  })
+
+  test('native hero selection hides the fallback preview even when the relation is unresolved', async () => {
+    for (const native of [9, 'unresolved-id', { id: 9 }, media()]) {
+      siblingFields = { 'slides.0.image': { value: native } }
+      await renderSource(hero)
+      assert.ok(!container.querySelector('img'), 'An inactive fallback must not look like the active image')
+      assert.match(container.querySelector('[role="status"]')?.textContent ?? '', /active source: media library/i)
+      assert.match(container.textContent ?? '', /fallback.*inactive/i)
+      assert.match(container.textContent ?? '', /remove.*(?:field|above)/i, 'Explain the existing native removal control')
+      assert.deepEqual(writes, [])
+    }
+  })
+
+  test('explicit native removal activates the untouched fallback URL without copying or clearing either source', async () => {
+    siblingFields = { 'slides.0.image': { value: 9 } }
+    await renderSource(hero)
+    siblingFields['slides.0.image'].value = null // Payload's existing native Remove control.
+    await renderSource(hero)
+    assert.match(container.textContent ?? '', /active source: (?:fallback )?url/i)
+    assert.equal(container.querySelector('img')?.getAttribute('src'), value)
+    assert.deepEqual(writes, [])
+  })
+
+  test('native source survives mount, locale changes, and upload save without any field writes', async () => {
+    siblingFields = { 'slides.0.image': { value: { id: 9 } } }
+    await renderSource(hero)
+    locale = 'kh'
+    await renderSource(hero)
+    await click('Upload image')
+    await act(() => uploadProps.onSave({ doc: media(), operation: 'create' }))
+    assert.ok(!container.querySelector('img'), 'Native selection must hide the fallback preview')
+    assert.match(container.textContent ?? '', /active source: media library/i)
+    assert.deepEqual(writes, [])
+    assert.equal(value, 'https://legacy.example.test/photo.jpg')
+    assert.deepEqual(siblingFields['slides.0.image'].value, { id: 9 })
+  })
+
+  test('native changes invalidate open selection and upload callbacks, including replacement and removal', async () => {
+    for (const [previous, next] of [[null, 9], [9, 10], [9, null], [{ id: 9 }, { id: 10 }]]) {
+      await act(() => root.render(null))
+      siblingFields = { 'slides.0.image': { value: previous } }
+      await renderSource(hero)
+      await click('Select image')
+      const staleSelection = listProps.onSelect
+      await click('Upload image')
+      const staleSave = uploadProps.onSave
+      const closed = [listsClosed, uploadsClosed]
+      siblingFields['slides.0.image'].value = next
+      await renderSource(hero)
+      assert.deepEqual([listsClosed, uploadsClosed], closed.map((count) => count + 1))
+      await act(() => {
+        staleSelection({ collectionSlug: 'media', doc: media() })
+        staleSave({ doc: media(), operation: 'create' })
+      })
+      assert.deepEqual(writes, [])
+      assert.doesNotMatch(container.textContent ?? '', /image uploaded/i)
+    }
+  })
+
+  test('section sources resolve the exact sibling through gallery, image pair, and nested two-column paths', async () => {
+    for (const path of [
+      'sections.2.src',
+      'sections.1.images.3.url',
+      'sections.4.left.src',
+      'sections.4.right.src',
+      'sections.0.left.0.images.2.url',
+      'sections.0.right.0.left.src',
+    ]) {
+      const parent = path.slice(0, path.lastIndexOf('.') + 1)
+      siblingFields = { [`${parent}media`]: { value: 9 }, media: { value: null } }
+      await renderSource(section, path)
+      assert.ok(!container.querySelector('img'), path)
+      assert.match(container.textContent ?? '', /active source: media library/i, path)
+      siblingFields[`${parent}media`].value = null
+      siblingFields.media.value = 99 // Another row must never determine this source.
+      await renderSource(section, path)
+      assert.equal(container.querySelector('img')?.getAttribute('src'), value, path)
+      assert.deepEqual(writes, [])
+    }
+  })
+
+  test('hero source follows the current reordered field path, not the stale server prop', async () => {
+    currentPath = 'slides.3.imageUrl'
+    siblingFields = { 'slides.0.image': { value: null }, 'slides.3.image': { value: 9 } }
+    await renderSource(hero, 'slides.0.imageUrl')
+    assert.ok(!container.querySelector('img'), 'Use the native relation at the current field path')
+    assert.match(container.textContent ?? '', /active source: media library/i)
+    assert.deepEqual(writes, [])
+  })
+
+  test('selecting a fallback while native is active changes only the URL and keeps its preview inactive', async () => {
+    siblingFields = { 'slides.0.image': { value: 9 } }
+    await renderSource(hero)
+    await click('Select image')
+    await act(() => listProps.onSelect({ collectionSlug: 'media', doc: media() }))
+    assert.deepEqual(writes, ['https://media.example.test/roomchang/photo.jpg'])
+    assert.equal(siblingFields['slides.0.image'].value, 9)
+    assert.ok(!container.querySelector('img'), 'Selecting a fallback must not make it look active')
+    assert.match(container.textContent ?? '', /fallback.*inactive/i)
+  })
+
+  test('URL-only fields ignore unrelated native siblings and remain usable', async () => {
+    siblingFields = { image: { value: 9 }, media: { value: 10 } }
+    await render({ path: 'seoImage' })
+    assert.equal(container.querySelector('img')?.getAttribute('src'), value)
+    assert.deepEqual(writes, [])
+  })
+
+  test('source-aware controls respect read-only, disabled, initializing, processing, and save permissions', async () => {
+    siblingFields = { 'slides.0.image': { value: 9 } }
+    for (const mode of ['readOnly', 'fieldReadOnly', 'disabled', 'initializing', 'processing', 'noSave']) {
+      disabled = mode === 'disabled'
+      formInitializing = mode === 'initializing'
+      formProcessing = mode === 'processing'
+      hasSavePermission = mode !== 'noSave'
+      await renderSource(hero, 'slides.0.imageUrl', {
+        readOnly: mode === 'readOnly',
+        field: { admin: { readOnly: mode === 'fieldReadOnly' } },
+      })
+      assert.equal(button('Select image').disabled, true, mode)
+      assert.equal(button('Upload image').disabled, true, mode)
+      assert.deepEqual(writes, [])
+    }
   })
 }

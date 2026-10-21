@@ -71,6 +71,7 @@ export const Homepage: CollectionConfig = {
       fields: [
         {
           name: 'image',
+          label: 'Image (All languages)',
           type: 'upload',
           relationTo: 'media',
           admin: {
@@ -79,14 +80,16 @@ export const Homepage: CollectionConfig = {
         },
         {
           name: 'imageUrl',
+          label: 'Fallback image URL (All languages)',
           type: 'text',
           admin: {
             description: 'Fallback image URL (used only when no Media image is selected).',
-            components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] },
+            components: { afterInput: ['/components/ImageUrlPreview#HeroImageUrlPreview'] },
           },
         },
         {
           name: 'imagePosition',
+          label: 'Image position (All languages)',
           type: 'text',
           admin: {
             description: 'Where the image anchors, e.g. “center center”, “center top”, “bottom center”.',
@@ -94,11 +97,13 @@ export const Homepage: CollectionConfig = {
         },
         {
           name: 'imageSize',
+          label: 'Image size (All languages)',
           type: 'text',
           admin: { description: 'CSS background-size, e.g. “cover” or “100% auto”.' },
         },
         {
           name: 'preserveFullImage',
+          label: 'Preserve full image (All languages)',
           type: 'checkbox',
           defaultValue: false,
           admin: { description: 'Show the whole image without cropping (panoramas).' },

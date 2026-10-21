@@ -208,7 +208,10 @@ const gallery: Block = {
       admin: { initCollapsed: true },
       fields: [
         mediaPick(),
-        { name: 'url', type: 'text', admin: { description: 'Or paste an image URL.' } },
+        { name: 'url', type: 'text', admin: {
+          description: 'Fallback URL, used only when no Media Library image is selected.',
+          components: { afterInput: ['/components/ImageUrlPreview#SectionImageUrlPreview'] },
+        } },
       ],
     },
   ],
@@ -221,7 +224,10 @@ const image: Block = {
   admin: NO_NAME,
   fields: [
     mediaPick(),
-    { name: 'src', type: 'text', admin: { description: 'Or paste an image URL — ignored when a Media Library image is picked above.' } },
+    { name: 'src', type: 'text', admin: {
+      description: 'Fallback URL, used only when no Media Library image is selected.',
+      components: { afterInput: ['/components/ImageUrlPreview#SectionImageUrlPreview'] },
+    } },
     { name: 'alt', type: 'text' },
     { name: 'heading', type: 'text' },
     { name: 'subheading', type: 'text' },
@@ -261,7 +267,10 @@ const imagePairSide = (name: 'left' | 'right'): Field => ({
   type: 'group',
   fields: [
     mediaPick(),
-    { name: 'src', type: 'text', admin: { description: 'Or paste an image URL.' } },
+    { name: 'src', type: 'text', admin: {
+      description: 'Fallback URL, used only when no Media Library image is selected.',
+      components: { afterInput: ['/components/ImageUrlPreview#SectionImageUrlPreview'] },
+    } },
     { name: 'alt', type: 'text' },
     { name: 'caption', type: 'text' },
   ],

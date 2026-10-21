@@ -39,6 +39,7 @@ export const BrandLogos: CollectionConfig = {
     },
     {
       name: 'logoUrl',
+      label: 'Logo URL (All languages)',
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },

@@ -46,6 +46,7 @@ export const CommunityArticles: CollectionConfig = {
     },
     {
       name: 'imageUrl',
+      label: 'Image URL (All languages)',
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
@@ -74,8 +75,9 @@ export const CommunityArticles: CollectionConfig = {
     },
     {
       name: 'images',
+      label: 'Images (All languages)',
       type: 'array',
-      fields: [{ name: 'url', type: 'text', required: true, admin: { components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] } } }],
+      fields: [{ name: 'url', label: 'Image URL (All languages)', type: 'text', required: true, admin: { components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] } } }],
     },
     {
       name: 'order',

@@ -37,6 +37,7 @@ export const Testimonials: CollectionConfig = {
     },
     {
       name: 'authorPhotoUrl',
+      label: 'Author photo URL (All languages)',
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },

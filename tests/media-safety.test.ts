@@ -6,7 +6,7 @@ import { Media } from '../src/collections/Media'
 const editor = { id: 7, roles: ['editor'], tenants: [{ tenant: 1 }] }
 const req = (user: unknown = editor) => ({
   user, context: {}, query: {},
-  payload: { findByID: async () => ({ id: 1, slug: 'roomchang' }), logger: { warn() {} } },
+  payload: { findByID: async (_args: { id: unknown }) => ({ id: 1, slug: 'roomchang' }), logger: { warn() {} } },
 })
 const validate = async (data: Record<string, unknown>, originalDoc?: Record<string, unknown>, user: unknown = editor) => {
   const hook = Media.hooks!.beforeValidate![0]!
@@ -50,6 +50,38 @@ test('new uploads fail closed when their tenant cannot be resolved', async () =>
   const request = req()
   request.payload.findByID = async () => { throw new Error('unavailable') }
   await assert.rejects(() => hook({ data: { tenant: 1 }, operation: 'create', req: request } as unknown as Parameters<typeof hook>[0]), /tenant|folder/i)
+})
+
+test('multi-membership uploads use the authorized document tenant, never the first membership', async () => {
+  const hook = Media.hooks!.beforeValidate![0]!
+  const request = req({ ...editor, tenants: [{ tenant: 1 }, { tenant: { id: 2 } }] })
+  request.payload.findByID = async ({ id }: { id: unknown }) => ({ id: Number(id), slug: Number(id) === 2 ? 'other-site' : 'roomchang' })
+  const data = await hook({ data: { tenant: { id: 2 }, prefix: 'roomchang/private' }, operation: 'create', req: request } as never)
+  assert.equal(data!.prefix, 'other-site')
+})
+
+test('upload ownership must be explicit and authorized even with a supplied prefix', async () => {
+  for (const tenant of [undefined, null, 2, { id: 2, slug: 'roomchang' }]) {
+    await assert.rejects(() => validate({ tenant, prefix: 'roomchang' }), /tenant|owner|folder/i)
+  }
+})
+
+test('trusted uploads preserve explicit deeper prefixes only after resolving document ownership', async () => {
+  for (const user of [null, { roles: ['super-admin'] }]) {
+    assert.equal((await validate({ tenant: 1, prefix: 'roomchang/doctors' }, undefined, user))!.prefix, 'roomchang/doctors')
+    await assert.rejects(() => validate({ prefix: 'roomchang/doctors' }, undefined, user), /tenant|owner|folder/i)
+    await assert.rejects(() => validate({ tenant: 1, prefix: 'other-site/doctors' }, undefined, user), /tenant|prefix|folder/i)
+  }
+})
+
+test('crop and focal controls are disabled without changing the generated focal field definitions', () => {
+  assert.equal(typeof Media.upload === 'object' && Media.upload.crop, false)
+  assert.equal(typeof Media.upload === 'object' && Media.upload.focalPoint, false)
+  for (const name of ['focalX', 'focalY']) {
+    assert.deepEqual(Media.fields.find(field => 'name' in field && field.name === name), {
+      name, type: 'number', admin: { disableGroupBy: true, disableListColumn: true, disableListFilter: true, hidden: true },
+    })
+  }
 })
 
 test('normal APIs do not allow anonymous creation or media deletion', async () => {

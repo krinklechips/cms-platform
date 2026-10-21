@@ -147,6 +147,7 @@ export const Services: CollectionConfig = {
     },
     {
       name: 'imageUrl',
+      label: 'Image URL (All languages)',
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },

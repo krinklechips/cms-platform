@@ -1,12 +1,14 @@
 import { TenantField as TenantField_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
-import { ImageUrlPreview as ImageUrlPreview_7462301dd20d90072f654d047389192b } from '../../../components/ImageUrlPreview'
+import { HeroImageUrlPreview as HeroImageUrlPreview_7462301dd20d90072f654d047389192b } from '../../../components/ImageUrlPreview'
 import { PublishingStatus as PublishingStatus_4f170ac3e9a486a1c232ad658ebe9a1b } from '../../../components/PublishingStatus'
 import { AssignTenantFieldTrigger as AssignTenantFieldTrigger_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { PreviewPublishButton as PreviewPublishButton_195e97763028237bdc82d1a53c4245fc } from '../../../components/PreviewPublishButton'
 import { HomepageSingleRedirect as HomepageSingleRedirect_b28ab2a24502ab103566306601f21301 } from '../../../components/HomepageSingleRedirect'
 import { ImageCell as ImageCell_686f17e722b2f5209effbf3003fe9a1e } from '../../../components/ImageCell'
+import { ImageUrlPreview as ImageUrlPreview_7462301dd20d90072f654d047389192b } from '../../../components/ImageUrlPreview'
 import { StatUsage as StatUsage_e76f63958c0e6f6da6b1741c5e710bba } from '../../../components/StatUsage'
 import { StatNameCell as StatNameCell_e76f63958c0e6f6da6b1741c5e710bba } from '../../../components/StatUsage'
+import { SectionImageUrlPreview as SectionImageUrlPreview_7462301dd20d90072f654d047389192b } from '../../../components/ImageUrlPreview'
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { PlatformNav as PlatformNav_d93cd8bf9ab6123ede6430df10ac9859 } from '../../../components/PlatformNav'
 import { SidebarControl as SidebarControl_6c1b9eb2d35079715d8e96016057ce39 } from '../../../components/SidebarControl'
@@ -24,14 +26,16 @@ import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc056
 /** @type import('payload').ImportMap */
 export const importMap = {
   "@payloadcms/plugin-multi-tenant/client#TenantField": TenantField_1d0591e3cf4f332c83a86da13a0de59a,
-  "/components/ImageUrlPreview#ImageUrlPreview": ImageUrlPreview_7462301dd20d90072f654d047389192b,
+  "/components/ImageUrlPreview#HeroImageUrlPreview": HeroImageUrlPreview_7462301dd20d90072f654d047389192b,
   "/components/PublishingStatus#PublishingStatus": PublishingStatus_4f170ac3e9a486a1c232ad658ebe9a1b,
   "@payloadcms/plugin-multi-tenant/client#AssignTenantFieldTrigger": AssignTenantFieldTrigger_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/PreviewPublishButton#PreviewPublishButton": PreviewPublishButton_195e97763028237bdc82d1a53c4245fc,
   "/components/HomepageSingleRedirect#HomepageSingleRedirect": HomepageSingleRedirect_b28ab2a24502ab103566306601f21301,
   "/components/ImageCell#ImageCell": ImageCell_686f17e722b2f5209effbf3003fe9a1e,
+  "/components/ImageUrlPreview#ImageUrlPreview": ImageUrlPreview_7462301dd20d90072f654d047389192b,
   "/components/StatUsage#StatUsage": StatUsage_e76f63958c0e6f6da6b1741c5e710bba,
   "/components/StatUsage#StatNameCell": StatNameCell_e76f63958c0e6f6da6b1741c5e710bba,
+  "/components/ImageUrlPreview#SectionImageUrlPreview": SectionImageUrlPreview_7462301dd20d90072f654d047389192b,
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/PlatformNav#PlatformNav": PlatformNav_d93cd8bf9ab6123ede6430df10ac9859,
   "/components/SidebarControl#SidebarControl": SidebarControl_6c1b9eb2d35079715d8e96016057ce39,

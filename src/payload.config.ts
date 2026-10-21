@@ -47,6 +47,7 @@ import { withModuleGating } from './lib/module-gating'
 import { withHostScope } from './lib/host-scope'
 import { withHumanLabels } from './lib/collection-labels'
 import { withDrafts } from './lib/with-drafts'
+import { withMediaValidation } from './lib/with-media-validation'
 import { cmsEmailAdapter } from './lib/cms-email'
 import { getPreviewUrl, PREVIEW_COLLECTIONS } from './lib/preview-routes'
 
@@ -171,7 +172,7 @@ export default buildConfig({
     withHumanLabels(Tenants),
     withHumanLabels(Modules),
     withHumanLabels(Invoices),
-  ],
+  ].map(withMediaValidation),
   endpoints: [
     // Public feature flags for the tenants' websites (e.g. the AI chatbot
     // only renders when its module is active). Hardened per Codex review:

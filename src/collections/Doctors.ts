@@ -94,6 +94,7 @@ export const Doctors: CollectionConfig = {
     },
     {
       name: 'photoUrl',
+      label: 'Photo URL (All languages)',
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' }, description: 'R2 photo URL (carried from the live site).' },

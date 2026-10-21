@@ -18,18 +18,36 @@ import {
 import type { FilterOptionsResult } from 'payload'
 import { imageUrlFromMedia, isSafeImageUrl, mediaTenantID } from './MediaPicker'
 
-/**
- * Augments the existing URL input through admin.components.afterInput.
- * Only the library's explicit selection callback writes the URL field.
- */
-export const ImageUrlPreview: React.FC<{
+type ImageUrlPreviewProps = {
   path?: string
   readOnly?: boolean
   field?: { admin?: { readOnly?: boolean } }
-}> = (props) => {
+}
+
+export const ImageUrlPreview: React.FC<ImageUrlPreviewProps> = (props) => (
+  <ImageUrlPreviewField {...props} />
+)
+
+export const HeroImageUrlPreview: React.FC<ImageUrlPreviewProps> = (props) => (
+  <ImageUrlPreviewField {...props} nativeSibling="image" />
+)
+
+export const SectionImageUrlPreview: React.FC<ImageUrlPreviewProps> = (props) => (
+  <ImageUrlPreviewField {...props} nativeSibling="media" />
+)
+
+/** Only an explicit library selection writes the URL; native relations stay independent. */
+const ImageUrlPreviewField: React.FC<ImageUrlPreviewProps & { nativeSibling?: 'image' | 'media' }> = (props) => {
   const { value, setValue, path, disabled, formInitializing, formProcessing } = useField<string>({
     potentiallyStalePath: props.path,
   })
+  // useField's current path follows reordered rows, unlike the static server prop.
+  const nativePath = props.nativeSibling && path
+    ? `${path.slice(0, path.lastIndexOf('.') + 1)}${props.nativeSibling}`
+    : undefined
+  const nativeValue = useFormFields(([fields]) => nativePath ? fields[nativePath]?.value : undefined)
+  // An unresolved relationship still takes priority; never show its fallback as active.
+  const nativeSelected = nativeValue !== null && nativeValue !== undefined && nativeValue !== ''
   const tenantField = useFormFields(([fields]) => fields.tenant)
   const { data, hasSavePermission } = useDocumentInfo()
   const { selectedTenantID } = useTenantSelection()
@@ -47,14 +65,24 @@ export const ImageUrlPreview: React.FC<{
 
   return (
     <div style={{ marginTop: 8 }}>
+      {props.nativeSibling && (
+        <p role="status" style={{ margin: '0 0 8px' }}>
+          {nativeSelected
+            ? 'Active source: Media Library. Fallback URL inactive. To use the fallback URL, remove the image using the Media Library field above.'
+            : value
+              ? 'Active source: fallback URL. No Media Library image selected.'
+              : 'No image selected. Choose a Media Library image or enter a fallback URL.'}
+        </p>
+      )}
       <MediaPickerControls
         // Discard open drawers and their callbacks when the editing context changes.
-        key={JSON.stringify([path, tenantID, locale.code, readOnly, value])}
+        key={JSON.stringify([path, tenantID, locale.code, readOnly, value, nativePath, nativeValue])}
         tenantID={tenantID}
         readOnly={readOnly}
+        fallback={nativeSelected}
         onSelect={setValue}
       />
-      {value &&
+      {!nativeSelected && value &&
         (isSafeImageUrl(value) ? (
           <ImagePreview key={value} url={value} />
         ) : (
@@ -67,8 +95,9 @@ export const ImageUrlPreview: React.FC<{
 const MediaPickerControls: React.FC<{
   tenantID: number | string | null
   readOnly: boolean
+  fallback: boolean
   onSelect: (url: string) => void
-}> = ({ tenantID, readOnly, onSelect }) => {
+}> = ({ tenantID, readOnly, fallback, onSelect }) => {
   const { permissions } = useAuth()
   const [error, setError] = useState('')
   const [uploaded, setUploaded] = useState(false)
@@ -115,7 +144,7 @@ const MediaPickerControls: React.FC<{
             list.openDrawer()
           }}
         >
-          Select image
+          {fallback ? 'Select image for fallback URL' : 'Select image'}
         </Button>
         <Button
           type="button"
@@ -130,12 +159,14 @@ const MediaPickerControls: React.FC<{
             upload.openDrawer()
           }}
         >
-          Upload image
+          {fallback ? 'Upload image for fallback URL' : 'Upload image'}
         </Button>
       </div>
       {tenantID === null && <p role="status">Choose a tenant before selecting or uploading an image.</p>}
       {error && <p role="alert">{error}</p>}
-      {uploaded && <p role="status">Image uploaded. Select image to use it here.</p>}
+      {uploaded && <p role="status">{fallback
+        ? 'Image uploaded. Select image to set the fallback URL; the Media Library image remains active.'
+        : 'Image uploaded. Select image to use it here.'}</p>}
       {canSelect && list.isDrawerOpen && (
         <ListDrawer
           allowCreate={false}

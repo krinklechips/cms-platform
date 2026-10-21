@@ -91,6 +91,7 @@ export const Branches: CollectionConfig = {
     },
     {
       name: 'imageUrl',
+      label: 'Image URL (All languages)',
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
@@ -111,6 +112,7 @@ export const Branches: CollectionConfig = {
     },
     {
       name: 'photos',
+      label: 'Photos (All languages)',
       type: 'json',
       admin: {
         description: 'Branch photos JSON — carried from the live site losslessly.',
