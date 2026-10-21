@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { getStatRecordHref } from '../lib/stat-pages'
 
 /**
  * SiteStats — mirrors the live site's `site_stats` table (Supabase).
@@ -10,6 +11,22 @@ export const SiteStats: CollectionConfig = {
     group: 'Home Page',
     useAsTitle: 'key',
     defaultColumns: ['key', 'displayValue', 'label', 'published', 'order'],
+    formatDocURL: ({ defaultURL, doc, req, viewType }) => {
+      if (viewType === 'trash' || typeof doc.key !== 'string' || (typeof doc.id !== 'string' && typeof doc.id !== 'number')) return defaultURL
+      const adminRoute = req.payload.config.routes.admin
+      let page = req.query?.statPage
+      // Table preference refreshes use a server action with the list in its referrer.
+      if (typeof page !== 'string') {
+        try {
+          const referrer = req.headers.get('referer')
+          const url = referrer ? new URL(referrer) : null
+          if (url?.pathname === `${adminRoute}/collections/site-stats`) page = url.searchParams.get('statPage')
+        } catch {
+          // Missing or malformed referrers use the statistic's primary page.
+        }
+      }
+      return getStatRecordHref(doc.key, doc.id, page, adminRoute)
+    },
   },
   access: {
     read: () => true,

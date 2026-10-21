@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import * as stats from '../src/lib/stat-pages'
 import { isNavigationItemActive } from '../src/lib/navigation-state'
+import { SiteStats } from '../src/collections/SiteStats'
 
 const groups = [
   { label: 'Home Page', items: [
@@ -79,4 +80,27 @@ test('only the relevant page shortcut is active on filtered lists and record edi
   }
   assert.equal(isNavigationItemActive('/admin/collections/site-stats-extra', clinical, 'statPage=clinical'), false)
   assert.equal(isNavigationItemActive('/admin/collections/doctors/1', '/admin/collections/doctors', 'locale=cn'), true)
+})
+
+test('collection-wide document URLs preserve context even when the Statistic column is hidden', () => {
+  const format = SiteStats.admin?.formatDocURL
+  assert.equal(typeof format, 'function')
+  assert.notEqual(SiteStats.admin?.enableListViewSelectAPI, true, 'URL metadata must remain available with other columns selected')
+  if (!format) return
+  const doc = Object.freeze({ id: 2, key: 'specialist_dentists', displayValue: '37', label: 'Dentists' })
+  const req = { query: { statPage: 'clinical' }, headers: new Headers(), payload: { config: { routes: { admin: '/admin' } } } }
+  const result = format({ collectionSlug: 'site-stats', defaultURL: '/admin/collections/site-stats/2', doc, req, viewType: 'list' } as unknown as Parameters<typeof format>[0])
+  assert.equal(result, '/admin/collections/site-stats/2?statPage=clinical')
+})
+
+test('column-refresh server actions retain context from the referring CMS list without changing records', () => {
+  const format = SiteStats.admin?.formatDocURL
+  assert.equal(typeof format, 'function')
+  if (!format) return
+  const doc = Object.freeze({ id: 2, key: 'specialist_dentists', displayValue: '37' })
+  const req = { query: {}, headers: new Headers({ referer: 'https://roomchang.serviettelab.com/manage/collections/site-stats?statPage=facilities' }), payload: { config: { routes: { admin: '/manage' } } } }
+  const args = { collectionSlug: 'site-stats', defaultURL: '/manage/collections/site-stats/2', doc, req, viewType: 'list' } as unknown as Parameters<typeof format>[0]
+  assert.equal(format(args), '/manage/collections/site-stats/2?statPage=facilities')
+  assert.equal(format({ ...args, viewType: 'trash', defaultURL: '/manage/collections/site-stats/trash/2' }), '/manage/collections/site-stats/trash/2')
+  assert.deepEqual(doc, { id: 2, key: 'specialist_dentists', displayValue: '37' })
 })
