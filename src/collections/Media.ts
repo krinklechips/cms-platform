@@ -1,4 +1,5 @@
-import type { CollectionConfig } from 'payload'
+import { randomUUID } from 'node:crypto'
+import { APIError, type CollectionConfig } from 'payload'
 import { getHostTenant } from '../lib/host-scope'
 
 /**
@@ -12,13 +13,18 @@ import { getHostTenant } from '../lib/host-scope'
  */
 export const Media: CollectionConfig = {
   slug: 'media',
+  disableDuplicate: true,
   admin: {
     group: 'Media Library',
+    description: 'Public website files. Upload a new file to replace an image, then select it on the page. Existing files are kept to protect published pages. Do not upload private patient records.',
     defaultColumns: ['filename', 'alt', 'prefix', 'updatedAt'],
     // NOTE: not hidden — hidden:true blocks the route itself. The super-admin
     // sidebar is slimmed by the custom PlatformNav component instead.
   },
   access: {
+    create: ({ req }) => Boolean(req.user),
+    update: ({ req }) => Boolean(req.user),
+    delete: () => false,
     // Anon reads on a TENANT host are scoped to that tenant's files (Bar-A
     // audit: read () => true exposed every tenant's media, including
     // unpublished uploads, to any caller). PLATFORM HOST CLOSED 2026-08-31 —
@@ -32,9 +38,44 @@ export const Media: CollectionConfig = {
     },
   },
   hooks: {
+    beforeOperation: [
+      ({ operation, req, args }) => {
+        if (operation === 'delete' && req.context.mediaMaintenance !== true) {
+          throw new APIError('Existing files are protected. Deletion requires a reviewed maintenance operation.', 409)
+        }
+        if (operation === 'update') {
+          const edits = req.query?.uploadEdits
+          if (req.file || (edits && typeof edits === 'object' && Object.keys(edits).length > 0)) {
+            throw new APIError('Upload a new file and select it on the page instead of replacing or editing this file.', 409)
+          }
+          if ('data' in args && args.data) {
+            // Refocal changes cause Payload to fetch and rewrite the file before validation.
+            delete args.data.focalX
+            delete args.data.focalY
+          }
+        }
+        if (operation === 'create') {
+          if ('duplicateFromID' in args && args.duplicateFromID) {
+            throw new APIError('Upload a new file instead of duplicating an existing file.', 409)
+          }
+          if (req.file) req.file.name = `${randomUUID()}-${req.file.name}`
+          if ('overwriteExistingFiles' in args) args.overwriteExistingFiles = false
+        }
+        return args
+      },
+    ],
     beforeValidate: [
-      async ({ data, req }) => {
+      async ({ data, req, operation, originalDoc }) => {
         if (!data) return data
+
+        if (operation === 'update' && originalDoc) {
+          // Metadata updates must never change the identity of a shared storage object.
+          for (const field of ['tenant', 'prefix', 'filename', 'url', 'mimeType', 'filesize', 'width', 'height', 'sizes', 'focalX', 'focalY']) {
+            if (Object.hasOwn(originalDoc, field)) data[field] = originalDoc[field]
+            else delete data[field]
+          }
+          return data
+        }
 
         const resolveSlug = async (tenantId: unknown): Promise<string | undefined> => {
           if (!tenantId) return undefined
@@ -47,7 +88,7 @@ export const Media: CollectionConfig = {
             })) as { slug?: string }
             return tenant?.slug
           } catch {
-            req.payload.logger.warn('media prefix hook: could not resolve tenant — using default prefix')
+            req.payload.logger.warn('media prefix hook: could not resolve tenant')
             return undefined
           }
         }
@@ -66,7 +107,8 @@ export const Media: CollectionConfig = {
               ? (ownTenant as { id?: number | string }).id
               : ownTenant
           const slug = await resolveSlug(ownTenantId)
-          if (slug) data.prefix = slug
+          if (!slug) throw new APIError('The upload tenant folder could not be resolved. Please retry.', 503)
+          data.prefix = slug
           return data
         }
 
@@ -93,5 +135,5 @@ export const Media: CollectionConfig = {
       localized: true,
     },
   ],
-  upload: true,
+  upload: { hideRemoveFile: true },
 }
