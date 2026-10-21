@@ -35,7 +35,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
   },
   'site-stats': {
     singular: "Website Statistic",
-    plural: "Website Statistics",
+    plural: "Stats Band",
     description:
       "Statistics for Home page, Our Team, About Roomchang, Our Facilities and Clinical Results.",
   },

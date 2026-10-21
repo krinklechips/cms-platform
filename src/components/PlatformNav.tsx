@@ -7,6 +7,7 @@ import { getTenantByHost, normalizeHost } from '@/lib/get-tenant-by-host'
 import { TenantNavigation, type TenantNavigationGroup } from './TenantNavigation'
 import { TenantNavBanner } from './TenantNavBanner'
 import { PlatformBackLink } from './PlatformBackLink'
+import { withStatPageLinks } from '@/lib/stat-pages'
 
 /**
  * Custom admin Nav — three cases:
@@ -118,7 +119,7 @@ export const PlatformNav: React.FC<NavServerProps> = async (props) => {
         id: `nav-${entity.slug}`,
       })),
     }))
-    return <TenantNavigation groups={navigation} identity={<TenantNavBanner payload={props.payload} user={props.user} />} footer={<PlatformBackLink payload={props.payload} user={props.user} />} />
+    return <TenantNavigation groups={withStatPageLinks(navigation, props.payload.config.routes.admin)} identity={<TenantNavBanner payload={props.payload} user={props.user} />} footer={<PlatformBackLink payload={props.payload} user={props.user} />} />
   }
 
   // Super-admin on a tenant's own domain → give them that tenant's workspace.

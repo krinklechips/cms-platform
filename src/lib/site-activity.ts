@@ -1,7 +1,7 @@
 import type { CollectionSlug, Payload, TypedUser } from 'payload'
 import { CONTENT_COLLECTION_SLUGS } from './content-collections'
 import { COLLECTION_LABELS } from './collection-labels'
-import { getStatLabel, getStatPageSummary } from './stat-pages'
+import { getStatLabel, getStatPageSummary, getStatRecordHref } from './stat-pages'
 
 export type RecentDoc = {
   collection: string
@@ -10,6 +10,7 @@ export type RecentDoc = {
   label: string
   updatedAt: string
   agoText: string
+  href?: string
 }
 
 export type UnpublishedDoc = Omit<RecentDoc, 'agoText'>
@@ -64,6 +65,7 @@ export const gatherActivity = async (payload: Payload, tenantId: number | string
         collection: slug,
         id: doc.id,
         title: typeof title === 'string' && title.trim() ? title : `#${doc.id}`,
+        ...(slug === 'site-stats' && typeof doc.key === 'string' ? { href: getStatRecordHref(doc.key, doc.id) } : {}),
         label: COLLECTION_LABELS[slug]?.singular ?? slug,
         updatedAt,
         agoText: updatedAt ? agoText(updatedAt) : '',

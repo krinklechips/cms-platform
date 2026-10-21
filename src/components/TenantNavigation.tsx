@@ -2,13 +2,10 @@
 
 import React from 'react'
 import { ChevronIcon, Link, XIcon, useNav } from '@payloadcms/ui'
-import { usePathname } from 'next/navigation'
-import { isNavigationItemActive } from '@/lib/navigation-state'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { isNavigationItemActive, type NavigationGroup } from '@/lib/navigation-state'
 
-export type TenantNavigationGroup = {
-  label: string
-  items: { label: string; href: string; id: string }[]
-}
+export type TenantNavigationGroup = NavigationGroup
 
 export const TenantNavigation = ({ groups, identity, footer }: {
   groups: TenantNavigationGroup[]
@@ -16,8 +13,9 @@ export const TenantNavigation = ({ groups, identity, footer }: {
   footer?: React.ReactNode
 }) => {
   const pathname = usePathname()
+  const search = useSearchParams().toString()
   const { navOpen, navRef, hydrated, shouldAnimate, setNavOpen } = useNav()
-  const isActive = (href: string) => isNavigationItemActive(pathname, href)
+  const isActive = (href: string) => isNavigationItemActive(pathname, href, search)
   return (
     <aside id="cms-tenant-navigation" className={`nav cms-tenant-nav${navOpen ? ' nav--nav-open' : ''}${hydrated ? ' nav--nav-hydrated' : ''}${shouldAnimate ? ' nav--nav-animate' : ''}`} inert={!navOpen || undefined}>
       <button className="cms-nav-dismiss" type="button" onClick={() => setNavOpen(false)} aria-label="Close navigation" title="Close navigation"><XIcon /></button>

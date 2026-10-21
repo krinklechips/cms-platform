@@ -1,13 +1,20 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import { DefaultCell, useDocumentTitle, useFormFields, useListDrawerContext } from '@payloadcms/ui'
+import { DefaultCell, Link, useConfig, useDocumentTitle, useFormFields, useListDrawerContext } from '@payloadcms/ui'
+import { useSearchParams } from 'next/navigation'
 import type { DefaultCellComponentProps } from 'payload'
-import { getStatLabel, getStatPageSummary } from '@/lib/stat-pages'
+import { getStatLabel, getStatPageLinks, getStatPageSummary, getStatRecordHref } from '@/lib/stat-pages'
 
 export const StatNameCell = (props: DefaultCellComponentProps) => {
   const key = typeof props.rowData?.key === 'string' ? props.rowData.key : ''
   const { drawerSlug, onSelect } = useListDrawerContext()
+  const search = useSearchParams()
+  const { config: { routes: { admin: adminRoute } } } = useConfig()
+  const id = props.rowData?.id
+  const linkURL = props.linkURL ?? (typeof id === 'string' || typeof id === 'number'
+    ? getStatRecordHref(key, id, search.get('statPage'), adminRoute)
+    : undefined)
   // Custom cells bypass Payload's normal drawer-selection adapter.
   const selection = drawerSlug && props.link !== false ? {
     link: false,
@@ -16,7 +23,7 @@ export const StatNameCell = (props: DefaultCellComponentProps) => {
     },
   } : {}
   return <div>
-    <DefaultCell {...props} {...selection} cellData={getStatLabel(key)} />
+    <DefaultCell {...props} {...selection} linkURL={linkURL} cellData={getStatLabel(key)} />
     <div style={{ marginTop: 4, maxWidth: 360, whiteSpace: 'normal', fontSize: 14, lineHeight: 1.5, color: 'var(--theme-elevation-600)' }}>
       {getStatPageSummary(key)}
     </div>
@@ -26,6 +33,8 @@ export const StatNameCell = (props: DefaultCellComponentProps) => {
 export const StatUsage = () => {
   const key = useFormFields(([fields]) => fields.key?.value as string | undefined)
   const { title, setDocumentTitle } = useDocumentTitle()
+  const { config: { routes: { admin: adminRoute } } } = useConfig()
+  const links = getStatPageLinks(key ?? '', adminRoute)
   useEffect(() => {
     if (!key) return
     const label = `${getStatLabel(key)} (${getStatPageSummary(key)})`
@@ -33,6 +42,9 @@ export const StatUsage = () => {
   }, [key, title, setDocumentTitle])
   return <div className="field-type">
     <span className="field-label">Pages updated</span>
-    <p>{getStatPageSummary(key ?? '')}</p>
+    <p>{links.length ? links.map((link, index) => <React.Fragment key={link.href}>
+      {index > 0 && ', '}<Link href={link.href} prefetch={false}>{link.label}</Link>
+      {links.length === 1 && ' only'}
+    </React.Fragment>) : 'Not currently displayed'}</p>
   </div>
 }

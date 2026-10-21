@@ -24,11 +24,14 @@ if (!Window) {
   let drawer: { drawerSlug?: string; onSelect?: (args: unknown) => void } = {}
   let cellProps: any
   let documentTitle = ''
+  let statPage = 'clinical'
   const selected: unknown[] = []
   const row = Object.freeze({ id: 11, key: 'clinical_experience', displayValue: '30 年', _status: 'draft' })
   const ui = {
     useFormFields: (select: any) => select([{ key: { value: key } }]),
     useListDrawerContext: () => drawer,
+    useConfig: () => ({ config: { routes: { admin: '/admin' } } }),
+    Link: ({ children, prefetch: _prefetch, ...props }: any) => React.createElement('a', props, children),
     useDocumentTitle: () => {
       const [title, setDocumentTitle] = React.useState(key)
       documentTitle = title
@@ -48,6 +51,7 @@ if (!Window) {
   new Function('require', 'module', 'exports', compiled)((name: string) => {
     if (name === '@payloadcms/ui') return ui
     if (name === '@/lib/stat-pages') return statPages
+    if (name === 'next/navigation') return { useSearchParams: () => new URLSearchParams({ statPage }) }
     return require(name)
   }, output, output.exports)
   const props = { cellData: row.key, rowData: row, collectionSlug: 'site-stats', field: { name: 'key', type: 'text' }, link: true, linkURL: '/admin/collections/site-stats/11' }
@@ -58,6 +62,7 @@ if (!Window) {
     drawer = {}
     cellProps = undefined
     documentTitle = ''
+    statPage = 'clinical'
     selected.length = 0
   })
   after(async () => {
@@ -84,6 +89,11 @@ if (!Window) {
     assert.equal(cellProps.link, false)
   })
 
+  test('record links retain the originating page while opening the existing statistic ID', async () => {
+    await renderCell({ linkURL: undefined })
+    assert.equal(container.querySelector('a')?.getAttribute('href'), '/admin/collections/site-stats/11?statPage=clinical')
+  })
+
   test('non-linked columns do not become drawer selection buttons', async () => {
     drawer = { drawerSlug: 'stat-picker', onSelect: (value) => selected.push(value) }
     await renderCell({ link: false })
@@ -103,10 +113,14 @@ if (!Window) {
     await act(() => root.render(React.createElement(output.exports.StatUsage)))
     assert.equal(documentTitle, 'Clinical experience (Clinical Results only)')
     assert.match(container.textContent!, /Pages updatedClinical Results only/)
+    const clinicalLink = container.querySelector('a')?.getAttribute('href')
+    assert.ok(clinicalLink)
+    assert.equal(new URL(clinicalLink, 'https://cms.example.test').searchParams.get('statPage'), 'clinical')
     key = 'years_experience'
     await act(() => root.render(React.createElement(output.exports.StatUsage)))
     assert.equal(documentTitle, 'Years of experience (Home page, Our Team)')
     assert.match(container.textContent!, /Home page, Our Team/)
+    assert.deepEqual(Array.from(container.querySelectorAll('a')).map((link) => new URL(link.href).searchParams.get('statPage')), ['home', 'team'])
     assert.deepEqual(row, { id: 11, key: 'clinical_experience', displayValue: '30 年', _status: 'draft' })
   })
 }

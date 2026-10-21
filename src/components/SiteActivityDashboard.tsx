@@ -87,8 +87,8 @@ const S: Record<string, React.CSSProperties> = {
   },
 }
 
-const docHref = (d: { collection: string; id: string | number }): string =>
-  `/admin/collections/${d.collection}/${d.id}`
+const docHref = (d: { collection: string; id: string | number; href?: string }): string =>
+  d.href ?? `/admin/collections/${d.collection}/${d.id}`
 
 export const SiteActivityDashboard: React.FC<Props> = ({
   tenantName,

@@ -6,10 +6,10 @@ import * as statPages from '../src/lib/stat-pages'
 import { gatherActivity } from '../src/lib/site-activity'
 import type { Payload, TypedUser } from 'payload'
 
-test('website-wide statistics are not presented as a homepage-only band', () => {
+test('the original Home Page stats-band location is retained with readable statistic labels', () => {
   const collection = withHumanLabels(SiteStats)
-  assert.equal(collection.admin?.group, 'Shared Content')
-  assert.equal(collection.labels?.plural, 'Website Statistics')
+  assert.equal(collection.admin?.group, 'Home Page')
+  assert.equal(collection.labels?.plural, 'Stats Band')
   const key = collection.fields.find((field) => 'name' in field && field.name === 'key')
   assert.equal(key?.admin?.components?.Cell, '/components/StatUsage#StatNameCell')
 })
@@ -44,6 +44,7 @@ test('activity labels distinguish pages without changing the underlying document
   const activity = await gatherActivity(payload, 1, { id: 1 } as TypedUser)
   assert.equal(activity.recent[0].title, 'Clinical experience (Clinical Results only)')
   assert.equal(activity.unpublished[0].title, 'Clinical experience (Clinical Results only)')
+  assert.equal(activity.recent[0].href, '/admin/collections/site-stats/11?statPage=clinical')
   assert.deepEqual(doc, before)
 })
 

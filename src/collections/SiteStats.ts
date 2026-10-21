@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const SiteStats: CollectionConfig = {
   slug: 'site-stats',
   admin: {
-    group: 'Shared Content',
+    group: 'Home Page',
     useAsTitle: 'key',
     defaultColumns: ['key', 'displayValue', 'label', 'published', 'order'],
   },
