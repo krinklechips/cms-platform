@@ -119,3 +119,22 @@ index 97f4381..c38a79d 100644
                                          const merged = mergeLocalizedData({
                                              configBlockReferences,
                                              dataWithLocales: newBlockData,
+diff --git a/node_modules/payload/dist/versions/saveVersion.js b/node_modules/payload/dist/versions/saveVersion.js
+index 898b667..8e0cf41 100644
+--- a/node_modules/payload/dist/versions/saveVersion.js
++++ b/node_modules/payload/dist/versions/saveVersion.js
+@@ -59,7 +59,13 @@ export async function saveVersion({ id, autosave, collection, docWithLocales, dr
+                     id,
+                     autosave,
+                     collection,
+-                    data: snapshot,
++                    // The new snapshot belongs to this save, even when retaining other locales' drafts.
++                    data: {
++                        ...snapshot,
++                        ...((collection?.timestamps || global) && versionData.updatedAt ? {
++                            updatedAt: versionData.updatedAt
++                        } : {})
++                    },
+                     global,
+                     payload,
+                     publishSpecificLocale,
