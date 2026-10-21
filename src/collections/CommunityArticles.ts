@@ -75,7 +75,7 @@ export const CommunityArticles: CollectionConfig = {
     {
       name: 'images',
       type: 'array',
-      fields: [{ name: 'url', type: 'text', required: true }],
+      fields: [{ name: 'url', type: 'text', required: true, admin: { components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'] } } }],
     },
     {
       name: 'order',

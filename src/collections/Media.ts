@@ -70,7 +70,7 @@ export const Media: CollectionConfig = {
 
         if (operation === 'update' && originalDoc) {
           // Metadata updates must never change the identity of a shared storage object.
-          for (const field of ['tenant', 'prefix', 'filename', 'url', 'mimeType', 'filesize', 'width', 'height', 'sizes', 'focalX', 'focalY']) {
+          for (const field of ['tenant', 'prefix', '_objectKey', 'filename', 'url', 'mimeType', 'filesize', 'width', 'height', 'sizes', 'focalX', 'focalY']) {
             if (Object.hasOwn(originalDoc, field)) data[field] = originalDoc[field]
             else delete data[field]
           }

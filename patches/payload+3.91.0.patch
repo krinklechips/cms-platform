@@ -1,57 +1,52 @@
 diff --git a/node_modules/payload/dist/collections/operations/restoreVersion.js b/node_modules/payload/dist/collections/operations/restoreVersion.js
-index 576e901..a140ce7 100644
+index 178d444..621e2e7 100644
 --- a/node_modules/payload/dist/collections/operations/restoreVersion.js
 +++ b/node_modules/payload/dist/collections/operations/restoreVersion.js
-@@ -18,7 +18,8 @@ import { saveVersion } from '../../versions/saveVersion.js';
+@@ -21,7 +21,8 @@ import { saveVersion } from '../../versions/saveVersion.js';
  import { buildAfterOperation } from './utilities/buildAfterOperation.js';
  import { buildBeforeOperation } from './utilities/buildBeforeOperation.js';
  export const restoreVersionOperation = async (args)=>{
 -    const { id, collection: { config: collectionConfig }, depth, draft: draftArg = false, overrideAccess = false, populate, req, req: { fallbackLocale, locale, payload }, select: incomingSelect, showHiddenFields } = args;
-+    const { id, collection: { config: collectionConfig }, depth, overrideAccess = false, populate, req, req: { fallbackLocale, locale, payload }, select: incomingSelect, showHiddenFields } = args;
++    const { id, collection: { config: collectionConfig }, depth, draft: requestedDraft = false, overrideAccess = false, populate, req, req: { fallbackLocale, locale, payload }, select: incomingSelect, showHiddenFields } = args;
 +    const previousRestoringVersion = req.context.isRestoringVersion;
      try {
          const shouldCommit = !args.disableTransaction && await initTransaction(args.req);
          // /////////////////////////////////////
-@@ -30,6 +31,12 @@ export const restoreVersionOperation = async (args)=>{
+@@ -33,6 +34,11 @@ export const restoreVersionOperation = async (args)=>{
              operation: 'restoreVersion',
              overrideAccess
          });
-+        // Opt-in collections prepare a bounded all-locale snapshot in their application hook.
 +        const scopedRestore = collectionConfig.custom?.localeScopedRestore ? req.context.localeScopedRestore : undefined;
 +        if (collectionConfig.custom?.localeScopedRestore && (typeof scopedRestore?.prepareSnapshot !== 'function' || scopedRestore.collection !== collectionConfig.slug || scopedRestore.versionID !== String(id) || scopedRestore.locale !== locale)) {
 +            throw new APIError('Missing safe locale restore snapshot.', httpStatus.BAD_REQUEST);
 +        }
-+        const draftArg = scopedRestore ? true : (args.draft ?? false);
++        const draftArg = scopedRestore ? true : requestedDraft;
          if (!id) {
              throw new APIError('Missing ID of version to restore.', httpStatus.BAD_REQUEST);
          }
-@@ -52,7 +59,10 @@ export const restoreVersionOperation = async (args)=>{
-         if (!rawVersionToRestore) {
+@@ -56,6 +62,9 @@ export const restoreVersionOperation = async (args)=>{
              throw new NotFound(req.t);
          }
--        const { parent: parentDocID, version: versionToRestoreWithLocales } = rawVersionToRestore;
-+        const { parent: parentDocID } = rawVersionToRestore;
+         const { parent: parentDocID } = rawVersionToRestore;
 +        if (scopedRestore && scopedRestore.parentID !== String(parentDocID)) {
 +            throw new APIError('Locale restore snapshot parent mismatch.', httpStatus.BAD_REQUEST);
 +        }
+         let versionToRestoreWithLocales = rawVersionToRestore.version;
          // /////////////////////////////////////
          // Access
-         // /////////////////////////////////////
-@@ -95,8 +105,12 @@ export const restoreVersionOperation = async (args)=>{
+@@ -118,8 +127,10 @@ export const restoreVersionOperation = async (args)=>{
              query: findOneArgs,
              req
          });
-+        // Preserve unfiltered stored values, but only after the native parent update policy succeeds.
-+        const versionToRestoreWithLocales = scopedRestore
-+            ? scopedRestore.prepareSnapshot(prevDocWithLocales, rawVersionToRestore.version)
-+            : rawVersionToRestore.version;
++        // Keep upstream status/parent authorization before preparing the bounded snapshot.
++        if (scopedRestore) versionToRestoreWithLocales = scopedRestore.prepareSnapshot(prevDocWithLocales, rawVersionToRestore.version);
          // originalDoc with hoisted localized data
 -        const validationLocale = payload.config.localization ? payload.config.localization.defaultLocale : locale;
 +        const validationLocale = scopedRestore?.locale ?? (payload.config.localization ? payload.config.localization.defaultLocale : locale);
          const originalDoc = await afterRead({
              collection: collectionConfig,
              context: req.context,
-@@ -115,7 +129,7 @@ export const restoreVersionOperation = async (args)=>{
+@@ -141,7 +152,7 @@ export const restoreVersionOperation = async (args)=>{
              collection: collectionConfig,
              context: req.context,
              depth: 0,
@@ -60,17 +55,16 @@ index 576e901..a140ce7 100644
              draft: draftArg,
              fallbackLocale: null,
              global: null,
-@@ -127,7 +141,8 @@ export const restoreVersionOperation = async (args)=>{
+@@ -159,7 +170,7 @@ export const restoreVersionOperation = async (args)=>{
          // /////////////////////////////////////
          // beforeValidate - Fields
          // /////////////////////////////////////
 -        req.context.isRestoringVersion = true;
-+        // A scoped restore is a partial update: denied fields must fall back to their CURRENT values.
 +        req.context.isRestoringVersion = !scopedRestore;
-         const reqWithValidationLocale = Object.assign(Object.create(req), req, {
-             fallbackLocale: null,
-             locale: validationLocale
-@@ -307,6 +322,12 @@ export const restoreVersionOperation = async (args)=>{
+         const reqWithValidationLocale = isolateObjectProperty(req, [
+             'fallbackLocale',
+             'locale'
+@@ -341,7 +352,13 @@ export const restoreVersionOperation = async (args)=>{
      } catch (error) {
          await killTransaction(req);
          throw error;
@@ -83,14 +77,15 @@ index 576e901..a140ce7 100644
      }
  };
  
+-//# sourceMappingURL=restoreVersion.js.map
+\ No newline at end of file
++//# sourceMappingURL=restoreVersion.js.map
 diff --git a/node_modules/payload/dist/utilities/mergeLocalizedData.js b/node_modules/payload/dist/utilities/mergeLocalizedData.js
-index 97f4381..c38a79d 100644
+index 97f4381..e28c9e6 100644
 --- a/node_modules/payload/dist/utilities/mergeLocalizedData.js
 +++ b/node_modules/payload/dist/utilities/mergeLocalizedData.js
-@@ -1,4 +1,12 @@
+@@ -1,4 +1,10 @@
  import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/config/types.js';
-+// Shared rows can move while only one locale is published. Match their identity,
-+// never another row's position, when preserving the unpublished locales.
 +function existingRow(rows, row, index) {
 +    if (!Array.isArray(rows)) return {};
 +    if (row?.id != null) return rows.find((existing)=>existing?.id != null && String(existing.id) === String(row.id)) || {};
@@ -100,7 +95,7 @@ index 97f4381..c38a79d 100644
  /**
   * Collects field names at the current data level, recursing through pass-through fields
   * (row, collapsible, unnamed group, unnamed tab) but stopping at named fields.
-@@ -74,7 +82,7 @@ import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/
+@@ -74,7 +80,7 @@ import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/
                              } else if (Array.isArray(newValue)) {
                                  // Non-localized array - still process children for any localized fields
                                  result[field.name] = newValue.map((newItem, index)=>{
@@ -109,7 +104,7 @@ index 97f4381..c38a79d 100644
                                      return mergeLocalizedData({
                                          configBlockReferences,
                                          dataWithLocales: newItem,
-@@ -125,7 +133,8 @@ import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/
+@@ -125,7 +131,8 @@ import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/
                                          block = field.blocks.find((b)=>b.slug === newBlockData.blockType);
                                      }
                                      if (block) {
@@ -119,22 +114,33 @@ index 97f4381..c38a79d 100644
                                          const merged = mergeLocalizedData({
                                              configBlockReferences,
                                              dataWithLocales: newBlockData,
+@@ -309,4 +316,4 @@ import { fieldAffectsData, fieldShouldBeLocalized, tabHasName } from '../fields/
+     return result;
+ }
+ 
+-//# sourceMappingURL=mergeLocalizedData.js.map
+\ No newline at end of file
++//# sourceMappingURL=mergeLocalizedData.js.map
 diff --git a/node_modules/payload/dist/versions/saveVersion.js b/node_modules/payload/dist/versions/saveVersion.js
-index 898b667..8e0cf41 100644
+index 898b667..bafe9f4 100644
 --- a/node_modules/payload/dist/versions/saveVersion.js
 +++ b/node_modules/payload/dist/versions/saveVersion.js
-@@ -59,7 +59,13 @@ export async function saveVersion({ id, autosave, collection, docWithLocales, dr
+@@ -59,7 +59,10 @@ export async function saveVersion({ id, autosave, collection, docWithLocales, dr
                      id,
                      autosave,
                      collection,
 -                    data: snapshot,
-+                    // The new snapshot belongs to this save, even when retaining other locales' drafts.
 +                    data: {
 +                        ...snapshot,
-+                        ...((collection?.timestamps || global) && versionData.updatedAt ? {
-+                            updatedAt: versionData.updatedAt
-+                        } : {})
++                        ...((collection?.timestamps || global) && versionData.updatedAt ? { updatedAt: versionData.updatedAt } : {})
 +                    },
                      global,
                      payload,
                      publishSpecificLocale,
+@@ -102,4 +105,4 @@ export async function saveVersion({ id, autosave, collection, docWithLocales, dr
+     return createdVersion;
+ }
+ 
+-//# sourceMappingURL=saveVersion.js.map
+\ No newline at end of file
++//# sourceMappingURL=saveVersion.js.map

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import pg from 'pg'
-import { drizzle } from 'drizzle-orm/node-postgres'
+import { drizzle } from '@payloadcms/db-postgres/drizzle/node-postgres'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { buildConfig, getPayload, type CollectionSlug, type Payload } from 'payload'
 import { migrations } from '../src/migrations'

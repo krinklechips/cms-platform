@@ -9,12 +9,18 @@ export const BookingSlots: CollectionConfig = {
     group: 'Inbox',
     useAsTitle: 'date',
     defaultColumns: ['date', 'time', 'branch', 'doctor', 'status'],
+    description: 'Read-only snapshot from the last approved import, not live availability or booking management. Bookings, cancellations and slot changes remain in the clinic dashboard (Supabase). CMS records may be stale; no changes here are sent back.',
   },
   access: {
     // Patient booking data — NEVER public. Require a logged-in user; the
     // multi-tenant plugin scopes reads to the user's own tenant, super-admins
     // see all. No public consumer reads booking slots from the CMS.
     read: ({ req: { user } }) => Boolean(user),
+    // Deny ordinary CMS/API writes without blocking trusted Local API imports
+    // that explicitly use overrideAccess.
+    create: () => false,
+    update: () => false,
+    delete: () => false,
   },
   fields: [
     {

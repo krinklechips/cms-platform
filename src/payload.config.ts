@@ -47,7 +47,8 @@ import { withModuleGating } from './lib/module-gating'
 import { withHostScope } from './lib/host-scope'
 import { withHumanLabels } from './lib/collection-labels'
 import { withDrafts } from './lib/with-drafts'
-import { getStatPages } from './lib/stat-pages'
+import { cmsEmailAdapter } from './lib/cms-email'
+import { getPreviewUrl, PREVIEW_COLLECTIONS } from './lib/preview-routes'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -66,6 +67,7 @@ const dirname = path.dirname(filename)
  * installed) and set DATABASE_URL in .env.
  */
 export default buildConfig({
+  email: cmsEmailAdapter(),
   i18n: {
     translations: {
       en: {
@@ -88,7 +90,7 @@ export default buildConfig({
     // the logo URL as a prop if we want the login screen branded per tenant.
     //
     components: {
-      header: ['/components/SidebarControl#SidebarControl'],
+      header: ['/components/SidebarControl#SidebarControl', '/components/CmsContentTypography#CmsContentTypography'],
       // Full Dashboard override (not beforeDashboard): super-admins see ONLY
       // the Serviette HQ cockpit; tenant users get Payload's DefaultDashboard.
       // Removes the confusing "cockpit + default collection cards" stack.
@@ -123,68 +125,8 @@ export default buildConfig({
       // Eye icon → the REAL page on the dummy site (roomchang-sandbox on
       // Vercel, CONTENT_SOURCE=payload), refreshed on save. Each collection
       // maps to the page it renders on.
-      url: ({ data, locale, collectionConfig }) => {
-        const dummy = process.env.DUMMY_SITE_URL || 'http://localhost:3200'
-        const loc = locale?.code ?? 'en'
-        const slug = (data as { slug?: string })?.slug ?? ''
-        const statPages = getStatPages((data as { key?: string })?.key ?? '')
-        if (collectionConfig?.slug === 'site-stats' && statPages.length === 0) return null
-        const pageFor: Record<string, string> = {
-          services: slug ? `/services/${slug}` : '/services',
-          pages: slug ? `/${slug}` : '',
-          doctors: '/team',
-          technology: '/technology',
-          homepage: '',
-          'site-stats': statPages[0]?.path ?? '',
-          'feature-cards': '',
-          'brand-logos': '',
-          testimonials: '',
-          'pricing-categories': '/pricing',
-          'pricing-items': '/pricing',
-          'pricing-comparison-sets': '/pricing',
-          'pricing-comparison-rows': '/pricing',
-          'international-treatments': '/international',
-          'international-steps': '/international',
-          'international-why-items': '/international',
-          'timeline-events': '/about',
-          branches: '/contact',
-          'clinical-cases': '/clinical-results',
-          'news-articles': slug ? `/about/news/${slug}` : '/about/news',
-          'community-articles': slug ? `/about/community/${slug}` : '/about/community',
-        }
-        const page = pageFor[collectionConfig?.slug ?? ''] ?? ''
-        const target = `/${loc}${page}`
-        // Drafts: route the preview through the sandbox's draft-mode endpoint
-        // so unpublished edits render in the iframe (see roomchang
-        // src/app/api/preview/route.ts). Without a secret, plain page.
-        const secret = process.env.PREVIEW_SECRET
-        return secret
-          ? `${dummy}/api/preview?secret=${encodeURIComponent(secret)}&redirect=${encodeURIComponent(target)}`
-          : `${dummy}${target}`
-      },
-      collections: [
-        'pages',
-        'services',
-        'doctors',
-        'technology',
-        'homepage',
-        'site-stats',
-        'feature-cards',
-        'brand-logos',
-        'testimonials',
-        'pricing-categories',
-        'pricing-items',
-        'pricing-comparison-sets',
-        'pricing-comparison-rows',
-        'international-treatments',
-        'international-steps',
-        'international-why-items',
-        'timeline-events',
-        'branches',
-        'clinical-cases',
-        'news-articles',
-        'community-articles',
-      ],
+      url: getPreviewUrl,
+      collections: PREVIEW_COLLECTIONS,
       breakpoints: [
         { label: 'Mobile', name: 'mobile', width: 390, height: 844 },
         { label: 'Desktop', name: 'desktop', width: 1280, height: 900 },

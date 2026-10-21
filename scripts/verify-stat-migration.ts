@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import pg from 'pg'
-import { drizzle } from 'drizzle-orm/node-postgres'
+import { drizzle } from '@payloadcms/db-postgres/drizzle/node-postgres'
 import { up } from '../src/migrations/20261020_095018_stat_values_localized'
 
 const uri = 'postgres://cms_fixture@127.0.0.1:55438/postgres'

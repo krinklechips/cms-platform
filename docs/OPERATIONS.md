@@ -3,20 +3,29 @@
 The rules that keep production healthy. Every one of these exists because its
 absence broke something once.
 
-## Architecture (one-way, by design)
+## Architecture (content and operations are separate)
 
 ```
-LIVE SITE (roomchang.com ← clinic Supabase, current public content)
+LEGACY CONTENT PATH (website deployments without CONTENT_SOURCE=payload ← clinic Supabase)
    X  legacy live→CMS imports blocked once staff editing has begun
 CMS (this app, Render: serviettelab.com + <tenant>.serviettelab.com, own Supabase DB)
    │  REST API, anonymous reads TENANT-HOST ONLY (published, tenant-scoped)
    ▼
-SANDBOX / UAT (roomchang-sandbox.vercel.app, CONTENT_SOURCE=payload)
+CMS CONTENT PATH (sandbox/UAT, and any deployment configured with CONTENT_SOURCE=payload)
+
+WEBSITE ENQUIRIES / SLOTS / BOOKINGS → clinic Supabase (not CMS snapshots)
 ```
 
-- **Nothing the CMS does can touch the live site.** There is no CMS→live path
-  until an explicit cutover is built. Never point the live Vercel project at
-  `CONTENT_SOURCE=payload`.
+- **Publishing affects deployments that consume the CMS.** Website code has a
+  `CONTENT_SOURCE=payload` path; a separate CMS database does not make publishing
+  incapable of affecting a live website. Verify each deployment's environment,
+  tenant API host and page consumers before making claims about its content
+  source. Changing the live project's content source requires an approved,
+  verified cutover; this runbook is not evidence that one has happened.
+- **Operational writes remain in clinic Supabase.** Contact enquiries, slot
+  availability and bookings do not use the CMS collections. A sandbox or
+  preview URL is not by itself an isolated operational environment. Never
+  submit patient data or exercise booking writes as a CMS preview check.
 - **The CMS owns staff editorial work.** The separate live-site database is
   not a safe source for replacing CMS records after Borin starts editing.
   Database separation alone does not prevent an import from overwriting edits.
@@ -205,8 +214,33 @@ change in one locale, verify other locales, then restore only that locale.
 
 ## Known deliberate limits (v1)
 
-- Enquiries/Bookings in the CMS are stale snapshots from the last sync —
-  the live inbox stays in the clinic dashboard.
+- Enquiries and Booking Slots in the CMS are read-only snapshots from the last
+  approved import, not a live inbox or availability manager. They may be stale;
+  CMS timestamps and read flags do not establish freshness in Supabase. Manage
+  new enquiries, read status, bookings, cancellations and availability in the
+  clinic dashboard. Normal CMS/API create, update and delete are denied;
+  trusted Local API imports may still explicitly bypass access checks with
+  `overrideAccess`. This is not permission to run a legacy import.
+- Live Preview selects the record's website route and active URL locale
+  (`en`, `kh`, `cn`). Comparison sets open either the implants comparison or
+  full international comparison; rows resolve their set relationship with the
+  current request and access checks. Missing/inaccessible sets offer no preview
+  instead of silently opening the main price list. Draft mode still requires
+  the matching preview secrets and website preview credentials; without the
+  CMS preview secret configured, the URL opens the ordinary published page.
+- Known imported branches retain the website's canonical source-ID-based
+  routes, not their name-derived CMS slugs. Keep the resolver's branch identity
+  map aligned with `SOURCE_BRANCH_SLUGS` in the website's `src/lib/branches.ts`.
+  Comparison-row preview and website grouping follow the current CMS set
+  relationship. A cleared relationship remains unassigned; legacy source IDs
+  are fallback provenance only when no relationship field is present.
+- Correct preview routing does not prove a page consumes CMS data. In the
+  website source, Publications, Careers and Dentist Talks consume CMS records
+  in Payload mode, as do branch details (with bundled branch-field fallbacks).
+  Dentist Talks consumes only videos categorized `dentist-talk`; other video
+  categories have no connected page consumer or preview. Existing CMS coverage
+  does not yet match the bundled public video catalog, so review missing
+  records before production cutover rather than replaying an old import.
 - Media serves from `r2.dev` (rate-limited dev domain) — move to a custom
   domain before real multi-tenant traffic.
 - The demo tenant "Oriental Bank" is display-only; rename or delete from

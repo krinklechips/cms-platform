@@ -9,6 +9,7 @@ export const Enquiries: CollectionConfig = {
     group: 'Inbox',
     useAsTitle: 'name',
     defaultColumns: ['name', 'treatment', 'branch', 'isRead', 'receivedAt'],
+    description: 'Read-only snapshot from the last approved import, not a live inbox. New enquiries and read-status changes remain in the clinic dashboard (Supabase). CMS records may be stale; no changes here are sent back.',
   },
   access: {
     // Patient PII — NEVER public. Require a logged-in user; the multi-tenant
@@ -16,6 +17,11 @@ export const Enquiries: CollectionConfig = {
     // all. No public consumer reads enquiries (the live site writes them to
     // Supabase directly), so anonymous access was pure exposure.
     read: ({ req: { user } }) => Boolean(user),
+    // Normal CMS/API users cannot change snapshots. Trusted Local API imports
+    // can still explicitly use overrideAccess; no write-blocking hooks.
+    create: () => false,
+    update: () => false,
+    delete: () => false,
   },
   fields: [
     {

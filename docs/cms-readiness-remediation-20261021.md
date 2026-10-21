@@ -12,16 +12,33 @@ Approved brief: the 21 October read-only readiness review and the user's request
 
 ## Execution Ledger
 
-- [in progress] Media: reproduce metadata-only corruption; preserve identity and block destructive file operations; verify native fixture.
-- [in progress] Typography: locale-aware readable fields and website labels/navigation without a layout redesign.
-- [in progress] Preview: actual destinations, missing collections, honest read-only operational snapshots, current guidance.
-- [in progress] Image controls: explicit Media Library selection and useful errors on existing URL fields, preserving stored values.
-- [in progress] Website validation: repair test harness/fixtures and real lint/type defects without suppressing assertions.
-- [pending] Content ownership/discovery: shared Team statistics, FAQ/static ownership, selected-source sitemap and SEO.
-- [pending] Reliability: explicit CMS failures and source-aware health; configure a real CMS email adapter if safe existing delivery configuration is available.
-- [pending] Security: triage and upgrade compatible dependencies, preserving/rebasing access and concurrency patches.
-- [pending] Preservation: compare read-only hosted content/draft snapshots; finish only guarded blank-field refreshes if appropriate.
-- [pending] Verification: full tests/types/lint/build, hosted non-patient workflow where permitted, new incomplete-module scan, independent final review.
+- [verified locally] Media: native metadata-edit corruption reproduced and repaired; immutable file identity and early replacement/deletion guards tested.
+- [verified locally] Typography: localized fields, website labels and navigation; real browser checks at 390/1280/1536/1920px. Khmer full navigation held until 1800px after a visual wrapping defect was found.
+- [verified locally] Preview: actual destinations, missing collections, read-only operational snapshots and current guidance. Unconnected video categories return no misleading preview.
+- [verified locally] Image controls: explicit tenant-filtered Media Library selection and upload drawer on existing URL fields; explicit selection required, not an incidental upload callback.
+- [verified locally] Website validation: tests and types repaired; existing newly enforced lint failures remain documented, not suppressed.
+- [verified locally] Content ownership/discovery: shared Team stats, CMS Careers/Dentist Talks consumers, current relationship mappings, public published-only sitemap and selected-source SEO.
+- [partly complete] Reliability: explicit CMS failures, timeouts and source-aware health. TLS email adapter tested with a fake transport; real delivery remains pending by the user's explicit instruction.
+- [partly complete] Security: Payload 3.91.0, Next 16.4.2, React 19.2.6, sharp 0.35.5 and nodemailer 10.1.7; access, locale restoration and concurrency patches rebased and native-tested. Runtime audit still reports transitive high advisories (CMS 12; website 12), zero critical.
+- [in progress] Preservation: read-only hashes cover 480 editorial/version tables and 57,283 rows. No hosted editorial writes/imports have been performed; compare after deployment as well.
+- [verified locally] Verification: final runs 219 CMS and 255 website tests, no skips; both TypeScript checks and production builds passed. Native SQLite locale restoration plus real PostgreSQL concurrency/migration fixtures passed again after a fresh clean install.
+- [in progress] Deployment: website commit 3b922de targets cms-sandbox only. Hosted CMS deployment, post-deploy preservation comparison and non-patient upload verification are next.
+
+## Independent Review Closure
+
+- Pristine-install patch failure: fixed by regenerating only four custom JavaScript diffs against official 3.91 tarballs. Fresh `npm ci` applied both patches successfully; upstream authorization and upload sanitization remain in place.
+- Missing upgrade schema: migration 20261021_120000_payload_391_schema adds nullable media._objectkey and users.reset_password_requested_at without backfills. Full R2-enabled schema checked against every prior migration; all old values/drafts remain equal. Legacy null-key URLs and existing keyed URLs survive EN/KH/CN metadata edits.
+- Noncanonical branch sitemap URLs: discovery now uses the same branch identity resolver as the page, with a failing-then-passing regression for imported and slugless branches.
+
+## Remaining Readiness Gaps
+
+- Real hosted upload/select/publish verification needs an authenticated CMS session; local behavior and native storage preservation are verified but are not a substitute for this check.
+- Missing translations remain content work: 27/35 FAQ rows per KH/CN, comparison labels, timeline/partner/video text and most stat labels. No auto-translations or existing drafts were rewritten.
+- The CMS has 21 videos overall, only six categorized dentist-talk, versus 24 bundled Dentist Talks entries. Review and import missing source records with concurrency checks before production cutover; do not reclassify unrelated records automatically.
+- Video testimonials are still bundled. One bundled FAQ supplement, global/static headings, navigation, footer, director/vision/legal copy and the playlist link remain owned by website code. Do not claim every visible string is CMS-editable.
+- Enquiries and Booking Slots are explicitly read-only CMS snapshots. Operational website writes remain Supabase-backed, and test-domain naming alone does not prove a separate operational database.
+- SMTP configuration and delivery are pending. Sandbox health correctly remains unhealthy for unavailable email delivery, rather than masking that dependency.
+- Website source lint retains seven pre-existing stricter React-rule errors and eleven warnings; repository lint additionally reports old script require-style errors. Tests/types/build passing does not make lint green.
 
 ## Rulings
 

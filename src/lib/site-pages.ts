@@ -2,9 +2,10 @@
  * SITE PAGES INDEX — the map from "a page on our website" to "the things in
  * this CMS that edit it".
  *
- * Generated from an audit of the live site (roomchang.com) against
- * src/lib/payload-source.ts on the site side. Keep in sync when a collection
- * starts (or stops) feeding a page.
+ * Describes the website's CONTENT_SOURCE=payload rendering path, not proof
+ * that a deployed live site consumes the CMS. Operational snapshots never
+ * drive the contact form or booking system. Keep in sync with page consumers,
+ * not just the presence of a collection or data-reader function.
  */
 
 export type PagePart = { collection: string; controls: string }
@@ -40,6 +41,7 @@ export const SITE_PAGES: SitePage[] = [
     page: "Team page",
     path: "/en/team",
     parts: [
+      { collection: "site-stats", controls: "The dentist, experience and branch figures use the same exact localized display text as the shared statistics. Language coverage is derived from the doctor's language fields." },
       { collection: "doctors", controls: "Every doctor card in the grid: name, credentials, role, department (the grouping heading the cards sit under), specialty list, languages, bio, short credential…" },
     ],
   },
@@ -69,8 +71,8 @@ export const SITE_PAGES: SitePage[] = [
     page: "Implants price comparison page",
     path: "/en/pricing/implants-comparison",
     parts: [
-      { collection: "pricing-comparison-sets", controls: "The row whose `slug` is exactly `implants-comparison` — its exchange rate and the small source/disclaimer note under the table. Wrong slug = blank page." },
-      { collection: "pricing-comparison-rows", controls: "Every table row (treatment, Roomchang price, Australia price, Singapore price, ADA code)." },
+      { collection: "pricing-comparison-sets", controls: "The set whose slug is implants-comparison identifies this table. This page consumes its rows, not the set's exchange rate or source note; missing rows can still render bundled prices." },
+      { collection: "pricing-comparison-rows", controls: "Table rows belonging to the implants-comparison set (treatment, Roomchang price, Australia price, Singapore price, ADA code). Preview follows the row's set relationship, not the main price list." },
     ],
   },
   {
@@ -96,8 +98,8 @@ export const SITE_PAGES: SitePage[] = [
     parts: [
       { collection: "branches", controls: "TWO things on this page: the \"Preferred branch\" dropdown inside the enquiry form, and the branch info cards below/beside it (name, address, phone, mobile, email…" },
       { collection: "doctors", controls: "Same Doctors rows as the Team page — they populate the searchable \"request a specific doctor\" picker in the enquiry form." },
-      { collection: "enquiries", controls: "Where submitted contact-form enquiries are READ (name, email, phone, country, treatment, branch, preferred date, message, read flag)." },
-      { collection: "booking-slots", controls: "The appointment slots and bookings behind the contact page's date/time picker (date, time, duration, availability, who booked, status)." },
+      { collection: "enquiries", controls: "Read-only snapshot from the last approved import, not the current inbox. Contact-form submissions and read-status changes remain in Supabase and the clinic dashboard; CMS snapshots may be stale and do not write back." },
+      { collection: "booking-slots", controls: "Read-only snapshot from the last approved import, not the live date/time picker or booking manager. Availability, bookings and cancellations remain in Supabase and the clinic dashboard; CMS snapshots may be stale and do not write back." },
     ],
   },
   {
@@ -105,6 +107,7 @@ export const SITE_PAGES: SitePage[] = [
     path: "/en/about",
     parts: [
       { collection: "site-stats", controls: "The stats strip near the top of /about reads site_stats by key." },
+      { collection: "timeline-events", controls: "The history timeline uses CMS events in Payload mode. Page headings, intro copy and shortcut tiles remain in the website's translation files and code." },
     ],
   },
   {
@@ -112,6 +115,14 @@ export const SITE_PAGES: SitePage[] = [
     path: "/en/about/facilities",
     parts: [
       { collection: "site-stats", controls: "Again the \"Home Page\" → Site Stats collection — only the numbers strip on this page." },
+      { collection: "branches", controls: "Branch location cards use getBranchDetails() in Payload mode. Missing branch fields can still fall back to bundled branch content; general facility copy and photo sections remain in website code and translations." },
+    ],
+  },
+  {
+    page: "Branch detail page",
+    path: "/en/about/branches/[slug]",
+    parts: [
+      { collection: "branches", controls: "The selected branch's details use getBranchDetails() in Payload mode, with bundled field fallbacks. Known source identities retain their canonical branch URLs even when the imported CMS slug differs. Other branches use their slug or source ID; unsaved records without either open Contact." },
     ],
   },
   {
@@ -161,8 +172,8 @@ export const SITE_PAGES: SitePage[] = [
     page: "Clinical results gallery",
     path: "/en/clinical-results",
     parts: [
-      { collection: "site-stats", controls: "\"Home Page\" → Site Stats: the small stat tiles above the case grid, looked up by key (falls back to bundled FALLBACK_STATS)." },
-      { collection: "clinical-cases", controls: "Every before/after case card: title, category (drives the filter chips), treatment, duration, description, tag, card image." },
+      { collection: "site-stats", controls: "\"Home Page\" → Site Stats: the small stat tiles above the case grid, looked up by key. Clinical experience and homepage years of experience are separate records." },
+      { collection: "clinical-cases", controls: "Every before/after case card: title, canonical categoryKey (filter identity), localized category label, treatment, duration, description, tag and card image." },
     ],
   },
   {
@@ -176,7 +187,7 @@ export const SITE_PAGES: SitePage[] = [
     page: "Clinical results by category",
     path: "/en/clinical-results/category/[category]",
     parts: [
-      { collection: "clinical-cases", controls: "Same Clinical Cases rows, filtered by the `category` field. The category list itself is hardcoded in src/lib/clinical-categories.ts — adding a new category value in…" },
+      { collection: "clinical-cases", controls: "Same Clinical Cases rows, filtered by canonical categoryKey; category is the localized display label. The category routes remain defined in website code, so adding a new category requires a website change." },
     ],
   },
   {
@@ -186,26 +197,39 @@ export const SITE_PAGES: SitePage[] = [
       { collection: "faq-items", controls: "Every question/answer accordion row. The `category` field creates the section headings the questions are grouped under." },
     ],
   },
+  {
+    page: "Publications page",
+    path: "/en/blog/publications",
+    parts: [
+      { collection: "publications", controls: "The publication list uses getPublications() in Payload mode: title, authors, journal, year and DOI/link. Page headings and supporting copy remain in website translations; non-Payload deployments retain the bundled list." },
+    ],
+  },
+  {
+    page: "Careers listing and detail pages",
+    path: "/en/about/careers",
+    parts: [{ collection: "career-positions", controls: "Published positions, full descriptions, ordered requirements and benefits in the selected language. Unpublished or deleted positions do not fall back to bundled jobs in CMS mode." }],
+  },
+  {
+    page: "Dentist Talks page",
+    path: "/en/blog/dentist-talks",
+    parts: [{ collection: "videos", controls: "Published dentist-talk videos with valid YouTube URLs, titles, descriptions, topics and presenters. Other video categories are not connected. The playlist link and page introduction remain in website code." }],
+  },
 ]
 
-/** Live pages with NO CMS collection behind them yet — shown so an editor
- *  stops hunting for a screen that does not exist (fail loud, not silent). */
+/** Website sections not yet rendered from CMS content. Some have collections
+ *  and readers already, but their page consumers are still unwired. */
 export const UNMODELED_PAGES: { path: string; whatsThere: string; source: string }[] = [
   { path: "/en (home) — the 6-icon service shortcut row between the stats band and the feature cards", whatsThere: "Six fixed shortcut tiles (Implants, Crowns, Aligners, Cosmetic, Whitening, Surgery) with hardcoded hrefs and Phosphor icons.", source: "Hardcoded SERVICES array in src/components/sections/home-services.tsx + labels from the `homeServices` namespa" },
-  { path: "/en/team — the stat strip above the doctor grid", whatsThere: "Numbers/labels above the doctor cards.", source: "messages/*.json, `team.stat.*` namespace (NOT site-stats)" },
-  { path: "/en/about — everything except the stat band", whatsThere: "Page headline and intro copy, the 9 section shortcut tiles (Facilities, Vision & Mission, Director's Message, Doctors, Community, Partnerships, Clinical Results…", source: "messages/*.json (`about.*` and `aboutTimeline.*`) + hardcoded SECTION_DEFS in src/app/[locale]/about/page.tsx " },
+  { path: "/en/about — headings, intro and section shortcuts", whatsThere: "Page headline, intro copy and the section shortcut tiles; the stats band and history timeline are CMS-fed in Payload mode.", source: "messages/*.json (`about.*`) + SECTION_DEFS in src/app/[locale]/about/page.tsx. Timeline events are separate CMS records." },
   { path: "/en/about/vision-mission-values", whatsThere: "Whole page — vision, mission, and the five value cards.", source: "messages/*.json, `visionMission` namespace. No CMS collection at all." },
   { path: "/en/about/director-message", whatsThere: "Whole page — the director's portrait and full letter.", source: "messages/*.json, `directorMessage` namespace + a hardcoded <Image> path. No CMS collection at all." },
-  { path: "/en/about/facilities — everything except the stat band", whatsThere: "All facility copy, the facility photo blocks, and the per-branch location cards at the bottom.", source: "messages/*.json (`facilities` namespace) + the hardcoded BRANCHES array in src/lib/branches.ts" },
-  { path: "/en/about/careers  AND  /en/about/careers/[slug]", whatsThere: "The whole jobs listing and every job detail page (title, description, requirements, benefits).", source: "Hardcoded POSITIONS array in src/lib/careers.ts. The CMS \"Careers\" group → `career-positions` collection exist" },
-  { path: "/en/about/branches/[slug] — the branch detail pages", whatsThere: "Each branch's hero photo, badge, long description, opening hours, phone, embedded Google Map and directions link.", source: "Hardcoded BRANCHES array in src/lib/branches.ts (slug, badge, image, coords, mapEmbedSrc, description). The CM" },
+  { path: "/en/about/facilities — general copy and facility photo blocks", whatsThere: "General facility copy and facility photo sections, excluding the CMS-fed stat strip and branch location cards.", source: "messages/*.json (`facilities` namespace) + page code. Branch cards use getBranchDetails() in Payload mode with bundled field fallbacks." },
   { path: "/en/blog (blog hub)", whatsThere: "The three-card hub linking to FAQ, Dentist Talks and Publications.", source: "messages/*.json, `blogIndex` namespace. No CMS collection." },
-  { path: "/en/blog/dentist-talks", whatsThere: "Every embedded YouTube video card and the playlist link.", source: "Hardcoded DENTIST_TALKS array + YOUTUBE_PLAYLIST_ID constant in src/app/[locale]/blog/dentist-talks/page.tsx. " },
-  { path: "/en/blog/publications", whatsThere: "The full academic publication list with authors, journals, years and DOI links.", source: "Hardcoded JSX literals inside src/app/[locale]/blog/publications/page.tsx (each citation is handwritten markup" },
+  { path: "/en/about/testimonials — video cards", whatsThere: "Bundled video testimonials are separate from the CMS text testimonials.", source: "VIDEO_TESTIMONIALS in the website page and translation files. Non-dentist-talk CMS videos have no page consumer yet." },
   { path: "/en/pricing/warranty", whatsThere: "The whole warranty page — coverage table, covered/not-covered lists, validity conditions, post-warranty terms, limitation of liability, contact block.", source: "Supabase table `warranty_terms` via getWarrantyTerms() in src/lib/data.ts (English-only, no i18n overlay). The" },
   { path: "/en/privacy-policy, /en/terms-of-service, /en/cookie-policy, /en/disclaimer, /en/booking-cancellation-policy", whatsThere: "All five legal pages, in full.", source: "messages/en.json | km.json | zh.json namespaces `privacyPolicy`, `termsOfService`, `cookiePolicy`, `disclaimer" },
   { path: "Site header / main navigation (every page)", whatsThere: "The whole nav tree including the Services dropdown's 13 links and the Technology dropdown's links, the logo, and the language switcher.", source: "Hardcoded NAV_ITEMS array in src/components/site/site-header.tsx + labels from the `nav`/`header` namespaces i" },
   { path: "Site footer (every page)", whatsThere: "All four footer columns, the social links (Facebook, YouTube, Instagram, Telegram, TikTok, LinkedIn), the legal link row, and the address/phone block.", source: "Hardcoded FOOTER_STRUCTURE, SOCIAL and LEGAL_LINKS arrays in src/components/site/site-footer.tsx + `footer`/`n" },
   { path: "Floating contact widget + cookie/consent banner (every page)", whatsThere: "The bottom-right WhatsApp/Telegram/Messenger/phone buttons and the consent banner text.", source: "src/components/site/floating-contact.tsx and consent-banner.tsx, with copy from the `floatingContact` and `con" },
-  { path: "SEO — page titles, descriptions, OG/Twitter cards, canonical URLs, noindex (all pages)", whatsThere: "Per-page metadata overrides.", source: "Supabase table `seo_page_meta` via getSeoPageMeta() in src/lib/data.ts (only /services/[slug], /technology/[sl" },
+  { path: "SEO — global/static page metadata", whatsThere: "Static page metadata remains in website code and translations. Custom pages have CMS SEO fields; content-detail metadata follows its selected content source.", source: "getSeoPageMeta() in src/lib/data.ts does not overlay Supabase metadata in CMS mode. Non-CMS deployments retain the legacy seo_page_meta table." },
 ]

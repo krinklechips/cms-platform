@@ -32,6 +32,14 @@ test('super-admin metadata edits also preserve the stored object identity', asyn
   assert.equal(data!.prefix, 'roomchang/brand-logos')
 })
 
+test('metadata edits cannot replace the storage object key or add one to legacy files', async () => {
+  for (const object of [{ _objectKey: 'stored-object' }, {}]) {
+    const original = { id: 4, tenant: 1, prefix: 'roomchang', filename: 'image.png', ...object }
+    const data = await validate({ alt: 'Metadata only', _objectKey: 'different-object' }, original)
+    assert.equal(data!._objectKey, '_objectKey' in object ? object._objectKey : undefined)
+  }
+})
+
 test('new tenant uploads ignore a supplied other-tenant prefix', async () => {
   const data = await validate({ tenant: 1, prefix: 'other-tenant', alt: 'A new image' })
   assert.equal(data!.prefix, 'roomchang')

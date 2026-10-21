@@ -3,6 +3,7 @@
 import React from 'react'
 import { Button, useDocumentInfo, useFormModified, useFormProcessing, useLivePreviewContext } from '@payloadcms/ui'
 import { publishingState } from '@/lib/publishing-state'
+import { TranslationStatus } from './TranslationStatus'
 
 export const PublishingStatus = () => {
   const { hasPublishedDoc, unpublishedVersionCount } = useDocumentInfo()
@@ -11,6 +12,7 @@ export const PublishingStatus = () => {
   const { isLivePreviewEnabled, openPopupWindow, url } = useLivePreviewContext()
   return (
     <div className="cms-preview-action">
+      <TranslationStatus />
         <span className={modified || processing ? 'cms-pending-state' : 'cms-sr-only'} role="status" aria-live="polite">
           {publishingState({ modified, processing, hasPublishedDoc, unpublishedVersionCount })}
         </span>

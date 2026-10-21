@@ -73,8 +73,50 @@
   }
 }
 
-.cms-preview-action { display: flex; align-items: center; gap: 12px; }
+.cms-preview-action { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.cms-translation-state { font-size: 14px; color: var(--theme-elevation-650); }
 .cms-sidebar-control { display: none; }
+
+// Input content is independent of the English admin interface language.
+:where(.field-type.text:not(.has-many)) input[type='text'],
+:where(.field-type.textarea) textarea,
+:where(.field-type) [contenteditable='true'] {
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.field-type.text:not(.has-many) input[type='text'],
+.field-type.textarea textarea {
+  height: auto;
+  min-height: 44px;
+  padding-block: 10px;
+}
+
+.field-label:not(.unstyled) {
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+[data-cms-content-typography]:lang(zh) {
+  font-family: var(--cms-font-chinese, 'Noto Sans SC'), 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+[data-cms-content-typography]:lang(km) {
+  font-family: var(--cms-font-khmer, 'Battambang'), 'Khmer OS Battambang', 'Noto Sans Khmer', sans-serif;
+  font-size: 18px;
+  line-height: 1.8;
+  letter-spacing: 0;
+}
+
+[data-cms-content-typography]:is(:lang(zh), :lang(km)) * {
+  letter-spacing: 0;
+  line-height: inherit;
+}
 
 body:has(.cms-tenant-nav) {
   .template-default__nav-toggler-wrapper,
