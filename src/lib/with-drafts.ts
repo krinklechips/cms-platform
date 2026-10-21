@@ -1,5 +1,6 @@
 import type { CollectionConfig, Field } from 'payload'
 import { serializeEditorialUpdate } from './editorial-lock'
+import { disableEditorialWriteFallback } from './editorial-write-fallback'
 import { prepareLocaleRestore } from './locale-restore'
 
 /**
@@ -34,7 +35,7 @@ export const withDrafts = (config: CollectionConfig): CollectionConfig => {
     custom: { ...config.custom, localeScopedRestore: true },
     hooks: {
       ...config.hooks,
-      beforeOperation: [serializeEditorialUpdate, ...(config.hooks?.beforeOperation ?? []), prepareLocaleRestore],
+      beforeOperation: [serializeEditorialUpdate, ...(config.hooks?.beforeOperation ?? []), prepareLocaleRestore, disableEditorialWriteFallback],
     },
     versions: { drafts: true, maxPerDoc: 100 },
     admin: {
