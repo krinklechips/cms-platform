@@ -34,10 +34,10 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
       "The grey band of partner logos that scrolls sideways directly under the home page hero.",
   },
   'site-stats': {
-    singular: "Stat",
-    plural: "Stats Band",
+    singular: "Website Statistic",
+    plural: "Website Statistics",
     description:
-      "Website statistics. Each record lists the pages where it appears.",
+      "Statistics for Home page, Our Team, About Roomchang, Our Facilities and Clinical Results.",
   },
   'feature-cards': {
     singular: "Highlight Card",

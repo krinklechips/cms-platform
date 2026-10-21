@@ -6,6 +6,7 @@ import { PreviewPublishButton as PreviewPublishButton_195e97763028237bdc82d1a53c
 import { HomepageSingleRedirect as HomepageSingleRedirect_b28ab2a24502ab103566306601f21301 } from '../../../components/HomepageSingleRedirect'
 import { ImageCell as ImageCell_686f17e722b2f5209effbf3003fe9a1e } from '../../../components/ImageCell'
 import { StatUsage as StatUsage_e76f63958c0e6f6da6b1741c5e710bba } from '../../../components/StatUsage'
+import { StatNameCell as StatNameCell_e76f63958c0e6f6da6b1741c5e710bba } from '../../../components/StatUsage'
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { PlatformNav as PlatformNav_d93cd8bf9ab6123ede6430df10ac9859 } from '../../../components/PlatformNav'
 import { SidebarControl as SidebarControl_6c1b9eb2d35079715d8e96016057ce39 } from '../../../components/SidebarControl'
@@ -30,6 +31,7 @@ export const importMap = {
   "/components/HomepageSingleRedirect#HomepageSingleRedirect": HomepageSingleRedirect_b28ab2a24502ab103566306601f21301,
   "/components/ImageCell#ImageCell": ImageCell_686f17e722b2f5209effbf3003fe9a1e,
   "/components/StatUsage#StatUsage": StatUsage_e76f63958c0e6f6da6b1741c5e710bba,
+  "/components/StatUsage#StatNameCell": StatNameCell_e76f63958c0e6f6da6b1741c5e710bba,
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/PlatformNav#PlatformNav": PlatformNav_d93cd8bf9ab6123ede6430df10ac9859,
   "/components/SidebarControl#SidebarControl": SidebarControl_6c1b9eb2d35079715d8e96016057ce39,

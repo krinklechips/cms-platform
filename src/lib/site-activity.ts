@@ -1,6 +1,7 @@
 import type { CollectionSlug, Payload, TypedUser } from 'payload'
 import { CONTENT_COLLECTION_SLUGS } from './content-collections'
 import { COLLECTION_LABELS } from './collection-labels'
+import { getStatLabel, getStatPageSummary } from './stat-pages'
 
 export type RecentDoc = {
   collection: string
@@ -55,7 +56,9 @@ export const gatherActivity = async (payload: Payload, tenantId: number | string
     const [recent, drafts] = await Promise.all([query(false), query(true)])
     const asRow = (doc: LooseDoc): RecentDoc => {
       const titleField = payload.collections[slug as CollectionSlug]?.config.admin.useAsTitle
-      const title = (titleField ? doc[titleField] : undefined) ?? doc.title ?? doc.name
+      const title = slug === 'site-stats' && typeof doc.key === 'string'
+        ? `${getStatLabel(doc.key)} (${getStatPageSummary(doc.key)})`
+        : (titleField ? doc[titleField] : undefined) ?? doc.title ?? doc.name
       const updatedAt = typeof doc.updatedAt === 'string' ? doc.updatedAt : ''
       return {
         collection: slug,

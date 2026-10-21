@@ -7,7 +7,7 @@ import type { CollectionConfig } from 'payload'
 export const SiteStats: CollectionConfig = {
   slug: 'site-stats',
   admin: {
-    group: 'Home Page',
+    group: 'Shared Content',
     useAsTitle: 'key',
     defaultColumns: ['key', 'displayValue', 'label', 'published', 'order'],
   },
@@ -32,10 +32,14 @@ export const SiteStats: CollectionConfig = {
     },
     {
       name: 'key',
+      label: 'Statistic',
       type: 'text',
       required: true,
       index: true,
-      admin: { position: 'sidebar' },
+      admin: {
+        position: 'sidebar',
+        components: { Cell: '/components/StatUsage#StatNameCell' },
+      },
     },
     {
       name: 'displayValue',
