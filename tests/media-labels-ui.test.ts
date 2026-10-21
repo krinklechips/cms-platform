@@ -138,6 +138,20 @@ if (!Window) {
     await window.happyDOM.close()
   })
 
+  test('localized block image sources use readable library and fallback labels', async () => {
+    locale = 'cn'
+    for (const [slug, path] of [
+      ['image', 'src'], ['gallery', 'images.url'], ['image_pair', 'left.src'], ['image_pair', 'right.src'],
+    ]) {
+      const block = SECTION_BLOCKS.find(block => block.slug === slug)!
+      const label = await renderLabel(findField(block.fields, path), `sections.${slug}.${path}`, true)
+      assert.match(label?.textContent ?? '', /^Fallback image URL/, `${slug}.${path}`)
+    }
+    const media = findField(SECTION_BLOCKS.find(block => block.slug === 'image')!.fields, 'media')
+    const label = await renderLabel(media, 'sections.image.media', true)
+    assert.match(label?.textContent ?? '', /^Image from library/)
+  })
+
   for (const [collection, path, type] of sharedFields) {
     test(`${collection.slug}.${path} visibly identifies all languages without changing storage type`, async () => {
       const field = findField(collection.fields, path)

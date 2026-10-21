@@ -32,6 +32,7 @@ const NO_NAME = { disableBlockName: true }
  *  browse/upload instead of pasting URLs; the site prefers this when set. */
 const mediaPick = (): Field => ({
   name: 'media',
+  label: 'Image from library',
   type: 'upload',
   relationTo: 'media',
   admin: { description: 'Pick or upload from the Media Library.' },
@@ -208,7 +209,7 @@ const gallery: Block = {
       admin: { initCollapsed: true },
       fields: [
         mediaPick(),
-        { name: 'url', type: 'text', admin: {
+        { name: 'url', label: 'Fallback image URL', type: 'text', admin: {
           description: 'Fallback URL, used only when no Media Library image is selected.',
           components: { afterInput: ['/components/ImageUrlPreview#SectionImageUrlPreview'] },
         } },
@@ -224,7 +225,7 @@ const image: Block = {
   admin: NO_NAME,
   fields: [
     mediaPick(),
-    { name: 'src', type: 'text', admin: {
+    { name: 'src', label: 'Fallback image URL', type: 'text', admin: {
       description: 'Fallback URL, used only when no Media Library image is selected.',
       components: { afterInput: ['/components/ImageUrlPreview#SectionImageUrlPreview'] },
     } },
@@ -267,7 +268,7 @@ const imagePairSide = (name: 'left' | 'right'): Field => ({
   type: 'group',
   fields: [
     mediaPick(),
-    { name: 'src', type: 'text', admin: {
+    { name: 'src', label: 'Fallback image URL', type: 'text', admin: {
       description: 'Fallback URL, used only when no Media Library image is selected.',
       components: { afterInput: ['/components/ImageUrlPreview#SectionImageUrlPreview'] },
     } },
