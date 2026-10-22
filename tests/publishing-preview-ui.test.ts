@@ -21,6 +21,7 @@ let drawer: string | undefined
 let preview: any
 let changes: any[]
 let popups: number
+let translationFeedback: string | null
 const require = createRequire(new URL('../src/components/PublishingStatus.tsx', import.meta.url))
 const nativeButton = { exports: {} as any }
 const nativeButtonSource = ts.transpileModule(readFileSync(new URL('../node_modules/@payloadcms/ui/dist/elements/Button/index.js', import.meta.url), 'utf8'), {
@@ -52,7 +53,7 @@ const compiled = ts.transpileModule(readFileSync(new URL('../src/components/Publ
 new Function('require', 'module', 'exports', compiled)((name: string) => {
   if (name === '@payloadcms/ui') return ui
   if (name === '@/lib/publishing-state') return { publishingState }
-  if (name === './TranslationStatus') return { TranslationStatus: () => null }
+  if (name === './TranslationStatus') return { TranslationStatus: () => translationFeedback ? React.createElement('span', { className: 'cms-translation-state', role: 'status' }, translationFeedback) : null }
   return require(name)
 }, output, output.exports)
 const { PublishingStatus } = output.exports
@@ -61,7 +62,7 @@ const click = () => act(() => container.querySelector('button')!.click())
 beforeEach(async () => {
   await act(() => root.render(null))
   doc = { id: 1, collectionSlug: 'homepage', hasPublishedDoc: true, unpublishedVersionCount: 0 }
-  modified = false; processing = false; mobile = false; drawer = undefined; changes = []; popups = 0
+  modified = false; processing = false; mobile = false; drawer = undefined; changes = []; popups = 0; translationFeedback = null
   preview = {
     isLivePreviewEnabled: true, isLivePreviewing: false, previewWindowType: 'iframe', url: 'https://preview.example.test/en',
     setIsLivePreviewing: (value: boolean) => { changes.push(['visible', value]); preview.isLivePreviewing = value },
@@ -203,5 +204,63 @@ test('new-tab preview stays available with the inline panel hidden on desktop an
     assert.equal(preview.isLivePreviewing, false)
     assert.equal(container.querySelector('a')?.getAttribute('target'), '_blank')
     assert.equal(container.querySelector('button')?.textContent, 'Show preview')
+  }
+})
+
+test('translation feedback does not split the preview action group or add standalone button spacing', async () => {
+  for (const feedback of ['Checking Khmer translations...', 'Khmer: 1 empty translation field', 'Chinese: 12 empty translation fields']) {
+    translationFeedback = feedback
+    await render(); await render()
+    const group = container.querySelector('[role="group"][aria-label="Page preview"]')
+    assert.ok(group, 'Keep the two preview controls together when translation feedback is visible')
+    assert.ok(group.querySelector('button'))
+    assert.ok(group.querySelector('a'))
+    assert.equal(group.querySelector('[role="status"]'), null)
+    for (const control of group.querySelectorAll('.btn')) {
+      assert.ok(control.classList.contains('btn--no-margin'), 'Toolbar controls must opt out of standalone button margins')
+    }
+  }
+})
+
+test('sticky preview follows toolbar resizing and native negative offsets, then restores existing styles', async () => {
+  const editor = document.createElement('div')
+  editor.className = 'collection-edit'
+  editor.style.setProperty('--cms-doc-controls-offset', '14px', 'important')
+  const toolbar = document.createElement('div')
+  toolbar.className = 'doc-controls'
+  toolbar.style.top = '0px'
+  editor.append(toolbar); toolbar.append(container); document.body.append(editor)
+  let height = 84
+  toolbar.getBoundingClientRect = () => ({ height }) as DOMRect
+  let resized: (() => void) | undefined
+  let observed: unknown
+  let disconnected = false
+  const previousObserver = window.ResizeObserver
+  Object.defineProperty(window, 'ResizeObserver', { configurable: true, value: class {
+    constructor(callback: () => void) { resized = callback }
+    observe(target: unknown) { observed = target }
+    disconnect() { disconnected = true }
+  } })
+  try {
+    await render(); await render()
+    assert.equal(editor.style.getPropertyValue('--cms-doc-controls-offset'), '84px')
+    assert.equal(observed, toolbar)
+    height = 96; resized!()
+    assert.equal(editor.style.getPropertyValue('--cms-doc-controls-offset'), '96px')
+    toolbar.style.top = '-56px'
+    window.dispatchEvent(new window.Event('resize'))
+    assert.equal(editor.style.getPropertyValue('--cms-doc-controls-offset'), '40px')
+    toolbar.style.top = '-120px'; resized!()
+    assert.equal(editor.style.getPropertyValue('--cms-doc-controls-offset'), '0px')
+    await act(() => root.render(null))
+    assert.equal(disconnected, true)
+    assert.equal(editor.style.getPropertyValue('--cms-doc-controls-offset'), '14px')
+    assert.equal(editor.style.getPropertyPriority('--cms-doc-controls-offset'), 'important')
+    resized!()
+    assert.equal(editor.style.getPropertyValue('--cms-doc-controls-offset'), '14px')
+  } finally {
+    await act(() => root.render(null))
+    document.body.append(container); editor.remove()
+    Object.defineProperty(window, 'ResizeObserver', { configurable: true, value: previousObserver })
   }
 })

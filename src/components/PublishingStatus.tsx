@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useLayoutEffect, useRef } from 'react'
 import { Button, ExternalLinkIcon, MinimizeMaximizeIcon, useDocumentDrawerContext, useDocumentInfo, useFormModified, useFormProcessing, useLivePreviewContext, useWindowInfo } from '@payloadcms/ui'
 import { publishingState } from '@/lib/publishing-state'
+import { observePreviewToolbarLayout } from '../lib/preview-toolbar-layout'
 import { TranslationStatus } from './TranslationStatus'
 
 export const PublishingStatus = () => {
@@ -13,9 +14,14 @@ export const PublishingStatus = () => {
   const processing = useFormProcessing()
   const { isLivePreviewEnabled, isLivePreviewing, previewWindowType, setIsLivePreviewing, setPreviewWindowType, url } = useLivePreviewContext()
   const initializedEditor = useRef<string | null>(null)
+  const actionRef = useRef<HTMLDivElement | null>(null)
   const editor = `${collectionSlug}:${id}`
   const canPreview = Boolean(id && !drawerSlug && isLivePreviewEnabled && url)
   const panelOpen = isLivePreviewing && previewWindowType === 'iframe'
+
+  useLayoutEffect(() => {
+    if (canPreview && actionRef.current) return observePreviewToolbarLayout(actionRef.current)
+  }, [canPreview, editor])
 
   useEffect(() => {
     if (!canPreview || mobile === undefined || initializedEditor.current === editor) return
@@ -30,15 +36,16 @@ export const PublishingStatus = () => {
     setIsLivePreviewing(!panelOpen)
   }
   return (
-    <div className="cms-preview-action">
+    <div className="cms-preview-action" ref={actionRef}>
       <TranslationStatus />
         <span className={modified || processing ? 'cms-pending-state' : 'cms-sr-only'} role="status" aria-live="polite">
           {publishingState({ modified, processing, hasPublishedDoc, unpublishedVersionCount })}
         </span>
       {canPreview ? (
-        <>
+        <div className="cms-preview-buttons" role="group" aria-label="Page preview">
           <Button
             type="button"
+            margin={false}
             buttonStyle="secondary"
             size="medium"
             className="cms-preview-toggle"
@@ -52,6 +59,7 @@ export const PublishingStatus = () => {
           </Button>
           <Button
             el="anchor"
+            margin={false}
             url={url ?? undefined}
             newTab
             buttonStyle="secondary"
@@ -63,7 +71,7 @@ export const PublishingStatus = () => {
           >
             Preview in new tab
           </Button>
-        </>
+        </div>
       ) : null}
     </div>
   )
