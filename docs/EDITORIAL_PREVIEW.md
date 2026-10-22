@@ -20,5 +20,11 @@ The panel renders the test website's **saved draft**, refreshed after saving. It
 does not promise per-keystroke updates. Publishing in the selected language is
 still a separate action; showing or hiding preview never saves or publishes.
 
+**Preview in new tab** opens the same page and selected language independently
+of the side panel, including when the panel is hidden. The link preserves the
+existing authenticated preview entry URL and uses `noopener noreferrer`. It
+opens the latest saved draft; unsaved fields require **Save Draft** first.
+Opening the link never saves, publishes, switches the panel or changes fields.
+
 No content migration, import or reconciliation is part of this change. It does
 not update production, existing content, drafts, versions or media relationships.

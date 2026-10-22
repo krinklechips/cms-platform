@@ -21,8 +21,22 @@ let drawer: string | undefined
 let preview: any
 let changes: any[]
 let popups: number
+const require = createRequire(new URL('../src/components/PublishingStatus.tsx', import.meta.url))
+const nativeButton = { exports: {} as any }
+const nativeButtonSource = ts.transpileModule(readFileSync(new URL('../node_modules/@payloadcms/ui/dist/elements/Button/index.js', import.meta.url), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true },
+}).outputText
+new Function('require', 'module', 'exports', nativeButtonSource)((name: string) => {
+  if (name.endsWith('.scss')) return {}
+  if (name.startsWith('../../icons/')) return Object.fromEntries(['Chevron', 'Edit', 'Link', 'Plus', 'Swap', 'X'].map(icon => [`${icon}Icon`, () => null]))
+  if (name === '../Link/index.js') return { Link: ({ children, href }: any) => React.createElement('a', { href }, children) }
+  if (name === '../Popup/index.js') return { Popup: () => null }
+  if (name === '../Tooltip/index.js') return { Tooltip: () => null }
+  return require(name)
+}, nativeButton, nativeButton.exports)
 const ui = {
-  Button: ({ children, onClick, disabled, type, extraButtonProps }: any) => React.createElement('button', { onClick, disabled, type, ...extraButtonProps }, children),
+  Button: nativeButton.exports.Button,
+  ExternalLinkIcon: () => React.createElement('svg', { 'aria-hidden': true }),
   MinimizeMaximizeIcon: () => React.createElement('svg', { 'aria-hidden': true }),
   useDocumentInfo: () => doc,
   useDocumentDrawerContext: () => ({ drawerSlug: drawer }),
@@ -31,7 +45,6 @@ const ui = {
   useWindowInfo: () => ({ breakpoints: { m: mobile } }),
   useLivePreviewContext: () => preview,
 }
-const require = createRequire(new URL('../src/components/PublishingStatus.tsx', import.meta.url))
 const output = { exports: {} as any }
 const compiled = ts.transpileModule(readFileSync(new URL('../src/components/PublishingStatus.tsx', import.meta.url), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
@@ -124,13 +137,71 @@ test('waits for responsive state and a URL, then initializes once without writin
 })
 
 test('does not offer previews for create views, drawers, disabled or unmapped content', async () => {
-  for (const change of [() => { doc.id = undefined }, () => { drawer = 'service-drawer' }, () => { preview.isLivePreviewEnabled = false }, () => { preview.url = '' }]) {
+  for (const change of [() => { doc.id = undefined }, () => { drawer = 'service-drawer' }, () => { preview.isLivePreviewEnabled = false }, () => { preview.url = '' }, () => { preview.url = null }, () => { preview.url = undefined }]) {
     await act(() => root.render(null))
     doc.id = 1; drawer = undefined; preview.isLivePreviewEnabled = true; preview.url = 'https://preview.example.test/en'
     changes = []
     change()
     await render()
     assert.equal(container.querySelector('button'), null)
+    assert.equal(container.querySelector('a'), null)
     assert.deepEqual(changes, [])
+  }
+})
+
+test('new-tab preview follows the current page and language without changing the inline panel', async () => {
+  const cases = [
+    ['https://preview.example.test/en/about/branches/fun-mall', '/en/about/branches/fun-mall'],
+    ['https://preview.example.test/kh/about/branches/fun-mall', '/kh/about/branches/fun-mall'],
+    ['https://preview.example.test/cn/about/branches/fun-mall', '/cn/about/branches/fun-mall'],
+  ]
+  for (const [url, path] of cases) {
+    preview.url = url
+    await render(); await render()
+    const link = container.querySelector<HTMLAnchorElement>('a')
+    assert.ok(link, 'Offer a separate new-tab preview link')
+    assert.equal(link.textContent, 'Preview in new tab')
+    assert.equal(new URL(link.href).pathname, path)
+    assert.equal(link.target, '_blank')
+    assert.ok(link.relList.contains('noopener'))
+    assert.ok(link.relList.contains('noreferrer'))
+    changes = []
+    link.addEventListener('click', event => event.preventDefault())
+    await act(() => link.click())
+    assert.deepEqual(changes, [])
+    assert.equal(preview.isLivePreviewing, true)
+    assert.equal(preview.previewWindowType, 'iframe')
+    assert.equal(popups, 0)
+  }
+})
+
+test('new-tab preview preserves draft authentication and never submits unsaved form fields', async () => {
+  modified = true; processing = true
+  preview.url = 'https://preview.example.test/api/preview?secret=synthetic-fixture&redirect=%2Fcn%2Fservices%2Fdental-implants'
+  let submitted = 0
+  await act(() => root.render(React.createElement('form', { onSubmit: (event: React.FormEvent) => { event.preventDefault(); submitted++ } },
+    React.createElement('input', { defaultValue: 'Unsaved staff edit' }), React.createElement(PublishingStatus))))
+  const link = container.querySelector<HTMLAnchorElement>('a')
+  assert.ok(link)
+  assert.equal(link.href, 'https://preview.example.test/api/preview?secret=synthetic-fixture&redirect=%2Fcn%2Fservices%2Fdental-implants')
+  assert.equal(link.getAttribute('aria-disabled'), null)
+  link.addEventListener('click', event => event.preventDefault())
+  changes = []
+  await act(() => link.click())
+  assert.equal(container.querySelector('input')?.value, 'Unsaved staff edit')
+  assert.equal(submitted, 0)
+  assert.deepEqual(changes, [])
+  assert.equal(modified, true)
+})
+
+test('new-tab preview stays available with the inline panel hidden on desktop and mobile', async () => {
+  for (const small of [false, true]) {
+    await act(() => root.render(null))
+    mobile = small
+    await render(); await render()
+    if (preview.isLivePreviewing) { await click(); await render() }
+    assert.equal(preview.isLivePreviewing, false)
+    assert.equal(container.querySelector('a')?.getAttribute('target'), '_blank')
+    assert.equal(container.querySelector('button')?.textContent, 'Show preview')
   }
 })

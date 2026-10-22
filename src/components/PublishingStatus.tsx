@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef } from 'react'
-import { Button, MinimizeMaximizeIcon, useDocumentDrawerContext, useDocumentInfo, useFormModified, useFormProcessing, useLivePreviewContext, useWindowInfo } from '@payloadcms/ui'
+import { Button, ExternalLinkIcon, MinimizeMaximizeIcon, useDocumentDrawerContext, useDocumentInfo, useFormModified, useFormProcessing, useLivePreviewContext, useWindowInfo } from '@payloadcms/ui'
 import { publishingState } from '@/lib/publishing-state'
 import { TranslationStatus } from './TranslationStatus'
 
@@ -36,19 +36,34 @@ export const PublishingStatus = () => {
           {publishingState({ modified, processing, hasPublishedDoc, unpublishedVersionCount })}
         </span>
       {canPreview ? (
-        <Button
-          type="button"
-          buttonStyle="secondary"
-          size="medium"
-          className="cms-preview-toggle"
-          icon={<MinimizeMaximizeIcon isMinimized={!panelOpen} />}
-          iconPosition="left"
-          extraButtonProps={{ 'aria-expanded': panelOpen, 'aria-controls': 'live-preview-iframe' }}
-          tooltip={panelOpen ? 'Hide preview' : 'Show preview'}
-          onClick={togglePreview}
-        >
-          {panelOpen ? 'Hide preview' : 'Show preview'}
-        </Button>
+        <>
+          <Button
+            type="button"
+            buttonStyle="secondary"
+            size="medium"
+            className="cms-preview-toggle"
+            icon={<MinimizeMaximizeIcon isMinimized={!panelOpen} />}
+            iconPosition="left"
+            extraButtonProps={{ 'aria-expanded': panelOpen, 'aria-controls': 'live-preview-iframe' }}
+            tooltip={panelOpen ? 'Hide preview' : 'Show preview'}
+            onClick={togglePreview}
+          >
+            {panelOpen ? 'Hide preview' : 'Show preview'}
+          </Button>
+          <Button
+            el="anchor"
+            url={url ?? undefined}
+            newTab
+            buttonStyle="secondary"
+            size="medium"
+            className="cms-preview-new-tab"
+            icon={<ExternalLinkIcon />}
+            iconPosition="left"
+            tooltip="Open the latest saved draft in a new tab"
+          >
+            Preview in new tab
+          </Button>
+        </>
       ) : null}
     </div>
   )
