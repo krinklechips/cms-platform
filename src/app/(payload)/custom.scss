@@ -278,6 +278,7 @@ body:has(.cms-tenant-nav) {
   }
   &__breadcrumbs button[aria-current] { font-weight: 600; }
   &__select { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; }
+  &__select > &__create { margin-left: auto; }
   select, &__destination select {
     font: inherit; color: var(--theme-text); background: var(--theme-input-bg);
     border: 1px solid var(--theme-elevation-150); border-radius: 4px;

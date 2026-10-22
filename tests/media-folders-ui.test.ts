@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { after, beforeEach, test } from 'node:test'
 import React, { act } from 'react'
+import { compile } from 'sass'
 import ts from 'typescript'
 import { buildMediaFolders, createMediaFolderPath } from '../src/lib/media-folders'
 
@@ -269,4 +270,16 @@ test('creation responses retain filters changed while the request was in flight'
   await render()
   assert.equal(query.search, 'new search')
   assert.deepEqual(query.where.and[0], { filename: { contains: 'recent filter' } })
+})
+
+test('the library and picker keep the creator right-aligned when the folder toolbar wraps', async () => {
+  const style = document.createElement('style')
+  style.textContent = compile(new URL('../src/app/(payload)/custom.scss', import.meta.url).pathname).css
+  document.head.append(style)
+  try {
+    await render()
+    const creator = container.querySelector('.cms-media-folders__select > .cms-media-folders__create')!
+    const computed = window.getComputedStyle(creator as unknown as Parameters<typeof window.getComputedStyle>[0])
+    assert.equal(computed.marginLeft, 'auto', 'A wrapped button must stay right-aligned so its right-anchored panel remains on-screen')
+  } finally { style.remove() }
 })
