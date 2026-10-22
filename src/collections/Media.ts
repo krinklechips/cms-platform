@@ -2,15 +2,17 @@ import { randomUUID } from 'node:crypto'
 import { APIError, type CollectionConfig } from 'payload'
 import { getHostTenant } from '../lib/host-scope'
 import { resolveMediaTenant } from '../lib/media-validation'
+import { isUploadFolder } from '../lib/media-folders'
+import { mediaFolderCatalog } from '../lib/media-folder-catalog'
 
 /**
  * Media — tenant-scoped uploads stored in Cloudflare R2 (cms-platform bucket).
  *
  * PER-TENANT FOLDERS: each doc's `prefix` decides its folder in the bucket
  * (the storage plugin reads data.prefix per document). A beforeValidate hook
- * sets it to the owning tenant's slug — Roomchang uploads land in
- * `roomchang/…`, Oriental Bank in `orientalbank-plc/…`. Imports may pass an
- * explicit deeper prefix (e.g. `roomchang/doctors`) which is preserved.
+ * selects the owning tenant and optional category. The storage adapter contains
+ * new uploads beneath its configured root. Imported prefixes remain unchanged;
+ * folder browsing groups their equivalent category without moving objects.
  */
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -19,6 +21,7 @@ export const Media: CollectionConfig = {
     group: 'Media Library',
     description: 'Public website files. Upload a new file to replace an image, then select it on the page. Existing files are kept to protect published pages. Do not upload private patient records.',
     defaultColumns: ['filename', 'alt', 'prefix', 'updatedAt'],
+    components: { beforeListTable: ['/components/MediaFolders#MediaFolderBrowser'] },
     // NOTE: not hidden — hidden:true blocks the route itself. The super-admin
     // sidebar is slimmed by the custom PlatformNav component instead.
   },
@@ -38,6 +41,9 @@ export const Media: CollectionConfig = {
       return process.env.NODE_ENV !== 'production'
     },
   },
+  endpoints: [{ path: '/folders', method: 'get', handler: async req => Response.json(await mediaFolderCatalog(req), {
+    headers: { 'Cache-Control': 'private, no-store', Vary: 'Cookie, Authorization' },
+  }) }],
   hooks: {
     beforeOperation: [
       ({ operation, req, args }) => {
@@ -75,6 +81,7 @@ export const Media: CollectionConfig = {
             if (Object.hasOwn(originalDoc, field)) data[field] = originalDoc[field]
             else delete data[field]
           }
+          delete data._uploadFolder
           return data
         }
 
@@ -83,7 +90,10 @@ export const Media: CollectionConfig = {
         const isRegularTenantUser = Boolean(req.user) && !isSuperAdmin
         try {
           const { slug } = await resolveMediaTenant(data.tenant, req)
-          if (isRegularTenantUser || !data.prefix || data.prefix === 'serviette-media') data.prefix = slug
+          if (data._uploadFolder !== undefined && data._uploadFolder !== null) {
+            if (!isUploadFolder(data._uploadFolder)) throw new Error('Choose a valid upload folder inside this tenant.')
+            data.prefix = data._uploadFolder ? `${slug}/${data._uploadFolder}` : slug
+          } else if (isRegularTenantUser || !data.prefix || data.prefix === 'serviette-media') data.prefix = slug
           else if (typeof data.prefix !== 'string' ||
             !(data.prefix === slug || data.prefix.startsWith(`${slug}/`)) ||
             !data.prefix.split('/').every((part: string) => /^[a-zA-Z0-9_-][a-zA-Z0-9._-]*$/.test(part) && part !== '..')) {
@@ -97,6 +107,11 @@ export const Media: CollectionConfig = {
     ],
   },
   fields: [
+    {
+      name: '_uploadFolder', type: 'text', virtual: true, label: 'Folder',
+      admin: { disableBulkEdit: true, disableListColumn: true, disableListFilter: true,
+        components: { Field: '/components/MediaFolders#MediaUploadFolder' } },
+    },
     {
       name: 'alt',
       type: 'text',

@@ -313,6 +313,7 @@ export interface Tenant {
 export interface Media {
   id: number;
   tenant?: (number | null) | Tenant;
+  _uploadFolder?: string | null;
   alt: string;
   focalX?: number | null;
   focalY?: number | null;
@@ -6116,6 +6117,7 @@ export interface BookingSlotsSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
+  _uploadFolder?: T;
   alt?: T;
   focalX?: T;
   focalY?: T;

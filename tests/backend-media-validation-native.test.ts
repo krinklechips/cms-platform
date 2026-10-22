@@ -7,11 +7,18 @@ import { test } from 'node:test'
 import { sqliteAdapter, type SQLiteAdapter } from '@payloadcms/db-sqlite'
 import { buildConfig, getPayload, ValidationError, type CollectionConfig } from 'payload'
 import { Media } from '../src/collections/Media'
+import { mediaFolderCatalog } from '../src/lib/media-folder-catalog'
+import { mediaFolderFilter } from '../src/lib/media-folders'
 
 process.env.PAYLOAD_SECRET = 'native-media-validation-disposable-fixture-only'
 process.env.DATABASE_URI = 'file:/tmp/native-media-validation-config-unused.db'
 process.env.PAYLOAD_FORCE_DRIZZLE_PUSH = 'true'
-delete process.env.R2_ACCESS_KEY_ID
+// Use the real prefix/URL hooks; these fixtures never perform a storage operation.
+process.env.R2_ACCESS_KEY_ID = 'native-fixture-only'
+process.env.R2_SECRET_ACCESS_KEY = 'native-fixture-only'
+process.env.R2_ACCOUNT_ID = 'native-fixture-only'
+process.env.R2_BUCKET_NAME = 'native-fixture-only'
+process.env.R2_PUBLIC_BASE_URL = 'https://pub-2b835c19d8644293b271deaeb97352b1.r2.dev'
 const config = await (await import('../src/payload.config')).default
 const rejectsMedia = (error: unknown) => error instanceof ValidationError && /image|tenant|media|URL|src|caption|JSON/i.test(JSON.stringify(error.data.errors))
 
@@ -45,6 +52,31 @@ test('native SQLite draft/publish guards preserve existing values, drafts, local
     const update = async (data: Record<string, unknown>, draft: boolean, locale: 'en' | 'kh' | 'cn' = 'en') => payload.update({
       collection: 'pages', id: page.id, data: { _status: draft ? 'draft' : 'published', ...data, _editorialRevision: await revision('pages', page.id, locale) } as never, draft, locale, user, overrideLock: true,
       publishSpecificLocale: draft ? undefined : locale, publishAllLocales: false,
+    })
+
+    await t.test('folder browsing uses real tenant access and exact persisted prefixes without modifying media or drafts', async () => {
+      const fixtures = [
+        { tenant: tenant.id, filename: 'doctor-old.png', prefix: 'roomchang/doctors' },
+        { tenant: tenant.id, filename: 'doctor-new.png', prefix: 'serviette-media/roomchang/doctors' },
+        { tenant: tenant.id, filename: 'service.png', prefix: 'roomchang/services' },
+        { tenant: other.id, filename: 'folder-foreign.png', prefix: 'other-site/doctors' },
+      ]
+      for (const data of fixtures) await payload.db.create({ collection: 'media', data: { ...data, mimeType: 'image/png' } })
+      const before = await payload.db.find({ collection: 'media', pagination: false })
+      const pageBefore = await read('en', true)
+      const editor = { id: 99, collection: 'users', roles: ['editor'], tenants: [{ tenant: tenant.id }] } as never
+      const { createLocalReq } = await import('payload')
+      const req = { ...await createLocalReq({ user: editor }, payload), searchParams: new URLSearchParams(`tenant=${tenant.id}`) }
+      const catalog = await mediaFolderCatalog(req)
+      const doctors = catalog.folders.find(folder => folder.path === 'doctors')
+      assert.equal(doctors?.count, 2)
+      assert.equal(catalog.folders.some(folder => folder.path.includes('other-site')), false)
+      const result = await payload.find({ collection: 'media', where: mediaFolderFilter(doctors), overrideAccess: false, user: editor, depth: 0 })
+      assert.deepEqual(result.docs.map(doc => doc.filename).sort(), ['doctor-new.png', 'doctor-old.png'])
+      req.searchParams = new URLSearchParams(`tenant=${other.id}`)
+      await assert.rejects(() => mediaFolderCatalog(req), /authorised/)
+      assert.deepEqual(await payload.db.find({ collection: 'media', pagination: false }), before)
+      assert.deepEqual(await read('en', true), pageBefore)
     })
 
     await t.test('new malformed image URLs reject both native drafts and publication', async () => {

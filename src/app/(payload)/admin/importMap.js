@@ -9,6 +9,8 @@ import { ImageUrlPreview as ImageUrlPreview_7462301dd20d90072f654d047389192b } f
 import { StatUsage as StatUsage_e76f63958c0e6f6da6b1741c5e710bba } from '../../../components/StatUsage'
 import { StatNameCell as StatNameCell_e76f63958c0e6f6da6b1741c5e710bba } from '../../../components/StatUsage'
 import { SectionImageUrlPreview as SectionImageUrlPreview_7462301dd20d90072f654d047389192b } from '../../../components/ImageUrlPreview'
+import { MediaUploadFolder as MediaUploadFolder_b0a91ac00b148fa94508d209a5ea9448 } from '../../../components/MediaFolders'
+import { MediaFolderBrowser as MediaFolderBrowser_b0a91ac00b148fa94508d209a5ea9448 } from '../../../components/MediaFolders'
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { AuditChanges as AuditChanges_7e9623af6577f0c39e521fa072d3a2d3 } from '../../../components/AuditChanges'
 import { PlatformNav as PlatformNav_d93cd8bf9ab6123ede6430df10ac9859 } from '../../../components/PlatformNav'
@@ -37,6 +39,8 @@ export const importMap = {
   "/components/StatUsage#StatUsage": StatUsage_e76f63958c0e6f6da6b1741c5e710bba,
   "/components/StatUsage#StatNameCell": StatNameCell_e76f63958c0e6f6da6b1741c5e710bba,
   "/components/ImageUrlPreview#SectionImageUrlPreview": SectionImageUrlPreview_7462301dd20d90072f654d047389192b,
+  "/components/MediaFolders#MediaUploadFolder": MediaUploadFolder_b0a91ac00b148fa94508d209a5ea9448,
+  "/components/MediaFolders#MediaFolderBrowser": MediaFolderBrowser_b0a91ac00b148fa94508d209a5ea9448,
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/AuditChanges#AuditChanges": AuditChanges_7e9623af6577f0c39e521fa072d3a2d3,
   "/components/PlatformNav#PlatformNav": PlatformNav_d93cd8bf9ab6123ede6430df10ac9859,

@@ -256,3 +256,40 @@ body:has(.cms-tenant-nav) {
   }
   .cms-pending-state { display: none; }
 }
+// Native media list and image-picker share the same folder navigation.
+.cms-media-folders {
+  margin: 0 0 20px;
+  padding: 16px 0;
+  border-block: 1px solid var(--theme-elevation-100);
+
+  &__toolbar, &__breadcrumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+  &__toolbar { justify-content: space-between; }
+  &__breadcrumbs { min-width: 0; }
+  &__breadcrumbs button, &__retry {
+    border: 0; background: none; color: var(--theme-text); padding: 4px 0;
+    font: inherit; cursor: pointer; overflow-wrap: anywhere;
+  }
+  &__breadcrumbs button[aria-current] { font-weight: 600; }
+  &__select { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; }
+  select, &__destination select {
+    font: inherit; color: var(--theme-text); background: var(--theme-input-bg);
+    border: 1px solid var(--theme-elevation-150); border-radius: 4px;
+    padding: 8px 10px; min-height: 40px; max-width: 100%; min-width: 0;
+  }
+  &__children { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 6px; margin-top: 12px; }
+  &__children:empty { display: none; }
+  &__folder {
+    display: flex; align-items: center; gap: 8px; text-align: left; min-width: 0;
+    padding: 9px 10px; border: 1px solid var(--theme-elevation-100); border-radius: 4px;
+    font: inherit; color: var(--theme-text); background: transparent; cursor: pointer;
+    span { overflow-wrap: anywhere; }
+    svg { width: 20px; height: 20px; flex-shrink: 0; }
+    &:hover { background: var(--theme-elevation-50); }
+  }
+  &__count { margin-left: auto; color: var(--theme-elevation-500); font-variant-numeric: tabular-nums; }
+  &__destination { margin-bottom: 24px; }
+  &__destination label { display: block; margin-bottom: 8px; }
+  &__destination select { width: 100%; }
+  &__destination p { overflow-wrap: anywhere; }
+  button:focus-visible, select:focus-visible { outline: 2px solid var(--theme-success-500); outline-offset: 2px; }
+}
