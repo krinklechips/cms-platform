@@ -7,6 +7,7 @@ import pg from 'pg'
 import { drizzle } from '@payloadcms/db-postgres/drizzle/node-postgres'
 import { getPayload, type Payload, type SanitizedConfig } from 'payload'
 import { migrations } from '../src/migrations'
+import { loadPayloadConfig } from './helpers/load-payload-config'
 
 const migrationName = '20261021_120000_payload_391_schema'
 const fixtureURI = 'postgres://cms_fixture@127.0.0.1:55439/cms_storage_upgrade_fixture'
@@ -27,7 +28,7 @@ async function withR2Config(run: (config: SanitizedConfig) => Promise<void>) {
   const previous = Object.fromEntries(Object.keys(environment).map((key) => [key, process.env[key]]))
   Object.assign(process.env, environment)
   try {
-    const config = await (await import('../src/payload.config')).default
+    const config = await loadPayloadConfig()
     await run({ ...config, telemetry: false, typescript: { ...config.typescript, autoGenerate: false } })
   } finally {
     for (const [key, value] of Object.entries(previous)) {
@@ -82,6 +83,14 @@ test('actual R2 URL hooks preserve legacy folders when the storage key is null o
         assert.deepEqual(data, { filename, prefix, _objectKey: storageKey }, 'URL hooks must not rewrite stored identity')
       }
     }
+  })
+})
+
+test('full config selects static Lexical exports instead of the unsettled Node entrypoints', async () => {
+  await withR2Config(async config => {
+    assert.ok(config.editor)
+    assert.match(import.meta.resolve('lexical'), /\/Lexical\.(dev|prod)\.mjs$/)
+    assert.match(import.meta.resolve('@lexical/rich-text'), /\.(dev|prod)\.mjs$/)
   })
 })
 

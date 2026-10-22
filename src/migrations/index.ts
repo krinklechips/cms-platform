@@ -19,6 +19,7 @@ import * as migration_20261020_105541_cms_localized_field_coverage from './20261
 import * as migration_20261021_120000_payload_391_schema from './20261021_120000_payload_391_schema';
 import * as migration_20261021_180000_editorial_audit from './20261021_180000_editorial_audit';
 import * as migration_20261022_040000_media_directories from './20261022_040000_media_directories';
+import * as migration_20261022_070000_page_addresses from './20261022_070000_page_addresses';
 
 export const migrations = [
   {
@@ -125,5 +126,10 @@ export const migrations = [
     up: migration_20261022_040000_media_directories.up,
     down: migration_20261022_040000_media_directories.down,
     name: '20261022_040000_media_directories'
+  },
+  {
+    up: migration_20261022_070000_page_addresses.up,
+    down: migration_20261022_070000_page_addresses.down,
+    name: '20261022_070000_page_addresses'
   },
 ];

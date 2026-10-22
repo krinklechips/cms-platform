@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict'
 import { after, test } from 'node:test'
 import type { Access, PayloadRequest } from 'payload'
-import config from '../src/payload.config'
+import { loadPayloadConfig } from './helpers/load-payload-config'
 
 const previous = { site: process.env.DUMMY_SITE_URL, secret: process.env.PREVIEW_SECRET }
 process.env.DUMMY_SITE_URL = 'https://preview.example.test'
 delete process.env.PREVIEW_SECRET
+const config = loadPayloadConfig()
 after(() => {
   for (const [key, value] of [['DUMMY_SITE_URL', previous.site], ['PREVIEW_SECRET', previous.secret]] as const) {
     if (value === undefined) delete process.env[key]

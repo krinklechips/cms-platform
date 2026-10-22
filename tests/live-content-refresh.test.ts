@@ -356,16 +356,29 @@ test('database-drop environment switches are rejected without configuration or d
 
 test('native import options enforce explicit status, locale-only publishing, permissions and editor leases', async () => {
   const { createRefreshRuntime } = await import('../scripts/refresh-live-translations')
+  const { editorialRevision } = await import('../src/lib/with-editorial-concurrency')
   const calls: any[] = []
+  const starting = fixture().get()
+  const identity = starting.identity, key = `${identity.collection}|${identity.id}`
+  const updatedAt = '2030-01-01T00:00:00.000Z'
+  const collection = { slug: identity.collection, fields: [] }
+  starting.history._faq_items_v[0].version_updated_at = updatedAt
   const runtime = await createRefreshRuntime({ pool: {} as any, tenantId: '1', tenantSlug: 'roomchang',
     destination: fixture().runtime.destination, policies: {} as any, actor: { id: 1 } as any,
-    payload: { db: { name: 'postgres' }, collections: {}, update: async (args: any) => { calls.push(args) } } as any })
-  for (const mode of ['publish', 'draft'] as const) await runtime.update({ req: { context: {}, transactionID: 'tx' } }, fixture().get().identity,
+    payload: { db: { name: 'postgres' }, collections: { [identity.collection]: { config: collection } }, update: async (args: any) => {
+      calls.push(args)
+      return { id: identity.id, updatedAt: new Date(Date.parse(updatedAt) + calls.length).toISOString() }
+    } } as any })
+  const transaction = { req: { context: {}, transactionID: 'tx' }, locked: new Set([key]),
+    initial: new Map([[key, starting]]), revisions: new Map([[key, updatedAt]]), published: new Set<string>() }
+  for (const mode of ['publish', 'draft'] as const) await runtime.update(transaction, identity,
     'kh', { question: 'Approved' }, mode)
   assert.equal(calls[0].data._status, 'published')
   assert.equal(calls[1].data._status, 'draft')
   assert.equal(calls[0].publishAllLocales, false)
   assert.equal(calls[0].publishSpecificLocale, 'kh')
+  assert.equal(calls[0].data._editorialRevision, editorialRevision(collection, { id: identity.id, updatedAt }, 'kh'))
+  assert.notEqual(calls[0].data._editorialRevision, calls[1].data._editorialRevision)
   for (const call of calls) { assert.equal(call.overrideAccess, false); assert.equal(call.overrideLock, false); assert.equal(call.autosave, false) }
   await assert.rejects(runtime.finalizePublish({ req: { context: {}, transactionID: 'tx' } }, fixture().get().identity, '0'.repeat(64)), /finalize_not_authorized/)
   assert.equal(calls.length, 2, 'Status-only finalization requires a captured, locked, draft-free starting state')

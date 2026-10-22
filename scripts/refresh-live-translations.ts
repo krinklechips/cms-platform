@@ -18,19 +18,30 @@ export async function createRefreshRuntime(options: RuntimeOptions): Promise<Ref
   const { pool, destination, payload, actor } = options
   const api = payload ? await import('payload') : undefined
   const locking = payload ? await import('../src/lib/editorial-lock') : undefined
+  const concurrency = payload ? await import('../src/lib/with-editorial-concurrency') : undefined
   const { sql } = payload ? await import('@payloadcms/db-postgres') : { sql: undefined }
-  type Tx = { query: SQLRead; req?: PayloadRequest; locked?: Set<string>; initial?: Map<string, RecordState>; published?: Set<string> }
+  type Tx = { query: SQLRead; req?: PayloadRequest; locked?: Set<string>; initial?: Map<string, RecordState>; published?: Set<string>; revisions?: Map<string, string> }
   const recordKey = (r: Identity) => r.collection + '|' + r.id
+  const revisionTimestamp = (value: unknown): string => {
+    if (!(typeof value === 'string' || value instanceof Date) || !Number.isFinite(new Date(value).getTime())) throw new RefreshConflict('editorial_revision_unavailable')
+    return new Date(value).toISOString()
+  }
+  const advanceRevision = (tx: unknown, identity: Identity, saved: { id: unknown; updatedAt?: unknown }) => {
+    if (String(saved.id) !== identity.id) throw new RefreshConflict('identity_changed')
+    ;(tx as Tx).revisions!.set(recordKey(identity), revisionTimestamp(saved.updatedAt))
+  }
   const writeContext = async (tx: unknown, identity: Identity, locale: 'en' | 'kh' | 'cn') => {
-    const req = (tx as Tx).req
-    if (!payload || !req || !actor) throw new Error('apply_requires_actor')
+    const t = tx as Tx, req = t.req, k = recordKey(identity), updatedAt = t.revisions?.get(k)
+    if (!payload || !req || !actor || !concurrency) throw new Error('apply_requires_actor')
+    if (!t.locked?.has(k) || !t.initial?.has(k) || !updatedAt) throw new RefreshConflict('editorial_revision_unavailable')
     if (payload.collections['payload-locked-documents']) {
       const leases = await payload.db.find({ collection: 'payload-locked-documents', req, limit: 1, pagination: false,
         where: { and: [{ 'document.relationTo': { equals: identity.collection } }, { 'document.value': { equals: identity.id } }] } })
       if (leases.docs.length) throw new RefreshConflict('editor_lease')
     }
     const writeReq = Object.assign(Object.create(req), req, { context: { ...req.context }, locale })
-    return { payload, actor, writeReq }
+    const revision = concurrency.editorialRevision(payload.collections[identity.collection].config, { id: identity.id, updatedAt }, locale)
+    return { payload, actor, writeReq, revision }
   }
   return {
     destination, tenantId: options.tenantId, tenantSlug: options.tenantSlug,
@@ -59,7 +70,7 @@ export async function createRefreshRuntime(options: RuntimeOptions): Promise<Ref
       }
       try {
         await query("SET LOCAL TIME ZONE 'UTC'")
-        const result = await run({ query, req, locked: new Set(), initial: new Map(), published: new Set() } satisfies Tx)
+        const result = await run({ query, req, locked: new Set(), initial: new Map(), published: new Set(), revisions: new Map() } satisfies Tx)
         try { await payload.db.commitTransaction(transactionID) }
         catch { throw new RefreshConflict('indeterminate_commit') }
         return result
@@ -81,16 +92,24 @@ export async function createRefreshRuntime(options: RuntimeOptions): Promise<Ref
     read: async (tx, identity) => {
       const t = tx as Tx
       const state = await readSQLState(t.query, identity, destination.schema, options.policies[identity.collection])
-      if (t.locked?.has(recordKey(identity)) && !t.initial?.has(recordKey(identity))) t.initial?.set(recordKey(identity), structuredClone(state))
+      const k = recordKey(identity)
+      if (t.locked?.has(k) && !t.initial?.has(k)) {
+        const latest = state.history['_' + identity.collection.replaceAll('-', '_') + '_v']?.filter(r => r.latest === true)
+        if (latest?.length !== 1) throw new RefreshConflict('editorial_revision_unavailable')
+        // Seed once from the snapshot applyRefresh validates, never from a later read.
+        t.revisions!.set(k, revisionTimestamp(latest[0].version_updated_at))
+        t.initial?.set(k, structuredClone(state))
+      }
       return state
     },
     update: async (tx, identity, locale, patch, mode) => {
       // Payload mutates its request locale; clones retain the same transaction session.
-      const { payload, actor, writeReq } = await writeContext(tx, identity, locale)
-      await payload.update({ collection: identity.collection, id: identity.id, locale, fallbackLocale: false,
+      const { payload, actor, writeReq, revision } = await writeContext(tx, identity, locale)
+      const saved = await payload.update({ collection: identity.collection, id: identity.id, locale, fallbackLocale: false,
         user: actor, overrideAccess: false, overrideLock: false, req: writeReq, draft: mode === 'draft', autosave: false,
         ...(mode === 'publish' ? { publishSpecificLocale: locale, publishAllLocales: false } : {}),
-        data: { ...patch, _status: mode === 'publish' ? 'published' : 'draft' }, depth: 0 })
+        data: { ...patch, _editorialRevision: revision, _status: mode === 'publish' ? 'published' : 'draft' }, depth: 0 })
+      advanceRevision(tx, identity, saved)
       if (mode === 'publish') (tx as Tx).published?.add(recordKey(identity))
     },
     finalizePublish: async (tx, identity, expectedCurrentHash) => {
@@ -101,11 +120,12 @@ export async function createRefreshRuntime(options: RuntimeOptions): Promise<Ref
         || initial?.parent[identity.collection.replaceAll('-', '_')]?.[0]?._status !== 'published') throw new RefreshConflict('finalize_not_authorized')
       const current = await readSQLState(t.query, identity, destination.schema, options.policies[identity.collection])
       if (hashJSON(current) !== expectedCurrentHash) throw new RefreshConflict('stale_state')
-      const { payload, actor, writeReq } = await writeContext(tx, identity, 'en')
+      const { payload, actor, writeReq, revision } = await writeContext(tx, identity, 'en')
       // Only our already-verified locale publications may receive this status-only final version.
-      await payload.update({ collection: identity.collection, id: identity.id, locale: 'en', fallbackLocale: false,
+      const saved = await payload.update({ collection: identity.collection, id: identity.id, locale: 'en', fallbackLocale: false,
         user: actor, overrideAccess: false, overrideLock: false, req: writeReq, draft: false, autosave: false,
-        publishAllLocales: true, data: { _status: 'published' }, depth: 0 })
+        publishAllLocales: true, data: { _editorialRevision: revision, _status: 'published' }, depth: 0 })
+      advanceRevision(tx, identity, saved)
     },
   }
 }

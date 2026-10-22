@@ -9,6 +9,7 @@ import { buildConfig, getPayload, ValidationError, type CollectionConfig } from 
 import { Media } from '../src/collections/Media'
 import { createMediaFolder, mediaFolderCatalog } from '../src/lib/media-folder-catalog'
 import { mediaFolderFilter } from '../src/lib/media-folders'
+import { loadPayloadConfig } from './helpers/load-payload-config'
 
 process.env.PAYLOAD_SECRET = 'native-media-validation-disposable-fixture-only'
 process.env.DATABASE_URI = 'file:/tmp/native-media-validation-config-unused.db'
@@ -19,7 +20,7 @@ process.env.R2_SECRET_ACCESS_KEY = 'native-fixture-only'
 process.env.R2_ACCOUNT_ID = 'native-fixture-only'
 process.env.R2_BUCKET_NAME = 'native-fixture-only'
 process.env.R2_PUBLIC_BASE_URL = 'https://pub-2b835c19d8644293b271deaeb97352b1.r2.dev'
-const config = await (await import('../src/payload.config')).default
+const config = await loadPayloadConfig()
 const rejectsMedia = (error: unknown) => error instanceof ValidationError && /image|tenant|media|URL|src|caption|JSON/i.test(JSON.stringify(error.data.errors))
 
 test('native SQLite draft/publish guards preserve existing values, drafts, locale data and stable row identities', { timeout: 120000 }, async t => {

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { SECTION_BLOCKS } from '../blocks/section-blocks'
+import { allocatePageAddress } from '../lib/page-addresses'
 
 /**
  * Pages — create a brand-new website page from the CMS, no developer needed.
@@ -15,18 +16,9 @@ import { SECTION_BLOCKS } from '../blocks/section-blocks'
  * The site's catch-all route (/{locale}/{address}) renders any published page.
  */
 
-const slugify = (raw: string): string =>
-  raw
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '') // strip diacritics
-    .replace(/[^a-z0-9\s-]/g, '') // drop anything not url-safe (incl. Khmer/Chinese)
-    .trim()
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-
 export const Pages: CollectionConfig = {
   slug: 'pages',
+  indexes: [{ fields: ['tenant', 'slug'], unique: true }],
   labels: { singular: 'Page', plural: 'Custom Pages' },
   admin: {
     group: 'Main Pages',
@@ -39,37 +31,7 @@ export const Pages: CollectionConfig = {
     read: () => true, // withModuleGating narrows anon to published + host tenant
   },
   hooks: {
-    beforeValidate: [
-      async ({ data, req, operation, originalDoc }) => {
-        if (!data) return data
-        // Only ever GENERATE a missing address — never rewrite an existing one
-        // (URL stability beats title fidelity).
-        if (operation === 'create' || !(originalDoc as { slug?: string } | undefined)?.slug) {
-          if (!data.slug) {
-            const base = slugify(String(data.title ?? '')) || 'page'
-            let candidate = base
-            for (let n = 2; n <= 50; n++) {
-              const clash = await req.payload.find({
-                collection: 'pages',
-                where: {
-                  and: [
-                    { slug: { equals: candidate } },
-                    ...(data.tenant ? [{ tenant: { equals: data.tenant } }] : []),
-                  ],
-                },
-                limit: 1,
-                depth: 0,
-                overrideAccess: true,
-              })
-              if (clash.totalDocs === 0) break
-              candidate = `${base}-${n}`
-            }
-            data.slug = candidate
-          }
-        }
-        return data
-      },
-    ],
+    beforeValidate: [allocatePageAddress],
   },
   fields: [
     {

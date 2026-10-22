@@ -1,9 +1,11 @@
-import type { CollectionConfig, Where } from 'payload'
+import { Forbidden, type CollectionBeforeDeleteHook, type CollectionBeforeValidateHook, type CollectionConfig, type CollectionSlug, type Where } from 'payload'
 import { getHostTenant } from './host-scope'
 
 type AccessFn = NonNullable<NonNullable<CollectionConfig['access']>['create']>
 type AccessArgs = Parameters<AccessFn>[0]
 type AccessResult = boolean | Where
+type TenantID = number | string
+type WriteOperation = 'create' | 'update' | 'delete'
 
 type TenantDoc = {
   enabledCollections?: unknown
@@ -21,13 +23,12 @@ type TenantDocWithID = TenantDoc & {
 const isSuperAdmin = (user: unknown): boolean =>
   Boolean((user as UserWithRolesAndTenants)?.roles?.includes('super-admin'))
 
-const firstTenantValue = (user: unknown): number | string | TenantDocWithID | null | undefined =>
-  (user as UserWithRolesAndTenants)?.tenants?.[0]?.tenant
-
-const tenantIdFromUser = (user: unknown): number | string | null => {
-  const tenant = firstTenantValue(user)
-  if (tenant === undefined || tenant === null) return null
-  return typeof tenant === 'object' ? tenant.id ?? null : tenant
+const tenantID = (value: unknown): TenantID | null => {
+  const id = value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as TenantDocWithID).id : value
+  if (typeof id === 'number' && Number.isFinite(id)) return id
+  if (typeof id === 'string' && id.trim()) return id
+  return null
 }
 
 // WRITE gate (fail-CLOSED, per Codex review): a tenant user may only
@@ -49,27 +50,55 @@ const isCollectionVisible = (tenant: TenantDoc | null | undefined, slug: string)
   return tenant.enabledCollections.includes(slug)
 }
 
-const getCachedTenant = async ({ req }: AccessArgs): Promise<TenantDoc | null> => {
-  if ('gatingTenant' in req.context) {
-    return req.context.gatingTenant as TenantDoc | null
+// Local API reads mutate their request. Preserve the writer's locale/fallback
+// while retaining its transaction and the request-local entitlement cache.
+const readReq = (req: AccessArgs['req']): AccessArgs['req'] => Object.assign(Object.create(req), req)
+
+const getCachedTenant = async (req: AccessArgs['req'], id: TenantID): Promise<TenantDoc | null> => {
+  if (!(req.context.moduleGatingTenants instanceof Map)) {
+    req.context.moduleGatingTenants = new Map<string, Promise<TenantDoc | null>>()
   }
-
-  const tenantId = tenantIdFromUser(req.user)
-  if (tenantId === null) {
-    req.context.gatingTenant = null
-    return null
+  const cache = req.context.moduleGatingTenants as Map<string, Promise<TenantDoc | null>>
+  const key = String(id)
+  if (!cache.has(key)) {
+    cache.set(key, req.payload.findByID({
+      collection: 'tenants', id, depth: 0, overrideAccess: true, disableErrors: true,
+      req: readReq(req), select: { enabledCollections: true },
+    }).catch(() => null))
   }
-
-  const tenant = (await req.payload.findByID({
-    collection: 'tenants',
-    id: tenantId,
-    depth: 0,
-    overrideAccess: true,
-  })) as TenantDoc
-
-  req.context.gatingTenant = tenant
-  return tenant
+  return cache.get(key)!
 }
+
+const enabledForTenant = async (req: AccessArgs['req'], id: TenantID | null, slug: string): Promise<boolean> =>
+  id !== null && isCollectionEnabledForWrite(await getCachedTenant(req, id), slug)
+
+const hasTenantMembership = (req: AccessArgs['req'], id: TenantID | null): boolean => id !== null
+  && Boolean((req.user as UserWithRolesAndTenants)?.tenants?.some(row => String(tenantID(row.tenant)) === String(id)))
+
+const storedOwner = async (req: AccessArgs['req'], slug: string, id: TenantID | null, draft = false): Promise<TenantID | null> => {
+  if (id === null) return null
+  const doc = await req.payload.findByID({
+    collection: slug as CollectionSlug, id, depth: 0, draft, trash: true,
+    overrideAccess: true, disableErrors: true, req: readReq(req), select: { tenant: true },
+  })
+  return tenantID((doc as { tenant?: unknown } | null)?.tenant)
+}
+
+const entitledMemberships = async (req: AccessArgs['req'], slug: string): Promise<TenantID[]> => {
+  const ids = new Map<string, TenantID>()
+  for (const row of (req.user as UserWithRolesAndTenants)?.tenants ?? []) {
+    const id = tenantID(row.tenant)
+    if (id !== null) ids.set(String(id), id)
+  }
+  const enabled: TenantID[] = []
+  for (const id of ids.values()) {
+    if (await enabledForTenant(req, id, slug)) enabled.push(id)
+  }
+  return enabled
+}
+
+const intersectAccess = (existing: AccessResult, constraint: Where): Where =>
+  typeof existing === 'object' ? { and: [existing, constraint] } : constraint
 
 const passesExistingAccess = async (
   existing: AccessFn | undefined,
@@ -86,19 +115,78 @@ const passesExistingAccess = async (
 const ALWAYS_ENTITLED = new Set(['media'])
 
 const composeWriteAccess =
-  (slug: string, existing: AccessFn | undefined): AccessFn =>
+  (slug: string, operation: WriteOperation, existing: AccessFn | undefined): AccessFn =>
   async (args) => {
     const existingResult = await passesExistingAccess(existing, args)
     if (existingResult === false) return false
 
     if (isSuperAdmin(args.req.user)) return existingResult
     if (ALWAYS_ENTITLED.has(slug)) return existingResult
+    if (!args.req.user) return false
 
-    const tenant = await getCachedTenant(args)
-    if (!isCollectionEnabledForWrite(tenant, slug)) return false
+    if (operation === 'create') {
+      // getEntityPermissions supplies collectionConfig; native create access
+      // does not. A discovery grant must not authorize a targetless write.
+      if (args.data === undefined && args.id === undefined && args.collectionConfig?.slug === slug) {
+        const ids = await entitledMemberships(args.req, slug)
+        return ids.length ? intersectAccess(existingResult, { tenant: { in: ids } }) : false
+      }
+      return await enabledForTenant(args.req, tenantID(args.data?.tenant), slug) ? existingResult : false
+    }
 
-    return existingResult
+    // A transfer must be entitled at BOTH ends. Native plugin membership
+    // access and beforeValidate still enforce who may own/assign each tenant.
+    if (operation === 'update' && args.data && 'tenant' in args.data
+      && !await enabledForTenant(args.req, tenantID(args.data.tenant), slug)) return false
+
+    if (args.id !== undefined && args.id !== null) {
+      const parent = await storedOwner(args.req, slug, args.id)
+      if (!await enabledForTenant(args.req, parent, slug)) return false
+      const owner = await storedOwner(args.req, slug, args.id, true)
+      if (!await enabledForTenant(args.req, owner, slug)) return false
+      if (!hasTenantMembership(args.req, parent) || !hasTenantMembership(args.req, owner)) return false
+      // Native document permissions and restore inspect the parent, while
+      // update/restore also query the latest version using this same filter.
+      // Both owners are authorized above; neither lookup may exclude the other.
+      const owners = [...new Set([parent, owner])]
+      return intersectAccess(existingResult, { tenant: { in: owners } })
+    }
+
+    // Collection permissions and bulk operations have no document ID. Never
+    // return an unbounded true: Payload intersects this with the native filter.
+    const ids = await entitledMemberships(args.req, slug)
+    return ids.length ? intersectAccess(existingResult, { tenant: { in: ids } }) : false
   }
+
+const checkWriteOwnership = (slug: string): CollectionBeforeValidateHook => async ({ data, originalDoc, operation, req }) => {
+  if (!req.user || isSuperAdmin(req.user) || ALWAYS_ENTITLED.has(slug)) return data
+  const owner = operation === 'create' ? tenantID(data?.tenant) : tenantID(originalDoc?.tenant)
+  const proposed = data && 'tenant' in data ? tenantID(data.tenant) : owner
+  const parent = operation === 'update' ? await storedOwner(req, slug, tenantID(originalDoc?.id)) : owner
+  const latest = operation === 'update' ? await storedOwner(req, slug, tenantID(originalDoc?.id), true) : owner
+  // Restore's access callback sees only _status, not the historical tenant.
+  // Check the actual native snapshot too, including draft/autosave transfers.
+  if (operation === 'update' && (!hasTenantMembership(req, parent) || !hasTenantMembership(req, latest))) {
+    throw new Forbidden(req.t)
+  }
+  if (!await enabledForTenant(req, parent, slug) || !await enabledForTenant(req, latest, slug) || !await enabledForTenant(req, owner, slug)
+    || !await enabledForTenant(req, proposed, slug)) {
+    throw new Forbidden(req.t)
+  }
+  return data
+}
+
+const checkDeleteOwnership = (slug: string): CollectionBeforeDeleteHook => async ({ id, req }) => {
+  if (!req.user || isSuperAdmin(req.user) || ALWAYS_ENTITLED.has(slug)) return
+  // Native bulk delete authorizes the parent query once, then removes every
+  // version. Recheck both owners per document before any deletion occurs.
+  const parent = await storedOwner(req, slug, id)
+  const latest = await storedOwner(req, slug, id, true)
+  if (!hasTenantMembership(req, parent) || !hasTenantMembership(req, latest)
+    || !await enabledForTenant(req, parent, slug) || !await enabledForTenant(req, latest, slug)) {
+    throw new Forbidden(req.t)
+  }
+}
 
 const collectionHasDrafts = (config: CollectionConfig): boolean =>
   Boolean((config.versions as { drafts?: unknown } | undefined)?.drafts)
@@ -168,24 +256,30 @@ export const withModuleGating = (config: CollectionConfig): CollectionConfig => 
     if (isSuperAdmin(args.user)) return false
     if (existingResult) return true
 
-    const tenant = firstTenantValue(args.user)
-    if (tenant === undefined || tenant === null || typeof tenant !== 'object') return false
-
-    return !isCollectionVisible(tenant, config.slug)
+    const memberships = (args.user as UserWithRolesAndTenants)?.tenants ?? []
+    if (!memberships.length) return false
+    return memberships.every(({ tenant }) => tenant && typeof tenant === 'object'
+      && !isCollectionVisible(tenant, config.slug))
   }
 
   return {
     ...config,
+    ...(collectionHasDrafts(config) ? { disableBulkDelete: true } : {}),
     admin: {
       ...config.admin,
       hidden: gatedHidden,
     },
+    hooks: {
+      ...config.hooks,
+      beforeDelete: [checkDeleteOwnership(config.slug), ...(config.hooks?.beforeDelete ?? [])],
+      beforeValidate: [...(config.hooks?.beforeValidate ?? []), checkWriteOwnership(config.slug)],
+    },
     access: {
       ...config.access,
       read: composeReadAccess(config, config.access?.read),
-      create: composeWriteAccess(config.slug, config.access?.create),
-      update: composeWriteAccess(config.slug, config.access?.update),
-      delete: composeWriteAccess(config.slug, config.access?.delete),
+      create: composeWriteAccess(config.slug, 'create', config.access?.create),
+      update: composeWriteAccess(config.slug, 'update', config.access?.update),
+      delete: composeWriteAccess(config.slug, 'delete', config.access?.delete),
     },
   }
 }

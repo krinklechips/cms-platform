@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import config from '../src/payload.config'
+import { loadPayloadConfig } from './helpers/load-payload-config'
+
+const config = loadPayloadConfig()
 
 test('stat preview opens Clinical Results for clinical experience, in the selected language', async () => {
   const resolved = await config

@@ -26,10 +26,11 @@ export const lockEditorialDocument = async (req: PayloadRequest, collection: str
 }
 
 export const serializeEditorialUpdate: CollectionBeforeOperationHook = async ({ args, collection, operation, req }) => {
-  if (operation !== 'update' || req.payload.db.name !== 'postgres') return
+  if (!['update', 'delete'].includes(operation) || req.payload.db.name !== 'postgres') return
   if (!('id' in args) || (typeof args.id !== 'string' && typeof args.id !== 'number')) {
-    // A bulk query may gain new matching rows while waiting; it cannot promise per-record serialization.
-    throw new APIError('Editorial PostgreSQL updates require a single document ID; bulk updates are not supported.', 400)
+    // Native bulk loops cannot guarantee a common lock order or a fixed set of matching rows.
+    const action = operation === 'delete' ? 'deletes' : 'updates'
+    throw new APIError(`Editorial PostgreSQL ${action} require a single document ID; bulk ${action} are not supported.`, 400)
   }
   await lockEditorialDocument(req, collection.slug, args.id)
 }

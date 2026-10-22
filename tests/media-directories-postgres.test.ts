@@ -7,6 +7,7 @@ import type { PostgresAdapter } from '@payloadcms/db-postgres'
 import { createLocalReq, getPayload, type Payload } from 'payload'
 import { migrations } from '../src/migrations'
 import { createMediaFolder, mediaFolderCatalog } from '../src/lib/media-folder-catalog'
+import { loadPayloadConfig } from './helpers/load-payload-config'
 
 const uri = 'postgres://cms_fixture@127.0.0.1:55439/cms_folder_upgrade_fixture'
 const name = '20261022_040000_media_directories'
@@ -58,7 +59,7 @@ test('PG18 adds persistent folders without changing old rows and safely handles 
     for (const [table, value] of before) assert.deepEqual(migrated.get(table), value, `Migration changed ${table}`)
     Object.assign(process.env, { DATABASE_URI: uri, PAYLOAD_SECRET: 'folder-native-pg-fixture-only', PAYLOAD_TELEMETRY_DISABLED: '1',
       R2_ACCESS_KEY_ID: 'fixture-only', R2_SECRET_ACCESS_KEY: 'fixture-only', R2_ACCOUNT_ID: 'fixture-only', R2_BUCKET_NAME: 'fixture-only', R2_PUBLIC_BASE_URL: 'https://storage-fixture.invalid' })
-    const config = await (await import('../src/payload.config')).default
+    const config = await loadPayloadConfig()
     payload = await getPayload({ key: randomUUID(), config: { ...config, telemetry: false, typescript: { ...config.typescript, autoGenerate: false } }, disableOnInit: true, disableDBConnect: true })
     // Own the fixture pool: Payload's reconnect listener deliberately retains a boot-time client.
     fixturePool = new pg.Pool({ connectionString: uri })

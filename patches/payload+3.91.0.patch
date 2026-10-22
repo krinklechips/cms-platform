@@ -161,20 +161,22 @@ diff --git a/node_modules/payload/dist/versions/saveVersion.js b/node_modules/pa
 index 898b667..0ea5632 100644
 --- a/node_modules/payload/dist/versions/saveVersion.js
 +++ b/node_modules/payload/dist/versions/saveVersion.js
-@@ -8,9 +8,10 @@ import { updateLatestVersion } from './updateLatestVersion.js';
+@@ -8,9 +8,12 @@ import { updateLatestVersion } from './updateLatestVersion.js';
  export async function saveVersion({ id, autosave, collection, docWithLocales, draft, global, operation, payload, publishSpecificLocale, req, returning, select, snapshot, unpublish }) {
      let result;
      let createdNewVersion = false;
 -    const now = new Date().toISOString();
-+    const now = collection?.custom?.editorialConcurrency && typeof req.context.editorialWriteTimestamp === 'string'
-+        ? req.context.editorialWriteTimestamp : new Date().toISOString();
++    const now = collection?.custom?.editorialConcurrency && operation === 'create' && typeof docWithLocales.updatedAt === 'string'
++        ? docWithLocales.updatedAt
++        : collection?.custom?.editorialConcurrency && typeof req.context.editorialWriteTimestamp === 'string'
++            ? req.context.editorialWriteTimestamp : new Date().toISOString();
      const versionData = deepCopyObjectSimple(docWithLocales);
 -    if ((collection?.timestamps || global) && draft) {
 +    if ((collection?.timestamps || global) && (draft || collection?.custom?.editorialConcurrency)) {
          versionData.updatedAt = now;
      }
      if (versionData._id) {
-@@ -55,17 +56,23 @@ export async function saveVersion({ id, autosave, collection, docWithLocales, dr
+@@ -55,17 +58,23 @@ export async function saveVersion({ id, autosave, collection, docWithLocales, dr
                  result = await payload.db.createGlobalVersion(createVersionArgs);
              }
              if (snapshot) {

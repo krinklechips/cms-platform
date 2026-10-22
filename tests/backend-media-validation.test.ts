@@ -2,11 +2,12 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { ValidationError, type Field, type FieldHook } from 'payload'
 import { withMediaValidation } from '../src/lib/with-media-validation'
+import { loadPayloadConfig } from './helpers/load-payload-config'
 
 process.env.PAYLOAD_SECRET = 'backend-media-validation-config-only'
 process.env.DATABASE_URI = 'file:/tmp/backend-media-validation-config-unused.db'
 process.env.R2_PUBLIC_BASE_URL = 'https://configured-assets.example.test'
-const config = await (await import('../src/payload.config')).default
+const config = await loadPayloadConfig()
 const editor = { id: 7, roles: ['editor'], tenants: [{ tenant: 1 }, { tenant: 2 }] }
 const roomchang = 'https://pub-2b835c19d8644293b271deaeb97352b1.r2.dev'
 const rejectsMedia = (error: unknown) => error instanceof ValidationError && /image|tenant|media|URL|src|caption|JSON/i.test(JSON.stringify(error.data.errors))
