@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useId, useRef, useState } from 'react'
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { Where } from 'payload'
 import { useTenantSelection } from '@payloadcms/plugin-multi-tenant/client'
 import { FolderIcon, useConfig, useDocumentInfo, useField, useFormFields, useListDrawerContext, useListQuery } from '@payloadcms/ui'
@@ -55,7 +55,7 @@ const CreateMediaFolder: React.FC<{
   const [saving, setSaving] = useState(false)
   const pending = useRef<AbortController | null>(null)
   const onCreatedRef = useRef(onCreated)
-  onCreatedRef.current = onCreated
+  useLayoutEffect(() => { onCreatedRef.current = onCreated }, [onCreated])
   useEffect(() => () => pending.current?.abort(), [])
   let path = ''
   try { path = createMediaFolderPath(parent, name) } catch { /* Validation is shown on Create. */ }
@@ -116,10 +116,12 @@ export const MediaFolderBrowser: React.FC = () => {
   const { selectedTenantID } = useTenantSelection()
   const { data, query, handleWhereChange } = useListQuery()
   const { isInDrawer } = useListDrawerContext()
-  const drawerTenant = useRef<number | string | null>(null)
+  const [drawerTenant, setDrawerTenant] = useState<number | string | null>(null)
   const owners = [...new Set((data?.docs ?? []).map(doc => mediaTenantID(doc.tenant)).filter(value => value !== null))]
-  if (isInDrawer && owners.length === 1) drawerTenant.current = owners[0]
-  const tenantID = isInDrawer ? drawerTenant.current ?? mediaTenantID(selectedTenantID) : mediaTenantID(selectedTenantID)
+  const owner = isInDrawer && owners.length === 1 ? owners[0] : null
+  // Empty filtered drawers retain their last committed owner, not the cookie.
+  if (owner !== null && drawerTenant !== owner) setDrawerTenant(owner)
+  const tenantID = isInDrawer ? owner ?? drawerTenant ?? mediaTenantID(selectedTenantID) : mediaTenantID(selectedTenantID)
   const { catalog, error, retry, setCatalog } = useMediaFolders(tenantID, true, data?.totalDocs)
   const [chosen, setChosen] = useState<{ path: string; filter?: Where }>({ path: '' })
   const folders = catalog?.folders ?? []

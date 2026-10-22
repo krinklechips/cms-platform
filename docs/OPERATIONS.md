@@ -37,23 +37,27 @@ WEBSITE ENQUIRIES / SLOTS / BOOKINGS → clinic Supabase (not CMS snapshots)
 
 - Repo: github.com/krinklechips/cms-platform → Render service `cms-platform`
   (srv-d6efr43uibrs73daurj0). Push to `main` = deploy (~4 min).
-- Start chain: `payload migrate && node scripts/verify-migrations.mjs && next start`.
+- Start chain: `node scripts/verify-runtime.mjs && payload migrate && node scripts/verify-migrations.mjs && next start`.
   The verify step **fails the deploy** if any migration file is unapplied —
   Render's own migrate has twice no-opped silently. A red deploy here means:
-  apply migrations locally (below), then redeploy.
+  inspect the migration log and destination schema, rehearse the correction on
+  an isolated restored database, then approve a forward correction. Do not
+  bypass the gate or replay a database snapshot over staff work.
 - The sandbox's production branch is **`cms-sandbox`** on the *roomchang*
   repo, not `main`. Pushing site-side changes: `git push origin main:cms-sandbox` too.
 
 ## Migrations — the four rules
 
-1. Generate AND run with the **full prod env, including R2_\***
-   (`serviette-cms/.env`). Without R2 vars the storage plugin doesn't
+1. Generate against a **disposable restored database**, with the same enabled
+   configuration shape, including fixture `R2_*` settings. Without R2 vars the storage plugin doesn't
    register and the diff tries to `DROP COLUMN media.prefix`.
-2. `DATABASE_URI="$DATABASE_URI_PROD" npx payload migrate:create <name>` —
+2. `DATABASE_URI="$DISPOSABLE_LOCAL_DATABASE_URI" npx payload migrate:create <name>` —
    then **read the generated SQL** before running it (destructive statements
-   belong only in `down()`).
-3. Apply locally: `DATABASE_URI="$DATABASE_URI_PROD" npm run migrate`, then
-   check `payload_migrations` gained the row. Do **not** rely on Render.
+   require a separate reviewed recovery plan; a `down()` function is not
+   permission to discard content or drafts).
+3. Restore-test the reviewed forward migration and compare existing content,
+   drafts, history and media identities first. Apply through the approved
+   deployment start chain and verify `payload_migrations` and the schema gate.
 4. New tables get RLS automatically (`auto_enable_rls` event trigger, both
    Supabase projects). A new **live-site** table that must be publicly
    readable still needs an explicit `*_public_read` policy — it renders
@@ -157,6 +161,12 @@ applying the migration: between the two, the API for that collection is down.
   history, not an independent backup; raising the cap cannot recover revisions
   already pruned under the old limit of 20. Database and media backup/restore
   must be verified separately before a production cutover.
+- Recovery evidence and the code-versus-database rollback procedure are in
+  [Test Release and Recovery Verification](cms-release-recovery-20261022.md).
+  The 22 October rehearsal restored the CMS public schema and Roomchang media
+  into isolation. It does not certify recurring provider backups or authorize
+  a production restore. Never store database dumps or environment secrets in
+  the public R2 media bucket.
 - The legacy `published` checkbox is hidden, not dropped; its values were
   backfilled into `_status`. Backfill lesson: the migration adds `_status`
   with **DEFAULT 'draft'** — backfill ALL rows, never `WHERE _status IS NULL`.

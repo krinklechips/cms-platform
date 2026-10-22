@@ -1,224 +1,209 @@
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
-import { test } from 'node:test'
+import { after, afterEach, test } from 'node:test'
 import { compile } from 'sass'
+import React from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import ts from 'typescript'
+import { chromiumExecutable, closeTypographyBrowser, closeTypographyPages, typographyBrowserVersion, typographyPage } from './fixtures/typography-browser'
 
-// Reuse the site's installed DOM tooling without adding CMS dependencies.
+// npm test does not require a website checkout. The complete release gate is:
+// node scripts/test-typography.mjs --site-root <website> [--browser <Chromium>]
+const complete = process.env.ROOMCHANG_TYPOGRAPHY_COMPLETE === '1'
 const siteRoot = process.env.ROOMCHANG_TYPOGRAPHY_SITE_ROOT
-const siteTest = siteRoot ? test : test.skip
 const siteRequire = siteRoot ? createRequire(resolve(siteRoot, 'package.json')) : null
 const cmsRoot = resolve(import.meta.dirname, '..')
+const cmsRequire = createRequire(resolve(cmsRoot, 'package.json'))
 const cmsCSS = compile(resolve(cmsRoot, 'src/app/(payload)/custom.scss')).css
+const observerJS = ts.transpileModule(readFileSync(resolve(cmsRoot, 'src/lib/cms-content-typography.ts'), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText
+const cmsOptions = { skip: !complete && !chromiumExecutable ? 'Chromium absent; run the complete typography command with --browser.' : false }
+const siteOptions = { skip: !complete && !siteRoot ? 'Website fixture: run scripts/test-typography.mjs --site-root <website> for the complete gate.' : false }
+afterEach(closeTypographyPages)
+after(closeTypographyBrowser)
 
-function cmsDocument() {
-  const { JSDOM } = siteRequire!('jsdom')
-  return new JSDOM(`<html lang="en"><head><style>
-    input, textarea, [contenteditable] { font: 13px/20px sans-serif; height: 38px; }
-    .field-label { font-size: 13px; }
-    ${cmsCSS}
-  </style></head><body>
+async function cmsDocument() {
+  const page = await typographyPage(`<html lang="en"><head></head><body>
     <nav>English navigation</nav>
     <div class="field-type text"><label class="field-label">Title <span class="localized">Chinese</span></label><div class="field-type__wrap"><input id="title" type="text" value="Existing content"></div></div>
     <div class="field-type textarea"><label class="field-label">Description <span class="localized">Chinese</span></label><div class="field-type__wrap"><textarea id="description">Existing description</textarea></div></div>
     <div class="field-type rich-text-lexical"><label class="field-label">Body <span class="localized">Chinese</span></label><div id="body" contenteditable="true"><p>Existing body</p></div></div>
     <div class="field-type text"><label class="field-label">Shared slug</label><input id="slug" type="text" lang="en"></div>
     <input id="search" type="search"><input id="number" type="number">
-  </body></html>`)
+  </body></html>`, `input, textarea, [contenteditable] { font: 13px/20px sans-serif; height: 38px; }
+    .field-label { font-size: 13px; }\n${cmsCSS}`)
+  await page.evaluate(`(() => { const exports = {}; ${observerJS}; window.observeTypography = exports.observeCmsContentTypography; })()`)
+  return page
 }
 
-async function typography() {
-  assert.ok(existsSync(resolve(cmsRoot, 'src/lib/cms-content-typography.ts')), 'locale-aware typography adapter is missing')
-  return import('../src/lib/cms-content-typography')
-}
-
-siteTest('CMS editing text is at least 16px and labels are at least 14px without changing chrome', () => {
-  const dom = cmsDocument()
-  const style = (selector: string) => dom.window.getComputedStyle(dom.window.document.querySelector(selector))
-  assert.ok(parseFloat(style('#title').fontSize) >= 16)
-  assert.ok(parseFloat(style('#description').fontSize) >= 16)
-  assert.ok(parseFloat(style('.field-label').fontSize) >= 14)
-  assert.equal(style('#search').fontSize, '13px')
-  assert.equal(style('#number').fontSize, '13px')
-  dom.window.close()
+test('CMS editing text is at least 16px and labels are at least 14px without changing chrome', cmsOptions, async t => {
+  const page = await cmsDocument()
+  const sizes = await page.evaluate<Record<string, number>>(`Object.fromEntries(['#title','#description','.field-label','#search','#number'].map(selector => [selector, parseFloat(getComputedStyle(document.querySelector(selector)).fontSize)]))`)
+  assert.ok(sizes['#title'] >= 16)
+  assert.ok(sizes['#description'] >= 16)
+  assert.ok(sizes['.field-label'] >= 14)
+  assert.equal(sizes['#search'], 13)
+  assert.equal(sizes['#number'], 13)
+  t.diagnostic(JSON.stringify(await typographyBrowserVersion()))
 })
 
 for (const [code, lang, size, font] of [['cn', 'zh-Hans', 16, 'Noto Sans SC'], ['kh', 'km', 18, 'Battambang']] as const) {
-  siteTest(`CMS ${code} tags only localized text controls and gives stacked glyphs room`, async () => {
-    const { observeCmsContentTypography } = await typography()
-    const dom = cmsDocument()
-    const document = dom.window.document
-    const cleanup = observeCmsContentTypography(document, code)
-    for (const id of ['title', 'description', 'body']) {
-      const element = document.getElementById(id)!
-      const style = dom.window.getComputedStyle(element)
-      assert.equal(element.lang, lang)
-      assert.ok(parseFloat(style.fontSize) >= size, `${id}: ${style.fontSize}`)
-      assert.ok(parseFloat(style.lineHeight) >= 1.7 && parseFloat(style.lineHeight) <= 1.9, `${id}: ${style.lineHeight}`)
-      assert.match(style.fontFamily, new RegExp(font))
-      assert.equal(style.letterSpacing, '0px')
+  test(`CMS ${code} tags only localized text controls and gives stacked glyphs room`, cmsOptions, async () => {
+    const page = await cmsDocument()
+    const result = await page.evaluate<{
+      controls: { id: string; lang: string; fontSize: string; lineHeight: string; fontFamily: string; letterSpacing: string }[]
+      htmlLang: string; navLang: string | null; labelLang: string | null; slugLang: string; searchLang: string | null; value: string; restoredLang: string | null
+    }>(`(() => {
+      const cleanup = window.observeTypography(document, ${JSON.stringify(code)});
+      const controls = ['title','description','body'].map(id => {
+        const element = document.getElementById(id), style = getComputedStyle(element);
+        return {id, lang:element.lang, fontSize:style.fontSize, lineHeight:style.lineHeight, fontFamily:style.fontFamily, letterSpacing:style.letterSpacing};
+      });
+      const result = {controls, htmlLang:document.documentElement.lang, navLang:document.querySelector('nav').getAttribute('lang'),
+        labelLang:document.querySelector('.field-label').getAttribute('lang'), slugLang:document.getElementById('slug').lang,
+        searchLang:document.getElementById('search').getAttribute('lang'), value:document.getElementById('title').value};
+      cleanup(); return {...result, restoredLang:document.getElementById('title').getAttribute('lang')};
+    })()`)
+    for (const control of result.controls) {
+      assert.equal(control.lang, lang)
+      assert.ok(parseFloat(control.fontSize) >= size, `${control.id}: ${control.fontSize}`)
+      const leading = parseFloat(control.lineHeight) / parseFloat(control.fontSize)
+      assert.ok(leading >= 1.7 && leading <= 1.9, `${control.id}: ${control.lineHeight}/${control.fontSize}`)
+      assert.match(control.fontFamily, new RegExp(font))
+      assert.equal(control.letterSpacing === 'normal' ? 0 : parseFloat(control.letterSpacing), 0)
     }
-    assert.equal(document.documentElement.lang, 'en')
-    assert.equal(document.querySelector('nav')!.getAttribute('lang'), null)
-    assert.equal(document.querySelector('.field-label')!.getAttribute('lang'), null)
-    assert.equal(document.getElementById('slug')!.lang, 'en')
-    assert.equal(document.getElementById('search')!.getAttribute('lang'), null)
-    assert.equal(document.getElementById('title')!.value, 'Existing content')
-    cleanup()
-    assert.equal(document.getElementById('title')!.getAttribute('lang'), null)
-    dom.window.close()
+    assert.equal(result.htmlLang, 'en'); assert.equal(result.navLang, null); assert.equal(result.labelLang, null)
+    assert.equal(result.slugLang, 'en'); assert.equal(result.searchLang, null); assert.equal(result.value, 'Existing content')
+    assert.equal(result.restoredLang, null)
   })
 }
 
-siteTest('CMS typography follows locale changes and newly mounted array fields, then restores prior attributes', async () => {
-  const { observeCmsContentTypography } = await typography()
-  const dom = cmsDocument()
-  const document = dom.window.document
-  const title = document.getElementById('title')!
-  title.lang = 'fr'
-  const cleanupChinese = observeCmsContentTypography(document, 'cn')
-  cleanupChinese()
-  assert.equal(title.lang, 'fr')
-  const cleanupKhmer = observeCmsContentTypography(document, 'kh')
-  const field = document.querySelector('.field-type.text')!.cloneNode(true)
-  field.querySelector('input').id = 'array-title'
-  document.body.append(field)
-  await new Promise((resolve) => dom.window.setTimeout(resolve, 0))
-  assert.equal(document.getElementById('array-title')!.lang, 'km')
-  assert.equal(title.lang, 'km')
-  cleanupKhmer()
-  assert.equal(title.lang, 'fr')
-  assert.equal(title.hasAttribute('data-cms-content-typography'), false)
-  dom.window.close()
+test('CMS typography follows locale changes and newly mounted array fields, then restores prior attributes', cmsOptions, async () => {
+  const page = await cmsDocument()
+  const result = await page.evaluate<{ firstRestore: string; arrayLang: string; titleLang: string; restoredLang: string; marker: boolean }>(`(async () => {
+    const title = document.getElementById('title'); title.lang = 'fr';
+    const chinese = window.observeTypography(document, 'cn'); chinese(); const firstRestore = title.lang;
+    const khmer = window.observeTypography(document, 'kh');
+    const field = document.querySelector('.field-type.text').cloneNode(true); field.querySelector('input').id = 'array-title'; document.body.append(field);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const arrayLang = document.getElementById('array-title').lang, titleLang = title.lang;
+    khmer(); return {firstRestore, arrayLang, titleLang, restoredLang:title.lang, marker:title.hasAttribute('data-cms-content-typography')};
+  })()`)
+  assert.deepEqual(result, { firstRestore: 'fr', arrayLang: 'km', titleLang: 'km', restoredLang: 'fr', marker: false })
 })
 
-siteTest('CMS typography rejects absent, malformed and all-locales selections', async () => {
-  const { observeCmsContentTypography } = await typography()
-  const dom = cmsDocument()
-  for (const code of [undefined, null, false, {}, 'all', 'constructor', '__proto__', 'cn<script>']) {
-    const cleanup = observeCmsContentTypography(dom.window.document, code)
-    assert.equal(dom.window.document.getElementById('title')!.getAttribute('lang'), null)
-    cleanup()
-  }
-  const cleanup = observeCmsContentTypography(dom.window.document, 'en')
-  assert.equal(dom.window.document.getElementById('title')!.lang, 'en')
-  cleanup()
-  dom.window.close()
+test('CMS typography rejects absent, malformed and all-locales selections', cmsOptions, async () => {
+  const page = await cmsDocument()
+  const result = await page.evaluate<{ invalid: (string | null)[]; english: string }>(`(() => {
+    const invalid = [undefined,null,false,{},'all','constructor','__proto__','cn<script>'].map(code => {
+      const cleanup = window.observeTypography(document, code); const lang = document.getElementById('title').getAttribute('lang'); cleanup(); return lang;
+    });
+    const cleanup = window.observeTypography(document, 'en'); const english = document.getElementById('title').lang; cleanup(); return {invalid,english};
+  })()`)
+  assert.deepEqual(result.invalid, Array(8).fill(null)); assert.equal(result.english, 'en')
 })
 
-siteTest('CMS text inside localized arrays inherits the selected content language, not nearby shared fields', async () => {
-  const { observeCmsContentTypography } = await typography()
-  const dom = cmsDocument()
-  const document = dom.window.document
-  document.body.insertAdjacentHTML('beforeend', `
-    <div class="field-type array-field">
-      <header class="array-field__header"><h3><span class="field-label">Tags <span class="localized">Khmer</span></span></h3></header>
-      <div class="field-type text"><label class="field-label">Tag</label><input id="tag" type="text"></div>
-    </div>
-    <div class="field-type array-field"><div class="field-type text"><label class="field-label">Shared tag</label><input id="shared-tag" type="text"></div></div>
-  `)
-  const cleanup = observeCmsContentTypography(document, 'kh')
-  assert.equal(document.getElementById('tag')!.lang, 'km')
-  assert.equal(document.getElementById('shared-tag')!.getAttribute('lang'), null)
-  cleanup()
-  dom.window.close()
+test('CMS text inside localized arrays inherits the selected content language, not nearby shared fields', cmsOptions, async () => {
+  const page = await cmsDocument()
+  const result = await page.evaluate<{ tag: string; shared: string | null }>(`(() => {
+    document.body.insertAdjacentHTML('beforeend', '<div class="field-type array-field"><header class="array-field__header"><h3><span class="field-label">Tags <span class="localized">Khmer</span></span></h3></header><div class="field-type text"><label class="field-label">Tag</label><input id="tag" type="text"></div></div><div class="field-type array-field"><div class="field-type text"><label class="field-label">Shared tag</label><input id="shared-tag" type="text"></div></div>');
+    const cleanup = window.observeTypography(document, 'kh');
+    const result = {tag:document.getElementById('tag').lang, shared:document.getElementById('shared-tag').getAttribute('lang')}; cleanup(); return result;
+  })()`)
+  assert.deepEqual(result, { tag: 'km', shared: null })
 })
 
 function renderSiteComponent(path: string, name: string, props = {}) {
-  const React = siteRequire!('react')
-  const { renderToStaticMarkup } = siteRequire!('react-dom/server')
-  const ts = siteRequire!('typescript')
-  const source = readFileSync(resolve(siteRoot!, path), 'utf8')
-  const { outputText } = ts.transpileModule(source, {
+  assert.ok(siteRoot, 'Complete typography gate requires --site-root <website checkout>.')
+  const { outputText } = ts.transpileModule(readFileSync(resolve(siteRoot, path), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
   })
-  const module = { exports: {} as Record<string, unknown> }
+  const compiledModule = { exports: {} as Record<string, unknown> }
   const requireComponent = (specifier: string) => {
     if (specifier === 'next-intl') return { useTranslations: () => (key: string) => key }
-    if (specifier === '@/i18n/navigation') return { Link: ({ children, ...props }: any) => React.createElement('a', props, children) }
-    if (specifier === 'next/image') return { __esModule: true, default: ({ fill, priority, ...props }: any) => React.createElement('img', props) }
-    if (specifier === './language-switcher' || specifier === './mobile-nav') {
-      return { LanguageSwitcher: () => null, MobileNav: () => null }
-    }
-    return siteRequire!(specifier)
+    if (specifier === '@/i18n/navigation') return { Link: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => React.createElement('a', props, children) }
+    if (specifier === 'next/image') return { __esModule: true,
+      default: ({ fill: _fill, priority: _priority, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean; priority?: boolean }) => React.createElement('img', props) }
+    if (specifier === './language-switcher' || specifier === './mobile-nav') return { LanguageSwitcher: () => null, MobileNav: () => null }
+    return cmsRequire(specifier)
   }
-  new Function('require', 'module', 'exports', outputText)(requireComponent, module, module.exports)
-  return renderToStaticMarkup(React.createElement(module.exports[name], props))
+  new Function('require', 'module', 'exports', outputText)(requireComponent, compiledModule, compiledModule.exports)
+  return renderToStaticMarkup(React.createElement(compiledModule.exports[name] as React.ComponentType, props))
 }
 
 async function siteDocument(lang: string, width: number) {
-  const { JSDOM } = siteRequire!('jsdom')
-  const { compile } = siteRequire!('@tailwindcss/node')
-  const { transform, Features } = siteRequire!('lightningcss')
-  const postcss = siteRequire!('postcss')
   const markup = renderSiteComponent('src/components/sections/home-stats.tsx', 'HomeStats', {
     stats: [{ numeric_value: 37, suffix: '+', display_value: '37+', label: 'Localized stat label' }],
   }) + renderSiteComponent('src/components/site/site-header.tsx', 'SiteHeader')
-  const dom = new JSDOM(`<html lang="${lang}"><head></head><body>${markup}<p id="body-text">Body text</p><p id="small-label" class="text-sm tracking-[0.2em]">Small label</p><h2 class="text-3xl">Heading</h2></body></html>`)
-  const candidates = [...dom.window.document.querySelectorAll('[class]')].flatMap((el: any) => [...el.classList])
-  const compiler = await compile(readFileSync(resolve(siteRoot!, 'src/app/globals.css'), 'utf8'), {
-    base: siteRoot, onDependency: () => {},
-  })
-  const css = transform({ filename: 'typography.css', code: Buffer.from(compiler.build(candidates)), include: Features.Nesting }).code.toString()
-  const root = postcss.parse(css)
-  // jsdom has no viewport media evaluation. Resolve width queries for these
-  // CSS regression fixtures; real layout/overflow stays a parent browser check.
-  root.walkAtRules('media', (rule: any) => {
-    const min = rule.params.match(/(?:min-width:\s*|width\s*>=\s*)([\d.]+)(rem|px)/)
-    const max = rule.params.match(/(?:max-width:\s*|width\s*<\s*)([\d.]+)(rem|px)/)
-    const pixels = (match: RegExpMatchArray) => Number(match[1]) * (match[2] === 'rem' ? 16 : 1)
-    if ((min && width >= pixels(min)) || (max && width < pixels(max))) rule.replaceWith(rule.nodes)
-    else rule.remove()
-  })
-  root.walkAtRules('layer', (rule: any) => rule.nodes ? rule.replaceWith(rule.nodes) : rule.remove())
-  const style = dom.window.document.createElement('style')
-  style.textContent = root.toString()
-  dom.window.document.head.append(style)
-  return dom
+  const html = `<html lang="${lang}"><head></head><body>${markup}<p id="body-text">Body text</p><p id="small-label" class="text-sm tracking-[0.2em]">Small label</p><h2 class="text-3xl">Heading</h2></body></html>`
+  const page = await typographyPage(html, '', width)
+  const candidates = await page.evaluate<string[]>(`Array.from(document.querySelectorAll('[class]')).flatMap(element => Array.from(element.classList))`)
+  const { compile } = siteRequire!('@tailwindcss/node')
+  const compiler = await compile(readFileSync(resolve(siteRoot!, 'src/app/globals.css'), 'utf8'), { base: siteRoot, onDependency: () => {} })
+  // The browser receives actual compiler output, including unmodified layers,
+  // media, :lang and escaped Tailwind selectors.
+  await page.evaluate(`(() => {const style=document.createElement('style'); style.textContent=${JSON.stringify(compiler.build(candidates))}; document.head.append(style);})()`)
+  return page
 }
 
 for (const [lang, minimum] of [['en', 14], ['zh', 16], ['km', 18]] as const) {
-  siteTest(`website ${lang} stat labels remain readable without collapsing display hierarchy`, async () => {
-    const dom = await siteDocument(lang, 1366)
-    const label = [...dom.window.document.querySelectorAll('p')].find((el: any) => el.textContent === 'Localized stat label')!
-    const labelStyle = dom.window.getComputedStyle(label)
-    const pixels = (value: string) => parseFloat(value) * (value.endsWith('rem') ? 16 : 1)
-    assert.ok(pixels(labelStyle.fontSize) >= minimum, `label is ${labelStyle.fontSize}`)
-    assert.ok(pixels(dom.window.getComputedStyle(dom.window.document.querySelector('p.font-display')).fontSize) > minimum)
+  test(`website ${lang} stat labels remain readable without collapsing display hierarchy`, siteOptions, async t => {
+    const page = await siteDocument(lang, 1366)
+    const result = await page.evaluate<{ labelSize: number; lineHeight: number; tracking: string; displaySize: number; smallLabelSize: number }>(`(() => {
+      const label=Array.from(document.querySelectorAll('p')).find(element=>element.textContent==='Localized stat label'); const style=getComputedStyle(label);
+      return {labelSize:parseFloat(style.fontSize),lineHeight:parseFloat(style.lineHeight),tracking:style.letterSpacing,
+        displaySize:parseFloat(getComputedStyle(document.querySelector('p.font-display')).fontSize),smallLabelSize:parseFloat(getComputedStyle(document.getElementById('small-label')).fontSize)};
+    })()`)
+    t.diagnostic(JSON.stringify({ language: lang, width: 1366, ...result }))
+    assert.ok(result.labelSize >= minimum, `label is ${result.labelSize}px; minimum ${minimum}px`)
+    assert.ok(result.displaySize > minimum)
     if (lang !== 'en') {
-      assert.equal(labelStyle.letterSpacing, '0px')
-      assert.ok(pixels(dom.window.getComputedStyle(dom.window.document.getElementById('small-label')).fontSize) >= minimum)
+      // CSSOM reports "normal" for zero added tracking, not necessarily "0px".
+      assert.equal(result.tracking === 'normal' ? 0 : parseFloat(result.tracking), 0)
+      assert.ok(result.smallLabelSize >= minimum)
     }
-    if (lang === 'km') assert.ok(parseFloat(labelStyle.lineHeight) >= 1.7)
-    dom.window.close()
+    if (lang === 'km') assert.ok(result.lineHeight / result.labelSize >= 1.7)
   })
 }
 
-siteTest('website uses the compact nav at laptop widths and readable full nav on wide screens', async () => {
+test('website uses the compact nav at laptop widths and readable full nav on wide screens', siteOptions, async t => {
+  const observed = []
   for (const width of [1024, 1280, 1366, 1440, 1536, 1920]) {
-    const dom = await siteDocument('en', width)
-    const nav = dom.window.document.querySelector('header nav')!
-    const desktop = nav.parentElement!
-    const compact = desktop.nextElementSibling!
-    assert.equal(dom.window.getComputedStyle(desktop).display, width < 1536 ? 'none' : 'flex', `full nav at ${width}`)
-    assert.equal(dom.window.getComputedStyle(compact).display, width < 1536 ? 'flex' : 'none', `compact nav at ${width}`)
-    if (width >= 1536) {
-      const size = dom.window.getComputedStyle(nav.querySelector('a')).fontSize.replace(/var\((--[\w-]+)\)/g,
-        (_: string, property: string) => dom.window.getComputedStyle(dom.window.document.documentElement).getPropertyValue(property).trim())
-      assert.ok(parseFloat(size) * (size.endsWith('rem') ? 16 : 1) >= 14, `nav size: ${size}`)
-    }
-    dom.window.close()
+    const page = await siteDocument('en', width)
+    const state = await page.evaluate<{ full: string; compact: string; size: number }>(`(() => {
+      const nav=document.querySelector('header nav'), desktop=nav.parentElement;
+      return {full:getComputedStyle(desktop).display,compact:getComputedStyle(desktop.nextElementSibling).display,size:parseFloat(getComputedStyle(nav.querySelector('a')).fontSize)};
+    })()`)
+    observed.push({ width, full: state.full, compact: state.compact, readable: width < 1536 || state.size >= 14 })
+    await page.close()
   }
+  t.diagnostic(JSON.stringify({ language: 'en', navigation: observed }))
+  assert.deepEqual(observed, [
+    { width: 1024, full: 'none', compact: 'flex', readable: true },
+    { width: 1280, full: 'none', compact: 'flex', readable: true },
+    { width: 1366, full: 'none', compact: 'flex', readable: true },
+    { width: 1440, full: 'none', compact: 'flex', readable: true },
+    { width: 1536, full: 'flex', compact: 'none', readable: true },
+    { width: 1920, full: 'flex', compact: 'none', readable: true },
+  ])
 })
 
-siteTest('Khmer keeps the compact nav until the full-size labels fit on one line', async () => {
+test('Khmer keeps the compact nav until the full-size labels fit on one line', siteOptions, async t => {
+  const observed = []
   for (const width of [1536, 1799, 1800, 1920]) {
-    const dom = await siteDocument('km', width)
-    const desktop = dom.window.document.querySelector('header nav')!.parentElement!
-    const compact = desktop.nextElementSibling!
-    assert.equal(dom.window.getComputedStyle(desktop).display, width < 1800 ? 'none' : 'flex', `Khmer full nav at ${width}`)
-    assert.equal(dom.window.getComputedStyle(compact).display, width < 1800 ? 'flex' : 'none', `Khmer compact nav at ${width}`)
-    dom.window.close()
+    const page = await siteDocument('km', width)
+    const state = await page.evaluate<{ full: string; compact: string }>(`(() => {const desktop=document.querySelector('header nav').parentElement;
+      return {full:getComputedStyle(desktop).display,compact:getComputedStyle(desktop.nextElementSibling).display};})()`)
+    observed.push({ width, ...state }); await page.close()
   }
+  t.diagnostic(JSON.stringify({ language: 'km', navigation: observed }))
+  assert.deepEqual(observed, [
+    { width: 1536, full: 'none', compact: 'flex' },
+    { width: 1799, full: 'none', compact: 'flex' },
+    { width: 1800, full: 'flex', compact: 'none' },
+    { width: 1920, full: 'flex', compact: 'none' },
+  ])
 })

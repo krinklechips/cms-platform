@@ -15,14 +15,14 @@ let editorId: number | undefined
 let pageId: number | undefined
 
 try {
-  const module = await payload.create({ collection: 'modules', data: {
+  const catalogModule = await payload.create({ collection: 'modules', data: {
     name: 'Isolated content protection', key: `content-protection-${stamp}`,
     defaultMonthlyPrice: 0, contentCollections: ['pages'],
   } })
-  moduleId = module.id
+  moduleId = catalogModule.id
   const tenant = await payload.create({ collection: 'tenants', data: {
     name: 'Isolated content protection', slug: `content-protection-${stamp}`,
-    subscriptions: [{ module: module.id, active: true }],
+    subscriptions: [{ module: catalogModule.id, active: true }],
   } })
   tenantId = tenant.id
   const editor = await payload.create({ collection: 'users', data: {

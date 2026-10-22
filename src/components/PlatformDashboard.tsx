@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link'
 import { Gutter } from '@payloadcms/ui'
 import type { Payload } from 'payload'
 import { OpenTenantContent } from './OpenTenantContent'
@@ -58,6 +59,7 @@ const S: Record<string, React.CSSProperties> = {
 export const PlatformDashboard: React.FC<Props> = async ({ payload, user, hostTenant }) => {
   if (!payload || !user?.roles?.includes('super-admin')) return null
 
+  let rows
   try {
     const [allTenants, modules, invoices] = await Promise.all([
       payload.find({ collection: 'tenants', limit: 100, depth: 0, overrideAccess: true }),
@@ -74,7 +76,7 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user, hostTe
       modules.docs.map((m) => [String(m.id), m as { name?: string; defaultMonthlyPrice?: number }]),
     )
 
-    const rows = tenants.docs.map((t) => {
+    rows = tenants.docs.map((t) => {
       const tenant = t as {
         id: number | string
         name: string
@@ -112,12 +114,23 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user, hostTe
         paid: byStatus('paid'),
       }
     })
-
-    const totalMRR = rows.reduce((sum, r) => sum + r.mrr, 0)
-    const anyPrices = totalMRR > 0
-
+  } catch (e) {
+    // Data failures must not take down the rest of the dashboard.
     return (
       <Gutter>
+        <div style={S.wrap}>
+          <h2 style={S.h2}>Serviette Labs — HQ</h2>
+          <p style={S.sub}>Cockpit failed to load: {(e as Error).message}</p>
+        </div>
+      </Gutter>
+    )
+  }
+
+  const totalMRR = rows.reduce((sum, r) => sum + r.mrr, 0)
+  const anyPrices = totalMRR > 0
+
+  return (
+    <Gutter>
       <div style={S.wrap}>
         <h2 style={S.h2}>{hostTenant ? `${hostTenant.name} — workspace` : 'Serviette Labs — HQ'}</h2>
         <p style={S.sub}>
@@ -150,9 +163,9 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user, hostTe
             {rows.map((r) => (
               <tr key={String(r.id)}>
                 <td style={S.td}>
-                  <a href={`/admin/collections/tenants/${r.id}`} style={S.link}>
+                  <Link href={`/admin/collections/tenants/${r.id}`} prefetch={false} style={S.link}>
                     <strong>{r.name}</strong>
-                  </a>
+                  </Link>
                   <div style={{ color: 'var(--theme-elevation-450)', fontSize: 11 }}>{r.slug}</div>
                 </td>
                 <td style={S.td}>{r.domains.length ? r.domains.join(', ') : '—'}</td>
@@ -179,23 +192,12 @@ export const PlatformDashboard: React.FC<Props> = async ({ payload, user, hostTe
           </tbody>
         </table>
         <div style={S.totals}>
-          Manage: <a href="/admin/collections/tenants" style={S.link}>Tenants</a> ·{' '}
-          <a href="/admin/collections/modules" style={S.link}>Modules</a> ·{' '}
-          <a href="/admin/collections/invoices" style={S.link}>Invoices</a> ·{' '}
-          <a href="/admin/collections/users" style={S.link}>Users</a>
+          Manage: <Link href="/admin/collections/tenants" prefetch={false} style={S.link}>Tenants</Link> ·{' '}
+          <Link href="/admin/collections/modules" prefetch={false} style={S.link}>Modules</Link> ·{' '}
+          <Link href="/admin/collections/invoices" prefetch={false} style={S.link}>Invoices</Link> ·{' '}
+          <Link href="/admin/collections/users" prefetch={false} style={S.link}>Users</Link>
         </div>
       </div>
-      </Gutter>
-    )
-  } catch (e) {
-    // Fail loud but small: never take the dashboard down with us.
-    return (
-      <Gutter>
-        <div style={S.wrap}>
-          <h2 style={S.h2}>Serviette Labs — HQ</h2>
-          <p style={S.sub}>Cockpit failed to load: {(e as Error).message}</p>
-        </div>
-      </Gutter>
-    )
-  }
+    </Gutter>
+  )
 }

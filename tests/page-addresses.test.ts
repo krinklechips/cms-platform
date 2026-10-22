@@ -12,10 +12,83 @@ import { postgresAdapter, type PostgresAdapter } from '@payloadcms/db-postgres'
 import { drizzle } from '@payloadcms/db-postgres/drizzle/node-postgres'
 import { getTableConfig } from '@payloadcms/db-postgres/drizzle/pg-core'
 import { sqliteAdapter, type SQLiteAdapter } from '@payloadcms/db-sqlite'
-import { buildConfig, createLocalReq, getPayload, type Payload } from 'payload'
+import { buildConfig, createLocalReq, getPayload, ValidationError, type Payload } from 'payload'
 import { Pages } from '../src/collections/Pages'
 import { withDrafts } from '../src/lib/with-drafts'
 import { migrations } from '../src/migrations'
+import { allocatePageAddress } from '../src/lib/page-addresses'
+
+// Static/localized route roots, nested-only routes, middleware shortcuts and
+// public asset directories in roomchang origin/cms-sandbox (85cdcd7).
+const siteNamespaces = [
+  'about', 'admin', 'api', 'autodiscover', 'blog', 'booking-cancellation-policy',
+  'brand', 'brands', 'chatbot', 'clinical-results', 'contact', 'cookie-policy',
+  'disclaimer', 'docs', 'doctors', 'fonts', 'hero', 'icons', 'international',
+  'intl', 'preview', 'pricing', 'privacy-policy', 'services', 'team', 'technology',
+  'terms-of-service', 'webmail', 'en', 'kh', 'cn', 'km', 'zh',
+]
+
+test('new addresses avoid every current website namespace, including nested-only routes and assets', async () => {
+  for (const slug of siteNamespaces) {
+    const req = { payload: { db: { name: 'fixture' }, collections: {},
+      find: async () => ({ totalDocs: 0 }) } } as never
+    const data = { tenant: 1, title: slug }
+    const result = await allocatePageAddress({ data, req, operation: 'create' } as never)
+    assert.equal(result.slug, ['admin', 'preview'].includes(slug) ? `page-${slug}` : `${slug}-2`, `Auto address must not claim ${slug}`)
+    for (const operation of ['create', 'update']) {
+      await assert.rejects(() => allocatePageAddress({ data: { tenant: 1, slug }, req, operation,
+        originalDoc: operation === 'update' ? { id: 1, tenant: 1, slug: 'patient-info' } : undefined } as never), error => {
+        assert.ok(error instanceof ValidationError)
+        assert.deepEqual(error.data?.errors, [{ path: 'slug', message: 'This web address is reserved by the website. Choose another address.' }])
+        return true
+      }, `Explicit address must not claim ${slug}`)
+    }
+  }
+})
+
+test('generated and explicit addresses cannot fall under the website prefix-based admin/preview auth checks', async () => {
+  const req = { payload: { db: { name: 'fixture' }, collections: {},
+    find: async () => ({ totalDocs: 0 }) } } as never
+  for (const slug of ['administrator', 'admin-guide', 'previewing', 'preview-guide']) {
+    const result = await allocatePageAddress({ data: { tenant: 1, title: slug }, req, operation: 'create' } as never)
+    assert.equal(result.slug, `page-${slug}`, 'A numeric suffix would still be intercepted by startsWith auth')
+    for (const operation of ['create', 'update']) {
+      await assert.rejects(() => allocatePageAddress({ data: { tenant: 1, slug }, req, operation,
+        originalDoc: operation === 'update' ? { id: 1, tenant: 1, slug: 'patient-info' } : undefined } as never), error => {
+        assert.ok(error instanceof ValidationError)
+        assert.match(error.data!.errors[0].message, /reserved by the website/)
+        return true
+      })
+    }
+  }
+})
+
+test('explicit new or changed addresses must be a single routable segment, never a localized/nested route or asset', async () => {
+  const req = { payload: { db: { name: 'fixture' }, collections: {},
+    find: async () => ({ totalDocs: 0 }) } } as never
+  for (const slug of ['en/about', '/kh/team', 'cn/technology/scanner', 'about/careers',
+    'api/health', 'fonts/font.woff2', '_next/image', 'robots.txt', 'sitemap.xml',
+    'llms.txt', 'llms-full.txt', 'favicon.ico', 'patient%2Finformation', 'patient?draft=1',
+    'patient#details', '..', 'About', ' patient-info ', 'patient\\info']) {
+    for (const operation of ['create', 'update']) {
+      await assert.rejects(() => allocatePageAddress({ data: { tenant: 1, slug }, req, operation,
+        originalDoc: operation === 'update' ? { id: 1, tenant: 1, slug: 'patient-info' } : undefined } as never),
+      /address|slug/i, `${operation} must reject ${slug}`)
+    }
+  }
+})
+
+test('unchanged legacy addresses remain stable even if now reserved or noncanonical', async () => {
+  const req = { payload: { db: { name: 'fixture' }, collections: {},
+    find: async () => ({ totalDocs: 0 }) } } as never
+  for (const slug of ['about', 'admin-guide', 'preview-guide', 'api', 'kh', 'about/legacy', 'Legacy_Address']) {
+    for (const suppliedSlug of [undefined, slug]) {
+      const result = await allocatePageAddress({ data: { title: 'Changed heading', slug: suppliedSlug }, req,
+        operation: 'update', originalDoc: { id: 1, tenant: 1, slug } } as never)
+      assert.equal(result.slug, slug)
+    }
+  }
+})
 
 const migrationName = '20261022_070000_page_addresses'
 const fixtureConfig = (db: Parameters<typeof buildConfig>[0]['db']) => buildConfig({
@@ -56,6 +129,22 @@ test('native SQLite rejects duplicate API addresses including drafts, but permit
     assert.deepEqual(await payload.findVersions({ collection: 'pages', pagination: false }), before)
     const saved = await payload.update({ collection: 'pages', id: first.id, data: { title: 'A new heading' } })
     assert.equal(saved.slug, 'patient-information')
+
+    await t.test('reserved route creates and explicit address changes reject without any persistence', async () => {
+      for (const isDraft of [false, true]) {
+        const generated = await createPage(payload, tenant, { title: 'About' }, isDraft)
+        assert.match(generated.slug!, /^about-\d+$/)
+        const beforePages = await payload.find({ collection: 'pages', locale: 'all', pagination: false })
+        const beforeVersions = await payload.findVersions({ collection: 'pages', locale: 'all', pagination: false })
+        for (const slug of ['about', 'admin', 'kh', 'api/health', 'about/careers', 'robots.txt']) {
+          await assert.rejects(() => createPage(payload, tenant, { slug }, isDraft))
+          await assert.rejects(() => payload.update({ collection: 'pages', id: generated.id,
+            draft: isDraft, data: { slug } }))
+        }
+        assert.deepEqual(await payload.find({ collection: 'pages', locale: 'all', pagination: false }), beforePages)
+        assert.deepEqual(await payload.findVersions({ collection: 'pages', locale: 'all', pagination: false }), beforeVersions)
+      }
+    })
 
     await t.test('latest draft-only addresses reserve the address without rewriting the published address', async () => {
       await payload.update({ collection: 'pages', id: first.id, draft: true, data: { slug: 'reserved-draft' } })
@@ -127,9 +216,13 @@ test('isolated native PostgreSQL migration preserves all content and serializes 
     const other = (await client.query("INSERT INTO tenants(name,slug) VALUES ('Other fixture','other') RETURNING id")).rows[0].id
     const page = (await client.query("INSERT INTO pages(tenant_id,slug,_status) VALUES ($1,'borin-preserved','published') RETURNING id", [tenant])).rows[0].id
     const version = (await client.query("INSERT INTO _pages_v(parent_id,version_tenant_id,version_slug,version__status,latest) VALUES ($1,$2,'borin-preserved','draft',true) RETURNING id", [page, tenant])).rows[0].id
+    const legacyPage = (await client.query("INSERT INTO pages(tenant_id,slug,_status) VALUES ($1,'about','published') RETURNING id", [tenant])).rows[0].id
+    const legacyVersion = (await client.query("INSERT INTO _pages_v(parent_id,version_tenant_id,version_slug,version__status,version_created_at,version_updated_at,latest) VALUES ($1,$2,'about','draft',now(),now(),true) RETURNING id", [legacyPage, tenant])).rows[0].id
     for (const locale of ['en', 'kh', 'cn']) {
       await client.query('INSERT INTO pages_locales(_parent_id,_locale,title) VALUES ($1,$2,$3)', [page, locale, `${locale} published`])
       await client.query('INSERT INTO _pages_v_locales(_parent_id,_locale,version_title) VALUES ($1,$2,$3)', [version, locale, `${locale} Borin saved draft`])
+      await client.query('INSERT INTO pages_locales(_parent_id,_locale,title) VALUES ($1,$2,$3)', [legacyPage, locale, `${locale} legacy published`])
+      await client.query('INSERT INTO _pages_v_locales(_parent_id,_locale,version_title) VALUES ($1,$2,$3)', [legacyVersion, locale, `${locale} legacy saved draft`])
     }
     const snapshot = async () => {
       const tables = (await client!.query("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename")).rows
@@ -173,6 +266,18 @@ test('isolated native PostgreSQL migration preserves all content and serializes 
     pool = new pg.Pool({ connectionString: uri, max: 12 })
     const db = payload.db as unknown as PostgresAdapter
     db.pool = pool; db.drizzle = drizzle({ client: pool, schema: db.schema }); db.resolveInitializing?.()
+    await t.test('PostgreSQL rejects reserved creates/changes without changing any row or version', async () => {
+      const unchanged = await snapshot()
+      for (const draft of [false, true]) {
+        for (const slug of ['team', 'kh', 'admin', 'api/health', 'about/careers', 'favicon.ico']) {
+          await assert.rejects(() => createPage(payload!, tenant, { slug }, draft))
+          await assert.rejects(() => payload!.update({ collection: 'pages', id: page, draft, data: { slug } }))
+        }
+      }
+      assert.deepEqual(await snapshot(), unchanged, 'Rejected addresses must roll back every table, locale and version')
+      const auto = await createPage(payload!, tenant, { title: 'Team' }, true)
+      assert.equal(auto.slug, 'team-2')
+    })
     const results = await Promise.all(Array.from({ length: 6 }, (_, n) => createPage(payload!, tenant, {}, n % 2 === 0)))
     assert.deepEqual(results.map(page => page.slug).sort(), [
       'patient-information', 'patient-information-2', 'patient-information-3', 'patient-information-4', 'patient-information-5', 'patient-information-6',
@@ -214,6 +319,16 @@ test('isolated native PostgreSQL migration preserves all content and serializes 
       const originalIDs = new Set(original.map(entry => entry.row.id))
       assert.deepEqual((after[table] as { row: { id: number } }[]).filter(entry => originalIDs.has(entry.row.id)), original, `Allocation changed existing ${table}`)
     }
+    await t.test('legacy reserved addresses still support ordinary locale draft and publish saves', async () => {
+      for (const draft of [true, false]) {
+        for (const suppliedSlug of [undefined, 'about']) {
+          const saved = await payload!.update({ collection: 'pages', id: legacyPage, locale: 'kh', draft,
+            data: { title: 'Updated fixture heading', ...(suppliedSlug ? { slug: suppliedSlug } : {}) } })
+          assert.equal(saved.slug, 'about')
+        }
+      }
+      assert.equal((await payload!.findByID({ collection: 'pages', id: legacyPage })).slug, 'about')
+    })
     t.diagnostic(`Preserved all ${Object.keys(before).length} predecessor tables; six concurrent draft/published creates received distinct addresses on local PG ${port}`)
   } finally {
     if (payload) await payload.destroy()

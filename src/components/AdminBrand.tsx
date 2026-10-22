@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useSyncExternalStore } from 'react'
 
 /**
  * Host-aware admin branding — CLIENT component, deliberately.
@@ -40,15 +40,12 @@ const BRANDS: { hostPrefix: string; brand: Brand }[] = [
   },
 ]
 
-function useBrand(): Brand | null {
-  const [brand, setBrand] = useState<Brand | null>(null)
-  useEffect(() => {
-    const host = window.location.hostname
-    const match = BRANDS.find((b) => host.startsWith(b.hostPrefix))
-    setBrand(match ? match.brand : SERVIETTE)
-  }, [])
-  return brand
-}
+// Host identity is immutable for this document; keep the server/hydration
+// placeholder while reading the browser snapshot without a mount-only update.
+const subscribeToHost = () => () => {}
+const browserBrand = (): Brand => BRANDS.find(b => window.location.hostname.startsWith(b.hostPrefix))?.brand ?? SERVIETTE
+const serverBrand = (): null => null
+const useBrand = (): Brand | null => useSyncExternalStore<Brand | null>(subscribeToHost, browserBrand, serverBrand)
 
 /** Login screen / large logo slot */
 export const AdminLogo: React.FC = () => {

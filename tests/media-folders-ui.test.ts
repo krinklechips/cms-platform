@@ -17,6 +17,7 @@ const root = createRoot(container)
 let selectedTenantID: number | undefined = 1
 let query: any = {}
 let listData: any = { docs: [] }
+const ListDataSnapshot = React.createContext<typeof listData | undefined>(undefined)
 let isInDrawer = false
 let documentID: number | undefined
 let data: any = {}
@@ -33,6 +34,12 @@ let posted: any[] = []
 let createFails = false
 let resolveCreation: (() => void) | undefined
 let pauseCreation = false
+let suspendBrowser = false
+const suspendedBrowser = new Promise<never>(() => {})
+const PendingBrowser = () => {
+  if (suspendBrowser) throw suspendedBrowser
+  return null
+}
 const originalFetch = globalThis.fetch
 const catalog = () => ({ tenant: { id: tenant, slug: 'roomchang' }, folders: buildMediaFolders('roomchang', tenant === 2 ? [] : [
     { prefix: 'roomchang/doctors', count: 87 }, { prefix: 'roomchang/brands/logos', count: 40 },
@@ -54,7 +61,7 @@ globalThis.fetch = async (input: any, init?: any) => {
 }
 const ui = {
   useConfig: () => ({ config: { routes: { api: '/api' } } }),
-  useListQuery: () => ({ data: listData, query, handleWhereChange: async (where: any) => { query = { ...query, where, page: 1 } } }),
+  useListQuery: () => ({ data: React.useContext(ListDataSnapshot) ?? listData, query, handleWhereChange: async (where: any) => { query = { ...query, where, page: 1 } } }),
   useListDrawerContext: () => ({ isInDrawer }),
   useDocumentInfo: () => ({ id: documentID, data }),
   useFormFields: (select: any) => select([{ tenant: { value: tenant } }]),
@@ -64,7 +71,7 @@ const ui = {
 const require = createRequire(new URL('../src/components/MediaFolders.tsx', import.meta.url))
 const output = { exports: {} as any }
 const compiled = ts.transpileModule(readFileSync(new URL('../src/components/MediaFolders.tsx', import.meta.url), 'utf8'), {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
 }).outputText
 new Function('require', 'module', 'exports', compiled)((name: string) => {
   if (name === '@payloadcms/ui') return ui
@@ -84,6 +91,7 @@ beforeEach(async () => {
   documentID = undefined; data = {}; value = ''; writes = []; disabled = false; tenant = 1; requests = []; failed = false; extraPrefix = false; extraSibling = false
   registered = []; posted = []; createFails = false
   resolveCreation = undefined; pauseCreation = false
+  suspendBrowser = false
 })
 after(async () => { await act(() => root.unmount()); globalThis.fetch = originalFetch; window.happyDOM.abort() })
 
@@ -270,6 +278,62 @@ test('creation responses retain filters changed while the request was in flight'
   await render()
   assert.equal(query.search, 'new search')
   assert.deepEqual(query.where.and[0], { filename: { contains: 'recent filter' } })
+})
+
+const browserTree = () => React.createElement(ListDataSnapshot, { value: listData },
+  React.createElement(React.Suspense, { fallback: 'Pending folders' },
+    React.createElement(MediaFolderBrowser), React.createElement(PendingBrowser)))
+
+test('abandoned drawer renders cannot change the remembered tenant when the committed list becomes empty', async () => {
+  isInDrawer = true
+  selectedTenantID = 2
+  listData = { docs: [{ tenant: 1 }] }
+  await act(async () => { root.render(browserTree()); await new Promise(resolve => setTimeout(resolve, 10)) })
+  assert.equal(requests.at(-1), '/api/media/folders?tenant=1')
+  listData = { docs: [{ tenant: 2 }] }
+  suspendBrowser = true
+  await act(() => React.startTransition(() => root.render(browserTree())))
+  listData = { docs: [] }
+  suspendBrowser = false
+  await act(async () => { root.render(browserTree()); await new Promise(resolve => setTimeout(resolve, 10)) })
+  assert.equal(requests.at(-1), '/api/media/folders?tenant=1')
+  assert.deepEqual(writes, [])
+})
+
+test('committed drawer tenant changes remain authoritative when filtering leaves no documents', async () => {
+  isInDrawer = true
+  selectedTenantID = 2
+  listData = { docs: [{ tenant: 1 }] }
+  await render()
+  assert.equal(requests.at(-1), '/api/media/folders?tenant=1')
+  tenant = 2
+  listData = { docs: [{ tenant: 2 }] }
+  await render()
+  assert.equal(requests.at(-1), '/api/media/folders?tenant=2')
+  listData = { docs: [] }
+  selectedTenantID = 1
+  await render()
+  assert.equal(requests.at(-1), '/api/media/folders?tenant=2')
+  assert.deepEqual(writes, [])
+})
+
+test('a pending folder creation uses the latest committed filters, never an abandoned render callback', async () => {
+  const committedQuery = { search: 'committed search', where: { filename: { contains: 'committed filter' } } }
+  query = committedQuery
+  await act(async () => { root.render(browserTree()); await new Promise(resolve => setTimeout(resolve, 10)) })
+  await act(() => button('New folder').click())
+  await fillName('Committed Folder')
+  pauseCreation = true
+  await act(() => button('Create folder').click())
+  query = { search: 'abandoned search', where: { filename: { contains: 'abandoned filter' } } }
+  suspendBrowser = true
+  await act(() => React.startTransition(() => root.render(browserTree())))
+  query = committedQuery
+  suspendBrowser = false
+  await act(async () => { resolveCreation!(); await new Promise(resolve => setTimeout(resolve, 10)) })
+  assert.equal(query.search, 'committed search')
+  assert.deepEqual(query.where.and[0], { filename: { contains: 'committed filter' } })
+  assert.deepEqual(writes, [])
 })
 
 test('the library and picker keep the creator right-aligned when the folder toolbar wraps', async () => {

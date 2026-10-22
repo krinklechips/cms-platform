@@ -12,9 +12,9 @@ let tenantId: number | undefined
 let userId: number | undefined
 let homeId: number | undefined
 try {
-  const module = await payload.create({ collection: 'modules', data: { name: 'Homepage isolation fixture', key: `homepage-isolation-${stamp}`, defaultMonthlyPrice: 0, contentCollections: ['homepage'] } })
-  moduleId = module.id
-  const tenant = await payload.create({ collection: 'tenants', data: { name: 'Homepage isolation fixture', slug: `homepage-isolation-${stamp}`, subscriptions: [{ module: module.id, active: true }] } })
+  const catalogModule = await payload.create({ collection: 'modules', data: { name: 'Homepage isolation fixture', key: `homepage-isolation-${stamp}`, defaultMonthlyPrice: 0, contentCollections: ['homepage'] } })
+  moduleId = catalogModule.id
+  const tenant = await payload.create({ collection: 'tenants', data: { name: 'Homepage isolation fixture', slug: `homepage-isolation-${stamp}`, subscriptions: [{ module: catalogModule.id, active: true }] } })
   tenantId = tenant.id
   const editor = await payload.create({ collection: 'users', data: { email: `home-isolation-${stamp}@roomchang.test`, password: 'Local-fixture-only-2026!', roles: ['editor'], tenants: [{ tenant: tenant.id }] } })
   userId = editor.id

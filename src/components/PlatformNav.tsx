@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link'
 import { DefaultNav } from '@payloadcms/next/rsc'
 import { EntityType, groupNavItems } from '@payloadcms/ui/shared'
 import { getTranslation } from '@payloadcms/translations'
@@ -165,18 +166,18 @@ export const PlatformNav: React.FC<NavServerProps> = async (props) => {
     <nav style={S.wrap}>
       <div style={S.brand}>Serviette Labs</div>
       {LINKS.map(([label, href]) => (
-        <a key={href} href={href} style={S.link}>
+        <Link key={href} href={href} prefetch={false} style={S.link}>
           {label}
-        </a>
+        </Link>
       ))}
       <div style={S.divider} />
       <div style={S.hint}>
         Tenant content: open it from the Dashboard — each tenant row has an “Open content” selector.
       </div>
       <div style={S.divider} />
-      <a href="/admin/logout" style={S.link}>
+      <Link href="/admin/logout" prefetch={false} style={S.link}>
         Log out
-      </a>
+      </Link>
     </nav>
   )
 }

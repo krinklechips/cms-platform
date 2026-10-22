@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link'
 import { Gutter } from '@payloadcms/ui'
 import { UNMODELED_PAGES } from '@/lib/site-pages'
 import type { RecentDoc, UnpublishedDoc } from '@/lib/site-activity'
@@ -117,7 +118,7 @@ export const SiteActivityDashboard: React.FC<Props> = ({
         </>
       )}
     </div>
-    {incomplete && <p role="alert" className="publishing-error">Activity could not be fully loaded. Publishing status is not verified. <a href="/admin">Retry</a></p>}
+    {incomplete && <p role="alert" className="publishing-error">Activity could not be fully loaded. Publishing status is not verified. <Link href="/admin" prefetch={false}>Retry</Link></p>}
 
     <div style={S.grid}>
       <section style={S.panel}>

@@ -13,9 +13,9 @@ let tenantId: number | undefined
 let editorId: number | undefined
 let statId: number | undefined
 try {
-  const module = await payload.create({ collection: 'modules', data: { name: 'Stat fixture', key: `stat-fixture-${stamp}`, defaultMonthlyPrice: 0, contentCollections: ['site-stats'] } })
-  moduleId = module.id
-  const tenant = await payload.create({ collection: 'tenants', data: { name: 'Stat fixture', slug: `stat-fixture-${stamp}`, subscriptions: [{ module: module.id, active: true }] } })
+  const catalogModule = await payload.create({ collection: 'modules', data: { name: 'Stat fixture', key: `stat-fixture-${stamp}`, defaultMonthlyPrice: 0, contentCollections: ['site-stats'] } })
+  moduleId = catalogModule.id
+  const tenant = await payload.create({ collection: 'tenants', data: { name: 'Stat fixture', slug: `stat-fixture-${stamp}`, subscriptions: [{ module: catalogModule.id, active: true }] } })
   tenantId = tenant.id
   const editor = await payload.create({ collection: 'users', data: { email: `stat-${stamp}@roomchang.test`, password: 'Local-stat-only-2026!', roles: ['editor'], tenants: [{ tenant: tenant.id }] } })
   editorId = editor.id

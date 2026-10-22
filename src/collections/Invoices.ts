@@ -31,7 +31,7 @@ const buildInvoice: CollectionBeforeChangeHook = async ({ data, originalDoc, ope
     }
   }
 
-  let lineItems: LineItem[] = (data?.lineItems as LineItem[] | undefined) ?? []
+  const lineItems: LineItem[] = (data?.lineItems as LineItem[] | undefined) ?? []
 
   if (operation === 'create' && lineItems.length === 0 && data?.tenant) {
     const tenantId = typeof data.tenant === 'object' ? data.tenant.id : data.tenant

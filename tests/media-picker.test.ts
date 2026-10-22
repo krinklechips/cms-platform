@@ -49,7 +49,12 @@ if (!Window) {
   let uploadOpen = false
   let listsClosed = 0
   let uploadsClosed = 0
+  let drawerGeneration = 'committed'
+  let suspendList = false
+  const closedGenerations: string[] = []
+  const suspendedList = new Promise<never>(() => {})
   const List = (props: any) => {
+    if (suspendList) throw suspendedList
     listProps = props
     return null
   }
@@ -73,6 +78,7 @@ if (!Window) {
     useAuth: () => ({ permissions: { collections: { media: { create: canCreate, read: canRead } } } }),
     useListDrawer: (args: any) => {
       listArgs = args
+      const generation = drawerGeneration
       const [open, setOpen] = React.useState(false)
       return [
         List,
@@ -82,6 +88,7 @@ if (!Window) {
           openDrawer: () => setOpen(true),
           closeDrawer: () => {
             listsClosed++
+            closedGenerations.push(generation)
             setOpen(false)
           },
         },
@@ -160,6 +167,9 @@ if (!Window) {
     canRead = canCreate = true
     listArgs = listProps = uploadProps = undefined
     listsClosed = uploadsClosed = 0
+    drawerGeneration = 'committed'
+    suspendList = false
+    closedGenerations.length = 0
     writes.length = 0
   })
   after(async () => {
@@ -289,6 +299,19 @@ if (!Window) {
     const initialFilter = listArgs.filterOptions
     await render()
     assert.equal(listArgs.filterOptions, initialFilter)
+  })
+
+  test('an abandoned render cannot replace the committed drawer cleanup callbacks', async () => {
+    const tree = () => React.createElement(React.Suspense, { fallback: 'Pending drawer' },
+      React.createElement(ImageUrlPreview, { path: 'slides.0.imageUrl' }))
+    await act(() => root.render(tree()))
+    await click('Select image')
+    drawerGeneration = 'abandoned'
+    suspendList = true
+    await act(() => React.startTransition(() => root.render(tree())))
+    await act(() => root.render(null))
+    assert.deepEqual(closedGenerations, ['committed'])
+    assert.deepEqual(writes, [])
   })
 
   test('local image URLs preview without rewriting the URL', async () => {

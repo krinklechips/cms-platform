@@ -14,13 +14,13 @@ const payload = await getPayload({ config })
 try {
   let tenant = (await payload.find({ collection: 'tenants', where: { slug: { equals: 'roomchang' } }, limit: 1 })).docs[0]
   if (!tenant) {
-    const module = await payload.create({ collection: 'modules', data: {
+    const catalogModule = await payload.create({ collection: 'modules', data: {
       name: 'Local preview', key: 'local-preview', defaultMonthlyPrice: 0,
       contentCollections: [...CONTENT_COLLECTION_SLUGS],
     } })
     tenant = await payload.create({ collection: 'tenants', data: {
       name: 'Roomchang - local preview', slug: 'roomchang',
-      domains: [{ domain: 'roomchang.localhost' }], subscriptions: [{ module: module.id, active: true }],
+      domains: [{ domain: 'roomchang.localhost' }], subscriptions: [{ module: catalogModule.id, active: true }],
     } })
     await payload.create({ collection: 'users', data: {
       email: 'editor@roomchang.test', password: 'Local-preview-only-2026!', name: 'Preview Editor',

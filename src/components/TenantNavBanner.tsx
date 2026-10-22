@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link'
 import { headers as nextHeaders } from 'next/headers'
 import type { Payload } from 'payload'
 import { getTenantByHost } from '@/lib/get-tenant-by-host'
@@ -53,7 +54,7 @@ export const TenantNavBanner: React.FC<ServerProps> = async ({ payload, user }) 
   return (
     <>
       <div className="tenant-identity">
-        <a href="/admin" aria-label={`${name} dashboard`}>
+        <Link href="/admin" prefetch={false} aria-label={`${name} dashboard`}>
           {logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img className={isRoomchang ? 'tenant-identity__wordmark' : 'tenant-identity__logo'} src={logoUrl} alt={isRoomchang ? 'Roomchang Dental Hospital' : name} width={isRoomchang ? 144 : 180} height={isRoomchang ? 75 : 72} />
@@ -65,7 +66,7 @@ export const TenantNavBanner: React.FC<ServerProps> = async ({ payload, user }) 
             )}
             <strong>{isRoomchang ? 'Roomchang' : name}</strong>
           </span>
-        </a>
+        </Link>
         <span className="tenant-identity__environment" title="CMS publishing updates the preview website, not roomchang.com.">Preview workspace</span>
       </div>
     </>

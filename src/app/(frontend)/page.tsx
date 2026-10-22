@@ -1,6 +1,7 @@
 import { headers as getHeaders } from 'next/headers.js'
 import { getPayload } from 'payload'
 import React from 'react'
+import Link from 'next/link'
 
 import config from '@/payload.config'
 import { getTenantByHost } from '@/lib/get-tenant-by-host'
@@ -58,9 +59,9 @@ export default async function HomePage() {
         )}
         <h1 style={S.h1}>{tenant.name}</h1>
         <p style={S.sub}>Content portal — manage your website’s services, team, and media.</p>
-        <a href="/admin" style={S.cta}>
+        <Link href="/admin" prefetch={false} style={S.cta}>
           Staff sign in
-        </a>
+        </Link>
         <div style={S.footer}>Powered by Serviette Labs</div>
       </div>
     )
@@ -75,9 +76,9 @@ export default async function HomePage() {
         The content platform behind beautiful healthcare websites — multilingual, multi-tenant,
         managed for you.
       </p>
-      <a href="/admin" style={S.cta}>
+      <Link href="/admin" prefetch={false} style={S.cta}>
         Sign in
-      </a>
+      </Link>
       <div style={S.footer}>© Serviette Labs</div>
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTenantSelection } from '@payloadcms/plugin-multi-tenant/client'
 import {
   Button,
@@ -115,7 +115,7 @@ const MediaPickerControls: React.FC<{
   })
   const [UploadDrawer, , upload] = useDocumentDrawer({ collectionSlug: 'media' })
   const drawers = useRef({ list, upload })
-  drawers.current = { list, upload }
+  useLayoutEffect(() => { drawers.current = { list, upload } }, [list, upload])
   useEffect(() => {
     active.current = true
     return () => {

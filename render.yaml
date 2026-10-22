@@ -8,14 +8,14 @@ services:
     name: serviette-cms
     runtime: node
     plan: starter
-    repo: https://github.com/krinklechips/serviette-cms
+    repo: https://github.com/krinklechips/cms-platform
     branch: main
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     healthCheckPath: /admin/login
     envVars:
       - key: NODE_VERSION
-        value: 22.12.0
+        value: 22.23.4
       - key: PAYLOAD_SECRET
         sync: false # set in dashboard — generate a long random string
       - key: DATABASE_URI
