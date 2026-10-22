@@ -61,6 +61,22 @@ const routes: [string, Record<string, unknown>, string][] = [
   ['site-stats', { key: 'clinical_experience' }, '/clinical-results'],
 ]
 
+test('all and only website-content editors share the default-open preview and publishing control', async () => {
+  const resolved = await config
+  assert.equal(resolved.admin.livePreview?.openByDefault, true)
+  const expected = new Set(routes.map(([slug]) => slug))
+  assert.equal(expected.size, 27)
+  assert.deepEqual(new Set(resolved.admin.livePreview?.collections), expected)
+  for (const collection of resolved.collections) {
+    const controls = collection.admin?.components?.edit?.beforeDocumentControls ?? []
+    if (expected.has(collection.slug)) {
+      assert.ok(controls.includes('/components/PublishingStatus#PublishingStatus'), collection.slug)
+    } else {
+      assert.ok(!resolved.admin.livePreview?.collections?.includes(collection.slug), collection.slug)
+    }
+  }
+})
+
 test('videos without a connected page consumer do not offer a misleading Dentist Talks preview', async () => {
   for (const category of [undefined, '', 'testimonial', 'other']) {
     assert.equal(await preview('videos', { category }), null)

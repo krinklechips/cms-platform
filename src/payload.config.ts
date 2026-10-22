@@ -123,12 +123,10 @@ export default buildConfig({
     },
     // Live Preview: edit a service and watch the REAL site render update
     // beside the form — the dummy roomchang instance (CONTENT_SOURCE=payload,
-    // :3200) refreshes on save. Locale codes ARE the site's URL segments
-    // (en/kh/cn), so no mapping needed.
+    // :3200) refreshes on save. CMS locales match the site's en/kh/cn routes.
     livePreview: {
-      // Eye icon → the REAL page on the dummy site (roomchang-sandbox on
-      // Vercel, CONTENT_SOURCE=payload), refreshed on save. Each collection
-      // maps to the page it renders on.
+      // PublishingStatus normalizes old per-collection panel preferences.
+      openByDefault: true,
       url: getPreviewUrl,
       collections: PREVIEW_COLLECTIONS,
       breakpoints: [

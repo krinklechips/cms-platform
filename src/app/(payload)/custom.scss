@@ -231,10 +231,17 @@ body:has(.cms-tenant-nav) {
   }
 }
 
-// Keep one preview action and omit creation metadata from the editing toolbar.
+// The shared, labelled panel control replaces Payload's icon-only toggle.
 .doc-controls:has(.cms-preview-action) {
   #live-preview-toggler { display: none; }
   .doc-controls__value-wrap:last-child { display: none; }
+}
+
+@media (max-width: 1024px) {
+  .collection-edit--is-live-previewing:has(.cms-preview-toggle) {
+    > .collection-edit__form > .collection-edit__main-wrapper > .collection-edit__main { display: none; }
+    .live-preview-window { width: 100%; }
+  }
 }
 
 @media (max-width: 767px) {
