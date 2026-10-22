@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { Media } from '../src/collections/Media'
 import { buildMediaFolders, mediaFolderFilter, hasMediaFolderFilter, replaceMediaFolderFilter } from '../src/lib/media-folders'
-import { mediaFolderCatalog } from '../src/lib/media-folder-catalog'
+import { assertFolderWriteOrigin, mediaFolderCatalog } from '../src/lib/media-folder-catalog'
+import * as folderTools from '../src/lib/media-folders'
 
 const editor = { id: 7, roles: ['editor'], tenants: [{ tenant: 1 }] }
 const request = () => ({ user: editor, context: {}, query: {}, headers: new Headers(),
@@ -87,10 +88,44 @@ test('folder catalogue paginates under actual collection access with a fixed ten
     findByID: async () => ({ id: 1, slug: 'roomchang' }),
     find: async (args: any) => {
       calls.push({ where: args.where, overrideAccess: args.overrideAccess, select: args.select, page: args.page })
+      if (args.collection === 'media-directories') return { docs: [{ path: 'technology/empty' }], hasNextPage: false }
       return { docs: [{ prefix: args.page === 1 ? 'roomchang/doctors' : 'roomchang/brands/logos' }], hasNextPage: args.page === 1 }
     },
   } }
   const catalog = await mediaFolderCatalog(req as never)
-  assert.deepEqual(calls, [1, 2].map(page => ({ where: { tenant: { equals: '1' } }, overrideAccess: false, select: { prefix: true }, page })))
+  assert.deepEqual(calls, [...[1, 2].map(page => ({ where: { tenant: { equals: '1' } }, overrideAccess: false, select: { prefix: true }, page })),
+    { where: { tenant: { equals: '1' } }, overrideAccess: false, select: { path: true }, page: undefined }])
   assert.equal(catalog.folders.find(folder => folder.path === '')?.count, 2)
+})
+
+test('registered empty folders and their parents remain browsable without matching unrelated files', () => {
+  const folders = buildMediaFolders('roomchang', [{ prefix: 'roomchang/technology/cad-cam', count: 3 }], ['technology/durr-dental-mylunos'])
+  const empty = folders.find(folder => folder.path === 'technology/durr-dental-mylunos')
+  assert.ok(empty, 'A folder must exist before the first upload')
+  assert.equal(empty.count, 0)
+  assert.equal(empty.parent, 'technology')
+  assert.deepEqual(mediaFolderFilter(empty), { prefix: { in: ['roomchang/technology/durr-dental-mylunos', 'serviette-media/roomchang/technology/durr-dental-mylunos'] } })
+  assert.equal(folders.find(folder => folder.path === 'technology')?.count, 3)
+  assert.equal(folders.find(folder => folder.path === '')?.count, 3)
+})
+
+test('new folder names become safe nested paths without modifying existing parent spelling', () => {
+  const createPath = (folderTools as any).createMediaFolderPath
+  assert.equal(typeof createPath, 'function')
+  assert.equal(createPath('technology', 'Dürr Dental MyLunos'), 'technology/durr-dental-mylunos')
+  assert.equal(createPath('', 'Technology/New Equipment'), 'technology/new-equipment')
+  assert.equal(createPath('Services/Existing_Name', 'New Item'), 'Services/Existing_Name/new-item')
+  for (const name of ['', ' ', '../other', '/other', 'one//two', '%2fsecret', 'x\\y', 'https://other', '.hidden', 'x/..']) {
+    assert.throws(() => createPath('technology', name), /folder/i)
+  }
+})
+
+test('browser folder writes reject foreign origins but allow the current hosted workspace and authenticated server clients', () => {
+  const req = { url: 'http://internal-host/api/media/folders', headers: new Headers({ origin: 'https://roomchang.serviettelab.com',
+    'x-forwarded-host': 'roomchang.serviettelab.com', 'x-forwarded-proto': 'https' }) }
+  assert.doesNotThrow(() => assertFolderWriteOrigin(req as never))
+  req.headers.set('origin', 'https://foreign.example')
+  assert.throws(() => assertFolderWriteOrigin(req as never), /workspace/)
+  req.headers.delete('origin')
+  assert.doesNotThrow(() => assertFolderWriteOrigin(req as never))
 })

@@ -18,6 +18,7 @@ import * as migration_20261020_095018_stat_values_localized from './20261020_095
 import * as migration_20261020_105541_cms_localized_field_coverage from './20261020_105541_cms_localized_field_coverage';
 import * as migration_20261021_120000_payload_391_schema from './20261021_120000_payload_391_schema';
 import * as migration_20261021_180000_editorial_audit from './20261021_180000_editorial_audit';
+import * as migration_20261022_040000_media_directories from './20261022_040000_media_directories';
 
 export const migrations = [
   {
@@ -119,5 +120,10 @@ export const migrations = [
     up: migration_20261021_180000_editorial_audit.up,
     down: migration_20261021_180000_editorial_audit.down,
     name: '20261021_180000_editorial_audit'
+  },
+  {
+    up: migration_20261022_040000_media_directories.up,
+    down: migration_20261022_040000_media_directories.down,
+    name: '20261022_040000_media_directories'
   },
 ];

@@ -3,13 +3,13 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { after, beforeEach, test } from 'node:test'
 import React, { act } from 'react'
-import { createRoot } from 'react-dom/client'
 import ts from 'typescript'
-import { buildMediaFolders } from '../src/lib/media-folders'
+import { buildMediaFolders, createMediaFolderPath } from '../src/lib/media-folders'
 
 const { Window } = await import('happy-dom')
 const window = new Window({ url: 'https://cms.example.test' })
 Object.assign(globalThis, { window, document: window.document, HTMLElement: window.HTMLElement, IS_REACT_ACT_ENVIRONMENT: true })
+const { createRoot } = await import('react-dom/client')
 const container = document.createElement('div')
 document.body.append(container)
 const root = createRoot(container)
@@ -27,14 +27,29 @@ let requests: string[] = []
 let failed = false
 let extraPrefix = false
 let extraSibling = false
+let registered: string[] = []
+let posted: any[] = []
+let createFails = false
+let resolveCreation: (() => void) | undefined
+let pauseCreation = false
 const originalFetch = globalThis.fetch
-globalThis.fetch = async (input: any) => {
-  requests.push(String(input))
-  return new Response(JSON.stringify({ tenant: { id: tenant, slug: 'roomchang' }, folders: buildMediaFolders('roomchang', tenant === 2 ? [] : [
+const catalog = () => ({ tenant: { id: tenant, slug: 'roomchang' }, folders: buildMediaFolders('roomchang', tenant === 2 ? [] : [
     { prefix: 'roomchang/doctors', count: 87 }, { prefix: 'roomchang/brands/logos', count: 40 },
     ...(extraPrefix ? [{ prefix: 'serviette-media/roomchang/doctors', count: 1 }] : []),
     ...(extraSibling ? [{ prefix: 'roomchang/brands/icons', count: 1 }] : []),
-  ]) }), { status: failed ? 503 : 200 })
+  ], registered) })
+globalThis.fetch = async (input: any, init?: any) => {
+  requests.push(String(input))
+  if (init?.method === 'POST') {
+    const body = JSON.parse(init.body)
+    posted.push({ url: String(input), ...body })
+    if (pauseCreation) await new Promise<void>(resolve => { resolveCreation = resolve })
+    if (createFails) return new Response(JSON.stringify({ errors: [{ message: 'Folder creation failed' }] }), { status: 503 })
+    const path = createMediaFolderPath(body.parent, body.name)
+    registered.push(path)
+    return new Response(JSON.stringify({ path, created: true, catalog: catalog() }), { status: 201 })
+  }
+  return new Response(JSON.stringify(catalog()), { status: failed ? 503 : 200 })
 }
 const ui = {
   useConfig: () => ({ config: { routes: { api: '/api' } } }),
@@ -66,6 +81,8 @@ beforeEach(async () => {
   await act(() => root.render(null))
   selectedTenantID = 1; query = {}; listData = { docs: [] }; isInDrawer = false
   documentID = undefined; data = {}; value = ''; writes = []; disabled = false; tenant = 1; requests = []; failed = false; extraPrefix = false; extraSibling = false
+  registered = []; posted = []; createFails = false
+  resolveCreation = undefined; pauseCreation = false
 })
 after(async () => { await act(() => root.unmount()); globalThis.fetch = originalFetch; window.happyDOM.abort() })
 
@@ -166,4 +183,90 @@ test('a selected parent keeps including new sibling folders when the media catal
   await render()
   assert.equal(container.querySelector('select')?.value, 'brands')
   assert.deepEqual(query.where, { and: [{ prefix: { in: ['roomchang/brands/logos', 'roomchang/brands/icons'] } }] })
+})
+
+test('the library, image picker and new upload all expose folder creation without submitting the document', async () => {
+  for (const Component of [MediaFolderBrowser, MediaUploadFolder]) {
+    await act(() => root.render(null))
+    await render(Component)
+    const button = [...container.querySelectorAll('button')].find(button => button.textContent?.includes('New folder'))
+    assert.ok(button, 'Folder creation must be available where folders are selected')
+    assert.equal(button.type, 'button')
+    await act(() => button.click())
+    await render(Component)
+    assert.ok(container.querySelector('input'), 'Show a folder-name input')
+    assert.deepEqual(writes, [])
+  }
+})
+
+const button = (name: string) => [...container.querySelectorAll('button')].find(button => button.textContent === name)!
+const fillName = async (name: string) => act(() => {
+  const input = container.querySelector('input')!
+  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!.call(input, name)
+  input.dispatchEvent(new window.Event('input', { bubbles: true }) as unknown as Event)
+})
+
+test('creating an empty subfolder in the library and picker selects it and retains native filters', async () => {
+  isInDrawer = true; query = { where: { mimeType: { like: 'image/' } } }
+  await render(); await choose('doctors'); await render()
+  await act(() => button('New folder').click())
+  await fillName('New Team')
+  await act(async () => { button('Create folder').click(); await new Promise(resolve => setTimeout(resolve, 10)) })
+  await render()
+  assert.deepEqual(posted, [{ url: '/api/media/folders?tenant=1', parent: 'doctors', name: 'New Team' }])
+  assert.equal(container.querySelector('select')?.value, 'doctors/new-team')
+  assert.deepEqual(query.where, { and: [{ mimeType: { like: 'image/' } }, { prefix: { in: ['roomchang/doctors/new-team', 'serviette-media/roomchang/doctors/new-team'] } }] })
+  assert.deepEqual(writes, [])
+})
+
+test('new uploads select the explicitly created folder, while a failed creation leaves the upload and form untouched', async () => {
+  await render(MediaUploadFolder); await choose('doctors')
+  await render(MediaUploadFolder)
+  await act(() => button('New folder').click())
+  await fillName('Portraits')
+  createFails = true
+  await act(async () => { button('Create folder').click(); await new Promise(resolve => setTimeout(resolve, 10)) })
+  assert.match(container.querySelector('[role="alert"]')?.textContent ?? '', /creation failed/)
+  assert.equal(value, 'doctors')
+  assert.equal(container.querySelector('input')?.value, 'Portraits')
+  createFails = false
+  await act(async () => { button('Create folder').click(); await new Promise(resolve => setTimeout(resolve, 10)) })
+  await render(MediaUploadFolder)
+  assert.equal(value, 'doctors/portraits')
+  assert.equal(container.querySelector('select')?.value, 'doctors/portraits')
+  assert.deepEqual(writes, ['doctors', 'doctors/portraits'])
+})
+
+test('opening and cancelling folder creation does not submit the document or change its folder', async () => {
+  await render(MediaUploadFolder)
+  await act(() => button('New folder').click())
+  await fillName('Not Created')
+  await act(() => button('Cancel').click())
+  assert.equal(container.querySelector('input'), null)
+  assert.deepEqual(posted, [])
+  assert.deepEqual(writes, [])
+})
+
+test('returning from another tab refreshes folders without discarding an unsaved folder name', async () => {
+  await render()
+  await act(() => button('New folder').click())
+  await fillName('New Equipment')
+  await act(async () => { window.dispatchEvent(new window.Event('focus')); await new Promise(resolve => setTimeout(resolve, 10)) })
+  await render()
+  assert.equal(container.querySelector('input')?.value, 'New Equipment')
+  assert.deepEqual(posted, [])
+})
+
+test('creation responses retain filters changed while the request was in flight', async () => {
+  await render()
+  await act(() => button('New folder').click())
+  await fillName('New Equipment')
+  pauseCreation = true
+  await act(() => button('Create folder').click())
+  query = { search: 'new search', where: { filename: { contains: 'recent filter' } } }
+  await render()
+  await act(async () => { resolveCreation!(); await new Promise(resolve => setTimeout(resolve, 10)) })
+  await render()
+  assert.equal(query.search, 'new search')
+  assert.deepEqual(query.where.and[0], { filename: { contains: 'recent filter' } })
 })

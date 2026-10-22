@@ -3,7 +3,7 @@ import { APIError, type CollectionConfig } from 'payload'
 import { getHostTenant } from '../lib/host-scope'
 import { resolveMediaTenant } from '../lib/media-validation'
 import { isUploadFolder } from '../lib/media-folders'
-import { mediaFolderCatalog } from '../lib/media-folder-catalog'
+import { createMediaFolder, mediaFolderCatalog } from '../lib/media-folder-catalog'
 
 /**
  * Media — tenant-scoped uploads stored in Cloudflare R2 (cms-platform bucket).
@@ -43,7 +43,10 @@ export const Media: CollectionConfig = {
   },
   endpoints: [{ path: '/folders', method: 'get', handler: async req => Response.json(await mediaFolderCatalog(req), {
     headers: { 'Cache-Control': 'private, no-store', Vary: 'Cookie, Authorization' },
-  }) }],
+  }) }, { path: '/folders', method: 'post', handler: async req => {
+    const result = await createMediaFolder(req)
+    return Response.json(result, { status: result.created ? 201 : 200, headers: { 'Cache-Control': 'private, no-store', Vary: 'Cookie, Authorization' } })
+  } }],
   hooks: {
     beforeOperation: [
       ({ operation, req, args }) => {

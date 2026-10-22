@@ -10,6 +10,7 @@ import sharp from 'sharp'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
+import { MediaDirectories } from './collections/MediaDirectories'
 import { Tenants } from './collections/Tenants'
 import { Services } from './collections/Services'
 import { Doctors } from './collections/Doctors'
@@ -174,6 +175,7 @@ export default buildConfig({
     withHumanLabels(Modules),
     withHumanLabels(Invoices),
     EditorialAudit,
+    MediaDirectories,
   ].map(withMediaValidation).map(withEditorialConcurrency).map(withEditorialAudit),
   endpoints: [
     // Public feature flags for the tenants' websites (e.g. the AI chatbot

@@ -321,7 +321,7 @@ export const recordEditorialAuditAfterDelete: CollectionAfterDeleteHook = async 
  * AuditChanges#AuditChanges must be registered by the parent's generated admin import map.
  */
 export const withEditorialAudit = (config: CollectionConfig): CollectionConfig => {
-  if (config.slug === 'editorial-audit' || config.slug !== 'media' && !(config.versions && typeof config.versions === 'object' && config.versions.drafts)) return config
+  if (config.slug === 'editorial-audit' || !['media', 'media-directories'].includes(config.slug) && !(config.versions && typeof config.versions === 'object' && config.versions.drafts)) return config
   return {
     ...config,
     hooks: {

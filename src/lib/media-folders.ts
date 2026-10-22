@@ -10,20 +10,36 @@ export type MediaFolder = {
 }
 export type MediaFolderCatalog = { tenant: { id: number | string; slug: string }; folders: MediaFolder[] }
 
+export function createMediaFolderPath(parent: unknown, name: unknown): string {
+  if (!isUploadFolder(parent) || typeof name !== 'string') throw new Error('Choose a valid parent folder and folder name.')
+  const child = name.trim().normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, '-')
+  const path = parent ? `${parent}/${child}` : child
+  if (!child || !isUploadFolder(child) || !isUploadFolder(path)) {
+    throw new Error('Use letters, numbers, hyphens or underscores in folder names. Separate subfolders with /.')
+  }
+  return path
+}
+
 export function isUploadFolder(value: unknown): value is string {
   return typeof value === 'string' && value.length <= 300 &&
     (value === '' || (value.split('/').length <= 10 && value.split('/').every(part =>
       /^[a-zA-Z0-9_-][a-zA-Z0-9._-]*$/.test(part) && part !== '.' && part !== '..')))
 }
 
-export function buildMediaFolders(slug: string, counts: { prefix: string | null; count: number }[]): MediaFolder[] {
+export function buildMediaFolders(slug: string, counts: { prefix: string | null; count: number }[], registered: string[] = []): MediaFolder[] {
   const nodes = new Map<string, MediaFolder>()
   const add = (path: string, label: string, parent: string | null, uploadable = true) => {
     if (!nodes.has(path)) nodes.set(path, { path, label, parent, count: 0, prefixes: [], uploadable })
     return nodes.get(path)!
   }
   const root = add('', 'All files', null)
-  for (const { prefix, count } of counts) {
+  const paths = [...counts]
+  for (const path of registered) {
+    if (path && isUploadFolder(path)) {
+      for (const base of [slug, `serviette-media/${slug}`]) paths.push({ prefix: `${base}/${path}`, count: 0 })
+    }
+  }
+  for (const { prefix, count } of paths) {
     // Old imports and new adapter-managed uploads share categories, not object keys.
     const relative = [slug, `serviette-media/${slug}`].map(base =>
       prefix === base ? '' : prefix?.startsWith(`${base}/`) ? prefix.slice(base.length + 1) : null,

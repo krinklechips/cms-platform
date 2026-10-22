@@ -7,7 +7,7 @@ import { test } from 'node:test'
 import { sqliteAdapter, type SQLiteAdapter } from '@payloadcms/db-sqlite'
 import { buildConfig, getPayload, ValidationError, type CollectionConfig } from 'payload'
 import { Media } from '../src/collections/Media'
-import { mediaFolderCatalog } from '../src/lib/media-folder-catalog'
+import { createMediaFolder, mediaFolderCatalog } from '../src/lib/media-folder-catalog'
 import { mediaFolderFilter } from '../src/lib/media-folders'
 
 process.env.PAYLOAD_SECRET = 'native-media-validation-disposable-fixture-only'
@@ -77,6 +77,42 @@ test('native SQLite draft/publish guards preserve existing values, drafts, local
       await assert.rejects(() => mediaFolderCatalog(req), /authorised/)
       assert.deepEqual(await payload.db.find({ collection: 'media', pagination: false }), before)
       assert.deepEqual(await read('en', true), pageBefore)
+    })
+
+    await t.test('persistent empty folders are tenant-scoped, idempotent, audited and never rewrite media or language drafts', async () => {
+      const mediaBefore = await payload.db.find({ collection: 'media', pagination: false })
+      const originals = await Promise.all((['en', 'kh', 'cn'] as const).map(locale => read(locale, true)))
+      const editor = { id: 99, name: 'Folder editor', collection: 'users', roles: ['editor'], tenants: [{ tenant: tenant.id }] } as never
+      const { createLocalReq } = await import('payload')
+      const request = async (data: Record<string, unknown>, selected = tenant.id, actor = editor) =>
+        Object.assign(await createLocalReq({ user: actor }, payload), { data, searchParams: new URLSearchParams(`tenant=${selected}`) })
+      const first = await createMediaFolder(await request({ parent: '', name: 'Technology' }))
+      assert.equal(first.created, true)
+      const second = await createMediaFolder(await request({ parent: 'technology', name: 'Dürr Dental MyLunos' }))
+      assert.equal(second.path, 'technology/durr-dental-mylunos')
+      assert.equal(second.catalog.folders.find(folder => folder.path === second.path)?.count, 0)
+      const empty = second.catalog.folders.find(folder => folder.path === second.path)!
+      const emptyFiles = await payload.find({ collection: 'media', where: mediaFolderFilter(empty), user: editor, overrideAccess: false })
+      assert.equal(emptyFiles.totalDocs, 0)
+      const repeated = await createMediaFolder(await request({ parent: 'technology', name: 'Dürr Dental MyLunos' }))
+      assert.equal(repeated.created, false)
+      const stored = await payload.find({ collection: 'media-directories', overrideAccess: false, user: editor, pagination: false })
+      assert.equal(stored.totalDocs, 2)
+      assert.equal((await mediaFolderCatalog(await request({}))).folders.some(folder => folder.path === second.path), true)
+      const audit = await payload.find({ collection: 'editorial-audit', where: { docCollection: { equals: 'media-directories' } }, pagination: false })
+      assert.equal(audit.totalDocs, 2)
+      assert.ok(audit.docs.every(row => row.actorID === '99' && row.action === 'create'))
+      for (const name of ['../other', '/private', 'one//two']) {
+        await assert.rejects(() => request({ parent: 'technology', name }).then(createMediaFolder), /folder/i)
+      }
+      await assert.rejects(() => request({ parent: '', name: 'Foreign' }, other.id).then(createMediaFolder), /authorised/)
+      await assert.rejects(() => payload.create({ collection: 'media-directories', data: { tenant: other.id, path: 'foreign' }, user: editor, overrideAccess: false }), /not allowed|forbidden/i)
+      await payload.db.create({ collection: 'media-directories', data: { tenant: other.id, path: 'foreign-private' } })
+      const allowed = await payload.find({ collection: 'media-directories', overrideAccess: false, user: editor, pagination: false })
+      assert.equal(allowed.docs.some(doc => doc.path === 'foreign-private'), false)
+      await assert.rejects(() => payload.update({ collection: 'media-directories', id: stored.docs[0].id, data: { path: 'moved' }, user: editor, overrideAccess: false }), /not allowed|forbidden/i)
+      assert.deepEqual(await payload.db.find({ collection: 'media', pagination: false }), mediaBefore)
+      assert.deepEqual(await Promise.all((['en', 'kh', 'cn'] as const).map(locale => read(locale, true))), originals)
     })
 
     await t.test('new malformed image URLs reject both native drafts and publication', async () => {
