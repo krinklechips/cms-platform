@@ -26,7 +26,7 @@ async function unpublish(options: { locale: string; all: boolean; protected?: bo
   let tasks = 0
   const scope = {
     qs, formatAdminURL, editorialConcurrencyEnabled: options.protected !== false,
-    entityConfig: { custom: { editorialConcurrency: options.protected !== false } },
+    entityConfig: { admin: { custom: { editorialConcurrency: options.protected !== false } } },
     dataFromProps: { title: 'Previously saved', _editorialRevision: `sha256:${'a'.repeat(64)}` },
     collectionSlug: 'pages', globalSlug: undefined, serverURL: '', api: '/api', localeCode: options.locale, id: 22,
     i18n: { language: 'en' }, t: (key: string) => key,

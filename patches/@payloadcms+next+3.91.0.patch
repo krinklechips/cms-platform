@@ -1,5 +1,5 @@
 diff --git a/node_modules/@payloadcms/next/dist/views/Version/Restore/index.js b/node_modules/@payloadcms/next/dist/views/Version/Restore/index.js
-index 760c234..7515739 100644
+index 760c234..96f5d13 100644
 --- a/node_modules/@payloadcms/next/dist/views/Version/Restore/index.js
 +++ b/node_modules/@payloadcms/next/dist/views/Version/Restore/index.js
 @@ -2,11 +2,11 @@
@@ -22,7 +22,7 @@ index 760c234..7515739 100644
    } = useTranslation();
 -  const [draft, setDraft] = useState(false);
 +  const locale = useLocale();
-+  const protectedRestore = collectionConfig?.custom?.editorialConcurrency === true;
++  const protectedRestore = collectionConfig?.admin?.custom?.editorialConcurrency === true;
 +  const revisionKey = `${collectionConfig?.slug}/${originalDocID}/${locale?.code}`;
 +  const [savedRevision, setSavedRevision] = useState(null);
 +  const revision = savedRevision?.key === revisionKey ? savedRevision.value : null;

@@ -6,6 +6,7 @@ Scope: hosted Roomchang CMS and the sandbox website. The public website remains 
 
 - Native Unpublish uses the revision-bearing Form submission path for protected collections, retaining explicit locale, save errors and the returned revision instead of resetting entered content to old props.
 - The pinned UI patch covers both leaf modules and the actual prebundled client entrypoint. Regression checks exercise both. Earlier leaf-only Form/Publish protections are now also present in that shipped entrypoint.
+- A hosted browser follow-up exposed an additional boundary: Payload strips collection-level `custom` from client configuration. The safe non-secret protection marker now uses `admin.custom`, including Unpublish, Publish All and version Restore. A regression test runs Payload's actual serializer and evaluates the native leaf/bundle protection expressions against its output.
 - Unsupported bulk updates are disabled on protected editorial and media collections. Bulk Upload creation remains available.
 - New uploads inherit the authorized current folder, including unvisited and later-added bulk files. Manual folder overrides and immutable existing R2 paths remain protected.
 - Whole-document deletion audits cover all languages. Authorized tenant transfers append isolated source/destination ownership history in the same transaction without exposing either tenant's content to the other.
@@ -16,7 +17,7 @@ Scope: hosted Roomchang CMS and the sandbox website. The public website remains 
 ## Verification
 
 - Before changes: 568 CMS tests passed, seven fixture-specific skips; 679 website tests passed.
-- After changes: 637 CMS tests passed, seven fixture-specific skips; 770 website tests passed. Both builds passed. Native PostgreSQL ownership/locking/audit tests passed, including a transfer/delete race. TypeScript checks passed; scoped lint has no errors and existing warning-level test annotations remain.
+- Initial repairs: 637 CMS tests passed, seven fixture-specific skips; 770 website tests passed. Both builds passed. Native PostgreSQL ownership/locking/audit tests passed, including a transfer/delete race. The serializer follow-up adds seven regression tests; final rerun results are recorded in the release journal. TypeScript and scoped lint are checked separately.
 - Fresh hosted fixtures before deployment passed private drafts, authenticated previews, EN/KH/CN publishing, other-language/draft preservation, R2 byte checks and alt isolation, stale/missing revision rejection, and publish audit attribution.
 - Read-only TLS-verified PostgreSQL fingerprints captured 500 tables / 58,638 rows before testing. Final comparison and post-deployment checks are recorded in the private local verification journal, not assumed from test-suite results.
 

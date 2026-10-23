@@ -286,7 +286,7 @@ for (const [name, custom, localizeStatus, expectedAll] of [
   test(`native publish-all menu preserves explicit locale intent for ${name}`, async () => {
     const submissions: { action: string; overrides: { _status: string } }[] = []
     const scope = {
-      entityConfig: { slug: 'pages', fields: [], custom, versions: { drafts: { localizeStatus } } },
+      entityConfig: { slug: 'pages', fields: [], admin: { custom }, versions: { drafts: { localizeStatus } } },
       hasLocalizeStatusEnabled, formatAdminURL, qs,
       localeCode: 'kh', api: '/api', collectionSlug: 'pages', globalSlug: undefined, id: 42,
       uploadStatus: 'idle',

@@ -54,7 +54,7 @@ async function mountRestore(t: TestContext, options: { protected?: boolean; glob
   const confirmations: Promise<unknown>[] = []
   let locale = { code: 'en', label: 'English' }
   let props = {
-    collectionConfig: options.global ? undefined : { slug: 'pages', custom: { editorialConcurrency: options.protected !== false } },
+    collectionConfig: options.global ? undefined : { slug: 'pages', admin: { custom: { editorialConcurrency: options.protected !== false } } },
     globalConfig: options.global ? { slug: 'settings' } : undefined,
     label: 'Page', originalDocID: 42, versionID: 'old-version', status: 'published', versionDateFormatted: '2026-10-19',
   }

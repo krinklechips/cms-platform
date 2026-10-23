@@ -72,6 +72,7 @@ export const withEditorialConcurrency = (config: CollectionConfig): CollectionCo
   return { ...config,
     disableBulkEdit: true,
     custom: { ...config.custom, editorialConcurrency: true },
+    admin: { ...config.admin, custom: { ...config.admin?.custom, editorialConcurrency: true } },
     forceSelect: { ...config.forceSelect, updatedAt: true },
     fields: [...config.fields, { name: REVISION, type: 'text', virtual: true, admin: { hidden: true },
       access: { read: ({ req }) => Boolean(req.user) } }],
