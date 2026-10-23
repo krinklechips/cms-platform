@@ -73,8 +73,17 @@
   }
 }
 
-.cms-preview-action { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; gap: 6px; }
-.cms-preview-buttons { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.cms-preview-action { display: flex; flex: 0 0 auto; flex-direction: column; align-items: flex-start; min-width: 0; max-width: 100%; margin-inline-end: auto; gap: 6px; }
+.cms-preview-buttons {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  gap: 8px;
+
+  .btn { min-width: 0; white-space: normal; }
+  .btn__icon { flex-shrink: 0; }
+}
 .cms-translation-state { font-size: 14px; color: var(--theme-elevation-650); }
 .cms-sidebar-control { display: none; }
 
@@ -236,10 +245,20 @@ body:has(.cms-tenant-nav) {
 .doc-controls:has(.cms-preview-action) {
   #live-preview-toggler { display: none; }
   .doc-controls__value-wrap:last-child { display: none; }
-  .doc-controls__wrapper { height: auto; min-height: var(--doc-controls-height); }
-  .doc-controls__content { min-width: 0; }
-  .doc-controls__controls-wrapper { height: auto; align-items: flex-end; padding-block: 8px; }
-  .doc-controls__controls { min-width: 0; align-items: flex-end; }
+  .doc-controls__wrapper { height: auto; min-height: var(--doc-controls-height); flex-wrap: wrap; row-gap: 0; }
+  .doc-controls__content { min-width: 0; flex: 1 1 320px; }
+  .doc-controls__controls-wrapper { flex: 1 1 auto; min-width: 0; height: auto; align-items: flex-end; padding-block: 8px; }
+  .doc-controls__controls {
+    flex: 1;
+    min-width: 0;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    overflow: visible;
+    padding-inline-start: 0;
+    &::after { display: none; }
+    > .btn--withPopup { margin-block: 0; }
+    .cms-preview-buttons .btn { white-space: normal; }
+  }
 }
 
 .collection-edit:has(.cms-preview-action) {
@@ -252,6 +271,10 @@ body:has(.cms-tenant-nav) {
 }
 
 @media (max-width: 1024px) {
+  .doc-controls:has(.cms-preview-action) {
+    .doc-controls__content { flex: 0 1 auto; }
+    .doc-controls__controls-wrapper { padding-inline: var(--gutter-h); }
+  }
   .collection-edit--is-live-previewing:has(.cms-preview-toggle) {
     > .collection-edit__form > .collection-edit__main-wrapper > .collection-edit__main { display: none; }
     .live-preview-window { width: 100%; }
