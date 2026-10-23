@@ -111,7 +111,8 @@ export const getPreviewUrl: Exclude<LivePreviewConfig['url'], string | null | un
     'partner-categories': '/about/partnerships',
     'faq-items': '/blog/faq',
     publications: '/blog/publications',
-    videos: data?.category === 'dentist-talk' ? '/blog/dentist-talks' : null,
+    videos: data?.category === 'dentist-talk' ? '/blog/dentist-talks'
+      : data?.category === 'testimonial' ? '/about/testimonials' : null,
     'career-positions': slug ? `/about/careers/${slug}` : '/about/careers',
   }
   const collection = collectionConfig?.slug ?? ''

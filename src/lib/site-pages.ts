@@ -16,25 +16,25 @@ export const SITE_PAGES: SitePage[] = [
     page: "Home page",
     path: "/en",
     parts: [
-      { collection: "homepage", controls: "The entire top hero: every carousel slide (image picked from Media Library or an image URL, crop/anchor position, eyebrow, headline, description), the small rounded…" },
+      { collection: "homepage", controls: "Hero slide images, anchor position, preserve-full-image option, trust pill and main CTA buttons. Slide captions (eyebrow, headline, subtitle, description and per-slide CTA) appear only when Show captions is enabled for the selected language; off by default. Slide membership, images, order and CTA URLs are shared by all languages. Legacy imageSize is retained but unused." },
       { collection: "brand-logos", controls: "The scrolling logo marquee band directly under the hero (partner/manufacturer logos). Each row = one logo; `order` sets marquee sequence." },
       { collection: "site-stats", controls: "The four count-up numbers band under the marquee. ONLY four keys are read here: years_experience, specialist_dentists, branches_count, patients_treated (see…" },
       { collection: "feature-cards", controls: "The large image \"highlight\" cards below the 6 service icons (title, description, image, link, CTA label)." },
-      { collection: "testimonials", controls: "The patient-quote carousel at the bottom of the home page (author name, title, photo, quote, star rating)." },
+      { collection: "testimonials", controls: "The homepage patient-quote carousel uses author name, title, photo, quote and star rating. It shows explicitly featured quotes when any exist; otherwise it shows all published quotes. The full Patient Testimonials quote wall is not filtered by isFeatured." },
     ],
   },
   {
     page: "Services page",
     path: "/en/services",
     parts: [
-      { collection: "services", controls: "Every card in the 13-service grid: name, slug, short description, icon name, card image, feature bullets, category, `isFeatured`, `order` (grid sequence) and…" },
+      { collection: "services", controls: "Visible overview cards use name, slug, description, image, overview-card tags and shared order. Hidden subservices such as implant-bridges and all-on-4 have no overview card, so their tags are not displayed. Icons, subservice links and navigation hierarchy remain in website code; isFeatured is unsupported and read-only." },
     ],
   },
   {
     page: "Service detail page (one per service, e.g. Dental Implants)",
     path: "/en/services/[slug]",
     parts: [
-      { collection: "services", controls: "SAME rows as the /services grid — one row = one detail page. The `eyebrow` field is the small uppercase label above the hero title, `heroDescription` is the long…" },
+      { collection: "services", controls: "Service rows also supply detail pages, including subservices hidden from the overview grid. Name, eyebrow, heroDescription (or description), image and localized Page sections control the detail content; legacy content JSON is used only without Page sections. Overview-card tags do not appear here. Shared slug identifies the URL, not the website navigation hierarchy." },
     ],
   },
   {
@@ -71,8 +71,8 @@ export const SITE_PAGES: SitePage[] = [
     page: "Implants price comparison page",
     path: "/en/pricing/implants-comparison",
     parts: [
-      { collection: "pricing-comparison-sets", controls: "The set whose slug is implants-comparison identifies this table. This page consumes its rows, not the set's exchange rate or source note; missing rows can still render bundled prices." },
-      { collection: "pricing-comparison-rows", controls: "Table rows belonging to the implants-comparison set (treatment, Roomchang price, Australia price, Singapore price, ADA code). Preview follows the row's set relationship, not the main price list." },
+      { collection: "pricing-comparison-sets", controls: "The set whose shared slug is implants-comparison identifies this table and supplies its own exchange rate, localized source note and shared last-updated date. In Payload mode, an empty CMS row list stays empty; bundled price rows are not restored." },
+      { collection: "pricing-comparison-rows", controls: "Table rows belonging to the implants-comparison set (treatment, Roomchang price, Australia price and ADA code). Preview follows the row's set relationship, not the main price list." },
     ],
   },
   {
@@ -88,7 +88,7 @@ export const SITE_PAGES: SitePage[] = [
     page: "Full price comparison page",
     path: "/en/international/price-comparison",
     parts: [
-      { collection: "pricing-comparison-sets", controls: "The row whose `slug` is exactly `full-comparison` — exchange rate + source note." },
+      { collection: "pricing-comparison-sets", controls: "The row whose shared slug is exactly full-comparison supplies its own exchange rate, localized source note and shared last-updated date. Each comparison page reads metadata from its own set." },
       { collection: "pricing-comparison-rows", controls: "Every row of the big country-by-country comparison table, filtered to the `full-comparison` set." },
     ],
   },
@@ -122,7 +122,7 @@ export const SITE_PAGES: SitePage[] = [
     page: "Branch detail page",
     path: "/en/about/branches/[slug]",
     parts: [
-      { collection: "branches", controls: "The selected branch's details use getBranchDetails() in Payload mode, with bundled field fallbacks. Known source identities retain their canonical branch URLs even when the imported CMS slug differs. Other branches use their slug or source ID; unsaved records without either open Contact." },
+      { collection: "branches", controls: "The selected branch's details and photos gallery use getBranchDetails() in Payload mode, with bundled field fallbacks. Images and gallery photos are shared by all languages. Known source identities retain their canonical branch URLs even when the imported CMS slug differs. Other branches use their slug or source ID; unsaved records without either open Contact." },
     ],
   },
   {
@@ -165,7 +165,8 @@ export const SITE_PAGES: SitePage[] = [
     page: "Patient testimonials page",
     path: "/en/about/testimonials",
     parts: [
-      { collection: "testimonials", controls: "The full wall of testimonial cards on this page — same rows as the home-page carousel." },
+      { collection: "testimonials", controls: "The full wall of all published text quotes, including author name, title and photo. Star ratings appear on the homepage carousel only. The isFeatured flag filters only the homepage carousel when featured quotes exist, not this wall." },
+      { collection: "videos", controls: "Published videos whose category is exactly testimonial, with supported YouTube URLs, titles, descriptions and treatment labels. Optional custom posters provide video controls; without a poster, the YouTube iframe is displayed directly. Shared order sets their sequence; other video categories do not appear here." },
     ],
   },
   {
@@ -201,18 +202,18 @@ export const SITE_PAGES: SitePage[] = [
     page: "Publications page",
     path: "/en/blog/publications",
     parts: [
-      { collection: "publications", controls: "The publication list uses getPublications() in Payload mode: title, authors, journal, year and DOI/link. Page headings and supporting copy remain in website translations; non-Payload deployments retain the bundled list." },
+      { collection: "publications", controls: "The publication list uses getPublications() in Payload mode: localized display title (or shared title), authors, journal, year, DOI/link and optional localized abstract. Years are newest first; shared order sorts within each year. Page headings and supporting copy remain in website translations; non-Payload deployments retain the bundled list." },
     ],
   },
   {
     page: "Careers listing and detail pages",
     path: "/en/about/careers",
-    parts: [{ collection: "career-positions", controls: "Published positions, full descriptions, ordered requirements and benefits in the selected language. Unpublished or deleted positions do not fall back to bundled jobs in CMS mode." }],
+    parts: [{ collection: "career-positions", controls: "Published positions, employment type, location, full descriptions, ordered requirements and benefits in the selected language. Unpublished or deleted positions do not fall back to bundled jobs in CMS mode." }],
   },
   {
     page: "Dentist Talks page",
     path: "/en/blog/dentist-talks",
-    parts: [{ collection: "videos", controls: "Published dentist-talk videos with valid YouTube URLs, titles, descriptions, topics and presenters. Other video categories are not connected. The playlist link and page introduction remain in website code." }],
+    parts: [{ collection: "videos", controls: "Published videos whose category is exactly dentist-talk, with supported YouTube URLs, titles, descriptions, topics, presenters and treatment labels. Optional custom posters provide video controls; without a poster, the YouTube iframe is displayed directly. Shared order sets their sequence. Testimonial videos appear on Patient Testimonials instead; unknown categories have no connected page or preview. The playlist link and page introduction remain in website code." }],
   },
 ]
 
@@ -225,7 +226,6 @@ export const UNMODELED_PAGES: { path: string; whatsThere: string; source: string
   { path: "/en/about/director-message", whatsThere: "Whole page — the director's portrait and full letter.", source: "messages/*.json, `directorMessage` namespace + a hardcoded <Image> path. No CMS collection at all." },
   { path: "/en/about/facilities — general copy and facility photo blocks", whatsThere: "General facility copy and facility photo sections, excluding the CMS-fed stat strip and branch location cards.", source: "messages/*.json (`facilities` namespace) + page code. Branch cards use getBranchDetails() in Payload mode with bundled field fallbacks." },
   { path: "/en/blog (blog hub)", whatsThere: "The three-card hub linking to FAQ, Dentist Talks and Publications.", source: "messages/*.json, `blogIndex` namespace. No CMS collection." },
-  { path: "/en/about/testimonials — video cards", whatsThere: "Bundled video testimonials are separate from the CMS text testimonials.", source: "VIDEO_TESTIMONIALS in the website page and translation files. Non-dentist-talk CMS videos have no page consumer yet." },
   { path: "/en/pricing/warranty", whatsThere: "The whole warranty page — coverage table, covered/not-covered lists, validity conditions, post-warranty terms, limitation of liability, contact block.", source: "Supabase table `warranty_terms` via getWarrantyTerms() in src/lib/data.ts (English-only, no i18n overlay). The" },
   { path: "/en/privacy-policy, /en/terms-of-service, /en/cookie-policy, /en/disclaimer, /en/booking-cancellation-policy", whatsThere: "All five legal pages, in full.", source: "messages/en.json | km.json | zh.json namespaces `privacyPolicy`, `termsOfService`, `cookiePolicy`, `disclaimer" },
   { path: "Site header / main navigation (every page)", whatsThere: "The whole nav tree including the Services dropdown's 13 links and the Technology dropdown's links, the logo, and the language switcher.", source: "Hardcoded NAV_ITEMS array in src/components/site/site-header.tsx + labels from the `nav`/`header` namespaces i" },

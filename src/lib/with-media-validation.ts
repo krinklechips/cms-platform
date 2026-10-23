@@ -4,13 +4,14 @@ import { assertMediaValue, canUseMediaTenant, mediaID, resolveMediaTenant, sameM
 const urlFields: Record<string, readonly string[]> = {
   homepage: ['slides.imageUrl'], doctors: ['photoUrl'], services: ['imageUrl'], technology: ['imageUrl'],
   testimonials: ['authorPhotoUrl'], branches: ['imageUrl'], 'feature-cards': ['imageUrl'], 'brand-logos': ['logoUrl'],
-  partners: ['logoUrl'], 'timeline-events': ['imageUrl'], 'clinical-cases': ['imageUrl'],
+  partners: ['logoUrl'], 'timeline-events': ['imageUrl'], 'clinical-cases': ['imageUrl'], videos: ['thumbnail'],
   'news-articles': ['imageUrl'], 'community-articles': ['imageUrl', 'images.url'], pages: ['seoImage'],
 }
 const sectionCollections = new Set(['pages', 'services', 'technology'])
 
 function targetKind(slug: string, path: string, field: Field): MediaValueKind | null {
   if (slug === 'clinical-cases' && path === 'images' && field.type === 'json') return 'clinical'
+  if (slug === 'branches' && path === 'photos' && field.type === 'json') return 'branch'
   if (urlFields[slug]?.includes(path) && field.type === 'text') return 'url'
   if (slug === 'homepage' && path === 'slides.image') {
     return field.type === 'upload' && field.relationTo === 'media' ? 'reference' : null

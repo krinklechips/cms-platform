@@ -30,22 +30,23 @@ export const PricingComparisonSets: CollectionConfig = {
       type: 'text',
       required: true,
       index: true,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Use full-comparison for International Price Comparison or implants-comparison for Dental Implants Price Comparison. Rows connect through their Set relationship; other slugs have no website preview.' },
     },
     {
       name: 'exchangeRate',
       type: 'number',
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Displayed on this set\'s comparison page; full-comparison and implants-comparison each use their own exchange rate.' },
     },
     {
       name: 'sourceNote',
       type: 'text',
       localized: true,
+      admin: { description: 'Source note in the selected language, displayed on both full-comparison and implants-comparison pages.' },
     },
     {
       name: 'lastUpdated',
       type: 'date',
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Last-updated date displayed on both full-comparison and implants-comparison pages.' },
     },
   ],
 }

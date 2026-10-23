@@ -33,6 +33,7 @@ export const Publications: CollectionConfig = {
       name: 'displayTitle',
       type: 'text',
       localized: true,
+      admin: { description: 'Display title in the selected language; the shared publication title is used when this is empty.' },
     },
     {
       name: 'authors',
@@ -45,7 +46,7 @@ export const Publications: CollectionConfig = {
     {
       name: 'year',
       type: 'number',
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Groups publications by year, newest year first.' },
     },
     {
       name: 'doi',
@@ -59,12 +60,13 @@ export const Publications: CollectionConfig = {
       name: 'abstract',
       type: 'textarea',
       localized: true,
+      admin: { description: 'Optional abstract shown with this publication in the selected language.' },
     },
     {
       name: 'order',
       type: 'number',
       defaultValue: 0,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Sorts publications within the same year; years remain newest first.' },
     },
     {
       name: 'published',

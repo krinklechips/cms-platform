@@ -25,7 +25,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
     singular: "Home Hero",
     plural: "Home Hero",
     description:
-      "The big rotating banner at the very top of the home page — its slides, the small badge on the left, and the buttons over the image.",
+      "The home page banner: shared slide images and order, the trust pill and main buttons. Slide captions and per-slide buttons are optional, off by default, and enabled per selected language.",
   },
   'brand-logos': {
     singular: "Logo Strip Item",
@@ -49,13 +49,13 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
     singular: "Patient Testimonial",
     plural: "Patient Testimonials",
     description:
-      "The patient quotes in the carousel at the foot of the home page and the full list on the Patient Testimonials page.",
+      "Patient quotes and author photos, with star ratings on the homepage carousel. The homepage shows featured quotes when any exist, otherwise all published quotes; Patient Testimonials always includes all published quotes.",
   },
   'services': {
     singular: "Service",
     plural: "Services",
     description:
-      "Every treatment in the Services menu — its card on the Services page and the whole of its own detail page.",
+      "Service detail pages and visible Services overview cards. Hidden subservices have no overview card; the navigation hierarchy stays in website code.",
   },
   'doctors': {
     singular: "Doctor",
@@ -85,7 +85,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
     singular: "Comparison Table",
     plural: "Comparison Tables",
     description:
-      "The two price-comparison tables as a whole — the exchange rate and the source note printed under the International Price Comparison and Dental Implants Price Comparison pages.",
+      "Identifies each comparison table through its shared slug and row relationships. Both comparison pages use their own set's exchange rate, localized source note and shared last-updated date.",
   },
   'pricing-comparison-rows': {
     singular: "Comparison Row",
@@ -133,13 +133,13 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
     singular: "Publication",
     plural: "Publications & Research",
     description:
-      "The peer-reviewed papers listed on the Publication & Research page under the Education Blog.",
+      "Papers and optional localized abstracts on Publication & Research. Years are newest first; shared order sorts papers within each year.",
   },
   'videos': {
     singular: "Video",
-    plural: "Dentist Talks Videos",
+    plural: "Videos",
     description:
-      "The video cards on the Dentist Talks page — title, thumbnail and the YouTube link each card opens.",
+      "Video cards on Dentist Talks (category dentist-talk) and Patient Testimonials (category testimonial). Other categories have no connected website page or preview.",
   },
   'faq-items': {
     singular: "FAQ",
@@ -163,13 +163,13 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
     singular: "Job Opening",
     plural: "Job Openings",
     description:
-      "The vacancies listed on About → Employment Opportunities, plus the requirements and benefits shown on each opening's own page.",
+      "Vacancies on About → Employment Opportunities, including employment type, location, descriptions, requirements and benefits on each opening's page.",
   },
   'branches': {
     singular: "Branch",
     plural: "Branches",
     description:
-      "The branch panels on the Contact page — address, phone, opening hours, photo and map link for each location.",
+      "Branch details on Contact, facility location cards and branch detail pages, including their shared photo galleries. General Facilities photo sections stay in website code.",
   },
   'clinical-cases': {
     singular: "Clinical Case",

@@ -44,6 +44,7 @@ const routes: [string, Record<string, unknown>, string][] = [
   ['faq-items', {}, '/blog/faq'],
   ['publications', {}, '/blog/publications'],
   ['videos', { category: 'dentist-talk' }, '/blog/dentist-talks'],
+  ['videos', { category: 'testimonial' }, '/about/testimonials'],
   ['pricing-comparison-sets', { slug: 'implants-comparison' }, '/pricing/implants-comparison'],
   ['pricing-comparison-sets', { slug: 'full-comparison' }, '/international/price-comparison'],
   ['pricing-comparison-rows', { set: { id: 12, slug: 'implants-comparison' } }, '/pricing/implants-comparison'],
@@ -78,8 +79,8 @@ test('all and only website-content editors share the default-open preview and pu
   }
 })
 
-test('videos without a connected page consumer do not offer a misleading Dentist Talks preview', async () => {
-  for (const category of [undefined, '', 'testimonial', 'other']) {
+test('videos without a connected page consumer do not offer a misleading preview', async () => {
+  for (const category of [undefined, '', 'other', 'constructor', '__proto__']) {
     assert.equal(await preview('videos', { category }), null)
   }
 })

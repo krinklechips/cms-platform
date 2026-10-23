@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from 'node:util'
 import type { PayloadRequest } from 'payload'
 
-export type MediaValueKind = 'reference' | 'url' | 'clinical'
+export type MediaValueKind = 'reference' | 'url' | 'clinical' | 'branch'
 export type MediaTenant = { id: number | string; slug: string }
 
 export function mediaID(value: unknown): number | string | null {
@@ -97,6 +97,19 @@ export async function assertMediaValue(kind: MediaValueKind, value: unknown, ten
       throw new Error('Select an image belonging to the document tenant.')
     }
     if (!isWebsiteImageURL(media.url, tenant)) throw new Error('The selected image URL is not compatible with this tenant website.')
+    return
+  }
+  if (kind === 'branch') {
+    if (!Array.isArray(value)) throw new Error('Branch photos must be a JSON array of image URLs or { src, alt?, caption? } objects.')
+    for (const photo of value) {
+      const object = photo && typeof photo === 'object' && !Array.isArray(photo) ? photo as Record<string, unknown> : null
+      const src = typeof photo === 'string' ? photo : object?.src ?? object?.url
+      if (typeof src !== 'string' || (object && (('alt' in object && typeof object.alt !== 'string') ||
+          ('caption' in object && typeof object.caption !== 'string')))) {
+        throw new Error('Each branch photo must have an image URL and optional text alt and caption.')
+      }
+      if (!isWebsiteImageURL(src, tenant)) throw new Error('Branch photo src must be a compatible website image URL.')
+    }
     return
   }
   if (kind === 'clinical') {

@@ -199,20 +199,24 @@ export interface Homepage {
    */
   heroPill?: string | null;
   /**
-   * The action buttons over the hero (first one is the highlighted primary).
+   * Optional and off by default. Enables slide captions and per-slide CTA buttons only in the selected language; the trust pill and main CTA buttons are separate.
+   */
+  showCaptions?: boolean | null;
+  /**
+   * The main action buttons over the hero (first one is the highlighted primary). Labels use the selected language; button membership, order and URLs are shared by all languages. Independent of Show captions.
    */
   heroButtons?:
     | {
         label?: string | null;
         /**
-         * Site-relative (e.g. /contact) or full URL.
+         * Shared by all languages. Site-relative (e.g. /contact) or full URL.
          */
         url: string;
         id?: string | null;
       }[]
     | null;
   /**
-   * Drag to reorder — the carousel plays top to bottom. Add or remove freely.
+   * Drag to reorder - the carousel plays top to bottom. Slide membership, images, order and CTA URLs are shared by all languages; caption text uses the selected language and appears only with Show captions enabled.
    */
   slides?:
     | {
@@ -229,18 +233,36 @@ export interface Homepage {
          */
         imagePosition?: string | null;
         /**
-         * CSS background-size, e.g. “cover” or “100% auto”.
+         * Not used by the current website. Existing values are retained; use Image position and Preserve full image for the supported image controls.
          */
         imageSize?: string | null;
         /**
          * Show the whole image without cropping (panoramas).
          */
         preserveFullImage?: boolean | null;
+        /**
+         * Caption eyebrow in the selected language. Visible only when Show captions is enabled for that language.
+         */
         eyebrow?: string | null;
+        /**
+         * Caption headline in the selected language. Visible only when Show captions is enabled for that language.
+         */
         title?: string | null;
+        /**
+         * Caption subtitle in the selected language. Visible only when Show captions is enabled for that language.
+         */
         subtitle?: string | null;
+        /**
+         * Caption paragraph in the selected language. Visible only when Show captions is enabled for that language.
+         */
         description?: string | null;
+        /**
+         * Per-slide CTA label in the selected language. Requires a supported CTA URL and Show captions enabled for that language.
+         */
         ctaText?: string | null;
+        /**
+         * Shared by all languages. Per-slide destination; shown only with a CTA label and Show captions enabled in the selected language. Use a supported site-relative path or full URL.
+         */
         ctaUrl?: string | null;
         id?: string | null;
       }[]
@@ -446,7 +468,7 @@ export interface FeatureCard {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * The patient quotes in the carousel at the foot of the home page and the full list on the Patient Testimonials page.
+ * Patient quotes, author photos and star ratings. The homepage shows featured quotes when any exist, otherwise all published quotes; Patient Testimonials always includes all published quotes.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "testimonials".
@@ -461,12 +483,18 @@ export interface Testimonial {
   authorName: string;
   authorTitle?: string | null;
   /**
-   * Author photo URL (carried from the live site).
+   * Shared by all languages. Author photo for the homepage quote carousel and Patient Testimonials quote cards; video cards are edited in Videos.
    */
   authorPhotoUrl?: string | null;
   quote?: string | null;
   rating?: number | null;
+  /**
+   * Shared by all languages. The homepage shows explicitly featured quotes when any exist; otherwise it shows all published quotes. The full Patient Testimonials quote wall always includes all published quotes.
+   */
   isFeatured?: boolean | null;
+  /**
+   * Shared by all languages. Sets quote sequence; video testimonial order is managed separately in Videos.
+   */
   order?: number | null;
   published?: boolean | null;
   _editorialRevision?: string | null;
@@ -1259,7 +1287,7 @@ export interface Page {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Every treatment in the Services menu — its card on the Services page and the whole of its own detail page.
+ * Service detail pages and visible Services overview cards. Hidden subservices have no overview card; the navigation hierarchy stays in website code.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "services".
@@ -2033,6 +2061,9 @@ export interface Service {
    */
   sourceId?: string | null;
   name: string;
+  /**
+   * Shared by all languages. Identifies the detail-page URL; the website navigation hierarchy and overview subservice exclusions remain defined in website code.
+   */
   slug: string;
   description?: string | null;
   /**
@@ -2048,9 +2079,12 @@ export interface Service {
    * Not shown on the website — kept for the data sync.
    */
   icon?: string | null;
+  /**
+   * Unsupported by the current website: this flag does not feature or reorder service cards. Existing values are retained.
+   */
   isFeatured?: boolean | null;
   /**
-   * The small pink tags on this service’s card on the "Services" overview page (/services) — a quick "what’s included" summary. NOT shown on this detail page, so the Live Preview won’t change when you edit these.
+   * The small tags on this service's card on the Services overview (/services), not on its detail page. Hidden subservices such as implant-bridges and all-on-4 have no overview card, so their tags are not displayed. Detail-page Live Preview does not show tag edits.
    */
   features?:
     | {
@@ -2059,9 +2093,12 @@ export interface Service {
       }[]
     | null;
   /**
-   * R2 image URL (carried from the live site).
+   * Shared by all languages. Service image URL; the website can fall back to a bundled image when empty.
    */
   imageUrl?: string | null;
+  /**
+   * Shared by all languages. Sets the sequence of visible overview cards; does not change the website navigation hierarchy or make hidden subservices visible.
+   */
   order?: number | null;
   published?: boolean | null;
   _editorialRevision?: string | null;
@@ -2971,7 +3008,7 @@ export interface PricingItem {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * The two price-comparison tables as a whole — the exchange rate and the source note printed under the International Price Comparison and Dental Implants Price Comparison pages.
+ * Identifies each comparison table through its shared slug and row relationships. Both comparison pages use their own set's exchange rate, localized source note and shared last-updated date.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pricing-comparison-sets".
@@ -2983,9 +3020,21 @@ export interface PricingComparisonSet {
    * Supabase pricing_comparison_sets.id — used by the sync for idempotent upserts.
    */
   sourceId?: string | null;
+  /**
+   * Shared by all languages. Use full-comparison for International Price Comparison or implants-comparison for Dental Implants Price Comparison. Rows connect through their Set relationship; other slugs have no website preview.
+   */
   slug: string;
+  /**
+   * Shared by all languages. Displayed on this set's comparison page; full-comparison and implants-comparison each use their own exchange rate.
+   */
   exchangeRate?: number | null;
+  /**
+   * Source note in the selected language, displayed on both full-comparison and implants-comparison pages.
+   */
   sourceNote?: string | null;
+  /**
+   * Shared by all languages. Last-updated date displayed on both full-comparison and implants-comparison pages.
+   */
   lastUpdated?: string | null;
   _editorialRevision?: string | null;
   updatedAt: string;
@@ -3113,7 +3162,7 @@ export interface TimelineEvent {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * The branch panels on the Contact page — address, phone, opening hours, photo and map link for each location.
+ * Branch details on Contact, facility location cards and branch detail pages, including their shared photo galleries. General Facilities photo sections stay in website code.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "branches".
@@ -3127,7 +3176,7 @@ export interface Branch {
   sourceId?: string | null;
   name: string;
   /**
-   * Optional — the live branches table has no slugs; the sync derives one from the name.
+   * Shared by all languages. Optional detail-page URL key. Known imported branches keep their canonical website routes even if this derived slug differs; other branches use the slug or source ID.
    */
   slug?: string | null;
   shortName?: string | null;
@@ -3141,14 +3190,14 @@ export interface Branch {
   email?: string | null;
   hours?: string | null;
   /**
-   * R2 image URL (carried from the live site).
+   * Shared by all languages. Main branch image; the branch photo gallery is managed separately in Photos.
    */
   imageUrl?: string | null;
   mapQuery?: string | null;
   mapUrl?: string | null;
   mapPlaceUrl?: string | null;
   /**
-   * Branch photos JSON — carried from the live site losslessly.
+   * Shared by all languages. Photo gallery on this branch's detail page. Retains the existing branch photos JSON shape; this does not edit the general Facilities photo sections.
    */
   photos?:
     | {
@@ -3159,6 +3208,9 @@ export interface Branch {
     | number
     | boolean
     | null;
+  /**
+   * Shared by all languages. Sets branch list order, not the website navigation hierarchy.
+   */
   order?: number | null;
   published?: boolean | null;
   _editorialRevision?: string | null;
@@ -3361,7 +3413,7 @@ export interface CommunityArticle {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * The peer-reviewed papers listed on the Publication & Research page under the Education Blog.
+ * Papers and optional localized abstracts on Publication & Research. Years are newest first; shared order sorts papers within each year.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "publications".
@@ -3374,13 +3426,25 @@ export interface Publication {
    */
   sourceId?: string | null;
   title: string;
+  /**
+   * Display title in the selected language; the shared publication title is used when this is empty.
+   */
   displayTitle?: string | null;
   authors?: string | null;
   journal?: string | null;
+  /**
+   * Shared by all languages. Groups publications by year, newest year first.
+   */
   year?: number | null;
   doi?: string | null;
   url?: string | null;
+  /**
+   * Optional abstract shown with this publication in the selected language.
+   */
   abstract?: string | null;
+  /**
+   * Shared by all languages. Sorts publications within the same year; years remain newest first.
+   */
   order?: number | null;
   published?: boolean | null;
   _editorialRevision?: string | null;
@@ -3389,7 +3453,7 @@ export interface Publication {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * The video cards on the Dentist Talks page — title, thumbnail and the YouTube link each card opens.
+ * Video cards on Dentist Talks (category dentist-talk) and Patient Testimonials (category testimonial). Other categories have no connected website page or preview.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "videos".
@@ -3402,13 +3466,34 @@ export interface Video {
    */
   sourceId?: string | null;
   title: string;
+  /**
+   * Shared by all languages. Supported YouTube video URL; videos without a valid YouTube destination are not displayed.
+   */
   url: string;
+  /**
+   * Shared by all languages. Optional custom video poster. When empty, the website displays the YouTube iframe directly, without a custom poster.
+   */
   thumbnail?: string | null;
   description?: string | null;
+  /**
+   * Shared by all languages. Use exactly dentist-talk for Dentist Talks or testimonial for Patient Testimonials. Other values have no connected website page or preview.
+   */
   category?: string | null;
+  /**
+   * Shared presenter name for Dentist Talks videos; this is text, not a Doctor relationship.
+   */
   doctor?: string | null;
+  /**
+   * Topic label for Dentist Talks in the selected language.
+   */
   topic?: string | null;
+  /**
+   * Treatment label in the selected language, displayed on both Dentist Talks and Patient Testimonials videos.
+   */
   treatment?: string | null;
+  /**
+   * Shared by all languages. Sets the video sequence within the selected category's website page.
+   */
   order?: number | null;
   published?: boolean | null;
   _editorialRevision?: string | null;
@@ -3417,7 +3502,7 @@ export interface Video {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * The vacancies listed on About → Employment Opportunities, plus the requirements and benefits shown on each opening's own page.
+ * Vacancies on About → Employment Opportunities, including employment type, location, descriptions, requirements and benefits on each opening's page.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "career-positions".
@@ -3854,6 +3939,7 @@ export interface PayloadMigration {
 export interface HomepageSelect<T extends boolean = true> {
   tenant?: T;
   heroPill?: T;
+  showCaptions?: T;
   heroButtons?:
     | T
     | {

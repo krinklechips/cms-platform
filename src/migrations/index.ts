@@ -20,6 +20,7 @@ import * as migration_20261021_120000_payload_391_schema from './20261021_120000
 import * as migration_20261021_180000_editorial_audit from './20261021_180000_editorial_audit';
 import * as migration_20261022_040000_media_directories from './20261022_040000_media_directories';
 import * as migration_20261022_070000_page_addresses from './20261022_070000_page_addresses';
+import * as migration_20261023_040000_homepage_captions from './20261023_040000_homepage_captions';
 
 export const migrations = [
   {
@@ -131,5 +132,10 @@ export const migrations = [
     up: migration_20261022_070000_page_addresses.up,
     down: migration_20261022_070000_page_addresses.down,
     name: '20261022_070000_page_addresses'
+  },
+  {
+    up: migration_20261023_040000_homepage_captions.up,
+    down: migration_20261023_040000_homepage_captions.down,
+    name: '20261023_040000_homepage_captions'
   },
 ];

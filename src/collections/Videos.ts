@@ -35,12 +35,13 @@ export const Videos: CollectionConfig = {
       name: 'url',
       type: 'text',
       required: true,
+      admin: { description: 'Shared by all languages. Supported YouTube video URL; videos without a valid YouTube destination are not displayed.' },
     },
     {
       name: 'thumbnail',
       label: 'Thumbnail (All languages)',
       type: 'text',
-      admin: { components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' } },
+      admin: { components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' }, description: 'Shared by all languages. Optional custom video poster. When empty, the website displays the YouTube iframe directly, without a custom poster.' },
     },
     {
       name: 'description',
@@ -50,30 +51,30 @@ export const Videos: CollectionConfig = {
     {
       name: 'category',
       type: 'text',
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Use exactly dentist-talk for Dentist Talks or testimonial for Patient Testimonials. Other values have no connected website page or preview.' },
     },
     {
       name: 'doctor',
       type: 'text',
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared presenter name for Dentist Talks videos; this is text, not a Doctor relationship.' },
     },
     {
       name: 'topic',
       type: 'text',
       localized: true,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Topic label for Dentist Talks in the selected language.' },
     },
     {
       name: 'treatment',
       type: 'text',
       localized: true,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Treatment label in the selected language, displayed on both Dentist Talks and Patient Testimonials videos.' },
     },
     {
       name: 'order',
       type: 'number',
       defaultValue: 0,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Sets the video sequence within the selected category\'s website page.' },
     },
     {
       name: 'published',

@@ -83,7 +83,7 @@ export const Services: CollectionConfig = {
       type: 'text',
       required: true,
       index: true,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Identifies the detail-page URL; the website navigation hierarchy and overview subservice exclusions remain defined in website code.' },
     },
     {
       name: 'description',
@@ -125,7 +125,7 @@ export const Services: CollectionConfig = {
       name: 'isFeatured',
       type: 'checkbox',
       defaultValue: false,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', readOnly: true, description: 'Unsupported by the current website: this flag does not feature or reorder service cards. Existing values are retained.' },
     },
     {
       name: 'features',
@@ -135,7 +135,7 @@ export const Services: CollectionConfig = {
       admin: {
         initCollapsed: true,
         description:
-          'The small pink tags on this service’s card on the "Services" overview page (/services) — a quick "what’s included" summary. NOT shown on this detail page, so the Live Preview won’t change when you edit these.',
+          'The small tags on this service\'s card on the Services overview (/services), not on its detail page. Hidden subservices such as implant-bridges and all-on-4 have no overview card, so their tags are not displayed. Detail-page Live Preview does not show tag edits.',
       },
       fields: [
         {
@@ -151,14 +151,14 @@ export const Services: CollectionConfig = {
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
-        description: 'R2 image URL (carried from the live site).',
+        description: 'Shared by all languages. Service image URL; the website can fall back to a bundled image when empty.',
       },
     },
     {
       name: 'order',
       type: 'number',
       defaultValue: 0,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Sets the sequence of visible overview cards; does not change the website navigation hierarchy or make hidden subservices visible.' },
     },
     {
       name: 'published',

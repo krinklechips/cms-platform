@@ -36,7 +36,7 @@ export const Branches: CollectionConfig = {
       index: true,
       admin: {
         position: 'sidebar',
-        description: 'Optional — the live branches table has no slugs; the sync derives one from the name.',
+        description: 'Shared by all languages. Optional detail-page URL key. Known imported branches keep their canonical website routes even if this derived slug differs; other branches use the slug or source ID.',
       },
     },
     {
@@ -95,7 +95,7 @@ export const Branches: CollectionConfig = {
       type: 'text',
       admin: {
         components: { afterInput: ['/components/ImageUrlPreview#ImageUrlPreview'], Cell: '/components/ImageCell#ImageCell' },
-        description: 'R2 image URL (carried from the live site).',
+        description: 'Shared by all languages. Main branch image; the branch photo gallery is managed separately in Photos.',
       },
     },
     {
@@ -115,14 +115,14 @@ export const Branches: CollectionConfig = {
       label: 'Photos (All languages)',
       type: 'json',
       admin: {
-        description: 'Branch photos JSON — carried from the live site losslessly.',
+        description: 'Shared by all languages. Photo gallery on this branch\'s detail page. Retains the existing branch photos JSON shape; this does not edit the general Facilities photo sections.',
       },
     },
     {
       name: 'order',
       type: 'number',
       defaultValue: 0,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', description: 'Shared by all languages. Sets branch list order, not the website navigation hierarchy.' },
     },
     {
       name: 'published',
