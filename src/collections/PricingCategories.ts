@@ -34,7 +34,7 @@ export const PricingCategories: CollectionConfig = {
     {
       name: 'icon',
       type: 'text',
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', readOnly: true, description: 'Legacy metadata; not used by the current website. Section icons are selected by the website layout.' },
     },
     {
       name: 'order',

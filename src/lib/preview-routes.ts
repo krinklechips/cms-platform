@@ -1,5 +1,5 @@
 import type { LivePreviewConfig, PayloadRequest } from 'payload'
-import { getStatPages } from './stat-pages'
+import { getStatPreviewPath } from './stat-pages'
 
 export const PREVIEW_COLLECTIONS = [
   'pages',
@@ -84,6 +84,25 @@ async function comparisonRowPath(set: unknown, req: PayloadRequest | undefined, 
   }
 }
 
+function statPreviewPath(data: Record<string, unknown>, req: PayloadRequest | undefined) {
+  let page = req?.query?.statPage
+  if (typeof page !== 'string') {
+    try {
+      const referrer = req?.headers?.get('referer')
+      const url = referrer ? new URL(referrer) : null
+      const base = `${req?.payload?.config?.routes?.admin ?? '/admin'}/collections/site-stats`
+      const record = url?.pathname.startsWith(`${base}/`) ? url.pathname.slice(base.length + 1) : ''
+      const matchesRecord = data.id != null ? record === encodeURIComponent(String(data.id)) : Boolean(record && !record.includes('/'))
+      if (url && (url.pathname === base || matchesRecord)) {
+        page = url.searchParams.get('statPage')
+      }
+    } catch {
+      // Server actions without an editor referrer use the statistic's primary page.
+    }
+  }
+  return getStatPreviewPath(typeof data.key === 'string' ? data.key : '', page)
+}
+
 export const getPreviewUrl: Exclude<LivePreviewConfig['url'], string | null | undefined> = async ({ data, locale, collectionConfig, req }) => {
   const loc = locale?.code === 'kh' || locale?.code === 'cn' ? locale.code : 'en'
   const slug = typeof data?.slug === 'string' ? encodeURIComponent(data.slug.trim()) : ''
@@ -93,10 +112,10 @@ export const getPreviewUrl: Exclude<LivePreviewConfig['url'], string | null | un
     doctors: '/team',
     technology: slug ? `/technology/${slug}` : '/technology',
     homepage: '',
-    'site-stats': getStatPages(typeof data?.key === 'string' ? data.key : '')[0]?.path ?? null,
+    'site-stats': statPreviewPath(data ?? {}, req),
     'feature-cards': '',
     'brand-logos': '',
-    testimonials: '',
+    testimonials: '/about/testimonials',
     'pricing-categories': '/pricing',
     'pricing-items': '/pricing',
     'international-treatments': '/international',

@@ -53,7 +53,7 @@ const routes: [string, Record<string, unknown>, string][] = [
   ['homepage', {}, ''],
   ['feature-cards', {}, ''],
   ['brand-logos', {}, ''],
-  ['testimonials', {}, ''],
+  ['testimonials', {}, '/about/testimonials'],
   ['pricing-categories', {}, '/pricing'],
   ['pricing-items', {}, '/pricing'],
   ['international-treatments', {}, '/international'],
@@ -102,6 +102,32 @@ test('missing detail slugs use their listing, while a new custom page has no hom
     ['news-articles', '/about/news'], ['community-articles', '/about/community'],
   ]) assert.equal(await target(collection, {}, 'kh'), `/kh${path}`)
   assert.equal(await preview('pages'), null)
+})
+
+test('statistics preview retains the selected page context in every language', async () => {
+  for (const locale of ['en', 'kh', 'cn']) {
+    for (const [statPage, path] of [['home', ''], ['team', '/team'], ['clinical', '/clinical-results'], ['about', '/about'], ['facilities', '/about/facilities']]) {
+      assert.equal(await target('site-stats', { id: 2, key: 'specialist_dentists' }, locale, { query: { statPage } }), `/${locale}${path}`)
+      const req = { query: {}, headers: new Headers({ referer: `https://cms.example.test/manage/collections/site-stats/2?statPage=${statPage}` }), payload: { config: { routes: { admin: '/manage' } } } }
+      assert.equal(await target('site-stats', { id: 2, key: 'specialist_dentists' }, locale, req), `/${locale}${path}`)
+    }
+  }
+})
+
+test('statistics preview rejects irrelevant, stale or malformed page contexts', async () => {
+  for (const statPage of ['clinical', '__proto__', 'https://foreign.example/', ['team']]) {
+    assert.equal(await target('site-stats', { id: 1, key: 'years_experience' }, 'kh', { query: { statPage } }), '/kh')
+  }
+  for (const referer of ['not a URL', 'https://cms.example.test/admin/account?statPage=team', 'https://cms.example.test/admin/collections/site-stats/99?statPage=team']) {
+    assert.equal(await target('site-stats', { id: 1, key: 'years_experience' }, 'kh', { query: {}, headers: new Headers({ referer }) }), '/kh')
+  }
+})
+
+test('statistic form-state refreshes keep page context when native form data omits the record ID', async () => {
+  const req = { query: {}, headers: new Headers({ referer: 'https://cms.example.test/admin/collections/site-stats/2?statPage=clinical' }) }
+  assert.equal(await target('site-stats', { key: 'specialist_dentists' }, 'kh', req), '/kh/clinical-results')
+  const history = { query: {}, headers: new Headers({ referer: 'https://cms.example.test/admin/collections/site-stats/2/versions/3?statPage=clinical' }) }
+  assert.equal(await target('site-stats', { key: 'specialist_dentists' }, 'kh', history), '/kh')
 })
 
 test('imported branch identities use the website canonical route, not their derived CMS slug or translated name', async () => {

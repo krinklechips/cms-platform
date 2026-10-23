@@ -61,6 +61,7 @@ export const CommunityArticles: CollectionConfig = {
     {
       name: 'href',
       type: 'text',
+      admin: { readOnly: true, description: 'Legacy destination; not used by the current website. Story cards open this article using its shared web address (slug). Existing values are retained.' },
     },
     {
       name: 'date',

@@ -104,7 +104,7 @@ export const captureEditorialAuditBeforeChange: CollectionBeforeChangeHook = asy
 }
 
 /** Bound every value, traversal and final row. Truncation is explicit, never silently presented as a full diff. */
-const changes = (collection: SanitizedCollectionConfig, before: Doc, after: Doc, locale: string, req: PayloadRequest) => {
+const changes = (collection: SanitizedCollectionConfig, before: Doc, after: Doc, locale: string, req: PayloadRequest, ownership = false) => {
   const diffs: EditorialAuditDiff[] = []
   let truncated = false
   let visits = 0
@@ -177,9 +177,7 @@ const changes = (collection: SanitizedCollectionConfig, before: Doc, after: Doc,
       if (field.type === 'tabs') {
         for (const tab of field.tabs) {
           if ('name' in tab && tab.name) {
-            if (omitted(tab.name)) continue
-            const local = inherited || Boolean(tab.localized)
-            visit(tab.fields, asDoc(valueAt(left[tab.name], Boolean(tab.localized) && !inherited)), asDoc(valueAt(right[tab.name], Boolean(tab.localized) && !inherited)), `${prefix}${tab.name}.`, local, depth + 1)
+            visit([{ name: tab.name, type: 'group', localized: tab.localized, label: tab.label, fields: tab.fields }], left, right, prefix, inherited, depth + 1)
           } else visit(tab.fields, left, right, prefix, inherited, depth + 1)
         }
         continue
@@ -191,6 +189,17 @@ const changes = (collection: SanitizedCollectionConfig, before: Doc, after: Doc,
       if (field.type === 'ui' || omitted(field.name) || 'virtual' in field && field.virtual) continue
       const path = `${prefix}${field.name}`
       const local = inherited || ('localized' in field && Boolean(field.localized))
+      if (locale === 'all' && local && !inherited) {
+        const oldLocales = asDoc(left[field.name])
+        const nextLocales = asDoc(right[field.name])
+        // Apply the field schema inside each locale map, including structured fields and references.
+        for (const language of new Set([...Object.keys(oldLocales), ...Object.keys(nextLocales)])) {
+          if (language.length > 200 || visits >= 2000) { truncated = true; break }
+          visit([{ ...field, name: language, localized: false, label: labelOf(field) } as Field],
+            oldLocales, nextLocales, `${path}.`, true, depth + 1)
+        }
+        continue
+      }
       const scope = local ? locale : 'all'
       const a = valueAt(left[field.name], local && !inherited)
       const b = valueAt(right[field.name], local && !inherited)
@@ -236,16 +245,29 @@ const changes = (collection: SanitizedCollectionConfig, before: Doc, after: Doc,
       } else walkValue(a, b, path, labelOf(field), scope)
     }
   }
+  // Reserve the same diff budget for ownership before potentially truncated content.
+  if (ownership) add('tenant', 'Tenant', 'all', idOf(before.tenant) ?? null, idOf(after.tenant) ?? null)
   visit(collection.fields, before, after)
   return { diffs, changedFields: diffs.map(diff => diff.path), truncated }
 }
 
-const append = async ({ collection, req, state, after, id, action, versionID, restoredFromVersionID }: {
+const append = async ({ collection, req, state, after, id, action, versionID, restoredFromVersionID, source: explicitSource, ownership = false }: {
   collection: SanitizedCollectionConfig; req: PayloadRequest; state: Pending; after: Doc; id: ID;
-  action: EditorialAuditAction; versionID?: string; restoredFromVersionID?: string
-}) => {
+  action: EditorialAuditAction; versionID?: string; restoredFromVersionID?: string; source?: Doc; ownership?: boolean
+}): Promise<void> => {
   await requireWriter(req, collection)
-  const source = action === 'delete' ? state.before.doc : after
+  const oldTenant = idOf(state.before.doc.tenant)
+  const newTenant = idOf(after.tenant)
+  if (oldTenant !== undefined && newTenant !== undefined && String(oldTenant) !== String(newTenant)) {
+    const allLocales = { ...state, locale: 'all' }
+    // Never expose the other owner's ID, content, label or new version to either tenant.
+    await append({ collection, req, state: allLocales, after: {}, source: state.before.doc, id, action,
+      ownership: true, versionID: state.before.versionID })
+    await append({ collection, req, state: { ...allLocales, before: { doc: {} } }, after, id, action,
+      ownership: true, versionID, restoredFromVersionID })
+    return
+  }
+  const source = explicitSource ?? (action === 'delete' ? state.before.doc : after)
   const tenant = idOf(source.tenant)
   if (tenant === undefined) throw new APIError('Editorial audit requires an explicit tenant on every document.', 400)
   const title = source[collection.admin.useAsTitle || 'title'] ?? source.title ?? source.name ?? source.filename ?? id
@@ -253,7 +275,7 @@ const append = async ({ collection, req, state, after, id, action, versionID, re
   const docLabel = typeof selectedTitle === 'string' && selectedTitle.trim() ? selectedTitle.slice(0, 250) : `${collection.slug} ${id}`
   const data: EditorialAuditEntry = { tenant, actorID: state.actorID, actorLabel: state.actorLabel, action, locale: state.locale,
     docCollection: collection.slug, documentID: String(id), docLabel, timestamp: new Date().toISOString(),
-    ...changes(collection, state.before.doc, after, state.locale, req), versionID, restoredFromVersionID,
+    ...changes(collection, state.before.doc, after, state.locale, req, ownership), versionID, restoredFromVersionID,
   }
   trustedAppends.add(req)
   try {
@@ -289,9 +311,12 @@ export const recordEditorialAuditAfterChange: CollectionAfterChangeHook = async 
   const publishedAfter = action === 'publish'
     ? await req.payload.db.findOne({ collection: collection.slug, req, locale: 'all', where: { id: { equals: id } } })
     : undefined
-  // Publish compares what patients could read, even when the staged text was saved earlier.
-  const comparison = action === 'publish' && state.publishedBefore
-    ? { ...state, before: { ...state.before, doc: state.publishedBefore } } : state
+  // Transfers compare actual ownership; otherwise publish compares what patients could read.
+  const transferred = String(idOf(state.before.doc.tenant)) !== String(idOf(after.tenant))
+  const comparison = action === 'publish' && state.publishedBefore && !transferred
+    ? { ...state, before: { doc: state.publishedBefore,
+      versionID: String(idOf(state.publishedBefore.tenant)) === String(idOf(state.before.doc.tenant)) ? state.before.versionID : undefined,
+    } } : state
   await append({ collection, req, state: comparison, after: publishedAfter ?? after, id, action, versionID: current?.versionID, restoredFromVersionID })
   return doc
 }
@@ -300,7 +325,7 @@ export const captureEditorialAuditBeforeDelete: CollectionBeforeDeleteHook = asy
   const actor = await requireWriter(req, collection)
   const before = await rawSnapshot(req, collection, id)
   if (!before) throw new APIError('Editorial audit cannot capture the document being deleted.', 500)
-  stateFor(req).pending.set(keyFor(collection.slug, id), { ...actor, before, locale: req.locale || 'all' })
+  stateFor(req).pending.set(keyFor(collection.slug, id), { ...actor, before, locale: 'all' })
 }
 
 export const recordEditorialAuditAfterDelete: CollectionAfterDeleteHook = async ({ collection, doc, id, req }) => {

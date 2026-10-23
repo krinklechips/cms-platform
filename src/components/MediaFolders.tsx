@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
-import type { Where } from 'payload'
+import type { FormState, Where } from 'payload'
 import { useTenantSelection } from '@payloadcms/plugin-multi-tenant/client'
 import { FolderIcon, useConfig, useDocumentInfo, useField, useFormFields, useListDrawerContext, useListQuery } from '@payloadcms/ui'
 import { mediaTenantID } from './MediaPicker'
-import { createMediaFolderPath, findMediaFolderFilter, hasMediaFolderFilter, mediaFolderFilter, replaceMediaFolderFilter, type MediaFolderCatalog } from '../lib/media-folders'
+import { createMediaFolderPath, findMediaFolderFilter, hasMediaFolderFilter, isUploadFolder, mediaFolderFilter, replaceMediaFolderFilter, type MediaFolderCatalog } from '../lib/media-folders'
+import { clearMediaUploadFolder, mediaUploadFolderFor, rememberMediaUploadFolder } from '../lib/media-upload-context'
 
 function useMediaFolders(tenant: number | string | null, enabled = true, refreshKey?: number) {
   const { config: { routes: { api } } } = useConfig()
@@ -113,6 +114,7 @@ const CreateMediaFolder: React.FC<{
 /** Payload renders this list slot in both the full library and native relationship pickers. */
 export const MediaFolderBrowser: React.FC = () => {
   const id = useId()
+  const { config: { routes: { api } } } = useConfig()
   const { selectedTenantID } = useTenantSelection()
   const { data, query, handleWhereChange } = useListQuery()
   const { isInDrawer } = useListDrawerContext()
@@ -133,6 +135,26 @@ export const MediaFolderBrowser: React.FC = () => {
       activePaths.every(prefix => typeof prefix === 'string' && folder.prefixes.includes(prefix))) : undefined)
   const path = selected?.path ?? ''
   const lastTenant = useRef(tenantID === null ? null : String(tenantID))
+  useLayoutEffect(() => {
+    const matchesTenant = catalog && (tenantID === null || String(catalog.tenant.id) === String(tenantID))
+    const changedTenant = catalog && lastTenant.current !== null && lastTenant.current !== String(catalog.tenant.id)
+    const authorizedCatalog = matchesTenant && !error && !changedTenant ? catalog : undefined
+    rememberMediaUploadFolder(api, authorizedCatalog, path)
+    const uploadPath = authorizedCatalog?.folders.find(folder => folder.path === path && folder.uploadable && isUploadFolder(path))?.path
+    const initializeUpload = (event: Event) => {
+      const detail = (event as CustomEvent<{ api: string; collectionSlug: string; state?: FormState | null }>).detail
+      if (!detail || detail.api !== api || detail.collectionSlug !== 'media' || !authorizedCatalog || !uploadPath) return
+      const state = detail.state
+      const field = state?._uploadFolder
+      if (!state || !field || state.id?.value != null || state.id?.initialValue != null
+        || field.value !== undefined || field.initialValue !== undefined) return
+      const owner = mediaTenantID(state.tenant?.value)
+      if (owner === null || String(owner) !== String(authorizedCatalog.tenant.id)) return
+      detail.state = { ...state, _uploadFolder: { ...field, initialValue: uploadPath, value: uploadPath } }
+    }
+    window.addEventListener('payload:bulk-upload-initial-state', initializeUpload)
+    return () => window.removeEventListener('payload:bulk-upload-initial-state', initializeUpload)
+  }, [api, catalog, error, path, tenantID])
   useEffect(() => {
     if (!catalog) return
     const changedTenant = lastTenant.current !== null && lastTenant.current !== String(catalog.tenant.id)
@@ -187,6 +209,7 @@ export const MediaFolderBrowser: React.FC = () => {
 
 export const MediaUploadFolder: React.FC<{ path: string; readOnly?: boolean }> = ({ path, readOnly }) => {
   const id = useId()
+  const { config: { routes: { api } } } = useConfig()
   const { id: documentID, data } = useDocumentInfo()
   const { value, setValue, disabled, formInitializing, formProcessing } = useField<string>({ path })
   const tenantField = useFormFields(([fields]) => fields.tenant)
@@ -194,18 +217,31 @@ export const MediaUploadFolder: React.FC<{ path: string; readOnly?: boolean }> =
   const tenantID = mediaTenantID(tenantField ? tenantField.value : data?.tenant ?? selectedTenantID)
   const existing = documentID !== undefined && documentID !== null
   const lastTenant = useRef(tenantID)
+  const initialized = useRef(false)
   useEffect(() => {
-    if (!existing && lastTenant.current !== null && String(lastTenant.current) !== String(tenantID) && value) setValue('')
+    if (!existing && lastTenant.current !== null && String(lastTenant.current) !== String(tenantID)) {
+      clearMediaUploadFolder()
+      initialized.current = true
+      if (value) setValue('')
+    }
     lastTenant.current = tenantID
   }, [tenantID, existing, value, setValue])
   const { catalog, error, retry, setCatalog } = useMediaFolders(tenantID, !existing && tenantID !== null)
+  useEffect(() => {
+    if (existing || initialized.current || !catalog || error || tenantID === null
+      || String(catalog.tenant.id) !== String(tenantID) || readOnly || disabled || formInitializing || formProcessing) return
+    initialized.current = true
+    if (value !== undefined && value !== null) return
+    const folder = mediaUploadFolderFor(api, tenantID, catalog)
+    if (folder) setValue(folder)
+  }, [api, catalog, error, tenantID, existing, readOnly, disabled, formInitializing, formProcessing, value, setValue])
   if (existing) return <div className="field-type cms-media-folders__destination"><label>R2 folder</label><p>{data?.prefix || 'Original storage folder'}</p></div>
   return (
     <div className="field-type cms-media-folders__destination">
       <label htmlFor={id}>Upload folder</label>
       {error && <RetryFolders error={error} retry={retry} />}
       <select id={id} value={value ?? ''} disabled={readOnly || disabled || formInitializing || formProcessing || !catalog}
-        onChange={event => setValue(event.target.value)}>
+        onChange={event => { initialized.current = true; setValue(event.target.value) }}>
         <option value="">General uploads</option>
         {catalog?.folders.filter(folder => folder.path && folder.uploadable).map(folder =>
           <option key={folder.path} value={folder.path}>{folder.path.replaceAll('/', ' / ')}</option>)}

@@ -38,12 +38,12 @@ export const PricingItems: CollectionConfig = {
     {
       name: 'ada',
       type: 'text',
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', readOnly: true, description: 'Legacy ADA metadata; not displayed in the current Treatment Prices list. Existing values are retained.' },
     },
     {
       name: 'aus',
       type: 'text',
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', readOnly: true, description: 'Legacy comparison metadata; not displayed in the current Treatment Prices list. Use Comparison Table Rows for website comparisons.' },
     },
     {
       name: 'note',

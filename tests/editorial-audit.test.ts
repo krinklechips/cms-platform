@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { mkdtemp, rm } from 'node:fs/promises'
-import os from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
+import { fileURLToPath } from 'node:url'
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
 import { buildConfig, createLocalReq, getPayload, type CollectionConfig, type PayloadRequest } from 'payload'
 import type { EditorialAuditEntry } from '../src/lib/editorial-audit'
@@ -15,7 +15,7 @@ test('editorial audit is transactional, append-only, bounded and tenant isolated
   // No app config, .env, external accounts, or shared database is used here.
   const audit = await import('../src/lib/editorial-audit').catch(() => assert.fail('Editorial audit hooks have not been implemented'))
   const { EditorialAudit } = await import('../src/collections/EditorialAudit')
-  const dir = await mkdtemp(path.join(os.tmpdir(), 'cms-editorial-audit-'))
+  const dir = await mkdtemp(fileURLToPath(new URL('.editorial-audit-fixture-', import.meta.url)))
   const pages: CollectionConfig = {
     slug: 'pages', admin: { useAsTitle: 'title' }, versions: { drafts: { validate: true }, maxPerDoc: 100 },
     access: { create: ({ req }) => Boolean(req.user), update: ({ req }) => Boolean(req.user), delete: ({ req }) => Boolean(req.user) },
@@ -40,6 +40,13 @@ test('editorial audit is transactional, append-only, bounded and tenant isolated
       ] },
       { name: 'details', type: 'json' },
       { name: 'apiKey', type: 'text' },
+      { name: 'body', type: 'array', localized: true, fields: [{ name: 'text', type: 'text' }] },
+      { name: 'sections', type: 'blocks', localized: true, blocks: [
+        { slug: 'copy', fields: [{ name: 'text', type: 'text' }] },
+      ] },
+      { name: 'summary', type: 'group', localized: true, fields: [{ name: 'text', type: 'text' }] },
+      { name: 'related', type: 'relationship', localized: true, relationTo: 'pages' },
+      { type: 'tabs', tabs: [{ name: 'tab', localized: true, fields: [{ name: 'text', type: 'text' }] }] },
     ],
   }
   const payload = await getPayload({ key: randomUUID(), config: buildConfig({
@@ -61,7 +68,7 @@ test('editorial audit is transactional, append-only, bounded and tenant isolated
         { name: 'alt', type: 'text', localized: true },
       ] }, { ...EditorialAudit, hooks: { ...EditorialAudit.hooks, beforeChange: [
         ...(EditorialAudit.hooks?.beforeChange ?? []), ({ data, req }) => {
-          if (req.context.rejectAuditInsert) throw new Error('audit insertion rejected')
+          if (req.context.rejectAuditInsert || req.context.rejectAuditInsertTenant === data.tenant) throw new Error('audit insertion rejected')
           return data
         },
       ] } },
@@ -297,7 +304,180 @@ test('editorial audit is transactional, append-only, bounded and tenant isolated
       for (const locale of ['kh', 'cn']) assert.ok((row.diffs as { path: string; before: unknown; after: unknown }[])
         .some(diff => diff.path === `title.${locale}` && diff.before === null && diff.after === `${locale} staged`))
     })
-    await t.test('deletion records its previous snapshot and never rewrites earlier audit rows', async () => {
+    await t.test('an allowed tenant transfer appends isolated ownership snapshots visible at both ends', async () => {
+      const entry = await payload.create({ collection: 'pages', locale: 'en', req: await request(),
+        data: { tenant: first.id, title: 'Original English', rank: 10, _status: 'published' } as never })
+      await payload.update({ collection: 'pages', id: entry.id, locale: 'kh', draft: true,
+        req: await request(editor, 'kh'), data: { title: 'Source-only Khmer' } })
+      const oldVersion = (await history(entry.id)).docs[0]
+      const before = await rows()
+      await payload.update({ collection: 'pages', id: entry.id, locale: 'kh', draft: true, overrideAccess: false,
+        req: await request(both, 'kh'), data: { tenant: second.id, title: 'Destination-only Khmer', rank: 999,
+          details: { visible: 'Destination-only details', password: 'never-log-transfer' } } as never })
+      const after = await rows()
+      assert.deepEqual(after.slice(0, before.length), before)
+      const added = after.slice(before.length)
+      assert.equal(added.length, 2)
+      const outgoing = added.find(row => row.tenant === first.id)!
+      const incoming = added.find(row => row.tenant === second.id)!
+      assert.ok(outgoing)
+      assert.ok(incoming)
+      for (const row of added) {
+        assert.equal(row.action, 'draft')
+        assert.equal(row.locale, 'all')
+        assert.equal(row.documentID, String(entry.id))
+        assert.equal(row.actorID, String(both.id))
+        assert.equal(row.changedFields[0], 'tenant')
+        assert.doesNotMatch(JSON.stringify(row), /never-log/)
+      }
+      assert.deepEqual(outgoing.diffs[0], { path: 'tenant', label: 'Tenant', scope: 'all', before: first.id, after: null })
+      assert.deepEqual(incoming.diffs[0], { path: 'tenant', label: 'Tenant', scope: 'all', before: null, after: second.id })
+      assert.equal(outgoing.versionID, String(oldVersion.id))
+      assert.notEqual(incoming.versionID, outgoing.versionID)
+      assert.deepEqual((await history(entry.id)).docs.find(version => version.id === oldVersion.id)?.version, oldVersion.version)
+      assert.ok(outgoing.diffs.some(diff => diff.path === 'title.kh' && diff.before === 'Source-only Khmer' && diff.after === null))
+      assert.ok(incoming.diffs.some(diff => diff.path === 'title.kh' && diff.before === null && diff.after === 'Destination-only Khmer'))
+      assert.doesNotMatch(JSON.stringify(outgoing), /Destination-only|999/)
+      assert.doesNotMatch(JSON.stringify(incoming), /Source-only/)
+      const visible = async (user: typeof editor, host = 'platform.test') => (await payload.find({
+        collection: 'editorial-audit', depth: 0, overrideAccess: false, req: await request(user, 'en', host),
+        where: { id: { in: added.map(row => row.id) } },
+      })).docs.map(row => row.id)
+      assert.deepEqual(await visible(editor), [outgoing.id])
+      assert.deepEqual(await visible(other), [incoming.id])
+      assert.deepEqual(await visible(both, 'first.test'), [outgoing.id])
+      assert.deepEqual(await visible(admin, 'second.test'), [incoming.id])
+      for (const [user, row, host] of [[editor, incoming, 'platform.test'], [other, outgoing, 'platform.test'],
+        [admin, outgoing, 'second.test']] as const) {
+        await assert.rejects(async () => payload.findByID({ collection: 'editorial-audit', id: row.id,
+          overrideAccess: false, req: await request(user, 'en', host) }))
+      }
+    })
+    await t.test('publishing a transferred draft never exposes its destination version to the previous public tenant', async () => {
+      const entry = await payload.create({ collection: 'pages', req: await request(),
+        data: { tenant: first.id, title: 'Source public title', _status: 'published' } as never })
+      await payload.update({ collection: 'pages', id: entry.id, draft: true, req: await request(both),
+        data: { tenant: second.id, title: 'Destination private draft' } })
+      const draftVersion = (await history(entry.id)).docs[0]
+      const before = await rows()
+      await payload.update({ collection: 'pages', id: entry.id, req: await request(both), data: { _status: 'published' } })
+      const added = (await rows()).slice(before.length)
+      assert.equal(added.length, 2)
+      const outgoing = added.find(row => row.tenant === first.id)!
+      const incoming = added.find(row => row.tenant === second.id)!
+      assert.equal(outgoing.versionID ?? null, null, 'The latest draft version belongs to the destination, not the outgoing public snapshot')
+      assert.doesNotMatch(JSON.stringify(outgoing), /Destination private draft/)
+      assert.equal(incoming.action, 'publish')
+      assert.ok(incoming.versionID)
+      assert.notEqual(incoming.versionID, String(draftVersion.id))
+      assert.ok(incoming.diffs.some(diff => diff.path === 'title.en' && diff.before === null && diff.after === 'Destination private draft'))
+    })
+    await t.test('a publish transfer back to the public owner still records the departing draft owner', async () => {
+      const entry = await payload.create({ collection: 'pages', req: await request(),
+        data: { tenant: first.id, title: 'Public A', _status: 'published' } as never })
+      await payload.update({ collection: 'pages', id: entry.id, draft: true, req: await request(both),
+        data: { tenant: second.id, title: 'Private B' } })
+      const before = await rows()
+      await payload.update({ collection: 'pages', id: entry.id, req: await request(both),
+        data: { tenant: first.id, title: 'Revised public A', _status: 'published' } })
+      const added = (await rows()).slice(before.length)
+      assert.equal(added.length, 2)
+      const outgoing = added.find(row => row.tenant === second.id)!
+      const incoming = added.find(row => row.tenant === first.id)!
+      assert.deepEqual(outgoing.diffs[0], { path: 'tenant', label: 'Tenant', scope: 'all', before: second.id, after: null })
+      assert.ok(outgoing.diffs.some(diff => diff.path === 'title.en' && diff.before === 'Private B' && diff.after === null))
+      assert.doesNotMatch(JSON.stringify(outgoing), /Revised public A/)
+      assert.ok(incoming.diffs.some(diff => diff.path === 'title.en' && diff.before === null && diff.after === 'Revised public A'))
+      assert.doesNotMatch(JSON.stringify(incoming), /Private B/)
+      assert.ok(added.every(row => row.action === 'publish' && row.locale === 'all'))
+    })
+    await t.test('failed transfer audit inserts and later hooks roll back both rows, content and legacy versions', async () => {
+      const entry = await payload.create({ collection: 'pages', req: await request(),
+        data: { tenant: first.id, title: 'Must survive rollback', _status: 'published' } as never })
+      const snapshot = async () => ({ rows: await rows(), versions: await history(entry.id),
+        doc: await payload.findByID({ collection: 'pages', id: entry.id, locale: 'all', draft: true, fallbackLocale: false }),
+      })
+      const before = await snapshot()
+      for (const [context, expected] of [
+        [{ rejectAuditInsertTenant: first.id }, /audit insertion rejected/],
+        [{ rejectAuditInsertTenant: second.id }, /audit insertion rejected/],
+        [{ rejectAfterAudit: true }, /later hook/],
+      ] as const) {
+        const req = await request(both, 'en', 'platform.test', context)
+        await assert.rejects(() => payload.update({ collection: 'pages', id: entry.id, draft: true, req,
+          data: { tenant: second.id, title: 'Must roll back' } }), expected)
+        assert.deepEqual(await snapshot(), before)
+        await assert.rejects(() => payload.create({ collection: 'editorial-audit', req,
+          data: before.rows[0] as never }), /append-only/)
+      }
+    })
+    await t.test('both transfer snapshots reserve ownership detail and retain existing truncation and redaction', async () => {
+      const entry = await payload.create({ collection: 'pages', req: await request(), data: {
+        tenant: first.id, title: 'Bounded transfer', details: { large: 's'.repeat(200000), password: 'never-log-source' },
+      } as never })
+      const before = await rows()
+      await payload.update({ collection: 'pages', id: entry.id, draft: true, req: await request(both), data: {
+        tenant: second.id, details: { large: 'd'.repeat(200000), apiKey: 'never-log-destination' },
+      } as never })
+      const added = (await rows()).slice(before.length)
+      assert.equal(added.length, 2)
+      for (const row of added) {
+        assert.equal(row.changedFields[0], 'tenant')
+        assert.equal(row.truncated, true)
+        assert.ok(row.diffs.length <= 80)
+        assert.ok(Buffer.byteLength(JSON.stringify(row), 'utf8') <= 65536)
+        assert.match(JSON.stringify(row.diffs), /Audit detail truncated/)
+        assert.doesNotMatch(JSON.stringify(row), /never-log|password|apiKey/)
+      }
+    })
+    await t.test('unversioned media ownership transfers use the same isolated all-locale audit snapshots', async () => {
+      const image = await payload.create({ collection: 'media', req: await request(), data: { tenant: first.id, alt: 'Source alt' },
+        file: { name: 'transfer-fixture.txt', mimetype: 'text/plain', size: 6, data: Buffer.from('bytes!') } })
+      const before = await rows()
+      await payload.update({ collection: 'media', id: image.id, locale: 'kh', req: await request(both, 'kh'),
+        data: { tenant: second.id, alt: 'Destination alt' } })
+      const added = (await rows()).slice(before.length)
+      assert.equal(added.length, 2)
+      const outgoing = added.find(row => row.tenant === first.id)!
+      const incoming = added.find(row => row.tenant === second.id)!
+      assert.ok(added.every(row => row.action === 'update' && row.locale === 'all' && !row.versionID))
+      assert.ok(outgoing.diffs.some(diff => diff.path === 'alt.en' && diff.before === 'Source alt' && diff.after === null))
+      assert.ok(incoming.diffs.some(diff => diff.path === 'alt.kh' && diff.before === null && diff.after === 'Destination alt'))
+      assert.doesNotMatch(JSON.stringify(outgoing), /Destination alt|bytes!|_editorialRevision/)
+    })
+    await t.test('all-locale deletion retains localized arrays, blocks, groups, tabs and relationship IDs', async () => {
+      const entry = await payload.create({ collection: 'pages', req: await request(), data: {
+        tenant: first.id, title: 'Localized structures', body: [{ text: 'EN paragraph' }],
+        sections: [{ blockType: 'copy', text: 'EN block' }], summary: { text: 'EN group' },
+        tab: { text: 'EN tab' }, related: page.id,
+      } as never })
+      await payload.update({ collection: 'pages', id: entry.id, locale: 'kh', draft: true,
+        req: await request(editor, 'kh'), data: { title: 'KH structures', body: [{ text: 'KH paragraph' }],
+          sections: [{ blockType: 'copy', text: 'KH block' }], summary: { text: 'KH group' },
+          tab: { text: 'KH tab' }, related: page.id } as never })
+      await payload.delete({ collection: 'pages', id: entry.id, locale: 'cn', req: await request(editor, 'cn') })
+      const row = (await rows()).at(-1)!
+      assert.equal(row.locale, 'all')
+      for (const [locale, prefix] of [['en', 'EN'], ['kh', 'KH']]) {
+        for (const [field, text] of [['body', 'paragraph'], ['sections', 'block']]) {
+          const diff = row.diffs.find(diff => diff.path === `${field}.${locale}`)
+          assert.ok(diff, `${field}.${locale}`)
+          assert.equal(diff.scope, 'all')
+          assert.deepEqual(diff.after, [])
+          assert.equal((diff.before as { text: string }[])[0].text, `${prefix} ${text}`)
+        }
+        for (const [field, text] of [['summary', 'group'], ['tab', 'tab']]) {
+          assert.ok(row.diffs.some(diff => diff.path === `${field}.${locale}.text`
+            && diff.scope === 'all' && diff.before === `${prefix} ${text}` && diff.after === null), `${field}.${locale}`)
+        }
+        assert.ok(row.diffs.some(diff => diff.path === `related.${locale}`
+          && diff.scope === 'all' && diff.before === page.id && diff.after === null), `related.${locale}`)
+      }
+    })
+    await t.test('deletion records all locales and shared fields with bounded detail, regardless of request locale', async () => {
+      await payload.update({ collection: 'pages', id: page.id, locale: 'cn', draft: true,
+        req: await request(editor, 'cn'), data: { title: 'Chinese draft' } })
+      const version = (await history(page.id)).docs[0]
       const before = await rows()
       await payload.delete({ collection: 'pages', id: page.id, locale: 'kh', req: await request(editor, 'kh') })
       const after = await rows()
@@ -306,7 +486,21 @@ test('editorial audit is transactional, append-only, bounded and tenant isolated
       assert.equal(row.action, 'delete')
       assert.equal(row.documentID, String(page.id))
       assert.equal(row.tenant, first.id)
-      assert.ok((row.diffs as { path: string; before: unknown; after: unknown }[]).some(d => d.path === 'title' && d.before === 'Khmer draft' && d.after === null))
+      assert.equal(row.locale, 'all')
+      assert.equal(row.versionID, String(version.id))
+      for (const [field, value] of Object.entries({
+        'title.en': 'English original', 'title.kh': 'Khmer draft', 'title.cn': 'Chinese draft',
+        'seoTitle.en': 'English SEO', rank: 3, 'settings.enabled': false,
+      })) {
+        assert.ok(row.diffs.some(diff => diff.path === field && diff.scope === 'all' && diff.before === value && diff.after === null), field)
+      }
+      const structure = row.diffs.find(diff => diff.path === 'rows')!
+      assert.equal(structure.scope, 'all')
+      assert.deepEqual(structure.after, [])
+      assert.ok(Array.isArray(structure.before))
+      assert.equal(row.truncated, true)
+      assert.ok(Buffer.byteLength(JSON.stringify(row), 'utf8') <= 65536)
+      assert.doesNotMatch(JSON.stringify(row), /never-log|_editorialRevision/)
     })
   } finally {
     await payload.destroy()

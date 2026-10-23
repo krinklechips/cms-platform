@@ -70,6 +70,7 @@ export const protectEditorialWrite: CollectionBeforeOperationHook = async ({ arg
 export const withEditorialConcurrency = (config: CollectionConfig): CollectionConfig => {
   if (!(config.versions && typeof config.versions === 'object' && config.versions.drafts) && config.slug !== 'media') return config
   return { ...config,
+    disableBulkEdit: true,
     custom: { ...config.custom, editorialConcurrency: true },
     forceSelect: { ...config.forceSelect, updatedAt: true },
     fields: [...config.fields, { name: REVISION, type: 'text', virtual: true, admin: { hidden: true },

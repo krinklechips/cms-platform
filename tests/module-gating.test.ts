@@ -425,7 +425,17 @@ test('native PostgreSQL delete shares the editorial writer lock before ownership
       const after = await state.snapshot()
       assert.equal(after.parent.length, 1)
       assert.equal(after.versions.length, 2)
-      assert.deepEqual(after.audit.map(row => row.row.action), ['create', 'draft'])
+      assert.deepEqual(after.audit.map(row => row.row.action), ['create', 'draft', 'draft'])
+      const [outgoing, incoming] = after.audit.slice(1).map(row => row.row)
+      assert.deepEqual([outgoing.tenant_id, incoming.tenant_id], [state.source, state.target])
+      assert.equal(outgoing.locale, 'all')
+      assert.equal(incoming.locale, 'all')
+      assert.ok(outgoing.diffs.some((diff: { path: string; before: unknown; after: unknown }) =>
+        diff.path === 'tenant' && diff.before === state.source && diff.after === null))
+      assert.ok(incoming.diffs.some((diff: { path: string; before: unknown; after: unknown }) =>
+        diff.path === 'tenant' && diff.before === null && diff.after === state.target))
+      assert.ok(!JSON.stringify(outgoing).includes('New B private draft'), 'Source history must not expose destination content')
+      assert.ok(!JSON.stringify(incoming).includes('Published A'), 'Destination history must not expose source content')
       assert.equal((await app.findByID({ collection: 'services', id: state.doc.id, draft: true })).tenant, state.target)
     })
 

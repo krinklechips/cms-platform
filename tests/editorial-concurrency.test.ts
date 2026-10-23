@@ -6,10 +6,36 @@ import path from 'node:path'
 import { test } from 'node:test'
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
 import { fieldSchemasToFormState } from '@payloadcms/ui/forms/fieldSchemasToFormState'
-import { buildConfig, createLocalReq, getPayload } from 'payload'
+import { buildConfig, createLocalReq, getPayload, type CollectionConfig } from 'payload'
 import { reduceFieldsToValues } from 'payload/shared'
 import { withDrafts } from '../src/lib/with-drafts'
 import { withEditorialConcurrency } from '../src/lib/with-editorial-concurrency'
+
+test('protected draft collections disable bulk writes without replacing their admin settings', () => {
+  const config: CollectionConfig = { slug: 'pages', fields: [], versions: { drafts: true },
+    disableBulkEdit: false, admin: { group: 'Website', defaultColumns: ['title'] } }
+  const protectedConfig = withEditorialConcurrency(config)
+  assert.equal(protectedConfig.disableBulkEdit, true)
+  assert.equal(protectedConfig.admin?.group, 'Website')
+  assert.deepEqual(protectedConfig.admin?.defaultColumns, ['title'])
+  assert.equal(config.disableBulkEdit, false)
+})
+
+test('protected media disables bulk writes while retaining native Bulk Upload', () => {
+  const config: CollectionConfig = { slug: 'media', fields: [], upload: { bulkUpload: true, crop: false },
+    admin: { components: { beforeListTable: ['/components/MediaFolders#MediaFolderBrowser'] } } }
+  const protectedConfig = withEditorialConcurrency(config)
+  assert.equal(protectedConfig.disableBulkEdit, true)
+  assert.deepEqual(protectedConfig.upload, { bulkUpload: true, crop: false })
+  assert.deepEqual(protectedConfig.admin?.components, config.admin?.components)
+})
+
+test('unprotected collections retain their existing bulk-action settings', () => {
+  for (const versions of [undefined, { drafts: false }, true]) {
+    const config: CollectionConfig = { slug: 'tenants', fields: [], versions, disableBulkEdit: false }
+    assert.equal(withEditorialConcurrency(config), config)
+  }
+})
 
 test('real staff share localized revisions and stale writes cannot replace a newer saved draft', { timeout: 120000 }, async t => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'cms-editorial-concurrency-'))
@@ -41,7 +67,7 @@ test('real staff share localized revisions and stale writes cannot replace a new
         data: { title: `${locale.toUpperCase()} original`, rows: [{ text: `${locale.toUpperCase()} row` }], _status: 'published' } as never })
       return page
     }
-    const read = (id: number, locale: 'en' | 'kh' | 'cn', user = a, draft = true, depth = 0) => payload.findByID({
+    const read = (id: number | string, locale: 'en' | 'kh' | 'cn', user = a, draft = true, depth = 0) => payload.findByID({
       collection: 'pages', id, locale, fallbackLocale: false, depth, draft, user, overrideAccess: false }) as Promise<any>
     const write = (doc: any, locale: 'en' | 'kh' | 'cn', title: string, user = a, draft = true) => payload.update({
       collection: 'pages', id: doc.id, locale, draft, user, overrideAccess: false,
@@ -80,6 +106,19 @@ test('real staff share localized revisions and stale writes cannot replace a new
       assert.deepEqual((await history()).docs, before.docs)
       await write(newer, 'en', 'Borin next draft', b)
       assert.equal((await read(page.id, 'en')).title, 'Borin next draft')
+    })
+
+    await t.test('bulk updates stay rejected even with a valid single-document revision', async () => {
+      const page = await seed()
+      const opened = await read(page.id, 'en')
+      const versions = await payload.findVersions({ collection: 'pages', where: { parent: { equals: page.id } }, pagination: false })
+      const bulkUpdate = (overrideAccess: boolean) => payload.update({ collection: 'pages', where: { id: { in: [page.id] } },
+        locale: 'en', draft: true, user: a, overrideAccess,
+        data: { title: 'Bulk overwrite', _status: 'draft', _editorialRevision: opened._editorialRevision } as never })
+      await assert.rejects(() => bulkUpdate(false), (error: any) => error.status === 403 && /disabled bulk edit/.test(error.message))
+      await assert.rejects(() => bulkUpdate(true), (error: any) => error.status === 400 && /one document ID/.test(error.message))
+      assert.equal((await read(page.id, 'en')).title, 'EN original')
+      assert.deepEqual((await payload.findVersions({ collection: 'pages', where: { parent: { equals: page.id } }, pagination: false })).docs, versions.docs)
     })
 
     await t.test('a publish without a locale option publishes only the selected language and retains other drafts', async () => {

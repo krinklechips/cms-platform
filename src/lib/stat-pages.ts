@@ -55,6 +55,12 @@ const statViews = [
 
 type StatViewID = (typeof statViews)[number]['id']
 
+export const getStatPreviewPath = (key: string, viewID?: unknown): string | null => {
+  const destinations = getStatPages(key)
+  const requested = statViews.find(view => view.id === viewID && destinations.some(({ path }) => path === view.page.path))
+  return requested?.page.path ?? destinations[0]?.path ?? null
+}
+
 export const getStatListHref = (viewID: StatViewID, adminRoute = '/admin'): string => {
   const view = statViews.find(({ id }) => id === viewID)!
   const query = new URLSearchParams({ statPage: view.id })

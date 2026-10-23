@@ -73,7 +73,7 @@ export const COLLECTION_LABELS: Record<string, LabelEntry> = {
     singular: "Price List Section",
     plural: "Price List Sections",
     description:
-      "The headed groups on the Treatment Prices page (Implants, Crowns, Orthodontics…), their icons and the order they appear in.",
+      "The headed groups on the Treatment Prices page (Implants, Crowns, Orthodontics...), their titles and display order. Section icons remain defined by the website layout.",
   },
   'pricing-items': {
     singular: "Price List Row",

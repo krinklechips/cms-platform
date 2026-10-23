@@ -91,7 +91,7 @@ export const SiteStats: CollectionConfig = {
       name: 'order',
       type: 'number',
       defaultValue: 0,
-      admin: { position: 'sidebar' },
+      admin: { position: 'sidebar', readOnly: true, description: 'Legacy list order; does not reorder website statistics. Each page uses fixed statistic positions.' },
     },
     {
       name: 'published',
