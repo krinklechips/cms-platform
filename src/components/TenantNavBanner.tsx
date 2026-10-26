@@ -5,12 +5,8 @@ import type { Payload } from 'payload'
 import { getTenantByHost } from '@/lib/get-tenant-by-host'
 
 /**
- * "Editing site: <tenant>" banner — rendered in the `beforeNavLinks` slot so it
- * sits INSIDE the sidebar, above the page groups.
- *
- * It must NOT be rendered as a sibling of <DefaultNav/> from the Nav override:
- * doing that puts it in the admin's nav *slot* alongside the real nav, which
- * renders as a second panel and covers Payload's nav-collapse chevron.
+ * Tenant identity for the shared workspace header. Resolve branding here,
+ * never inside Payload's graphics slot, which must remain synchronous.
  */
 
 type ServerProps = {

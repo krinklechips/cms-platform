@@ -85,7 +85,7 @@
   .btn__icon { flex-shrink: 0; }
 }
 .cms-translation-state { font-size: 14px; color: var(--theme-elevation-650); }
-.cms-sidebar-control { display: none; }
+.cms-sidebar-control, .cms-workspace-header { display: none; }
 
 // Input content is independent of the English admin interface language.
 :where(.field-type.text:not(.has-many)) input[type='text'],
@@ -129,22 +129,44 @@
 }
 
 body:has(.cms-tenant-nav) {
+  --nav-width: 240px;
+  --app-header-height: 64px;
+
   .template-default__nav-toggler-wrapper,
   .app-header__mobile-nav-toggler { display: none; }
+
+  .cms-workspace-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    inset-inline-start: 0;
+    top: 0;
+    width: var(--nav-width);
+    height: 64px;
+    padding: 8px 12px;
+    z-index: calc(var(--z-nav) + 1);
+    background: var(--theme-bg);
+
+    .tenant-identity { min-width: 0; margin: 0; padding: 0; border: 0; }
+    .tenant-identity > a { display: flex; align-items: center; height: 48px; }
+    .tenant-identity__wordmark, .tenant-identity__logo { width: 144px; height: 56px; }
+    .tenant-identity__environment { display: none; }
+    .tenant-identity__name { margin: 0; }
+    .tenant-identity__dark { min-width: 0; gap: 6px; font-size: 14px; }
+    .tenant-identity__dark img { flex: 0 0 24px; width: 24px; height: 24px; }
+  }
 
   .cms-sidebar-control {
     display: grid;
     place-items: center;
-    position: fixed;
-    inset-inline-start: 16px;
-    top: 12px;
-    z-index: var(--z-modal);
-    width: 32px;
-    height: 32px;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
     padding: 0;
-    border: 1px solid var(--theme-elevation-150);
-    border-radius: 4px;
-    background: var(--theme-bg);
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
     color: var(--theme-text);
     cursor: pointer;
 
@@ -152,6 +174,11 @@ body:has(.cms-tenant-nav) {
     &:focus-visible { outline: 2px solid var(--theme-text); outline-offset: 3px; }
     svg { width: 20px; height: 20px; }
   }
+
+  .step-nav__home, .step-nav__home + span { display: none; }
+  .app-header__account { margin-inline-start: auto; }
+  .template-default:not(.template-default--nav-open) .app-header__content { padding-inline-start: calc(var(--nav-width) + var(--gutter-h)); }
+  .app-header__actions-wrapper:has(.app-header__actions:empty) { display: none; }
 }
 
 .app-header__controls-wrapper { min-width: 0; flex: 1; }
@@ -173,7 +200,11 @@ body:has(.cms-tenant-nav) {
 }
 
 .cms-tenant-nav {
-  .cms-nav-dismiss { display: none; }
+  --nav-padding-block-start: 72px;
+  --nav-padding-inline-start: 12px;
+  --nav-padding-inline-end: 12px;
+  .nav__wrap { align-items: stretch; }
+  .cms-nav-environment { color: var(--theme-elevation-650); font-size: 12px; margin: 0 10px 12px; }
   .cms-overview-link {
     display: block;
     color: var(--theme-text);
@@ -223,21 +254,26 @@ body:has(.cms-tenant-nav) {
 }
 
 @media (max-width: 1024px) {
-  body:has(.cms-tenant-nav) .app-header__controls-wrapper { padding-inline-start: 44px; }
-  .cms-tenant-nav .cms-nav-dismiss {
-    display: grid;
-    place-items: center;
-    position: absolute;
-    top: 12px;
-    right: 16px;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: 1px solid var(--theme-elevation-150);
-    border-radius: 4px;
-    background: var(--theme-bg);
-    color: var(--theme-text);
-    z-index: 2;
+  body:has(.cms-tenant-nav) {
+    .template-default { grid-template-columns: 0 minmax(0, 1fr); }
+    .template-default__wrap { grid-column: 2; }
+    .cms-tenant-nav { position: fixed; top: var(--app-header-height); height: calc(100dvh - var(--app-header-height)); z-index: var(--z-nav); background: var(--theme-bg); }
+    .cms-tenant-nav .nav__scroll { padding-block-start: 16px; }
+    .app-header__content { padding-inline-start: calc(var(--nav-width) + var(--gutter-h)); }
+  }
+}
+
+@media (max-width: 600px) {
+  body:has(.cms-tenant-nav) {
+    --app-header-height: 104px;
+    .cms-workspace-header { width: 192px; gap: 4px; padding-inline: 12px; }
+    .cms-workspace-header .tenant-identity__wordmark, .cms-workspace-header .tenant-identity__logo { width: 112px; }
+    .app-header__content,
+    .template-default:not(.template-default--nav-open) .app-header__content { height: 64px; padding-inline: 180px 16px; }
+    .app-header__wrapper { gap: 0; }
+    .app-header__step-nav-wrapper { position: absolute; inset-inline: 16px; top: 64px; width: auto; height: 40px; align-items: center; }
+    .app-header__localizer.localizer { top: 32px; inset-inline-end: 48px; display: flex; }
+    .app-header .localizer-button__label { display: none; }
   }
 }
 

@@ -88,7 +88,7 @@ export type TypographyPage = {
 }
 
 /** Real browser DOM/CSS only. No stylesheet, selector, media or computed-style rewrites. */
-export async function typographyPage(markup: string, css = '', width = 1366): Promise<TypographyPage> {
+export async function typographyPage(markup: string, css = '', width = 1366, embeddedImages = false): Promise<TypographyPage> {
   const instance = await (browser ??= launchBrowser())
   const { targetId } = await instance.send('Target.createTarget', { url: 'about:blank' })
   const { sessionId } = await instance.send('Target.attachToTarget', { targetId, flatten: true })
@@ -104,7 +104,7 @@ export async function typographyPage(markup: string, css = '', width = 1366): Pr
   pages.add(page)
   await send('Page.enable')
   await send('Network.enable')
-  await send('Network.setBlockedURLs', { urls: ['*'] })
+  await send('Network.setBlockedURLs', { urls: embeddedImages ? ['http://*', 'https://*', 'file://*', 'ftp://*'] : ['*'] })
   await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
   const tree = await send('Page.getFrameTree')
   const { frame } = tree.frameTree as { frame: { id: string } }

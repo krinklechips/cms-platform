@@ -96,7 +96,7 @@ export default buildConfig({
     // the logo URL as a prop if we want the login screen branded per tenant.
     //
     components: {
-      header: ['/components/SidebarControl#SidebarControl', '/components/CmsContentTypography#CmsContentTypography'],
+      header: ['/components/TenantWorkspaceHeader#TenantWorkspaceHeader', '/components/CmsContentTypography#CmsContentTypography'],
       // Full Dashboard override (not beforeDashboard): super-admins see ONLY
       // the Serviette HQ cockpit; tenant users get Payload's DefaultDashboard.
       // Removes the confusing "cockpit + default collection cards" stack.

@@ -14,7 +14,7 @@ import { MediaFolderBrowser as MediaFolderBrowser_b0a91ac00b148fa94508d209a5ea94
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { AuditChanges as AuditChanges_7e9623af6577f0c39e521fa072d3a2d3 } from '../../../components/AuditChanges'
 import { PlatformNav as PlatformNav_d93cd8bf9ab6123ede6430df10ac9859 } from '../../../components/PlatformNav'
-import { SidebarControl as SidebarControl_6c1b9eb2d35079715d8e96016057ce39 } from '../../../components/SidebarControl'
+import { TenantWorkspaceHeader as TenantWorkspaceHeader_cc4025d8fd8a28dc34ca68e3829c9daa } from '../../../components/TenantWorkspaceHeader'
 import { CmsContentTypography as CmsContentTypography_bae71cde7ba653b314d0652b644d3b75 } from '../../../components/CmsContentTypography'
 import { AdminIcon as AdminIcon_185d6ccbdba3821d35293b1570e8d361 } from '../../../components/AdminBrand'
 import { AdminLogo as AdminLogo_185d6ccbdba3821d35293b1570e8d361 } from '../../../components/AdminBrand'
@@ -44,7 +44,7 @@ export const importMap = {
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/AuditChanges#AuditChanges": AuditChanges_7e9623af6577f0c39e521fa072d3a2d3,
   "/components/PlatformNav#PlatformNav": PlatformNav_d93cd8bf9ab6123ede6430df10ac9859,
-  "/components/SidebarControl#SidebarControl": SidebarControl_6c1b9eb2d35079715d8e96016057ce39,
+  "/components/TenantWorkspaceHeader#TenantWorkspaceHeader": TenantWorkspaceHeader_cc4025d8fd8a28dc34ca68e3829c9daa,
   "/components/CmsContentTypography#CmsContentTypography": CmsContentTypography_bae71cde7ba653b314d0652b644d3b75,
   "/components/AdminBrand#AdminIcon": AdminIcon_185d6ccbdba3821d35293b1570e8d361,
   "/components/AdminBrand#AdminLogo": AdminLogo_185d6ccbdba3821d35293b1570e8d361,

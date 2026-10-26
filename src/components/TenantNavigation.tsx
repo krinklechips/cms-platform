@@ -1,15 +1,14 @@
 'use client'
 
 import React from 'react'
-import { ChevronIcon, Link, XIcon, useNav } from '@payloadcms/ui'
+import { ChevronIcon, Link, useNav } from '@payloadcms/ui'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { isNavigationItemActive, type NavigationGroup } from '@/lib/navigation-state'
 
 export type TenantNavigationGroup = NavigationGroup
 
-export const TenantNavigation = ({ groups, identity, footer }: {
+export const TenantNavigation = ({ groups, footer }: {
   groups: TenantNavigationGroup[]
-  identity: React.ReactNode
   footer?: React.ReactNode
 }) => {
   const pathname = usePathname()
@@ -18,10 +17,9 @@ export const TenantNavigation = ({ groups, identity, footer }: {
   const isActive = (href: string) => isNavigationItemActive(pathname, href, search)
   return (
     <aside id="cms-tenant-navigation" className={`nav cms-tenant-nav${navOpen ? ' nav--nav-open' : ''}${hydrated ? ' nav--nav-hydrated' : ''}${shouldAnimate ? ' nav--nav-animate' : ''}`} inert={!navOpen || undefined}>
-      <button className="cms-nav-dismiss" type="button" onClick={() => setNavOpen(false)} aria-label="Close navigation" title="Close navigation"><XIcon /></button>
       <div className="nav__scroll" ref={navRef}>
         <nav className="nav__wrap" aria-label="Website content">
-          {identity}
+          <p className="cms-nav-environment" title="CMS publishing updates the preview website, not roomchang.com.">Preview workspace</p>
           <Link className="cms-overview-link" href="/admin" prefetch={false} aria-current={pathname === '/admin' ? 'page' : undefined}>Overview</Link>
           {groups.map((group) => {
             const active = group.items.some((item) => isActive(item.href))

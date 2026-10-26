@@ -6,7 +6,6 @@ import { getTranslation } from '@payloadcms/translations'
 import type { Payload } from 'payload'
 import { getTenantByHost, normalizeHost } from '@/lib/get-tenant-by-host'
 import { TenantNavigation, type TenantNavigationGroup } from './TenantNavigation'
-import { TenantNavBanner } from './TenantNavBanner'
 import { PlatformBackLink } from './PlatformBackLink'
 import { withStatPageLinks } from '@/lib/stat-pages'
 
@@ -120,7 +119,7 @@ export const PlatformNav: React.FC<NavServerProps> = async (props) => {
         id: `nav-${entity.slug}`,
       })),
     }))
-    return <TenantNavigation groups={withStatPageLinks(navigation, props.payload.config.routes.admin)} identity={<TenantNavBanner payload={props.payload} user={props.user} />} footer={<PlatformBackLink payload={props.payload} user={props.user} />} />
+    return <TenantNavigation groups={withStatPageLinks(navigation, props.payload.config.routes.admin)} footer={<PlatformBackLink payload={props.payload} user={props.user} />} />
   }
 
   // Super-admin on a tenant's own domain → give them that tenant's workspace.
@@ -151,9 +150,8 @@ export const PlatformNav: React.FC<NavServerProps> = async (props) => {
       // MUST return a SINGLE element. Returning a fragment here puts extra
       // children into the admin template's layout container, which renders a
       // second sidebar panel, covers the nav-collapse chevron, and pushes the
-      // main content area out of view. The "Editing site" banner and the
-      // back-to-platform link live in the beforeNavLinks / afterNavLinks slots
-      // instead, which render INSIDE the nav.
+      // main content area out of view. Branding now belongs to the separate
+      // shared header slot; platform navigation remains inside this nav.
       return tenantNav(scopedProps.visibleEntities?.collections ?? [])
     }
   }

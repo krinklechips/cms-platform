@@ -27,6 +27,41 @@ assert.ok(brand.AdminLogo)
 assert.ok(brand.AdminIcon)
 const { AdminLogo, AdminIcon } = brand
 
+test('shared-header menu retains native navigation state, accessible labels and desktop preference behavior', async () => {
+  for (const open of [true, false]) for (const mobile of [true, false]) {
+    let next: boolean | undefined
+    const preferences: unknown[][] = []
+    const controls: { SidebarControl?: () => React.ReactElement<React.ComponentProps<'button'>> } = {}
+    loadSource('../src/components/SidebarControl.tsx', controls, {
+      '@payloadcms/ui': {
+        MenuIcon: () => null, useNav: () => ({ navOpen: open, setNavOpen: (value: boolean) => { next = value } }),
+        useWindowInfo: () => ({ breakpoints: { l: mobile } }),
+        usePreferences: () => ({ setPreference: async (...args: unknown[]) => { preferences.push(args) } }),
+      },
+    })
+    const button = controls.SidebarControl!()
+    assert.equal(button.type, 'button')
+    assert.equal(button.props['aria-expanded'], open)
+    assert.equal(button.props['aria-label'], open ? 'Hide sidebar' : 'Show sidebar')
+    assert.equal(button.props['aria-controls'], 'cms-tenant-navigation')
+    await button.props.onClick!({} as never)
+    assert.equal(next, !open)
+    assert.equal(preferences.length, mobile ? 0 : 1)
+    if (!mobile) assert.deepEqual(preferences[0].slice(1), [{ open: !open }, true])
+  }
+})
+
+test('temporary branding lookup failure never removes the tenant workspace menu', async () => {
+  const header: { TenantWorkspaceHeader?: (props: object) => Promise<React.ReactNode> } = {}
+  loadSource('../src/components/TenantWorkspaceHeader.tsx', header, {
+    './SidebarControl': { SidebarControl: () => React.createElement('button', { 'aria-label': 'Show sidebar' }) },
+    './TenantNavBanner': { TenantNavBanner: async () => null },
+  })
+  const html = renderToStaticMarkup(await header.TenantWorkspaceHeader!({}))
+  assert.match(html, /cms-workspace-header/)
+  assert.match(html, /aria-label="Show sidebar"/)
+})
+
 for (const [host, name, src] of [
   ['roomchang.serviettelab.com', 'Roomchang Dental Hospital', '/roomchang-mark.png'],
   ['serviettelab.com', 'Serviette Labs', '/serviette-logo.png'],
