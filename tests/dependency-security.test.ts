@@ -19,7 +19,7 @@ test('the resolved graph excludes the vulnerable DOMPurify and esbuild releases'
   for (const [name, entry] of Object.entries(lock.packages) as [string, { version: string }][]) {
     if (name.endsWith('/dompurify')) {
       sanitizers++
-      assert.equal(entry.version, '3.4.16', name)
+      assert.equal(entry.version, '3.4.17', name)
     }
     if (name.endsWith('/esbuild')) {
       builders++
