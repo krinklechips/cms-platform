@@ -12,6 +12,7 @@
  */
 import { readdirSync } from 'node:fs'
 import pg from 'pg'
+import { postgresConnection } from '../src/lib/postgres-connection.mjs'
 
 const uri = process.env.DATABASE_URI
 if (!uri) {
@@ -24,7 +25,7 @@ const files = readdirSync(new URL('../src/migrations/', import.meta.url))
   .map((f) => f.replace(/\.ts$/, ''))
   .sort()
 
-const client = new pg.Client({ connectionString: uri })
+const client = new pg.Client(postgresConnection(uri))
 try {
   await client.connect()
   const { rows } = await client.query('SELECT name FROM payload_migrations')

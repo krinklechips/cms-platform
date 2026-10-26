@@ -3,12 +3,13 @@ import { after, test } from 'node:test'
 import type { Access, PayloadRequest } from 'payload'
 import { loadPayloadConfig } from './helpers/load-payload-config'
 
-const previous = { site: process.env.DUMMY_SITE_URL, secret: process.env.PREVIEW_SECRET }
+const previous = { site: process.env.DUMMY_SITE_URL, secret: process.env.PREVIEW_SECRET, tenant: process.env.DUMMY_SITE_TENANT_ID }
 process.env.DUMMY_SITE_URL = 'https://preview.example.test'
+process.env.DUMMY_SITE_TENANT_ID = '42'
 delete process.env.PREVIEW_SECRET
 const config = loadPayloadConfig()
 after(() => {
-  for (const [key, value] of [['DUMMY_SITE_URL', previous.site], ['PREVIEW_SECRET', previous.secret]] as const) {
+  for (const [key, value] of [['DUMMY_SITE_URL', previous.site], ['PREVIEW_SECRET', previous.secret], ['DUMMY_SITE_TENANT_ID', previous.tenant]] as const) {
     if (value === undefined) delete process.env[key]
     else process.env[key] = value
   }
@@ -19,7 +20,18 @@ async function preview(collection: string, data: Record<string, unknown> = {}, l
   const url = resolved.admin.livePreview?.url
   assert.equal(typeof url, 'function')
   if (typeof url !== 'function') throw new Error('Missing live preview URL resolver')
-  return url({ data, locale: { code: locale }, collectionConfig: { slug: collection }, req } as unknown as Parameters<typeof url>[0])
+  // Routing tests use an authorized saved fixture; security tests exercise the
+  // real tenant access checks separately in preview-tenant-isolation.test.ts.
+  const supplied = req as { payload?: { findByID?: (args: Record<string, unknown>) => unknown; config?: unknown } } | undefined
+  const originalFindByID = supplied?.payload?.findByID
+  const request = Object.assign(supplied ?? {}, { user: { id: 7, roles: ['editor'], tenants: [{ tenant: 42 }] },
+    payload: { ...supplied?.payload, findByID: async (args: Record<string, unknown>) => {
+      if (args.collection === collection && (args.select as { tenant?: boolean })?.tenant) return { id: args.id, tenant: 42 }
+      if (originalFindByID) return originalFindByID(args)
+      return null
+    } },
+  })
+  return url({ data: { id: 100, ...data }, locale: { code: locale }, collectionConfig: { slug: collection }, req: request } as unknown as Parameters<typeof url>[0])
 }
 
 async function target(collection: string, data: Record<string, unknown>, locale: string, req?: unknown) {
@@ -97,7 +109,7 @@ for (const [collection, data, path] of routes) {
 
 test('missing detail slugs use their listing, while a new custom page has no homepage preview', async () => {
   for (const [collection, path] of [
-    ['services', '/services'], ['technology', '/technology'], ['branches', '/contact'],
+    ['services', '/services'], ['technology', '/technology'], ['branches', '/about/branches/100'],
     ['clinical-cases', '/clinical-results'], ['career-positions', '/about/careers'],
     ['news-articles', '/about/news'], ['community-articles', '/about/community'],
   ]) assert.equal(await target(collection, {}, 'kh'), `/kh${path}`)
@@ -125,7 +137,7 @@ test('statistics preview rejects irrelevant, stale or malformed page contexts', 
 
 test('statistic form-state refreshes keep page context when native form data omits the record ID', async () => {
   const req = { query: {}, headers: new Headers({ referer: 'https://cms.example.test/admin/collections/site-stats/2?statPage=clinical' }) }
-  assert.equal(await target('site-stats', { key: 'specialist_dentists' }, 'kh', req), '/kh/clinical-results')
+  assert.equal(await target('site-stats', { id: 2, key: 'specialist_dentists' }, 'kh', req), '/kh/clinical-results')
   const history = { query: {}, headers: new Headers({ referer: 'https://cms.example.test/admin/collections/site-stats/2/versions/3?statPage=clinical' }) }
   assert.equal(await target('site-stats', { key: 'specialist_dentists' }, 'kh', history), '/kh')
 })

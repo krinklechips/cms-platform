@@ -279,7 +279,8 @@ test('native transferred drafts authorize both stored owners while retaining doc
         const state = await transferred()
         if (admin) await payload.db.updateOne({ collection: 'tenants', id: state.target.id, data: { enabledCollections: [] } })
         const user = admin ? { id: 99, collection: 'users', roles: ['super-admin'], tenants: [] } as never : state.user
-        const deleted = await payload.delete({ collection: 'services', id: state.published.id, user, overrideAccess: false })
+        const deleted = await payload.delete({ collection: 'services', id: state.published.id, user, overrideAccess: false,
+          req: { headers: new Headers({ 'if-match': state.moved._editorialRevision! }) } })
         assert.equal(deleted.id, state.published.id)
         const after = await state.snapshot()
         assert.equal(after.parent, null)
@@ -383,7 +384,8 @@ test('native PostgreSQL delete shares the editorial writer lock before ownership
       const state = await seed()
       const pause = barrier()
       deletePause = { id: state.doc.id, gate: pause }
-      const deleting = app.delete({ collection: 'services', id: state.doc.id, locale: 'en', user: state.deleter, overrideAccess: false })
+      const deleting = app.delete({ collection: 'services', id: state.doc.id, locale: 'en', user: state.deleter, overrideAccess: false,
+        req: { headers: new Headers({ 'if-match': state.doc._editorialRevision! }) } })
       await pause.reached
       const writer = state.transfer().then(doc => ({ saved: true, tenant: doc.tenant, status: 200 }), error => ({ saved: false, tenant: undefined, status: status(error) }))
       try {
@@ -410,7 +412,8 @@ test('native PostgreSQL delete shares the editorial writer lock before ownership
       writePause = { id: state.doc.id, gate: pause }
       const writer = state.transfer()
       await pause.reached
-      const deleting = app.delete({ collection: 'services', id: state.doc.id, locale: 'en', user: state.deleter, overrideAccess: false })
+      const deleting = app.delete({ collection: 'services', id: state.doc.id, locale: 'en', user: state.deleter, overrideAccess: false,
+        req: { headers: new Headers({ 'if-match': state.doc._editorialRevision! }) } })
         .then(() => ({ deleted: true, status: 200 }), error => ({ deleted: false, status: status(error) }))
       try {
         assert.equal(await waiting(deleting), true, 'Delete must wait before reading ownership or capturing audit state')
@@ -448,7 +451,8 @@ test('native PostgreSQL delete shares the editorial writer lock before ownership
         assert.deepEqual(await state.snapshot(), before)
       }
       assert.equal(app.collections.services.config.disableBulkDelete, true, 'Payload must also hide the unsafe Admin bulk-delete action')
-      await app.delete({ collection: 'services', id: state.doc.id, user: state.user, overrideAccess: false })
+      await app.delete({ collection: 'services', id: state.doc.id, user: state.user, overrideAccess: false,
+        req: { headers: new Headers({ 'if-match': state.doc._editorialRevision! }) } })
       const after = await state.snapshot()
       assert.equal(after.parent.length, 0)
       assert.equal(after.versions.length, 0)

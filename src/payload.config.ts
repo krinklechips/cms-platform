@@ -54,6 +54,7 @@ import { withEditorialConcurrency } from './lib/with-editorial-concurrency'
 import { withEditorialAudit } from './lib/editorial-audit'
 import { cmsEmailAdapter } from './lib/cms-email'
 import { getPreviewUrl, PREVIEW_COLLECTIONS } from './lib/preview-routes'
+import { postgresConnection } from './lib/postgres-connection.mjs'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -66,10 +67,8 @@ const dirname = path.dirname(filename)
  *     └─sync──▶ THIS CMS (editing layer; Roomchang = tenant #1)
  *                 └─renders──▶ DUMMY SITE (mirror fed by this CMS)
  *
- * DB: sqlite for the POC. To move onto the Supabase Postgres later, swap
- * `sqliteAdapter` for `postgresAdapter({ pool: { connectionString:
- * process.env.DATABASE_URL } })` from @payloadcms/db-postgres (already
- * installed) and set DATABASE_URL in .env.
+ * DB: the CMS's own Supabase Postgres via verified TLS in production;
+ * SQLite remains available for disposable local development fixtures.
  */
 export default buildConfig({
   email: cmsEmailAdapter(),
@@ -210,7 +209,7 @@ export default buildConfig({
   // prod DB never got its tables. Migrations are the correct production fix.
   db: process.env.DATABASE_URI?.startsWith('postgres')
     ? postgresAdapter({
-        pool: { connectionString: process.env.DATABASE_URI },
+        pool: postgresConnection(process.env.DATABASE_URI),
         // Never dev-push against Postgres (that's always prod or prod-like):
         // schema changes go through migrations ONLY. Prevents local scripts
         // from silently mutating the production schema (bit us once already

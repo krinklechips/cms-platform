@@ -48,6 +48,22 @@ WEBSITE ENQUIRIES / SLOTS / BOOKINGS → clinic Supabase (not CMS snapshots)
 
 ## Migrations — the four rules
 
+PostgreSQL connections in Payload (including `payload migrate`) and the startup
+migration gate share `src/lib/postgres-connection.mjs`. Remote connections always
+request TLS with certificate and hostname verification. Supabase uses Node's
+trusted roots plus the bundled public Supabase Root 2021 CA. The CA expires on
+26 April 2031; review provider certificate changes before that date. No runtime
+certificate download or new secret is required. Other private PostgreSQL CAs can
+be configured using the PEM value `DATABASE_SSL_CA` in the service environment.
+
+Do not use `NODE_TLS_REJECT_UNAUTHORIZED=0` or a `rejectUnauthorized: false`
+workaround. URL `ssl*` options are removed before passing explicit verified TLS
+options to `pg`, since the URL parser can otherwise replace those options.
+Only exact loopback hosts outside `NODE_ENV=production` can use plaintext local
+fixtures. A TLS failure stops connection/startup; it never retries plaintext.
+Enabling the provider's SSL-enforcement switch is a separate infrastructure
+change with possible downtime and requires a maintenance approval.
+
 1. Generate against a **disposable restored database**, with the same enabled
    configuration shape, including fixture `R2_*` settings. Without R2 vars the storage plugin doesn't
    register and the diff tries to `DROP COLUMN media.prefix`.
@@ -71,6 +87,20 @@ the regenerated importMap.js** — `next build` does not do it, and the
 component silently renders empty (PublishedCell incident).
 
 ## Tenant onboarding
+
+The existing website preview integration is explicitly bound to
+`DUMMY_SITE_TENANT_ID` (Roomchang: `1`). Set it alongside `DUMMY_SITE_URL` and
+`PREVIEW_SECRET` in the CMS service environment before deploying the preview
+authorization fix. Missing tenant configuration disables preview URLs rather
+than exposing another customer's drafts. Only an authenticated member of that
+tenant (or platform staff), opening a saved document owned by that tenant, may
+receive the preview link. Existing content/drafts are not changed.
+
+Do not reuse Roomchang's preview site or credential for a newly onboarded tenant.
+If a shared preview credential may previously have been issued to another
+tenant, rotate `PREVIEW_SECRET` on the CMS and `PAYLOAD_PREVIEW_SECRET` on the
+sandbox together. Existing grants are not revoked by the URL-generation fix
+alone. Coordinate this separately from changing the production website source.
 
 ```
 DATABASE_URI="$DATABASE_URI_PROD" npx tsx scripts/create-tenant.ts \

@@ -23,8 +23,13 @@ const readRevision = (args: Record<string, unknown>, req: PayloadRequest): strin
   return expected
 }
 
-export const protectEditorialWrite: CollectionBeforeOperationHook = async ({ args, collection, operation, req }) => {
-  if (operation !== 'update' && operation !== 'restoreVersion') return
+const protectEditorialOperation = async ({ args, collection, operation, req }: {
+  args?: object
+  collection: Parameters<CollectionBeforeOperationHook>[0]['collection']
+  operation: string
+  req: PayloadRequest
+}) => {
+  if (operation !== 'update' && operation !== 'restoreVersion' && operation !== 'delete') return
   if (!args) throw new APIError('Missing editorial operation arguments.', 400)
   const parent = operation === 'restoreVersion'
     ? asObject(req.context.localeScopedRestore).parentID : 'id' in args ? args.id : undefined
@@ -67,6 +72,10 @@ export const protectEditorialWrite: CollectionBeforeOperationHook = async ({ arg
   }
 }
 
+export const protectEditorialWrite: CollectionBeforeOperationHook = args => {
+  if (args.operation === 'update' || args.operation === 'restoreVersion') return protectEditorialOperation(args)
+}
+
 export const withEditorialConcurrency = (config: CollectionConfig): CollectionConfig => {
   if (!(config.versions && typeof config.versions === 'object' && config.versions.drafts) && config.slug !== 'media') return config
   return { ...config,
@@ -78,6 +87,11 @@ export const withEditorialConcurrency = (config: CollectionConfig): CollectionCo
       access: { read: ({ req }) => Boolean(req.user) } }],
     hooks: { ...config.hooks,
       beforeOperation: [...(config.hooks?.beforeOperation ?? []), protectEditorialWrite],
+      // Native delete access and stored-owner checks run first. The existing
+      // transaction lock still covers this check, audit capture, and deletion.
+      beforeDelete: [...(config.hooks?.beforeDelete ?? []), async args => {
+        await protectEditorialOperation({ ...args, operation: 'delete', args: { id: args.id } })
+      }],
       afterRead: [...(config.hooks?.afterRead ?? []), ({ doc, req, collection }) => {
         const localization = req.payload.config.localization
         if (req.user && doc.id != null && doc.updatedAt && (!localization || typeof req.locale === 'string' && localization.localeCodes.includes(req.locale))) {

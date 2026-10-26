@@ -35,11 +35,15 @@ test('obsolete service preview returns native 404 before reading CMS data in eve
 test('supported service previews still use the test-site entry point and selected language', async () => {
   const previousSite = process.env.DUMMY_SITE_URL
   const previousSecret = process.env.PREVIEW_SECRET
+  const previousTenant = process.env.DUMMY_SITE_TENANT_ID
   process.env.DUMMY_SITE_URL = 'https://preview.example.test'
   process.env.PREVIEW_SECRET = 'synthetic-preview-test-secret'
+  process.env.DUMMY_SITE_TENANT_ID = '1'
+  const req = { user: { roles: ['editor'], tenants: [{ tenant: 1 }] },
+    payload: { findByID: async () => ({ id: 1, tenant: 1 }) } }
   try {
     for (const code of ['en', 'kh', 'cn']) {
-      const value = await getPreviewUrl({ data: { slug: 'implant-bridges' }, locale: { code }, collectionConfig: { slug: 'services' } } as any)
+      const value = await getPreviewUrl({ data: { id: 1, slug: 'implant-bridges' }, locale: { code }, collectionConfig: { slug: 'services' }, req } as unknown as Parameters<typeof getPreviewUrl>[0])
       const url = new URL(String(value))
       assert.equal(url.origin, 'https://preview.example.test')
       assert.equal(url.pathname, '/api/preview')
@@ -50,5 +54,7 @@ test('supported service previews still use the test-site entry point and selecte
     else process.env.DUMMY_SITE_URL = previousSite
     if (previousSecret === undefined) delete process.env.PREVIEW_SECRET
     else process.env.PREVIEW_SECRET = previousSecret
+    if (previousTenant === undefined) delete process.env.DUMMY_SITE_TENANT_ID
+    else process.env.DUMMY_SITE_TENANT_ID = previousTenant
   }
 })

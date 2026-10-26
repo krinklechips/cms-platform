@@ -121,6 +121,31 @@ test('real staff share localized revisions and stale writes cannot replace a new
       assert.deepEqual((await payload.findVersions({ collection: 'pages', where: { parent: { equals: page.id } }, pagination: false })).docs, versions.docs)
     })
 
+    await t.test('stale or missing delete preconditions cannot erase another account draft or its versions', async () => {
+      for (const locale of ['en', 'kh', 'cn'] as const) {
+        const page = await seed()
+        const opened = await read(page.id, locale)
+        const otherLocale = locale === 'en' ? 'kh' : 'en'
+        await write(await read(page.id, otherLocale, b), otherLocale, 'Borin newer draft before deletion', b)
+        const history = () => payload.findVersions({ collection: 'pages', where: { parent: { equals: page.id } }, locale: 'all', pagination: false })
+        const before = await history()
+        const remove = async (revision?: string) => {
+          const req = await createLocalReq({ locale, fallbackLocale: false, user: a }, payload)
+          if (revision) req.headers.set('if-match', revision)
+          return payload.delete({ collection: 'pages', id: page.id, locale, req, user: a, overrideAccess: false })
+        }
+        const hasStatus = (status: number) => (error: unknown) => error instanceof Error && 'status' in error && error.status === status
+        await assert.rejects(() => remove(opened._editorialRevision), hasStatus(409))
+        await assert.rejects(() => remove(), hasStatus(428))
+        assert.equal((await read(page.id, otherLocale, b)).title, 'Borin newer draft before deletion')
+        assert.equal((await read(page.id, otherLocale, b, false)).title, `${otherLocale.toUpperCase()} original`)
+        assert.deepEqual((await history()).docs, before.docs)
+        // Deliberate deletion is still available, but only after reopening the current record.
+        await remove((await read(page.id, locale))._editorialRevision)
+        await assert.rejects(() => read(page.id, locale), hasStatus(404))
+      }
+    })
+
     await t.test('a publish without a locale option publishes only the selected language and retains other drafts', async () => {
       const page = await seed()
       for (const locale of ['kh', 'cn'] as const) await write(await read(page.id, locale), locale, `${locale} private pending`)

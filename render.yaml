@@ -22,3 +22,5 @@ services:
         sync: false # set in dashboard — the CMS's own Supabase Postgres connection string (pooler URI)
       - key: DUMMY_SITE_URL
         sync: false # set once the dummy site is deployed (Live Preview target)
+      - key: DUMMY_SITE_TENANT_ID
+        sync: false # saved tenant owner of that preview integration (Roomchang: 1)

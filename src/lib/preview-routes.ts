@@ -1,4 +1,4 @@
-import type { LivePreviewConfig, PayloadRequest } from 'payload'
+import type { CollectionSlug, LivePreviewConfig, PayloadRequest } from 'payload'
 import { getStatPreviewPath } from './stat-pages'
 
 export const PREVIEW_COLLECTIONS = [
@@ -103,8 +103,38 @@ function statPreviewPath(data: Record<string, unknown>, req: PayloadRequest | un
   return getStatPreviewPath(typeof data.key === 'string' ? data.key : '', page)
 }
 
+const tenantID = (value: unknown): string | null => {
+  const id = value && typeof value === 'object' ? (value as { id?: unknown }).id : value
+  return typeof id === 'number' && Number.isFinite(id) || typeof id === 'string' && id.trim()
+    ? String(id) : null
+}
+
+async function canPreviewDocument(collection: string, data: Record<string, unknown>, req: PayloadRequest | undefined, locale: 'en' | 'kh' | 'cn') {
+  // The single configured site/credential is a capability for ONE tenant, not
+  // a platform-wide fallback. New tenants need their own reviewed integration.
+  const configuredTenant = process.env.DUMMY_SITE_TENANT_ID?.trim()
+  const actor = req?.user as { roles?: string[]; tenants?: { tenant?: unknown }[] } | null | undefined
+  const id = tenantID(data.id)
+  if (!configuredTenant || !actor || !req?.payload || !id || !PREVIEW_COLLECTIONS.includes(collection)) return false
+  if (!actor.roles?.includes('super-admin') && !actor.tenants?.some(row => tenantID(row.tenant) === configuredTenant)) return false
+  try {
+    const readReq = Object.assign(Object.create(req), req, { context: { ...req.context }, fallbackLocale: false })
+    const saved = await req.payload.findByID({
+      collection: collection as CollectionSlug, id,
+      req: readReq, user: req.user, overrideAccess: false, disableErrors: true,
+      locale, fallbackLocale: false, draft: true, depth: 0, select: { tenant: true },
+    })
+    // Form data (including populated relationships) is never proof of ownership.
+    return tenantID((saved as { tenant?: unknown } | null)?.tenant) === configuredTenant
+  } catch {
+    return false
+  }
+}
+
 export const getPreviewUrl: Exclude<LivePreviewConfig['url'], string | null | undefined> = async ({ data, locale, collectionConfig, req }) => {
   const loc = locale?.code === 'kh' || locale?.code === 'cn' ? locale.code : 'en'
+  const collection = collectionConfig?.slug ?? ''
+  if (!await canPreviewDocument(collection, data ?? {}, req, loc)) return null
   const slug = typeof data?.slug === 'string' ? encodeURIComponent(data.slug.trim()) : ''
   const pages: Record<string, string | null> = {
     services: slug ? `/services/${slug}` : '/services',
@@ -134,7 +164,6 @@ export const getPreviewUrl: Exclude<LivePreviewConfig['url'], string | null | un
       : data?.category === 'testimonial' ? '/about/testimonials' : null,
     'career-positions': slug ? `/about/careers/${slug}` : '/about/careers',
   }
-  const collection = collectionConfig?.slug ?? ''
   const page = collection === 'pricing-comparison-sets'
     ? comparisonPath(data?.slug)
     : collection === 'pricing-comparison-rows'
