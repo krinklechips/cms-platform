@@ -79,6 +79,43 @@ change with possible downtime and requires a maintenance approval.
    readable still needs an explicit `*_public_read` policy — it renders
    empty until then (fail-visible, by design).
 
+## Browser Authentication And Password Recovery
+
+Staff sessions remain two hours, with HttpOnly, SameSite=Lax and production
+Secure cookies. Browser writes to `/admin` and `/api` must originate from the
+same explicit CMS origin as their destination. Cookie-less, origin-less
+header-authenticated server integrations retain Payload's normal authorization.
+Anonymous GET reads are not routed through tenant pinning.
+
+`CMS_TRUSTED_ORIGINS` is an optional comma-separated list of exact HTTPS CMS
+origins. The default trusted origins are `https://serviettelab.com` and
+`https://roomchang.serviettelab.com`. Add a newly onboarded CMS hostname here
+before staff use it. Never add a wildcard, untrusted sibling, or public website
+domain just because it belongs to a tenant. Local HTTP exceptions are limited
+to explicitly configured loopback origins outside production. Forwarded host
+and protocol values must resolve to one of these explicit entries.
+
+`CMS_PUBLIC_URL` controls the canonical password-reset link origin; it defaults
+to `https://serviettelab.com`. Reset email links never trust request Host/Origin
+headers. Do not make the global Payload serverURL canonical: requests and
+cookies must remain on the active tenant portal. SMTP remains a separate
+configuration step; adding this generator does not enable email delivery.
+
+The deployed headers protect transport, framing, object embedding, MIME types
+and referrers. This is not a complete script-source CSP or an XSS guarantee.
+Do not add a broad enforcing CSP without checking Next scripts, uploads and
+the external test-site preview iframe.
+
+Service and Technology URLs reserve their tenant's published and latest-draft
+addresses under the existing transaction, with parent-table unique indexes.
+Migration `20261026_032357` adds only four indexes. Duplicate preflight aborts
+without renaming or merging documents. If preflight fails, inspect with the
+content owner; never clear a draft or import older content to force deployment.
+The migration's up/down/up path preserves every row in isolated PostgreSQL.
+Application rollback can retain these additive indexes; do not restore an old
+database snapshot over newer staff work. Any deliberate index removal requires
+review because it removes a safety guarantee, even though it deletes no rows.
+
 ## Admin components
 
 Any new component path referenced in the config or a field

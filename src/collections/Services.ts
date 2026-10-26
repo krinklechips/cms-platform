@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { SECTION_BLOCKS } from '../blocks/section-blocks'
+import { protectDetailAddress } from '../lib/detail-addresses'
 
 /**
  * Services — mirrors the live site's `services` table (Supabase).
@@ -12,6 +13,8 @@ import { SECTION_BLOCKS } from '../blocks/section-blocks'
  */
 export const Services: CollectionConfig = {
   slug: 'services',
+  indexes: [{ fields: ['tenant', 'slug'], unique: true }],
+  hooks: { beforeValidate: [protectDetailAddress] },
   admin: {
     group: 'Main Pages',
     useAsTitle: 'name',

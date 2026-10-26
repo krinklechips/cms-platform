@@ -37,7 +37,7 @@ export async function GET(request: Request): Promise<Response> {
   // proxy to stop redirecting for a while (it re-tries after expiry).
   const noPin = (why: string) => {
     console.warn(`pin-tenant: not pinning (${why}) — setting pt-nopin sentinel`)
-    res.cookies.set('pt-nopin', '1', { path: '/', maxAge: 600, httpOnly: true, sameSite: 'lax' })
+    res.cookies.set('pt-nopin', '1', { path: '/', maxAge: 600, httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
     return res
   }
 

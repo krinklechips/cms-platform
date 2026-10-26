@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { allowCMSBrowserWrite } from './lib/cms-browser-security'
 
 /**
  * LAYER 2 of host scoping — pin the multi-tenant plugin's `payload-tenant`
@@ -11,8 +12,8 @@ import { NextResponse, type NextRequest } from 'next/server'
  * `export const runtime`.
  *
  * Design rules (from reading the plugin source — see PlatformNav/host-scope):
- *  - matcher covers /admin ONLY. Never /api: the sandbox site reads the REST
- *    API anonymously and a redirect there would be a live outage.
+ *  - tenant pinning covers /admin ONLY. API requests get the browser-write
+ *    guard but must never be redirected: anonymous sandbox reads stay intact.
  *  - The cookie cannot be set from a client component (the plugin's provider
  *    deletes it on mount when its server-rendered initialValue was empty), so
  *    we bounce through a server route that sets it BEFORE the admin renders.
@@ -21,9 +22,14 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const PLATFORM_HOSTS = new Set(['serviettelab.com', 'www.serviettelab.com', 'localhost'])
 
-export const config = { matcher: ['/admin/:path*'] }
+export const config = { matcher: ['/admin/:path*', '/api/:path*'] }
 
 export default function proxy(req: NextRequest) {
+  if (!allowCMSBrowserWrite(req)) {
+    return NextResponse.json({ errors: [{ message: 'This browser request must come from this CMS origin.' }] },
+      { status: 403, headers: { 'Cache-Control': 'no-store' } })
+  }
+  if (!req.nextUrl.pathname.startsWith('/admin')) return
   try {
     const host = (req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? '')
       .split(':')[0]

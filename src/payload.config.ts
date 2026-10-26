@@ -55,6 +55,7 @@ import { withEditorialAudit } from './lib/editorial-audit'
 import { cmsEmailAdapter } from './lib/cms-email'
 import { getPreviewUrl, PREVIEW_COLLECTIONS } from './lib/preview-routes'
 import { postgresConnection } from './lib/postgres-connection.mjs'
+import { trustedCMSOrigins } from './lib/cms-browser-security'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -71,6 +72,7 @@ const dirname = path.dirname(filename)
  * SQLite remains available for disposable local development fixtures.
  */
 export default buildConfig({
+  csrf: trustedCMSOrigins(),
   email: cmsEmailAdapter(),
   i18n: {
     translations: {

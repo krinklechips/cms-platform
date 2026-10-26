@@ -1,4 +1,5 @@
 import { APIError, type CollectionConfig } from 'payload'
+import { cmsResetEmail } from '../lib/cms-reset-email'
 
 const isSuperAdmin = (user: unknown): boolean =>
   Boolean((user as { roles?: string[] } | null)?.roles?.includes('super-admin'))
@@ -21,7 +22,9 @@ export const Users: CollectionConfig = {
   },
   // useAPIKey: the sandbox's draft-preview fetches authenticate as a service
   // user (tenant member) via `Authorization: users API-Key <key>`.
-  auth: { depth: 2, useAPIKey: true },
+  auth: { depth: 2, useAPIKey: true, tokenExpiration: 7200,
+    cookies: { secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' },
+    forgotPassword: { generateEmailHTML: cmsResetEmail } },
   hooks: {
     beforeValidate: [
       // INCIDENT 2026-08-18: an "editor" account saved with no tenant

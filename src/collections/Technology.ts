@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { SECTION_BLOCKS } from '../blocks/section-blocks'
+import { protectDetailAddress } from '../lib/detail-addresses'
 
 /**
  * Technology — mirrors the live site's `technology` table (Supabase).
@@ -7,6 +8,8 @@ import { SECTION_BLOCKS } from '../blocks/section-blocks'
  */
 export const Technology: CollectionConfig = {
   slug: 'technology',
+  indexes: [{ fields: ['tenant', 'slug'], unique: true }],
+  hooks: { beforeValidate: [protectDetailAddress] },
   admin: {
     group: 'Main Pages',
     useAsTitle: 'name',
