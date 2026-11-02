@@ -6,6 +6,7 @@ export type TenantBranding = {
   slug: string
   logoUrl: string | null
   moduleKeys: string[]
+  enabledCollections: string[]
 }
 
 /** Lowercase, strip port — exact match against tenants.domains[].domain. */
@@ -35,6 +36,7 @@ export async function getTenantByHost(payload: Payload, rawHost: string | null |
         slug: string
         logo?: { url?: string | null } | number | null
         subscriptions?: { module?: { key?: string } | number | null; active?: boolean | null }[]
+        enabledCollections?: unknown
       }
     | undefined
   if (!tenant) return null
@@ -51,5 +53,6 @@ export async function getTenantByHost(payload: Payload, rawHost: string | null |
     .filter((s) => s.active !== false && typeof s.module === 'object' && s.module?.key)
     .map((s) => (s.module as { key: string }).key)
 
-  return { id: tenant.id, name: tenant.name, slug: tenant.slug, logoUrl, moduleKeys }
+  return { id: tenant.id, name: tenant.name, slug: tenant.slug, logoUrl, moduleKeys,
+    enabledCollections: Array.isArray(tenant.enabledCollections) ? tenant.enabledCollections.filter((s): s is string => typeof s === 'string') : [] }
 }

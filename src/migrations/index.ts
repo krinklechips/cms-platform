@@ -22,6 +22,7 @@ import * as migration_20261022_040000_media_directories from './20261022_040000_
 import * as migration_20261022_070000_page_addresses from './20261022_070000_page_addresses';
 import * as migration_20261023_040000_homepage_captions from './20261023_040000_homepage_captions';
 import * as migration_20261026_032357 from './20261026_032357';
+import * as migration_20261102_063727_meanpack_website from './20261102_063727_meanpack_website';
 
 export const migrations = [
   {
@@ -122,26 +123,31 @@ export const migrations = [
   {
     up: migration_20261021_180000_editorial_audit.up,
     down: migration_20261021_180000_editorial_audit.down,
-    name: '20261021_180000_editorial_audit'
+    name: '20261021_180000_editorial_audit',
   },
   {
     up: migration_20261022_040000_media_directories.up,
     down: migration_20261022_040000_media_directories.down,
-    name: '20261022_040000_media_directories'
+    name: '20261022_040000_media_directories',
   },
   {
     up: migration_20261022_070000_page_addresses.up,
     down: migration_20261022_070000_page_addresses.down,
-    name: '20261022_070000_page_addresses'
+    name: '20261022_070000_page_addresses',
   },
   {
     up: migration_20261023_040000_homepage_captions.up,
     down: migration_20261023_040000_homepage_captions.down,
-    name: '20261023_040000_homepage_captions'
+    name: '20261023_040000_homepage_captions',
   },
   {
     up: migration_20261026_032357.up,
     down: migration_20261026_032357.down,
-    name: '20261026_032357'
+    name: '20261026_032357',
+  },
+  {
+    up: migration_20261102_063727_meanpack_website.up,
+    down: migration_20261102_063727_meanpack_website.down,
+    name: '20261102_063727_meanpack_website'
   },
 ];

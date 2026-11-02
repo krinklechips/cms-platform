@@ -34,6 +34,7 @@ type Brand = {
 const SERVIETTE: Brand = { name: 'Serviette Labs', wordmarkSrc: '/serviette-logo.png' }
 
 const BRANDS: { hostPrefix: string; brand: Brand }[] = [
+  { hostPrefix: 'meanpack.', brand: { name: 'Mean Pack', markSrc: '/meanpack-logo.webp' } },
   {
     hostPrefix: 'roomchang.',
     brand: { name: 'Roomchang Dental Hospital', markSrc: '/roomchang-mark.png' },

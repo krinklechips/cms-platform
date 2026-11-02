@@ -90,6 +90,10 @@ test('detail URL migration, rollback, concurrent reservations and locale restore
       assert.ok(current.tables[`public.${table}`].indexes[index]); delete current.tables[`public.${table}`].indexes[index]
     }
     assert.deepEqual({ ...current, id: previous.id, prevId: previous.prevId }, previous)
+    // Runtime configuration includes collections added after this historical
+    // migration. Bring only that disposable runtime fixture up to date after
+    // completing the predecessor/index preservation assertions above.
+    for (const subsequent of migrations.filter(m => m.name > name)) await subsequent.up(args)
     const config = await loadPayloadConfig()
     cms = await getPayload({ key: randomUUID(), config: { ...config, secret: 'isolated-detail-postgres-only', telemetry: false,
       db: postgresAdapter({ pool: {}, push: false }) as typeof config.db, typescript: { ...config.typescript, autoGenerate: false } },

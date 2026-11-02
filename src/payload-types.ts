@@ -67,6 +67,7 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    'meanpack-websites': MeanpackWebsite;
     homepage: Homepage;
     'brand-logos': BrandLogo;
     'site-stats': SiteStat;
@@ -110,6 +111,7 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    'meanpack-websites': MeanpackWebsitesSelect<false> | MeanpackWebsitesSelect<true>;
     homepage: HomepageSelect<false> | HomepageSelect<true>;
     'brand-logos': BrandLogosSelect<false> | BrandLogosSelect<true>;
     'site-stats': SiteStatsSelect<false> | SiteStatsSelect<true>;
@@ -186,84 +188,210 @@ export interface UserAuthOperations {
   };
 }
 /**
- * The home page hero: slides, trust pill, and call-to-action buttons.
+ * Edit the Mean Pack website here. Save a draft to review changes; Publish makes them visible on the website within one minute.
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "homepage".
+ * via the `definition` "meanpack-websites".
  */
-export interface Homepage {
+export interface MeanpackWebsite {
   id: number;
   tenant?: (number | null) | Tenant;
-  /**
-   * The small rounded badge at the top-left of the hero (e.g. “Trusted Since 1996”).
-   */
-  heroPill?: string | null;
-  /**
-   * Optional and off by default. Enables slide captions and per-slide CTA buttons only in the selected language; the trust pill and main CTA buttons are separate.
-   */
-  showCaptions?: boolean | null;
-  /**
-   * The main action buttons over the hero (first one is the highlighted primary). Labels use the selected language; button membership, order and URLs are shared by all languages. Independent of Show captions.
-   */
-  heroButtons?:
+  name: string;
+  copy: {
+    homeEyebrow: string;
+    homeTitle: string;
+    homeBody: string;
+    homePrimaryAction: string;
+    homeSecondaryAction: string;
+    homeFilmLabel: string;
+    homeFilmCaption: string;
+    orchardEyebrow: string;
+    orchardTitle: string;
+    orchardBody: string;
+    orchardAction: string;
+    orchardCaption: string;
+    harvestEyebrow: string;
+    harvestTitle: string;
+    harvestBody: string;
+    harvestAction: string;
+    qualityStoryEyebrow: string;
+    qualityStoryTitle: string;
+    qualityStoryBody: string;
+    qualityNoteTitle: string;
+    qualityNoteBody: string;
+    preparationEyebrow: string;
+    preparationTitle: string;
+    preparationBody: string;
+    preparationAction: string;
+    cropsEyebrow: string;
+    cropsTitle: string;
+    cropsAction: string;
+    shipmentEyebrow: string;
+    shipmentTitle: string;
+    shipmentBody: string;
+    shipmentAction: string;
+    productsEyebrow: string;
+    productsTitle: string;
+    productsBody: string;
+    servicesEyebrow: string;
+    servicesTitle: string;
+    servicesBody: string;
+    servicesCta: string;
+    servicesAction: string;
+    facilityEyebrow: string;
+    facilityTitle: string;
+    facilityBody: string;
+    facilityAreasEyebrow: string;
+    facilityAreasTitle: string;
+    facilityRouteEyebrow: string;
+    facilityRouteTitle: string;
+    facilityRouteBody: string;
+    facilityRouteAction: string;
+    facilityPhotoNote: string;
+    qualityEyebrow: string;
+    qualityTitle: string;
+    qualityBody: string;
+    qualityEvidenceEyebrow: string;
+    qualityEvidenceTitle: string;
+    qualityEvidenceBody: string;
+    qualityEvidenceNote: string;
+    qualityCta: string;
+    qualityAction: string;
+    aboutEyebrow: string;
+    aboutTitle: string;
+    aboutBody: string;
+    aboutRoleEyebrow: string;
+    aboutRoleTitle: string;
+    aboutRoleBody: string;
+    aboutRoleNote: string;
+    aboutPlaceEyebrow: string;
+    aboutPlaceTitle: string;
+    aboutPhotoCaption: string;
+    aboutDirectionsAction: string;
+    aboutContactAction: string;
+    galleryEyebrow: string;
+    galleryTitle: string;
+    galleryBody: string;
+    galleryFilmsTitle: string;
+    galleryFilmsBody: string;
+    partnershipsEyebrow: string;
+    partnershipsTitle: string;
+    partnershipsBody: string;
+    enquiryEyebrow: string;
+    enquiryTitle: string;
+    enquiryBody: string;
+    privacyEyebrow: string;
+    privacyTitle: string;
+    privacyBody: string;
+  };
+  contact: {
+    phone: string;
+    email: string;
+    whatsapp: string;
+    telegram: string;
+    facebook: string;
+    googleMaps: string;
+    address: string;
+  };
+  identity: {
+    legalName: string;
+    legalNameKhmer: string;
+    legalNameChinese: string;
+    tagline: string;
+    taglineKhmer: string;
+    taglineChinese: string;
+    location: string;
+  };
+  logo: number | Media;
+  media?:
     | {
-        label?: string | null;
-        /**
-         * Shared by all languages. Site-relative (e.g. /contact) or full URL.
-         */
-        url: string;
+        slug: string;
+        kind: 'photo' | 'video';
+        category: 'orchard' | 'visit' | 'harvest' | 'quality' | 'films' | 'library';
+        file: number | Media;
+        poster?: (number | null) | Media;
+        title?: string | null;
+        description?: string | null;
+        published?: boolean | null;
         id?: string | null;
       }[]
     | null;
-  /**
-   * Drag to reorder - the carousel plays top to bottom. Slide membership, images, order and CTA URLs are shared by all languages; caption text uses the selected language and appears only with Show captions enabled.
-   */
-  slides?:
+  scenes: {
+    heroFilm: number | Media;
+    heroPoster: number | Media;
+    orchard: number | Media;
+    orchardPortrait: number | Media;
+    harvest: number | Media;
+    harvestDetail: number | Media;
+    qualityBunch: number | Media;
+    qualityClose: number | Media;
+    about: number | Media;
+  };
+  products?:
     | {
-        /**
-         * Pick from the Media Library (preferred) — or paste a URL below.
-         */
-        image?: (number | null) | Media;
-        /**
-         * Fallback image URL (used only when no Media image is selected).
-         */
-        imageUrl?: string | null;
-        /**
-         * Where the image anchors, e.g. “center center”, “center top”, “bottom center”.
-         */
-        imagePosition?: string | null;
-        /**
-         * Not used by the current website. Existing values are retained; use Image position and Preserve full image for the supported image controls.
-         */
-        imageSize?: string | null;
-        /**
-         * Show the whole image without cropping (panoramas).
-         */
-        preserveFullImage?: boolean | null;
-        /**
-         * Caption eyebrow in the selected language. Visible only when Show captions is enabled for that language.
-         */
-        eyebrow?: string | null;
-        /**
-         * Caption headline in the selected language. Visible only when Show captions is enabled for that language.
-         */
-        title?: string | null;
-        /**
-         * Caption subtitle in the selected language. Visible only when Show captions is enabled for that language.
-         */
-        subtitle?: string | null;
-        /**
-         * Caption paragraph in the selected language. Visible only when Show captions is enabled for that language.
-         */
+        slug: string;
+        name?: string | null;
+        summary?: string | null;
         description?: string | null;
-        /**
-         * Per-slide CTA label in the selected language. Requires a supported CTA URL and Show captions enabled for that language.
-         */
-        ctaText?: string | null;
-        /**
-         * Shared by all languages. Per-slide destination; shown only with a CTA label and Show captions enabled in the selected language. Use a supported site-relative path or full URL.
-         */
-        ctaUrl?: string | null;
+        image: number | Media;
+        featured?: boolean | null;
+        featuredNote?: string | null;
+        published?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  phases: {
+    /**
+     * Fixed website phase. Edit its heading and description or reorder the phases.
+     */
+    slug: string;
+    title?: string | null;
+    description?: string | null;
+    id?: string | null;
+  }[];
+  processStages?:
+    | {
+        slug: string;
+        title?: string | null;
+        description?: string | null;
+        phase: 'receive' | 'prepare' | 'pack' | 'protect' | 'dispatch';
+        icon_key?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  capabilities?:
+    | {
+        mark?: string | null;
+        title?: string | null;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  qualityChecks?:
+    | {
+        title?: string | null;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  principles?:
+    | {
+        title?: string | null;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  galleryChapters?:
+    | {
+        slug: string;
+        title?: string | null;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  routeSteps?:
+    | {
+        title?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -388,6 +516,93 @@ export interface Module {
   createdAt: string;
 }
 /**
+ * The home page hero: slides, trust pill, and call-to-action buttons.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage".
+ */
+export interface Homepage {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * The small rounded badge at the top-left of the hero (e.g. “Trusted Since 1996”).
+   */
+  heroPill?: string | null;
+  /**
+   * Optional and off by default. Enables slide captions and per-slide CTA buttons only in the selected language; the trust pill and main CTA buttons are separate.
+   */
+  showCaptions?: boolean | null;
+  /**
+   * The main action buttons over the hero (first one is the highlighted primary). Labels use the selected language; button membership, order and URLs are shared by all languages. Independent of Show captions.
+   */
+  heroButtons?:
+    | {
+        label?: string | null;
+        /**
+         * Shared by all languages. Site-relative (e.g. /contact) or full URL.
+         */
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Drag to reorder - the carousel plays top to bottom. Slide membership, images, order and CTA URLs are shared by all languages; caption text uses the selected language and appears only with Show captions enabled.
+   */
+  slides?:
+    | {
+        /**
+         * Pick from the Media Library (preferred) — or paste a URL below.
+         */
+        image?: (number | null) | Media;
+        /**
+         * Fallback image URL (used only when no Media image is selected).
+         */
+        imageUrl?: string | null;
+        /**
+         * Where the image anchors, e.g. “center center”, “center top”, “bottom center”.
+         */
+        imagePosition?: string | null;
+        /**
+         * Not used by the current website. Existing values are retained; use Image position and Preserve full image for the supported image controls.
+         */
+        imageSize?: string | null;
+        /**
+         * Show the whole image without cropping (panoramas).
+         */
+        preserveFullImage?: boolean | null;
+        /**
+         * Caption eyebrow in the selected language. Visible only when Show captions is enabled for that language.
+         */
+        eyebrow?: string | null;
+        /**
+         * Caption headline in the selected language. Visible only when Show captions is enabled for that language.
+         */
+        title?: string | null;
+        /**
+         * Caption subtitle in the selected language. Visible only when Show captions is enabled for that language.
+         */
+        subtitle?: string | null;
+        /**
+         * Caption paragraph in the selected language. Visible only when Show captions is enabled for that language.
+         */
+        description?: string | null;
+        /**
+         * Per-slide CTA label in the selected language. Requires a supported CTA URL and Show captions enabled for that language.
+         */
+        ctaText?: string | null;
+        /**
+         * Shared by all languages. Per-slide destination; shown only with a CTA label and Show captions enabled in the selected language. Use a supported site-relative path or full URL.
+         */
+        ctaUrl?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  _editorialRevision?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * The grey band of partner logos that scrolls sideways directly under the home page hero.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -431,6 +646,9 @@ export interface SiteStat {
   numericValue?: number | null;
   suffix?: string | null;
   label?: string | null;
+  /**
+   * Legacy list order; does not reorder website statistics. Each page uses fixed statistic positions.
+   */
   order?: number | null;
   published?: boolean | null;
   _editorialRevision?: string | null;
@@ -468,7 +686,7 @@ export interface FeatureCard {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Patient quotes, author photos and star ratings. The homepage shows featured quotes when any exist, otherwise all published quotes; Patient Testimonials always includes all published quotes.
+ * Patient quotes and author photos, with star ratings on the homepage carousel. The homepage shows featured quotes when any exist, otherwise all published quotes; Patient Testimonials always includes all published quotes.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "testimonials".
@@ -2961,7 +3179,7 @@ export interface Technology {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * The headed groups on the Treatment Prices page (Implants, Crowns, Orthodontics…), their icons and the order they appear in.
+ * The headed groups on the Treatment Prices page (Implants, Crowns, Orthodontics...), their titles and display order. Section icons remain defined by the website layout.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pricing-categories".
@@ -2974,6 +3192,9 @@ export interface PricingCategory {
    */
   sourceId?: string | null;
   title: string;
+  /**
+   * Legacy metadata; not used by the current website. Section icons are selected by the website layout.
+   */
   icon?: string | null;
   order?: number | null;
   _editorialRevision?: string | null;
@@ -2996,7 +3217,13 @@ export interface PricingItem {
   sourceId?: string | null;
   name: string;
   price?: string | null;
+  /**
+   * Legacy ADA metadata; not displayed in the current Treatment Prices list. Existing values are retained.
+   */
   ada?: string | null;
+  /**
+   * Legacy comparison metadata; not displayed in the current Treatment Prices list. Use Comparison Table Rows for website comparisons.
+   */
   aus?: string | null;
   note?: string | null;
   category?: (number | null) | PricingCategory;
@@ -3391,6 +3618,9 @@ export interface CommunityArticle {
    */
   imageUrl?: string | null;
   imageAlt?: string | null;
+  /**
+   * Legacy destination; not used by the current website. Story cards open this article using its shared web address (slug). Existing values are retained.
+   */
   href?: string | null;
   date?: string | null;
   body?:
@@ -3755,6 +3985,10 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'meanpack-websites';
+        value: number | MeanpackWebsite;
+      } | null)
+    | ({
         relationTo: 'homepage';
         value: number | Homepage;
       } | null)
@@ -3931,6 +4165,223 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meanpack-websites_select".
+ */
+export interface MeanpackWebsitesSelect<T extends boolean = true> {
+  tenant?: T;
+  name?: T;
+  copy?:
+    | T
+    | {
+        homeEyebrow?: T;
+        homeTitle?: T;
+        homeBody?: T;
+        homePrimaryAction?: T;
+        homeSecondaryAction?: T;
+        homeFilmLabel?: T;
+        homeFilmCaption?: T;
+        orchardEyebrow?: T;
+        orchardTitle?: T;
+        orchardBody?: T;
+        orchardAction?: T;
+        orchardCaption?: T;
+        harvestEyebrow?: T;
+        harvestTitle?: T;
+        harvestBody?: T;
+        harvestAction?: T;
+        qualityStoryEyebrow?: T;
+        qualityStoryTitle?: T;
+        qualityStoryBody?: T;
+        qualityNoteTitle?: T;
+        qualityNoteBody?: T;
+        preparationEyebrow?: T;
+        preparationTitle?: T;
+        preparationBody?: T;
+        preparationAction?: T;
+        cropsEyebrow?: T;
+        cropsTitle?: T;
+        cropsAction?: T;
+        shipmentEyebrow?: T;
+        shipmentTitle?: T;
+        shipmentBody?: T;
+        shipmentAction?: T;
+        productsEyebrow?: T;
+        productsTitle?: T;
+        productsBody?: T;
+        servicesEyebrow?: T;
+        servicesTitle?: T;
+        servicesBody?: T;
+        servicesCta?: T;
+        servicesAction?: T;
+        facilityEyebrow?: T;
+        facilityTitle?: T;
+        facilityBody?: T;
+        facilityAreasEyebrow?: T;
+        facilityAreasTitle?: T;
+        facilityRouteEyebrow?: T;
+        facilityRouteTitle?: T;
+        facilityRouteBody?: T;
+        facilityRouteAction?: T;
+        facilityPhotoNote?: T;
+        qualityEyebrow?: T;
+        qualityTitle?: T;
+        qualityBody?: T;
+        qualityEvidenceEyebrow?: T;
+        qualityEvidenceTitle?: T;
+        qualityEvidenceBody?: T;
+        qualityEvidenceNote?: T;
+        qualityCta?: T;
+        qualityAction?: T;
+        aboutEyebrow?: T;
+        aboutTitle?: T;
+        aboutBody?: T;
+        aboutRoleEyebrow?: T;
+        aboutRoleTitle?: T;
+        aboutRoleBody?: T;
+        aboutRoleNote?: T;
+        aboutPlaceEyebrow?: T;
+        aboutPlaceTitle?: T;
+        aboutPhotoCaption?: T;
+        aboutDirectionsAction?: T;
+        aboutContactAction?: T;
+        galleryEyebrow?: T;
+        galleryTitle?: T;
+        galleryBody?: T;
+        galleryFilmsTitle?: T;
+        galleryFilmsBody?: T;
+        partnershipsEyebrow?: T;
+        partnershipsTitle?: T;
+        partnershipsBody?: T;
+        enquiryEyebrow?: T;
+        enquiryTitle?: T;
+        enquiryBody?: T;
+        privacyEyebrow?: T;
+        privacyTitle?: T;
+        privacyBody?: T;
+      };
+  contact?:
+    | T
+    | {
+        phone?: T;
+        email?: T;
+        whatsapp?: T;
+        telegram?: T;
+        facebook?: T;
+        googleMaps?: T;
+        address?: T;
+      };
+  identity?:
+    | T
+    | {
+        legalName?: T;
+        legalNameKhmer?: T;
+        legalNameChinese?: T;
+        tagline?: T;
+        taglineKhmer?: T;
+        taglineChinese?: T;
+        location?: T;
+      };
+  logo?: T;
+  media?:
+    | T
+    | {
+        slug?: T;
+        kind?: T;
+        category?: T;
+        file?: T;
+        poster?: T;
+        title?: T;
+        description?: T;
+        published?: T;
+        id?: T;
+      };
+  scenes?:
+    | T
+    | {
+        heroFilm?: T;
+        heroPoster?: T;
+        orchard?: T;
+        orchardPortrait?: T;
+        harvest?: T;
+        harvestDetail?: T;
+        qualityBunch?: T;
+        qualityClose?: T;
+        about?: T;
+      };
+  products?:
+    | T
+    | {
+        slug?: T;
+        name?: T;
+        summary?: T;
+        description?: T;
+        image?: T;
+        featured?: T;
+        featuredNote?: T;
+        published?: T;
+        id?: T;
+      };
+  phases?:
+    | T
+    | {
+        slug?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  processStages?:
+    | T
+    | {
+        slug?: T;
+        title?: T;
+        description?: T;
+        phase?: T;
+        icon_key?: T;
+        id?: T;
+      };
+  capabilities?:
+    | T
+    | {
+        mark?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  qualityChecks?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  principles?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  galleryChapters?:
+    | T
+    | {
+        slug?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  routeSteps?:
+    | T
+    | {
+        title?: T;
+        id?: T;
+      };
+  _editorialRevision?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

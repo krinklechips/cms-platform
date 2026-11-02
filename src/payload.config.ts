@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
 import { Users } from './collections/Users'
+import { MeanpackWebsites } from './collections/MeanpackWebsites'
 import { Media } from './collections/Media'
 import { MediaDirectories } from './collections/MediaDirectories'
 import { Tenants } from './collections/Tenants'
@@ -138,6 +139,7 @@ export default buildConfig({
     },
   },
   collections: [
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(MeanpackWebsites)))),
     // Order defines nav-group order: site pages first, platform tools last.
     // withHostScope: on a tenant's own domain the admin lists only that
     // tenant's rows (see lib/host-scope.ts). No-op on serviettelab.com.
@@ -245,6 +247,7 @@ export default buildConfig({
       // Tenant-scoped collections. Roomchang is tenant #1; future customers
       // get their own tenant and see only their own content.
       collections: {
+        'meanpack-websites': {},
         pages: {},
         services: {},
         doctors: {},

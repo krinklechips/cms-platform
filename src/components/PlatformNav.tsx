@@ -124,7 +124,7 @@ export const PlatformNav: React.FC<NavServerProps> = async (props) => {
 
   // Super-admin on a tenant's own domain → give them that tenant's workspace.
   if (isSuperAdmin) {
-    let hostTenant: { name: string } | null = null
+    let hostTenant: { name: string; enabledCollections: string[] } | null = null
     try {
       const host = normalizeHost(
         props.req?.headers?.get('x-forwarded-host') ?? props.req?.headers?.get('host'),
@@ -141,7 +141,7 @@ export const PlatformNav: React.FC<NavServerProps> = async (props) => {
         ...props,
         visibleEntities: {
           collections: (props.visibleEntities?.collections ?? []).filter(
-            (slug) => !PLATFORM_COLLECTIONS.has(slug),
+            (slug) => !PLATFORM_COLLECTIONS.has(slug) && (slug === 'media' || hostTenant!.enabledCollections.includes(slug)),
           ),
           globals: props.visibleEntities?.globals ?? [],
         },

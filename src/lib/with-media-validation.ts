@@ -10,6 +10,10 @@ const urlFields: Record<string, readonly string[]> = {
 const sectionCollections = new Set(['pages', 'services', 'technology'])
 
 function targetKind(slug: string, path: string, field: Field): MediaValueKind | null {
+  if (slug === 'meanpack-websites' && field.type === 'upload' && field.relationTo === 'media') {
+    if (path === 'media.file') return 'gallery-reference'
+    return path === 'scenes.heroFilm' ? 'video-reference' : 'reference'
+  }
   if (slug === 'clinical-cases' && path === 'images' && field.type === 'json') return 'clinical'
   if (slug === 'branches' && path === 'photos' && field.type === 'json') return 'branch'
   if (urlFields[slug]?.includes(path) && field.type === 'text') return 'url'
@@ -30,10 +34,11 @@ function mediaGuard(slug: string, kind: MediaValueKind): FieldHook {
   return async args => {
     const tenant = owner(slug, args.data, args.originalDoc)
     // Payload supplies previousValue by stable row/block ID, not by the current array index.
-    if (args.operation === 'update' && sameMediaID(tenant, owner(slug, args.originalDoc)) && unchangedMediaValue(kind, args.value, args.previousValue)) return args.value
+    if (kind !== 'gallery-reference' && args.operation === 'update' && sameMediaID(tenant, owner(slug, args.originalDoc)) && unchangedMediaValue(kind, args.value, args.previousValue)) return args.value
     if (args.value === undefined || args.value === null || args.value === '') return args.value
     try {
-      await assertMediaValue(kind, args.value, await resolveMediaTenant(tenant, args.req), args.req)
+      const resolvedKind = kind === 'gallery-reference' ? args.siblingData?.kind === 'video' ? 'video-reference' : 'reference' : kind
+      await assertMediaValue(resolvedKind, args.value, await resolveMediaTenant(tenant, args.req), args.req)
     } catch (error) {
       throw new ValidationError({ collection: slug, errors: [{ path: args.path.join('.'),
         message: error instanceof Error ? error.message : 'The image could not be validated.' }] })
@@ -42,7 +47,7 @@ function mediaGuard(slug: string, kind: MediaValueKind): FieldHook {
   }
 }
 
-function scopeUpload(field: UploadField, slug: string): UploadField {
+function scopeUpload(field: UploadField, slug: string, kind: MediaValueKind): UploadField {
   const originalFilter = field.filterOptions
   const originalValidate = field.validate ?? validations.upload
   return {
@@ -52,7 +57,8 @@ function scopeUpload(field: UploadField, slug: string): UploadField {
       if (tenant === null || !canUseMediaTenant(tenant, args.user ?? args.req.user)) return false
       const existing = typeof originalFilter === 'function' ? await originalFilter(args) : originalFilter
       if (existing === false) return false
-      return { and: [{ tenant: { equals: tenant } }, { mimeType: { like: 'image/%' } },
+      const video = kind === 'video-reference' || kind === 'gallery-reference' && (args.siblingData as { kind?: string } | undefined)?.kind === 'video'
+      return { and: [{ tenant: { equals: tenant } }, video ? { mimeType: { equals: 'video/mp4' } } : { mimeType: { like: 'image/%' } },
         ...(existing && existing !== true ? [existing] : [])] }
     },
     // Keep native validation (and its original filters) intact for legacy refs. The
@@ -126,7 +132,7 @@ export function withMediaValidation(config: CollectionConfig): CollectionConfig 
     }
     const kind = targetKind(config.slug, path, field)
     if (kind && (field.type === 'upload' || field.type === 'text' || field.type === 'json')) {
-      if (field.type === 'upload') field = scopeUpload(field, config.slug)
+      if (field.type === 'upload') field = scopeUpload(field, config.slug, kind)
       field = { ...field, hooks: { ...field.hooks, beforeChange: [...(field.hooks?.beforeChange ?? []), mediaGuard(config.slug, kind)] } } as Field
     }
     return field

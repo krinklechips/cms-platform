@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from 'node:util'
 import type { PayloadRequest } from 'payload'
 
-export type MediaValueKind = 'reference' | 'url' | 'clinical' | 'branch'
+export type MediaValueKind = 'reference' | 'video-reference' | 'gallery-reference' | 'url' | 'clinical' | 'branch'
 export type MediaTenant = { id: number | string; slug: string }
 
 export function mediaID(value: unknown): number | string | null {
@@ -83,7 +83,7 @@ export function isWebsiteImageURL(value: unknown, tenant: MediaTenant): boolean 
 
 export async function assertMediaValue(kind: MediaValueKind, value: unknown, tenant: MediaTenant, req: PayloadRequest): Promise<void> {
   if (value === undefined || value === null || value === '') return
-  if (kind === 'reference') {
+  if (kind === 'reference' || kind === 'video-reference') {
     const id = mediaID(value)
     if (id === null) throw new Error('Select an image from the document tenant Media Library.')
     let media
@@ -93,8 +93,9 @@ export async function assertMediaValue(kind: MediaValueKind, value: unknown, ten
     } catch {
       throw new Error('The selected media image could not be resolved.')
     }
-    if (!sameMediaID(media.id, id) || !sameMediaID(media.tenant, tenant.id) || !/^image\/[a-z0-9.+-]+$/i.test(media.mimeType ?? '')) {
-      throw new Error('Select an image belonging to the document tenant.')
+    const mime = kind === 'video-reference' ? /^video\/mp4$/i : /^image\/[a-z0-9.+-]+$/i
+    if (!sameMediaID(media.id, id) || !sameMediaID(media.tenant, tenant.id) || !mime.test(media.mimeType ?? '')) {
+      throw new Error(`Select ${kind === 'video-reference' ? 'an MP4 video' : 'an image'} belonging to the document tenant.`)
     }
     if (!isWebsiteImageURL(media.url, tenant)) throw new Error('The selected image URL is not compatible with this tenant website.')
     return

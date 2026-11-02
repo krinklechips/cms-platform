@@ -8,6 +8,7 @@
  * here — they are never gated by a module subscription.
  */
 export const CONTENT_COLLECTION_SLUGS = [
+  'meanpack-websites',
   'homepage',
   'site-stats',
   'feature-cards',
