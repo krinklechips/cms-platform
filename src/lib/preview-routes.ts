@@ -173,7 +173,10 @@ export const getPreviewUrl: Exclude<LivePreviewConfig['url'], string | null | un
       : Object.hasOwn(pages, collection) ? pages[collection] : null
   if (page === null) return null
 
-  const site = (process.env.DUMMY_SITE_URL || 'http://localhost:3200').replace(/\/+$/, '')
+  const configuredSite = process.env.DUMMY_SITE_URL || 'http://localhost:3200'
+  let siteEnd = configuredSite.length
+  while (siteEnd > 0 && configuredSite[siteEnd - 1] === '/') siteEnd--
+  const site = configuredSite.slice(0, siteEnd)
   const target = `/${loc}${page}`
   const secret = process.env.PREVIEW_SECRET
   return secret

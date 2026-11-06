@@ -28,6 +28,20 @@ const siteNamespaces = [
   'terms-of-service', 'webmail', 'en', 'kh', 'cn', 'km', 'zh',
 ]
 
+test('title-derived addresses retain existing separator and accent normalization', async () => {
+  for (const [title, slug] of [
+    ['--- Patient information ---', 'patient-information'],
+    ['  Patient   information  ', 'patient-information'],
+    ['Patient--information', 'patient-information'],
+    ['Patient__information', 'patientinformation'],
+    ['-- Caf\u00e9 - information --', 'cafe-information'],
+  ]) {
+    const req = { payload: { db: { name: 'fixture' }, collections: {}, find: async () => ({ totalDocs: 0 }) } } as never
+    const result = await allocatePageAddress({ data: { tenant: 1, title }, req, operation: 'create' } as never)
+    assert.equal(result.slug, slug)
+  }
+})
+
 test('new addresses avoid every current website namespace, including nested-only routes and assets', async () => {
   for (const slug of siteNamespaces) {
     const req = { payload: { db: { name: 'fixture' }, collections: {},

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
@@ -26,7 +27,7 @@ try {
   } })
   tenantId = tenant.id
   const editor = await payload.create({ collection: 'users', data: {
-    email: `protection-${stamp}@roomchang.test`, password: 'Local-fixture-only-2026!',
+    email: `protection-${stamp}@roomchang.test`, password: randomUUID(),
     roles: ['editor'], tenants: [{ tenant: tenant.id }],
   } })
   editorId = editor.id

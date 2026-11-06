@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import test from 'node:test'
+import test, { before } from 'node:test'
 import ts from 'typescript'
 import { formatAdminURL } from 'payload/shared'
 import { nativeBundle, nativeCallback, nativeFunction } from './helpers/native-ui-bundle'
@@ -16,7 +16,7 @@ function find(node: ts.Node) {
   ts.forEachChild(node, find)
 }
 find(source)
-assert.ok(callback)
+before(() => assert.ok(callback))
 const shippedCallback = nativeCallback(nativeFunction('w=`delete-${e}`'), 'S')
 
 async function remove(shipped: boolean, locale: string, status: number, protectedCollection = true) {

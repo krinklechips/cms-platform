@@ -6,19 +6,16 @@ import { buildConfig, getPayload, type Access, type Payload, type PayloadRequest
 import { FaqItems } from '../src/collections/FaqItems'
 import { CareerPositions } from '../src/collections/CareerPositions'
 import { withDrafts } from '../src/lib/with-drafts'
-import { APPROVED_IDENTITIES, applyRefresh, hashJSON, planRefresh, type Identity, type Manifest, type RecordState } from '../src/lib/live-content-refresh'
+import { APPROVED_IDENTITIES, applyRefresh, hashJSON, planRefresh, type Identity, type Manifest } from '../src/lib/live-content-refresh'
 import { collectionPolicies, createRefreshRuntime } from './refresh-live-translations'
+import { refreshFixtureConnection } from './lib/refresh-fixture.mjs'
 
 // No app configuration, env files, service credentials, or non-fixture destinations.
 const url = process.argv[2]
 if (!url || process.argv.length !== 3) throw new Error('Pass the explicit cms_refresh_fixture PostgreSQL URL only.')
-const parsed = new URL(url)
-if (!['postgres:', 'postgresql:'].includes(parsed.protocol) || !['127.0.0.1', 'localhost'].includes(parsed.hostname)
-  || parsed.port !== '55439' || parsed.pathname !== '/cms_refresh_fixture' || parsed.search || parsed.hash || parsed.password) {
-  throw new Error('Only password-free localhost:55439/cms_refresh_fixture is permitted.')
-}
+const connection = refreshFixtureConnection(url)
 const schema = 'refresh_' + randomUUID().replaceAll('-', '')
-const pool = new pg.Pool({ connectionString: url, max: 4 })
+const pool = new pg.Pool({ ...connection, max: 4 })
 const acquired = new Set<pg.PoolClient>()
 const fixturePools = new Set<pg.Pool>()
 class FixturePool extends pg.Pool {
@@ -46,7 +43,7 @@ try {
   })
   cms = await getPayload({ key: schema, config: buildConfig({
     secret: 'isolated-local-refresh-fixture-only', telemetry: false, typescript: { autoGenerate: false },
-    db: postgresAdapter({ schemaName: schema, pool: { connectionString: url, max: 8,
+    db: postgresAdapter({ schemaName: schema, pool: { ...connection, max: 8,
       options: '-c lock_timeout=10000 -c statement_timeout=15000' }, pg: { ...pg, Pool: FixturePool },
       push: true, disableCreateDatabase: true }),
     localization: { locales: ['en', 'kh', 'cn'], defaultLocale: 'en', fallback: false },
@@ -83,7 +80,7 @@ try {
     career_positions: [{ id: APPROVED_IDENTITIES['career-positions'][0], slug: 'clinical-fellowship' }], content_translations: translations } }))
   const policies = collectionPolicies(payload.config)
   policies['faq-items'].canPublish = policies['career-positions'].canPublish = true
-  const runtime = await createRefreshRuntime({ pool, destination: { host: parsed.hostname, port: 55439, database: 'cms_refresh_fixture', schema },
+  const runtime = await createRefreshRuntime({ pool, destination: { host: connection.host, port: 55439, database: 'cms_refresh_fixture', schema },
     tenantId: String(tenant.id), tenantSlug: 'roomchang', policies, payload, actor })
   const identities: Identity[] = faqDocs.map((d, i) => ({ collection: 'faq-items', id: String(d.id), sourceId: sourceIDs[i], tenantId: String(tenant.id) }))
   identities.push({ collection: 'career-positions', id: String(career.id), sourceId: APPROVED_IDENTITIES['career-positions'][0], tenantId: String(tenant.id) })

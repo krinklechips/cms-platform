@@ -65,4 +65,6 @@ async function main() {
   console.log(`${APPLY ? '✓ applied' : 'DRY RUN'}: ${pruned} pruned, ${updated} updated`)
   process.exit(0)
 }
-main().catch((e) => { console.error('RECONCILE FAILED:', e.message); process.exit(1) })
+try {
+  await main()
+} catch (e) { console.error('RECONCILE FAILED:', e instanceof Error ? e.message : String(e)); process.exit(1) }

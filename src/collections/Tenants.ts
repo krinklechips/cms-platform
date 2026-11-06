@@ -50,7 +50,7 @@ const recomputeEnabledCollections: CollectionBeforeChangeHook = async ({
     }
   }
 
-  return { ...data, enabledCollections: [...enabled].sort() }
+  return { ...data, enabledCollections: [...enabled].sort((a, b) => Number(a > b) - Number(a < b)) }
 }
 
 /**

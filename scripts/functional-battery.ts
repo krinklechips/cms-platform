@@ -5,6 +5,7 @@
  * explicitly (the admin assigns it from the login). Retired on shared databases:
  * use verify-publishing-ux.ts for an isolated, self-contained fixture instead.
  */
+import { randomUUID } from 'node:crypto'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
 import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
@@ -80,7 +81,7 @@ async function main() {
 
     const tenants = await payload.find({ collection: 'tenants', overrideAccess: false, user: borin, limit: 10, depth: 0 })
     record('editor sees only own tenant', tenants.totalDocs === 1 && String(tenants.docs[0].id) === '1', `${tenants.totalDocs} tenant(s)`)
-    const usersErr = await expectThrow(() => payload.create({ collection: 'users', data: { email: `x${stamp}@example.com`, password: 'irrelevant-1234', roles: ['editor'], tenants: [{ tenant: 1 }] } as never, overrideAccess: false, user: borin }))
+    const usersErr = await expectThrow(() => payload.create({ collection: 'users', data: { email: `x${stamp}@example.com`, password: randomUUID(), roles: ['editor'], tenants: [{ tenant: 1 }] } as never, overrideAccess: false, user: borin }))
     record('editor cannot create users', Boolean(usersErr))
     const invErr = await expectThrow(() => payload.find({ collection: 'invoices', overrideAccess: false, user: borin, limit: 1 }))
     record('editor cannot read invoices', Boolean(invErr))
@@ -90,7 +91,7 @@ async function main() {
     const adminInv = await payload.find({ collection: 'invoices', overrideAccess: false, user: teamAdmin, limit: 5, depth: 0 })
     record('tenant-admin sees only own tenant invoices', adminInv.docs.every((i) => String((i as { tenant?: unknown }).tenant) === '1'), `${adminInv.totalDocs} invoice(s)`)
 
-    const guardErr = await expectThrow(() => payload.create({ collection: 'users', data: { email: `ghost${stamp}@example.com`, password: 'irrelevant-1234', roles: ['editor'], tenants: [] } as never, overrideAccess: false, user: enoch }))
+    const guardErr = await expectThrow(() => payload.create({ collection: 'users', data: { email: `ghost${stamp}@example.com`, password: randomUUID(), roles: ['editor'], tenants: [] } as never, overrideAccess: false, user: enoch }))
     record('tenant-less user refused with a plain message', Boolean(guardErr && /site|tenant/i.test(guardErr)), guardErr?.slice(0, 70) ?? '')
 
     let missing = 0
@@ -107,4 +108,6 @@ async function main() {
   console.log(`\n${results.length - fails.length}/${results.length} passed${fails.length ? ' — FAILURES: ' + fails.map((f) => f.test).join('; ') : ''}`)
   process.exit(fails.length ? 1 : 0)
 }
-main().catch((e) => { console.error('BATTERY CRASHED:', e.message); process.exit(1) })
+try {
+  await main()
+} catch (e) { console.error('BATTERY CRASHED:', e instanceof Error ? e.message : String(e)); process.exit(1) }

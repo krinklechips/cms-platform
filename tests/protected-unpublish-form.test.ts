@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import test from 'node:test'
+import test, { before } from 'node:test'
 import ts from 'typescript'
 import * as qs from 'qs-esm'
 import { formatAdminURL } from 'payload/shared'
@@ -17,7 +17,7 @@ function find(node: ts.Node) {
   ts.forEachChild(node, find)
 }
 find(source)
-assert.ok(callback, 'Execute the installed native unpublish callback, not a rewritten implementation')
+before(() => assert.ok(callback, 'Execute the installed native unpublish callback, not a rewritten implementation'))
 const shippedCallback = nativeCallback(nativeFunction('confirm-un-publish-'), '_')
 
 async function unpublish(options: { locale: string; all: boolean; protected?: boolean; status?: number }, shipped: boolean) {

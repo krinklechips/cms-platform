@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { fileURLToPath } from 'node:url'
+import { typographySiteRoot, typographySource, writeTypographyEvidence } from './lib/typography-paths.mjs'
 
 const { values } = parseArgs({ options: { 'site-root': { type: 'string' }, browser: { type: 'string' }, evidence: { type: 'string' }, help: { type: 'boolean' } } })
 if (values.help) {
   console.log(`Complete typography release gate (all 11 cases, no skips):
-  node scripts/test-typography.mjs --site-root <website> [--browser <Chromium executable>] [--evidence <JSON path>]
+  node scripts/test-typography.mjs --site-root <website> [--browser <Chromium executable>] [--evidence <JSON filename>]
 
 Prerequisites: repository npm dependencies, a locally installed Chromium/Chrome,
 and the website checkout with its existing @tailwindcss/node dependency installed.
@@ -20,12 +20,13 @@ ROOMCHANG_TYPOGRAPHY_SITE_ROOT and ROOMCHANG_TYPOGRAPHY_BROWSER may supply paths
 Plain npm test runs CMS cases when Chromium exists; website cases are explicitly
 skipped without a site root. A plain-suite pass does not replace this release gate.
 The gate uses isolated, network-blocked Chromium and unchanged compiler output.
-It checks computed styles, not downloaded font glyphs or a hydrated application.`)
+It checks computed styles, not downloaded font glyphs or a hydrated application.
+Evidence is created under .artifacts/typography; existing files are never replaced.`)
   process.exit(0)
 }
 const requestedRoot = values['site-root'] ?? process.env.ROOMCHANG_TYPOGRAPHY_SITE_ROOT
 assert.ok(requestedRoot, 'Pass --site-root <website checkout>; website typography coverage is required, not optional.')
-const siteRoot = realpathSync(requestedRoot)
+const siteRoot = typographySiteRoot(requestedRoot)
 const browserExecutable = values.browser ?? process.env.ROOMCHANG_TYPOGRAPHY_BROWSER ?? [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome',
@@ -33,8 +34,8 @@ const browserExecutable = values.browser ?? process.env.ROOMCHANG_TYPOGRAPHY_BRO
 assert.ok(browserExecutable && existsSync(browserExecutable), 'Install Chromium/Chrome or supply --browser <executable>.')
 const cmsRoot = fileURLToPath(new URL('..', import.meta.url))
 const sources = [
-  ...['package.json', 'package-lock.json', 'src/app/(payload)/custom.scss', 'src/lib/cms-content-typography.ts'].map(path => resolve(cmsRoot, path)),
-  ...['package.json', 'package-lock.json', 'src/app/globals.css', 'src/components/sections/home-stats.tsx', 'src/components/site/site-header.tsx'].map(path => resolve(siteRoot, path)),
+  ...['package.json', 'package-lock.json', 'src/app/(payload)/custom.scss', 'src/lib/cms-content-typography.ts'].map(path => typographySource(cmsRoot, path)),
+  ...['package.json', 'package-lock.json', 'src/app/globals.css', 'src/components/sections/home-stats.tsx', 'src/components/site/site-header.tsx'].map(path => typographySource(siteRoot, path)),
 ]
 const hash = path => createHash('sha256').update(readFileSync(path)).digest('hex')
 const before = sources.map(path => ({ path, before: hash(path) }))
@@ -64,6 +65,6 @@ const evidence = { startedAt, finishedAt: new Date().toISOString(), node: proces
   cmsRoot, siteRoot, browserExecutable, browserVersion, cssRewrites: false, networkBlocked: true,
   status: result.status, signal: result.signal, error: result.error?.message,
   counts, complete, unchanged, sources: preservation }
-if (values.evidence) writeFileSync(resolve(values.evidence), `${JSON.stringify(evidence, null, 2)}\n`)
+if (values.evidence) writeTypographyEvidence(cmsRoot, values.evidence, evidence)
 console.log(`Typography coverage complete=${complete}; source/package preservation=${unchanged}; ${sources.length} SHA-256 comparisons.`)
 process.exitCode = unchanged && complete && browserVersion && !result.error ? result.status ?? 1 : 1

@@ -34,4 +34,6 @@ async function main() {
   }
   process.exit(0)
 }
-main().catch((e) => { console.error('ALIGN FAILED:', e.message); process.exit(1) })
+try {
+  await main()
+} catch (e) { console.error('ALIGN FAILED:', e instanceof Error ? e.message : String(e)); process.exit(1) }

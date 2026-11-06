@@ -49,4 +49,6 @@ async function main() {
   console.log('scratch draft deleted')
   process.exit(0)
 }
-main().catch((err) => { console.error('VERIFY FAILED:', err.message); process.exit(1) })
+try {
+  await main()
+} catch (err) { console.error('VERIFY FAILED:', err instanceof Error ? err.message : String(err)); process.exit(1) }

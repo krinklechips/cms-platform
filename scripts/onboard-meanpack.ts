@@ -65,4 +65,10 @@ async function main() {
   console.log(JSON.stringify({ tenantId: tenant.id, documentId: doc.id, importedMedia: assets.size, galleryEntries: media.length, crops: products.length, editor: `https://meanpack.serviettelab.com/admin/collections/meanpack-websites/${doc.id}` }))
   await Promise.race([payload.destroy(), new Promise(resolve => setTimeout(resolve, 2000))])
 }
-main().then(() => process.exit(0)).catch(error => { console.error(error instanceof Error ? error.message.replace(/postgres(?:ql)?:\/\/[^\s"']+/g, '[REDACTED CONNECTION]') : 'Mean Pack import failed'); process.exit(1) })
+try {
+  await main()
+  process.exit(0)
+} catch (error) {
+  console.error(error instanceof Error ? error.message.replace(/postgres(?:ql)?:\/\/[^\s"']+/g, '[REDACTED CONNECTION]') : 'Mean Pack import failed')
+  process.exit(1)
+}

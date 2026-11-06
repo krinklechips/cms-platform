@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { getPayload } from 'payload'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -26,4 +26,6 @@ async function run() {
   console.log('raw via same connection:', JSON.stringify(raw.rows ?? raw))
   process.exit(0)
 }
-run().catch((e) => { console.error(e.message); process.exit(1) })
+try {
+  await run()
+} catch (e) { console.error(e instanceof Error ? e.message : String(e)); process.exit(1) }
