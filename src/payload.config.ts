@@ -58,6 +58,7 @@ import { cmsEmailAdapter } from './lib/cms-email'
 import { getPreviewUrl, PREVIEW_COLLECTIONS } from './lib/preview-routes'
 import { postgresConnection } from './lib/postgres-connection.mjs'
 import { trustedCMSOrigins } from './lib/cms-browser-security'
+import { logServiceWriteDenial } from './lib/service-write-diagnostics'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -75,6 +76,7 @@ const dirname = path.dirname(filename)
  */
 export default buildConfig({
   csrf: trustedCMSOrigins(),
+  hooks: { afterError: [logServiceWriteDenial] },
   email: cmsEmailAdapter(),
   i18n: {
     translations: {
