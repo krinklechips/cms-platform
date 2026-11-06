@@ -71,6 +71,7 @@ export interface Config {
     homepage: Homepage;
     'brand-logos': BrandLogo;
     'site-stats': SiteStat;
+    'home-services': HomeService;
     'feature-cards': FeatureCard;
     testimonials: Testimonial;
     pages: Page;
@@ -115,6 +116,7 @@ export interface Config {
     homepage: HomepageSelect<false> | HomepageSelect<true>;
     'brand-logos': BrandLogosSelect<false> | BrandLogosSelect<true>;
     'site-stats': SiteStatsSelect<false> | SiteStatsSelect<true>;
+    'home-services': HomeServicesSelect<false> | HomeServicesSelect<true>;
     'feature-cards': FeatureCardsSelect<false> | FeatureCardsSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
@@ -651,6 +653,29 @@ export interface SiteStat {
    */
   order?: number | null;
   published?: boolean | null;
+  _editorialRevision?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * The heading and six service shortcuts below the home page statistics.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-services".
+ */
+export interface HomeService {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  eyebrow?: string | null;
+  heading?: string | null;
+  seeAll?: string | null;
+  implants?: string | null;
+  crowns?: string | null;
+  aligners?: string | null;
+  cosmetic?: string | null;
+  whitening?: string | null;
+  surgery?: string | null;
   _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -4001,6 +4026,10 @@ export interface PayloadLockedDocument {
         value: number | SiteStat;
       } | null)
     | ({
+        relationTo: 'home-services';
+        value: number | HomeService;
+      } | null)
+    | ({
         relationTo: 'feature-cards';
         value: number | FeatureCard;
       } | null)
@@ -4450,6 +4479,26 @@ export interface SiteStatsSelect<T extends boolean = true> {
   label?: T;
   order?: T;
   published?: T;
+  _editorialRevision?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-services_select".
+ */
+export interface HomeServicesSelect<T extends boolean = true> {
+  tenant?: T;
+  eyebrow?: T;
+  heading?: T;
+  seeAll?: T;
+  implants?: T;
+  crowns?: T;
+  aligners?: T;
+  cosmetic?: T;
+  whitening?: T;
+  surgery?: T;
   _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;

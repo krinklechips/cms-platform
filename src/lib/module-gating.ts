@@ -1,5 +1,6 @@
 import { Forbidden, type CollectionBeforeDeleteHook, type CollectionBeforeValidateHook, type CollectionConfig, type CollectionSlug, type Where } from 'payload'
 import { getHostTenant } from './host-scope'
+import { isCollectionEntitled } from './content-collections'
 
 type AccessFn = NonNullable<NonNullable<CollectionConfig['access']>['create']>
 type AccessArgs = Parameters<AccessFn>[0]
@@ -40,14 +41,14 @@ const tenantID = (value: unknown): TenantID | null => {
 // the tenant-isolation security boundary.)
 const isCollectionEnabledForWrite = (tenant: TenantDoc | null | undefined, slug: string): boolean => {
   if (!Array.isArray(tenant?.enabledCollections)) return false // fail closed
-  return tenant.enabledCollections.includes(slug)
+  return isCollectionEntitled(tenant.enabledCollections, slug)
 }
 
 // NAV visibility (cosmetic): fail-OPEN so a mid-provisioning tenant sees their
 // collection rather than a blank admin. The write gate above is the real fence.
 const isCollectionVisible = (tenant: TenantDoc | null | undefined, slug: string): boolean => {
   if (!Array.isArray(tenant?.enabledCollections)) return true
-  return tenant.enabledCollections.includes(slug)
+  return isCollectionEntitled(tenant.enabledCollections, slug)
 }
 
 // Local API reads mutate their request. Preserve the writer's locale/fallback

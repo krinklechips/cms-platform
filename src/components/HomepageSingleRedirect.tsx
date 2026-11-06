@@ -28,17 +28,19 @@ import { redirect } from 'next/navigation'
  */
 
 type ListOverrideProps = {
+  collectionConfig?: { slug?: string }
   data?: { docs?: { id?: number | string }[] }
   newDocumentURL?: string
 }
 
 export const HomepageSingleRedirect: React.FC<ListOverrideProps> = (props) => {
   const doc = props?.data?.docs?.[0]
+  const slug = props.collectionConfig?.slug === 'home-services' ? 'home-services' : 'homepage'
 
   if (doc?.id != null) {
-    redirect(`/admin/collections/homepage/${doc.id}`)
+    redirect(`/admin/collections/${slug}/${doc.id}`)
   }
 
   // No homepage yet (fresh tenant): go straight to the create form.
-  redirect(props?.newDocumentURL ?? '/admin/collections/homepage/create')
+  redirect(props?.newDocumentURL ?? `/admin/collections/${slug}/create`)
 }

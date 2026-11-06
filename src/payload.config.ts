@@ -18,6 +18,7 @@ import { Doctors } from './collections/Doctors'
 import { Technology } from './collections/Technology'
 import { Testimonials } from './collections/Testimonials'
 import { Homepage } from './collections/Homepage'
+import { HomeServices } from './collections/HomeServices'
 import { Pages } from './collections/Pages'
 import { Branches } from './collections/Branches'
 import { SiteStats } from './collections/SiteStats'
@@ -146,6 +147,7 @@ export default buildConfig({
     withHumanLabels(withHostScope(withModuleGating(withDrafts(Homepage)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(BrandLogos)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(SiteStats)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(HomeServices)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(FeatureCards)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(Testimonials)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(Pages)))),
@@ -260,6 +262,7 @@ export default buildConfig({
         // collection with a one-doc-per-tenant convention; the cockpit /
         // "Open content" links deep-link straight to that doc.
         homepage: {},
+        'home-services': {},
         branches: {},
         'site-stats': {},
         'feature-cards': {},

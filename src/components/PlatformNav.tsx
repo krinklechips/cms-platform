@@ -8,6 +8,7 @@ import { getTenantByHost, normalizeHost } from '@/lib/get-tenant-by-host'
 import { TenantNavigation, type TenantNavigationGroup } from './TenantNavigation'
 import { PlatformBackLink } from './PlatformBackLink'
 import { withStatPageLinks } from '@/lib/stat-pages'
+import { isCollectionEntitled } from '@/lib/content-collections'
 
 /**
  * Custom admin Nav — three cases:
@@ -141,7 +142,7 @@ export const PlatformNav: React.FC<NavServerProps> = async (props) => {
         ...props,
         visibleEntities: {
           collections: (props.visibleEntities?.collections ?? []).filter(
-            (slug) => !PLATFORM_COLLECTIONS.has(slug) && (slug === 'media' || hostTenant!.enabledCollections.includes(slug)),
+            (slug) => !PLATFORM_COLLECTIONS.has(slug) && (slug === 'media' || isCollectionEntitled(hostTenant!.enabledCollections, slug)),
           ),
           globals: props.visibleEntities?.globals ?? [],
         },

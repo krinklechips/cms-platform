@@ -16,6 +16,7 @@ export const SITE_PAGES: SitePage[] = [
     page: "Home page",
     path: "/en",
     parts: [
+      { collection: "home-services", controls: "Small heading, section heading, view-all link label and the six shortcut labels below the statistics, in the selected language. Fixed icons, destinations and order remain in website code. This has a separate draft from Home Hero." },
       { collection: "homepage", controls: "Hero slide images, anchor position, preserve-full-image option, trust pill and main CTA buttons. Slide captions (eyebrow, headline, subtitle, description and per-slide CTA) appear only when Show captions is enabled for the selected language; off by default. Slide membership, images, order and CTA URLs are shared by all languages. Legacy imageSize is retained but unused." },
       { collection: "brand-logos", controls: "The scrolling logo marquee band directly under the hero (partner/manufacturer logos). Each row = one logo; `order` sets marquee sequence." },
       { collection: "site-stats", controls: "The four count-up numbers band under the marquee. ONLY four keys are read here: years_experience, specialist_dentists, branches_count, patients_treated (see…" },
@@ -220,7 +221,6 @@ export const SITE_PAGES: SitePage[] = [
 /** Website sections not yet rendered from CMS content. Some have collections
  *  and readers already, but their page consumers are still unwired. */
 export const UNMODELED_PAGES: { path: string; whatsThere: string; source: string }[] = [
-  { path: "/en (home) — the 6-icon service shortcut row between the stats band and the feature cards", whatsThere: "Six fixed shortcut tiles (Implants, Crowns, Aligners, Cosmetic, Whitening, Surgery) with hardcoded hrefs and Phosphor icons.", source: "Hardcoded SERVICES array in src/components/sections/home-services.tsx + labels from the `homeServices` namespa" },
   { path: "/en/about — headings, intro and section shortcuts", whatsThere: "Page headline, intro copy and the section shortcut tiles; the stats band and history timeline are CMS-fed in Payload mode.", source: "messages/*.json (`about.*`) + SECTION_DEFS in src/app/[locale]/about/page.tsx. Timeline events are separate CMS records." },
   { path: "/en/about/vision-mission-values", whatsThere: "Whole page — vision, mission, and the five value cards.", source: "messages/*.json, `visionMission` namespace. No CMS collection at all." },
   { path: "/en/about/director-message", whatsThere: "Whole page — the director's portrait and full letter.", source: "messages/*.json, `directorMessage` namespace + a hardcoded <Image> path. No CMS collection at all." },

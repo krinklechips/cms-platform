@@ -39,7 +39,7 @@ async function target(collection: string, data: Record<string, unknown>, locale:
   if (!result) return null
   const url = new URL(result)
   assert.equal(url.origin, 'https://preview.example.test')
-  return url.searchParams.get('redirect') ?? url.pathname
+  return url.searchParams.get('redirect') ?? url.pathname + url.hash
 }
 
 const routes: [string, Record<string, unknown>, string][] = [
@@ -63,6 +63,7 @@ const routes: [string, Record<string, unknown>, string][] = [
   ['pricing-comparison-rows', { set: { id: 13, slug: 'full-comparison' } }, '/international/price-comparison'],
   ['doctors', {}, '/team'],
   ['homepage', {}, ''],
+  ['home-services', {}, '#services'],
   ['feature-cards', {}, ''],
   ['brand-logos', {}, ''],
   ['testimonials', {}, '/about/testimonials'],
@@ -79,7 +80,7 @@ test('all and only website-content editors share the default-open preview and pu
   const resolved = await config
   assert.equal(resolved.admin.livePreview?.openByDefault, true)
   const expected = new Set(routes.map(([slug]) => slug))
-  assert.equal(expected.size, 27)
+  assert.equal(expected.size, 28)
   assert.deepEqual(new Set(resolved.admin.livePreview?.collections), expected)
   for (const collection of resolved.collections) {
     const controls = collection.admin?.components?.edit?.beforeDocumentControls ?? []

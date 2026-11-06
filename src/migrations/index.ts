@@ -23,6 +23,7 @@ import * as migration_20261022_070000_page_addresses from './20261022_070000_pag
 import * as migration_20261023_040000_homepage_captions from './20261023_040000_homepage_captions';
 import * as migration_20261026_032357 from './20261026_032357';
 import * as migration_20261102_063727_meanpack_website from './20261102_063727_meanpack_website';
+import * as migration_20261106_030000_home_services from './20261106_030000_home_services';
 
 export const migrations = [
   {
@@ -149,5 +150,10 @@ export const migrations = [
     up: migration_20261102_063727_meanpack_website.up,
     down: migration_20261102_063727_meanpack_website.down,
     name: '20261102_063727_meanpack_website'
+  },
+  {
+    up: migration_20261106_030000_home_services.up,
+    down: migration_20261106_030000_home_services.down,
+    name: '20261106_030000_home_services',
   },
 ];

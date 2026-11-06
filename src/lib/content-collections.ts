@@ -10,6 +10,7 @@
 export const CONTENT_COLLECTION_SLUGS = [
   'meanpack-websites',
   'homepage',
+  'home-services',
   'site-stats',
   'feature-cards',
   'brand-logos',
@@ -41,6 +42,9 @@ export const CONTENT_COLLECTION_SLUGS = [
 ] as const
 
 export type ContentCollectionSlug = (typeof CONTENT_COLLECTION_SLUGS)[number]
+
+export const isCollectionEntitled = (enabled: unknown, slug: string): boolean =>
+  Array.isArray(enabled) && (enabled.includes(slug) || slug === 'home-services' && enabled.includes('homepage'))
 
 export const isKnownContentSlug = (slug: unknown): slug is ContentCollectionSlug =>
   typeof slug === 'string' && (CONTENT_COLLECTION_SLUGS as readonly string[]).includes(slug)
