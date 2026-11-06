@@ -310,6 +310,14 @@ export default buildConfig({
       userHasAccessToAllTenants: (user) =>
         Boolean((user as { roles?: string[] })?.roles?.includes('super-admin')),
     }),
+    (config) => {
+      // JWT auth reloads memberships from the database. Populated tenant
+      // documents can otherwise make refreshed cookies exceed browser limits.
+      const users = config.collections?.find(({ slug }) => slug === Users.slug)
+      const tenants = users?.fields.find((field) => 'name' in field && field.name === 'tenants')
+      if (tenants?.type === 'array') tenants.saveToJWT = false
+      return config
+    },
     // Media uploads → Cloudflare R2 (cms-platform bucket). Env var names match
     // what already exists on the Render service from the old platform.
     //
