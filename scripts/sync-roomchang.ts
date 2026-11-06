@@ -12,8 +12,8 @@
  * roomchang repo's .env (../roomchang/.env) — not duplicated here.
  */
 import dotenv from 'dotenv'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { getPayload } from 'payload'
 import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
@@ -1182,7 +1182,9 @@ async function run() {
   process.exit(0)
 }
 
-run().catch((e) => {
+try {
+  await run()
+} catch (e) {
   console.error(e)
   process.exit(1)
-})
+}

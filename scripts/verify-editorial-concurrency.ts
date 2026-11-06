@@ -126,6 +126,7 @@ try {
       secondOperationEntered: false }
     gate = active
     const writes: Promise<unknown>[] = []
+    const failures: unknown[] = []
     let observing = true
     try {
       const firstWrite = first()
@@ -149,14 +150,35 @@ try {
       assert.equal(serialized, true, 'Second writer must block before reading a stale editorial snapshot')
       if (secondIsUpdate) assert.equal(active.secondOperationEntered, false,
         'Serialization must run before existing beforeOperation hooks')
+    } catch (error) {
+      failures.push(error)
     } finally {
       observing = false
       active.release.resolve()
-      const results = await bounded(Promise.allSettled(writes), 'writers complete after lock release')
-      gate = undefined
-      for (const result of results) if (result.status === 'rejected') throw result.reason
     }
+    try {
+      const results = await bounded(Promise.allSettled(writes), 'writers complete after lock release')
+      for (const result of results) if (result.status === 'rejected') failures.push(result.reason)
+    } catch (error) {
+      failures.push(error)
+    } finally {
+      gate = undefined
+    }
+    if (failures.length === 1) throw failures[0]
+    if (failures.length > 1) throw new AggregateError(failures, 'Concurrent verification and writer failures')
   }
+
+  await assert.rejects(overlap(async () => {
+    gate!.firstEntered.resolve()
+    await gate!.release.promise
+    throw new Error('Synthetic writer cleanup failure')
+  }, async () => { gate!.secondEntered.resolve() }, true), error => {
+    assert.ok(error instanceof AggregateError, 'Keep both the original assertion and writer failure')
+    assert.ok(error.errors.some(cause => cause instanceof assert.AssertionError && /Second writer must block/.test(cause.message)))
+    assert.ok(error.errors.some(cause => cause instanceof Error && cause.message === 'Synthetic writer cleanup failure'))
+    assert.equal(gate, undefined, 'The verification gate must be cleared on failure')
+    return true
+  })
 
   await overlap(() => write('en', 'published-concurrently', false, 'first'),
     () => write('cn', 'published-concurrently', false, 'second'), true)

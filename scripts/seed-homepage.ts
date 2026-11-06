@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { getPayload } from 'payload'
 import { assertLegacyContentWritesAllowed } from './lib/protect-editorial-content'
@@ -105,7 +105,9 @@ async function run() {
   console.log(`✓ homepage doc seeded: ${slides.length} slides + 3 buttons`)
   process.exit(0)
 }
-run().catch((e) => {
-  console.error(e.message)
+try {
+  await run()
+} catch (e) {
+  console.error(e instanceof Error ? e.message : String(e))
   process.exit(1)
-})
+}

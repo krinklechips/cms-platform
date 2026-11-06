@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
 
@@ -16,7 +17,7 @@ try {
   moduleId = catalogModule.id
   const tenant = await payload.create({ collection: 'tenants', data: { name: 'Homepage isolation fixture', slug: `homepage-isolation-${stamp}`, subscriptions: [{ module: catalogModule.id, active: true }] } })
   tenantId = tenant.id
-  const editor = await payload.create({ collection: 'users', data: { email: `home-isolation-${stamp}@roomchang.test`, password: 'Local-fixture-only-2026!', roles: ['editor'], tenants: [{ tenant: tenant.id }] } })
+  const editor = await payload.create({ collection: 'users', data: { email: `home-isolation-${stamp}@roomchang.test`, password: randomUUID(), roles: ['editor'], tenants: [{ tenant: tenant.id }] } })
   userId = editor.id
   const user = { ...editor, collection: 'users' as const }
   const home = await payload.create({ collection: 'homepage', user, overrideAccess: false, locale: 'en', data: {

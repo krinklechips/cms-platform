@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
 
@@ -17,7 +18,7 @@ try {
   moduleId = catalogModule.id
   const tenant = await payload.create({ collection: 'tenants', data: { name: 'Stat fixture', slug: `stat-fixture-${stamp}`, subscriptions: [{ module: catalogModule.id, active: true }] } })
   tenantId = tenant.id
-  const editor = await payload.create({ collection: 'users', data: { email: `stat-${stamp}@roomchang.test`, password: 'Local-stat-only-2026!', roles: ['editor'], tenants: [{ tenant: tenant.id }] } })
+  const editor = await payload.create({ collection: 'users', data: { email: `stat-${stamp}@roomchang.test`, password: randomUUID(), roles: ['editor'], tenants: [{ tenant: tenant.id }] } })
   editorId = editor.id
   const user = { ...editor, collection: 'users' as const }
   const stat = await payload.create({ collection: 'site-stats', locale: 'en', user, overrideAccess: false, data: { tenant: tenant.id, key: 'clinical_experience', displayValue: '30 years', numericValue: 30, suffix: ' years', label: 'Clinical experience', _status: 'published' } })

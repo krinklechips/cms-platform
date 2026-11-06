@@ -4,7 +4,7 @@ import { APIError, ValidationError, type CollectionBeforeValidateHook, type Payl
 const slugify = (raw: string): string => raw.toLowerCase().normalize('NFKD')
   .replace(/[\u0300-\u036f]/g, '')
   .replace(/[^a-z0-9\s-]/g, '')
-  .trim().replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '')
+  .trim().replace(/[\s_-]+/g, '-').replace(/^-|-$/g, '')
 
 // Roomchang origin/cms-sandbox (85cdcd7): explicit and nested route roots,
 // middleware/rewrite namespaces, public asset directories, and locale prefixes.

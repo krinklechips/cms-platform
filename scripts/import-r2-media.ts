@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { getPayload } from 'payload'
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
 
@@ -124,7 +124,9 @@ async function run() {
   console.log(`✓ media import (${TENANT_SLUG}): ${created} created, ${existing} already present, ${failed} failed`)
   process.exit(failed ? 1 : 0)
 }
-run().catch((e) => {
+try {
+  await run()
+} catch (e) {
   console.error(e)
   process.exit(1)
-})
+}

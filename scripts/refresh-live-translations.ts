@@ -28,7 +28,8 @@ export async function createRefreshRuntime(options: RuntimeOptions): Promise<Ref
   }
   const advanceRevision = (tx: unknown, identity: Identity, saved: { id: unknown; updatedAt?: unknown }) => {
     if (String(saved.id) !== identity.id) throw new RefreshConflict('identity_changed')
-    ;(tx as Tx).revisions!.set(recordKey(identity), revisionTimestamp(saved.updatedAt))
+    const current = tx as Tx
+    current.revisions!.set(recordKey(identity), revisionTimestamp(saved.updatedAt))
   }
   const writeContext = async (tx: unknown, identity: Identity, locale: 'en' | 'kh' | 'cn') => {
     const t = tx as Tx, req = t.req, k = recordKey(identity), updatedAt = t.revisions?.get(k)
@@ -257,9 +258,11 @@ export async function runRefreshCLI(argv: string[]): Promise<number> {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  runRefreshCLI(process.argv.slice(2)).then(code => { process.exitCode = code }).catch(() => {
+  try {
+    process.exitCode = await runRefreshCLI(process.argv.slice(2))
+  } catch {
     // Do not echo driver errors or config values that could contain credentials.
     console.error('LIVE_CONTENT_REFRESH_REFUSED: inputs, permissions, configuration, or database guard failed.')
     process.exitCode = 1
-  })
+  }
 }

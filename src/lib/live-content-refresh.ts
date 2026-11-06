@@ -52,7 +52,7 @@ const locales: readonly string[] = ['kh', 'cn']
 const tableOf = (c: Collection) => c.replaceAll('-', '_')
 export const sha256 = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex')
 const canonical = (v: any): any => v instanceof Date ? v.toISOString() : Array.isArray(v) ? v.map(canonical)
-  : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, canonical(v[k])])) : v
+  : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort((a, b) => Number(a > b) - Number(a < b)).map(k => [k, canonical(v[k])])) : v
 export const hashJSON = (value: unknown): string => sha256(JSON.stringify(canonical(value)))
 const eq = (a: unknown, b: unknown) => hashJSON(a) === hashJSON(b)
 const key = (c: Pick<Cell, 'collection' | 'sourceId' | 'locale' | 'field'>) => [c.collection, c.sourceId, c.locale, c.field].join('|')
@@ -171,7 +171,10 @@ export async function planRefresh(bytes: Uint8Array, runtime: RefreshRuntime, re
         if (!cells.length) continue
         if (mode === 'draft') conflicts.push({ ...identity, code: 'staged_not_visible' })
         records.push({ ...matches[0], expectedHash: hashJSON(s), mode, cells: cells.map(c => ({ locale: c.locale, field: c.field, valueHash: sha256(c.value) })) })
-      } catch (e) { if (!(e instanceof RefreshConflict)) throw e; conflicts.push({ ...identity, code: e.code }) }
+      } catch (e) {
+        if (!(e instanceof RefreshConflict)) throw e
+        conflicts.push({ ...identity, code: e.code })
+      }
     }
   })
   return { manifest: { version: 1, tenantSlug: 'roomchang', sourceHash: source.sourceHash, destination: { ...runtime.destination }, records } as Manifest,
@@ -363,7 +366,7 @@ export async function readSQLState(query: SQLRead, identity: Identity, schema: s
   const history = await loadGraph(version, 'parent_id::text=$1', [identity.id])
   const parentColumns = metadata.filter(r => r.table_name === base + '_locales').map(r => r.column_name)
   const versionColumns = metadata.filter(r => r.table_name === version + '_locales').map(r => r.column_name)
-  const columns = parentColumns.filter(c => !['id', '_locale', '_parent_id'].includes(c) && versionColumns.includes('version_' + c)).sort()
+  const columns = parentColumns.filter(c => !['id', '_locale', '_parent_id'].includes(c) && versionColumns.includes('version_' + c)).sort((a, b) => Number(a > b) - Number(a < b))
   return { identity: { collection: identity.collection, id: identity.id, sourceId: identity.sourceId, tenantId: identity.tenantId },
     parent, history, columns, links, ...config }
 }
@@ -380,7 +383,11 @@ export function parseRefreshArgs(argv: string[]): RefreshArgs {
   const values = new Map<string, string>(), switches = new Set<string>()
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
-    if (a === '--apply') { if (switches.has(a)) refuse('duplicate_argument'); switches.add(a); continue }
+    if (a === '--apply') {
+      if (switches.has(a)) refuse('duplicate_argument')
+      switches.add(a)
+      continue
+    }
     if (!allowed.includes(a) || values.has(a) || !argv[i + 1] || argv[i + 1].startsWith('--')) refuse('invalid_argument')
     values.set(a, argv[++i])
   }

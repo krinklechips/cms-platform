@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
 import { createLocalReq, getPayload } from 'payload'
 import { handleStaleDataCheck } from '../node_modules/@payloadcms/ui/dist/utilities/handleStaleDataCheck.js'
 import config from '../src/payload.config'
@@ -23,7 +24,7 @@ try {
       domains: [{ domain: 'roomchang.localhost' }], subscriptions: [{ module: catalogModule.id, active: true }],
     } })
     await payload.create({ collection: 'users', data: {
-      email: 'editor@roomchang.test', password: 'Local-preview-only-2026!', name: 'Preview Editor',
+      email: 'editor@roomchang.test', password: randomUUID(), name: 'Preview Editor',
       roles: ['editor'], tenants: [{ tenant: tenant.id }],
     } })
   }

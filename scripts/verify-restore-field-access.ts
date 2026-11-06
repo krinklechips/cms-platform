@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
 import { Socket } from 'node:net'
 import { isAbsolute } from 'node:path'
 import { mock, test } from 'node:test'
@@ -62,7 +63,7 @@ try {
   }) })
   const cms = payload
   const editor = await cms.create({ collection: 'users', data: {
-    email: 'restore-field-access@example.test', password: 'Memory-fixture-only-2026!',
+    email: 'restore-field-access@example.test', password: randomUUID(),
   } as never })
   const user = { ...editor, collection: 'users' } as PayloadRequest['user']
   const content = (locale: Locale, phase: string, price: number) => ({

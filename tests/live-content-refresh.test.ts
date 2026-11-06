@@ -1,9 +1,15 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { test } from 'node:test'
 import {
   APPROVED_IDENTITIES, applyRefresh, collectCandidates, hashJSON, parseRefreshArgs,
   planRefresh, readSQLState, sha256, validateManifest, assertRefreshEnvironment, type RefreshRuntime, type RecordState, type SQLRead,
 } from '../src/lib/live-content-refresh'
+
+test('refresh manifest hashes preserve their prior code-unit key ordering', () => {
+  const previousCanonicalJSON = '{"A":5,"Z":3,"_":4,"a":{"A":1,"z":2}}'
+  assert.equal(hashJSON({ a: { z: 2, A: 1 }, Z: 3, _: 4, A: 5 }), createHash('sha256').update(previousCanonicalJSON).digest('hex'))
+})
 
 const faqID = 'e1afc59c-6012-4c04-b0d5-aeaddfe46889'
 const careerID = 'c89d76a4-1d2e-461c-b3ad-444f9df08903'

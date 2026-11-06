@@ -31,4 +31,4 @@ async function run() {
   console.log('created page id', doc.id, '| web address:', doc.slug)
   process.exit(0)
 }
-run()
+await run()

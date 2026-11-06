@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { getPayload } from 'payload'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -183,7 +183,9 @@ async function run() {
   }
   process.exit(0)
 }
-run().catch((e) => {
+try {
+  await run()
+} catch (e) {
   console.error(e)
   process.exit(1)
-})
+}

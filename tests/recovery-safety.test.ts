@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { test } from 'node:test'
 
 const load = () => import('../scripts/lib/recovery-safety.mjs')
+
+test('recovery fingerprints retain existing code-unit key ordering, not locale-dependent alphabetic ordering', async () => {
+  const { fingerprintRows } = await load()
+  const row = { a: { z: 2, A: 1 }, Z: 3, _: 4, A: 5 }
+  const previousCanonicalJSON = '{"A":5,"Z":3,"_":4,"a":{"A":1,"z":2}}'
+  const rowHash = createHash('sha256').update(previousCanonicalJSON).digest('hex')
+  assert.deepEqual(fingerprintRows([row]), { count: 1, sha256: createHash('sha256').update(rowHash).digest('hex') })
+})
 
 test('recovery targets must be disposable loopback databases', async () => {
   const { assertRecoveryTarget } = await load()

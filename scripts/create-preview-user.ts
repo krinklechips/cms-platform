@@ -1,4 +1,4 @@
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
 
@@ -35,4 +35,6 @@ async function main() {
   console.log(`API_KEY=${apiKey}`)
   process.exit(0)
 }
-main().catch((e) => { console.error(e); process.exit(1) })
+try {
+  await main()
+} catch (e) { console.error(e); process.exit(1) }

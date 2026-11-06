@@ -42,6 +42,15 @@ async function target(collection: string, data: Record<string, unknown>, locale:
   return url.searchParams.get('redirect') ?? url.pathname + url.hash
 }
 
+test('trailing origin slash cleanup keeps the exact page and language in every locale', async () => {
+  try {
+    process.env.DUMMY_SITE_URL = 'https://preview.example.test////'
+    for (const locale of ['en', 'kh', 'cn']) {
+      assert.equal(await target('services', { slug: 'dental-implants' }, locale), `/${locale}/services/dental-implants`)
+    }
+  } finally { process.env.DUMMY_SITE_URL = 'https://preview.example.test' }
+})
+
 const routes: [string, Record<string, unknown>, string][] = [
   ['pages', { slug: 'welcome-to-roomchang' }, '/welcome-to-roomchang'],
   ['services', { slug: 'dental-implants' }, '/services/dental-implants'],

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { after, test } from 'node:test'
+import { after, before, test } from 'node:test'
 import React, { act } from 'react'
 import { renderToStaticMarkup, renderToString } from 'react-dom/server'
 import ts from 'typescript'
@@ -23,9 +23,14 @@ function loadSource(path: string, exports: object, doubles: Record<string, unkno
 
 const brand: { AdminLogo?: React.ComponentType; AdminIcon?: React.ComponentType } = {}
 loadSource('../src/components/AdminBrand.tsx', brand)
-assert.ok(brand.AdminLogo)
-assert.ok(brand.AdminIcon)
-const { AdminLogo, AdminIcon } = brand
+let AdminLogo: React.ComponentType
+let AdminIcon: React.ComponentType
+before(() => {
+  assert.ok(brand.AdminLogo)
+  assert.ok(brand.AdminIcon)
+  AdminLogo = brand.AdminLogo
+  AdminIcon = brand.AdminIcon
+})
 
 test('shared-header menu retains native navigation state, accessible labels and desktop preference behavior', async () => {
   for (const open of [true, false]) for (const mobile of [true, false]) {
@@ -102,8 +107,11 @@ loadSource('../src/components/PlatformDashboard.tsx', dashboard, {
   '@payloadcms/ui': { Gutter: ({ children }: { children: React.ReactNode }) => children },
   './OpenTenantContent': { OpenTenantContent: () => null },
 })
-assert.ok(dashboard.PlatformDashboard)
-const { PlatformDashboard } = dashboard
+let PlatformDashboard: (props: DashboardProps) => Promise<React.ReactNode>
+before(() => {
+  assert.ok(dashboard.PlatformDashboard)
+  PlatformDashboard = dashboard.PlatformDashboard
+})
 
 const collections: Record<string, FindResult> = {
   tenants: { docs: [

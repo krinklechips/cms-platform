@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import test from 'node:test'
+import test, { before } from 'node:test'
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { FormState } from 'payload'
@@ -21,15 +21,18 @@ function findSubmit(node: ts.Node) {
   }
   ts.forEachChild(node, findSubmit)
 }
-findSubmit(source)
-assert.ok(submit && ts.isBlock(submit.body), 'Locate the installed Form submit callback')
-const request = submit.body.statements.find(ts.isTryStatement)
-assert.ok(request, 'Locate the native request/response try block')
-const responseIndex = request.tryBlock.statements.findIndex(statement => ts.isVariableStatement(statement)
-  && statement.declarationList.declarations.some(declaration => declaration.name.getText(source) === 'res'))
-assert.ok(responseIndex >= 0 && ts.isIfStatement(request.tryBlock.statements[responseIndex + 1]))
-// Execute every installed statement after the HTTP request, not a rewritten copy of its logic.
-const responseSource = request.tryBlock.statements.slice(responseIndex + 2).map(statement => statement.getText(source)).join('\n')
+let responseSource: string
+before(() => {
+  findSubmit(source)
+  assert.ok(submit && ts.isBlock(submit.body), 'Locate the installed Form submit callback')
+  const request = submit.body.statements.find(ts.isTryStatement)
+  assert.ok(request, 'Locate the native request/response try block')
+  const responseIndex = request.tryBlock.statements.findIndex(statement => ts.isVariableStatement(statement)
+    && statement.declarationList.declarations.some(declaration => declaration.name.getText(source) === 'res'))
+  assert.ok(responseIndex >= 0 && ts.isIfStatement(request.tryBlock.statements[responseIndex + 1]))
+  // Execute every installed statement after the HTTP request, not a rewritten copy of its logic.
+  responseSource = request.tryBlock.statements.slice(responseIndex + 2).map(statement => statement.getText(source)).join('\n')
+})
 
 function formHarness(modified = true, modifiedWhileProcessing = false) {
   const fields = {
@@ -260,19 +263,24 @@ test('mounted native Form retains entered text and modified context after 409, t
 
 const publishURL = new URL('../node_modules/@payloadcms/ui/dist/elements/PublishButton/index.js', import.meta.url)
 const publishSource = ts.createSourceFile(publishURL.pathname, readFileSync(publishURL, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JS)
-const publishButton = publishSource.statements.find(statement => ts.isFunctionDeclaration(statement) && statement.name?.text === 'PublishButton')
-assert.ok(publishButton && ts.isFunctionDeclaration(publishButton) && publishButton.body)
 function declarationNamed(statement: ts.Statement, name: string) {
   return ts.isVariableStatement(statement) && statement.declarationList.declarations.find(declaration => declaration.name.getText(publishSource) === name)
 }
-const publishIndex = publishButton.body.statements.findIndex(statement => Boolean(declarationNamed(statement, 'publish')))
-const statusIndex = publishButton.body.statements.findIndex(statement => Boolean(declarationNamed(statement, 'localizeStatusEnabled')))
-assert.ok(statusIndex >= 0 && publishIndex > statusIndex)
-const publishDeclaration = declarationNamed(publishButton.body.statements[publishIndex], 'publish')
-assert.ok(publishDeclaration && publishDeclaration.initializer && ts.isCallExpression(publishDeclaration.initializer))
-const publishCallback = publishDeclaration.initializer.arguments[0]
-assert.ok(publishCallback && ts.isArrowFunction(publishCallback))
-const publishSetup = publishButton.body.statements.slice(statusIndex, publishIndex).map(statement => statement.getText(publishSource)).join('\n')
+let publishCallback: ts.ArrowFunction
+let publishSetup: string
+before(() => {
+  const publishButton = publishSource.statements.find(statement => ts.isFunctionDeclaration(statement) && statement.name?.text === 'PublishButton')
+  assert.ok(publishButton && ts.isFunctionDeclaration(publishButton) && publishButton.body)
+  const publishIndex = publishButton.body.statements.findIndex(statement => Boolean(declarationNamed(statement, 'publish')))
+  const statusIndex = publishButton.body.statements.findIndex(statement => Boolean(declarationNamed(statement, 'localizeStatusEnabled')))
+  assert.ok(statusIndex >= 0 && publishIndex > statusIndex)
+  const publishDeclaration = declarationNamed(publishButton.body.statements[publishIndex], 'publish')
+  assert.ok(publishDeclaration && publishDeclaration.initializer && ts.isCallExpression(publishDeclaration.initializer))
+  const callback = publishDeclaration.initializer.arguments[0]
+  assert.ok(callback && ts.isArrowFunction(callback))
+  publishCallback = callback
+  publishSetup = publishButton.body.statements.slice(statusIndex, publishIndex).map(statement => statement.getText(publishSource)).join('\n')
+})
 
 for (const [name, custom, localizeStatus, expectedAll] of [
   ['protected collection without localized status', { editorialConcurrency: true }, false, 'true'],
