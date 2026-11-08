@@ -1538,6 +1538,16 @@ export interface Page {
 export interface Service {
   id: number;
   tenant?: (number | null) | Tenant;
+  eyebrow?: string | null;
+  name: string;
+  /**
+   * Falls back to the overview-card description when empty.
+   */
+  heroDescription?: string | null;
+  /**
+   * Shared by all languages. Service image URL; the website can fall back to a bundled image when empty.
+   */
+  imageUrl?: string | null;
   /**
    * The detail page, section by section — add, reorder and edit with real forms. When any section exists here, the site uses THIS and ignores the legacy JSON below.
    */
@@ -1550,6 +1560,7 @@ export interface Service {
              * Render inside a soft card background.
              */
             card?: boolean | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'text';
@@ -1591,6 +1602,7 @@ export interface Service {
                   id?: string | null;
                 }[]
               | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'callout';
@@ -1603,6 +1615,7 @@ export interface Service {
                   id?: string | null;
                 }[]
               | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'list';
@@ -1650,6 +1663,7 @@ export interface Service {
                   id?: string | null;
                 }[]
               | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'cards';
@@ -1664,6 +1678,7 @@ export interface Service {
                   id?: string | null;
                 }[]
               | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'steps';
@@ -1678,6 +1693,7 @@ export interface Service {
                   id?: string | null;
                 }[]
               | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'pricing';
@@ -1692,6 +1708,7 @@ export interface Service {
                   id?: string | null;
                 }[]
               | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'pricetable';
@@ -1712,6 +1729,7 @@ export interface Service {
                   id?: string | null;
                 }[]
               | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'gallery';
@@ -1732,6 +1750,7 @@ export interface Service {
             size?: ('small' | 'medium' | 'large' | 'full') | null;
             width?: number | null;
             height?: number | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'image';
@@ -1743,6 +1762,7 @@ export interface Service {
             videoId?: string | null;
             heading?: string | null;
             subheading?: string | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'video';
@@ -1751,6 +1771,7 @@ export interface Service {
             src?: string | null;
             heading?: string | null;
             caption?: string | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'self_video';
@@ -1780,6 +1801,7 @@ export interface Service {
               alt?: string | null;
               caption?: string | null;
             };
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'image_pair';
@@ -2281,11 +2303,22 @@ export interface Service {
                     }
                 )[]
               | null;
+            sectionSpacing?: ('default' | 'compact' | 'none') | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'twocol';
           }
       )[]
+    | null;
+  description?: string | null;
+  /**
+   * The small tags on this service's card on the Services overview (/services), not on its detail page. Hidden subservices such as implant-bridges and all-on-4 have no overview card, so their tags are not displayed. Detail-page Live Preview does not show tag edits.
+   */
+  features?:
+    | {
+        feature: string;
+        id?: string | null;
+      }[]
     | null;
   /**
    * Detail-page sections JSON ({ sections: [...] }) — same shape the live site renders.
@@ -2303,20 +2336,10 @@ export interface Service {
    * Supabase services.id — used by the sync for idempotent upserts.
    */
   sourceId?: string | null;
-  name: string;
   /**
    * Shared by all languages. Identifies the detail-page URL; the website navigation hierarchy and overview subservice exclusions remain defined in website code.
    */
   slug: string;
-  description?: string | null;
-  /**
-   * Small uppercase label above the hero title.
-   */
-  eyebrow?: string | null;
-  /**
-   * Longer hero paragraph (falls back to description).
-   */
-  heroDescription?: string | null;
   category?: string | null;
   /**
    * Not shown on the website — kept for the data sync.
@@ -2326,19 +2349,6 @@ export interface Service {
    * Unsupported by the current website: this flag does not feature or reorder service cards. Existing values are retained.
    */
   isFeatured?: boolean | null;
-  /**
-   * The small tags on this service's card on the Services overview (/services), not on its detail page. Hidden subservices such as implant-bridges and all-on-4 have no overview card, so their tags are not displayed. Detail-page Live Preview does not show tag edits.
-   */
-  features?:
-    | {
-        feature: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Shared by all languages. Service image URL; the website can fall back to a bundled image when empty.
-   */
-  imageUrl?: string | null;
   /**
    * Shared by all languages. Sets the sequence of visible overview cards; does not change the website navigation hierarchy or make hidden subservices visible.
    */
@@ -5110,6 +5120,10 @@ export interface PagesSelect<T extends boolean = true> {
  */
 export interface ServicesSelect<T extends boolean = true> {
   tenant?: T;
+  eyebrow?: T;
+  name?: T;
+  heroDescription?: T;
+  imageUrl?: T;
   sections?:
     | T
     | {
@@ -5119,6 +5133,7 @@ export interface ServicesSelect<T extends boolean = true> {
               heading?: T;
               body?: T;
               card?: T;
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5135,6 +5150,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     label?: T;
                     id?: T;
                   };
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5148,6 +5164,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     item?: T;
                     id?: T;
                   };
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5170,6 +5187,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     link?: T;
                     id?: T;
                   };
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5185,6 +5203,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     detail?: T;
                     id?: T;
                   };
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5200,6 +5219,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     price?: T;
                     id?: T;
                   };
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5215,6 +5235,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     price?: T;
                     id?: T;
                   };
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5230,6 +5251,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     url?: T;
                     id?: T;
                   };
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5245,6 +5267,7 @@ export interface ServicesSelect<T extends boolean = true> {
               size?: T;
               width?: T;
               height?: T;
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5254,6 +5277,7 @@ export interface ServicesSelect<T extends boolean = true> {
               videoId?: T;
               heading?: T;
               subheading?: T;
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5263,6 +5287,7 @@ export interface ServicesSelect<T extends boolean = true> {
               src?: T;
               heading?: T;
               caption?: T;
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5285,6 +5310,7 @@ export interface ServicesSelect<T extends boolean = true> {
                     alt?: T;
                     caption?: T;
                   };
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
@@ -5649,27 +5675,24 @@ export interface ServicesSelect<T extends boolean = true> {
                           blockName?: T;
                         };
                   };
+              sectionSpacing?: T;
               id?: T;
               blockName?: T;
             };
       };
-  content?: T;
-  sourceId?: T;
-  name?: T;
-  slug?: T;
   description?: T;
-  eyebrow?: T;
-  heroDescription?: T;
-  category?: T;
-  icon?: T;
-  isFeatured?: T;
   features?:
     | T
     | {
         feature?: T;
         id?: T;
       };
-  imageUrl?: T;
+  content?: T;
+  sourceId?: T;
+  slug?: T;
+  category?: T;
+  icon?: T;
+  isFeatured?: T;
   order?: T;
   published?: T;
   _editorialRevision?: T;

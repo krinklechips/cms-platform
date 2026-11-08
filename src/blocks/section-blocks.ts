@@ -325,3 +325,19 @@ const twocol: Block = {
 }
 
 export const SECTION_BLOCKS: Block[] = [...LEAF_BLOCKS, twocol]
+
+// Only Service top-level sections need outer spacing; nested columns keep their own layout.
+export const SERVICE_SECTION_BLOCKS: Block[] = SECTION_BLOCKS.map(block => ({
+  ...block,
+  fields: [...block.fields, {
+    name: 'sectionSpacing',
+    label: 'Space before section',
+    type: 'select',
+    enumName: 'service_section_spacing',
+    options: [
+      { label: 'Default', value: 'default' },
+      { label: 'Compact', value: 'compact' },
+      { label: 'None', value: 'none' },
+    ],
+  }],
+}))

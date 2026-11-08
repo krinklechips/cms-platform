@@ -24,6 +24,7 @@ import * as migration_20261023_040000_homepage_captions from './20261023_040000_
 import * as migration_20261026_032357 from './20261026_032357';
 import * as migration_20261102_063727_meanpack_website from './20261102_063727_meanpack_website';
 import * as migration_20261106_030000_home_services from './20261106_030000_home_services';
+import * as migration_20261108_030000_service_section_spacing from './20261108_030000_service_section_spacing';
 
 export const migrations = [
   {
@@ -155,5 +156,10 @@ export const migrations = [
     up: migration_20261106_030000_home_services.up,
     down: migration_20261106_030000_home_services.down,
     name: '20261106_030000_home_services',
+  },
+  {
+    up: migration_20261108_030000_service_section_spacing.up,
+    down: migration_20261108_030000_service_section_spacing.down,
+    name: '20261108_030000_service_section_spacing',
   },
 ];

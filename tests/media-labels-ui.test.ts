@@ -39,6 +39,9 @@ function findField(fields: Field[], path: string): Field {
         }
       }
     }
+    if (field.type === 'collapsible' && field.fields.some(child => 'name' in child && child.name === name)) {
+      return findField(field.fields, path)
+    }
   }
   throw new Error(`Missing field: ${path}`)
 }
