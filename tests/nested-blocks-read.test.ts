@@ -51,6 +51,9 @@ test('additive nested block repair preserves published locales, latest drafts an
     const db = client
     const args = { db: drizzle(db) } as never
     for (const migration of migrations) await migration.up(args)
+    await repair.up(args)
+    assert.equal((await db.query('SELECT count(*)::int AS n FROM tenants')).rows[0].n, 0,
+      'An empty installation must not require or create the Roomchang tenant')
     const insert = async (table: string, row: Record<string, unknown>) => {
       const columns = Object.keys(row)
       return (await db.query(`INSERT INTO ${quote(table)} (${columns.map(quote).join(',')})
@@ -149,6 +152,11 @@ test('additive nested block repair preserves published locales, latest drafts an
       return insert(target, Object.fromEntries(Object.entries({ ...row, ...overrides }).filter(([, value]) => value !== undefined)))
     }
     await rejectChange('missing tenant fails closed', () => db.query("UPDATE tenants SET slug='roomchang-renamed' WHERE id=$1", [tenant]), /exactly one Roomchang tenant/)
+    await rejectChange('missing tenant with only unsupported legacy data fails closed', async () => {
+      await cloneSource('services_blocks_text_2', 'services_blocks_text_3', { id: 'unsupported-missing-tenant' })
+      for (const source of sources) await db.query(`DELETE FROM ${quote(source)}`)
+      await db.query("UPDATE tenants SET slug='roomchang-renamed' WHERE id=$1", [tenant])
+    }, /exactly one Roomchang tenant/)
     await rejectChange('published ID cannot be reused at another address', () => cloneSource('technology_blocks_text_2', 'technology_blocks_text', { _path: 'sections', _order: 8 }), /conflicting.*identity, address or value/)
     await rejectChange('published address cannot contain another ID', () => cloneSource('technology_blocks_text_2', 'technology_blocks_text', { id: 'conflicting-new-id' }), /conflicting.*identity, address or value/)
     await rejectChange('published copy with changed value is not overwritten', () => cloneSource('technology_blocks_text_2', 'technology_blocks_text', { body: 'different editor wording' }), /conflicting.*identity, address or value/)

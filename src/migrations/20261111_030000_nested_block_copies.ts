@@ -1,7 +1,7 @@
 import { type MigrateUpArgs, sql } from '@payloadcms/db-postgres'
 
-// LOCAL PREPARATION ONLY: intentionally not registered. Requires approval, paused
-// editors, and reopening ALL editor tabs before resume: parent updatedAt/revisions
+// Requires paused editors and reopening ALL editor tabs before resume:
+// parent updatedAt/revisions
 // stay unchanged, so an already-open empty form can delete the restored children.
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   // One statement is atomic even without a caller transaction. NOWAIT refuses
@@ -41,13 +41,24 @@ DECLARE
 BEGIN
   LOCK TABLE public.tenants IN SHARE ROW EXCLUSIVE MODE NOWAIT;
   SELECT count(*), min(id) INTO tenant_count, tenant FROM public.tenants WHERE slug = 'roomchang';
-  IF tenant_count <> 1 THEN
-    RAISE EXCEPTION 'Nested block repair: expected exactly one Roomchang tenant';
-  END IF;
   SELECT string_agg(format('public.%I', tablename), ', ' ORDER BY tablename)
     INTO tables FROM pg_tables WHERE schemaname = 'public'
     AND tablename ~ '^(services|technology|_services_v|_technology_v)($|_)';
   EXECUTE 'LOCK TABLE ' || tables || ' IN SHARE ROW EXCLUSIVE MODE NOWAIT';
+  IF tenant_count = 0 THEN
+    -- Fresh installations have no legacy rows to recover and no tenant yet.
+    FOR candidate IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+      AND tablename ~ '^(services|technology|_services_v|_technology_v)_blocks_.*_[23]($|_)'
+    LOOP
+      EXECUTE format('SELECT EXISTS (SELECT 1 FROM public.%I)', candidate.tablename) INTO populated;
+      IF populated THEN
+        RAISE EXCEPTION 'Nested block repair: expected exactly one Roomchang tenant';
+      END IF;
+    END LOOP;
+    RETURN;
+  ELSIF tenant_count <> 1 THEN
+    RAISE EXCEPTION 'Nested block repair: expected exactly one Roomchang tenant';
+  END IF;
 
   -- No array remapping is implemented. This also refuses newly populated old
   -- block types instead of silently repairing only a subset of editorial data.
