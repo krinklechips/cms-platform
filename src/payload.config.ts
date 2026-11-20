@@ -19,6 +19,7 @@ import { Technology } from './collections/Technology'
 import { Testimonials } from './collections/Testimonials'
 import { Homepage } from './collections/Homepage'
 import { HomeServices } from './collections/HomeServices'
+import { WebsiteText } from './collections/WebsiteText'
 import { Pages } from './collections/Pages'
 import { Branches } from './collections/Branches'
 import { SiteStats } from './collections/SiteStats'
@@ -153,6 +154,7 @@ export default buildConfig({
     withHumanLabels(withHostScope(withModuleGating(withDrafts(FeatureCards)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(Testimonials)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(Pages)))),
+    withHumanLabels(withHostScope(withModuleGating(withDrafts(WebsiteText)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(Services)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(Doctors)))),
     withHumanLabels(withHostScope(withModuleGating(withDrafts(Technology)))),
@@ -265,6 +267,7 @@ export default buildConfig({
         // "Open content" links deep-link straight to that doc.
         homepage: {},
         'home-services': {},
+        'website-text': {},
         branches: {},
         'site-stats': {},
         'feature-cards': {},

@@ -1,5 +1,6 @@
 import type { CollectionSlug, LivePreviewConfig, PayloadRequest } from 'payload'
 import { getStatPreviewPath } from './stat-pages'
+import { websiteTextPage } from './website-text'
 
 export const PREVIEW_COLLECTIONS = [
   'pages',
@@ -8,6 +9,7 @@ export const PREVIEW_COLLECTIONS = [
   'technology',
   'homepage',
   'home-services',
+  'website-text',
   'site-stats',
   'feature-cards',
   'brand-logos',
@@ -144,6 +146,7 @@ export const getPreviewUrl: Exclude<LivePreviewConfig['url'], string | null | un
     technology: slug ? `/technology/${slug}` : '/technology',
     homepage: '',
     'home-services': '#services',
+    'website-text': websiteTextPage(data?.page)?.path ?? null,
     'site-stats': statPreviewPath(data ?? {}, req),
     'feature-cards': '',
     'brand-logos': '',

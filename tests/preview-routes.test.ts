@@ -64,6 +64,7 @@ const routes: [string, Record<string, unknown>, string][] = [
   ['doctors', {}, '/team'],
   ['homepage', {}, ''],
   ['home-services', {}, '#services'],
+  ['website-text', {page:'footer'}, '#site-footer'],
   ['feature-cards', {}, ''],
   ['brand-logos', {}, ''],
   ['testimonials', {}, '/about/testimonials'],
@@ -80,7 +81,7 @@ test('all and only website-content editors share the default-open preview and pu
   const resolved = await config
   assert.equal(resolved.admin.livePreview?.openByDefault, true)
   const expected = new Set(routes.map(([slug]) => slug))
-  assert.equal(expected.size, 28)
+  assert.equal(expected.size, 29)
   assert.deepEqual(new Set(resolved.admin.livePreview?.collections), expected)
   for (const collection of resolved.collections) {
     const controls = collection.admin?.components?.edit?.beforeDocumentControls ?? []

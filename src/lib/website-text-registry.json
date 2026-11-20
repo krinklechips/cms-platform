@@ -1,0 +1,1448 @@
+[
+  {
+    "page": "about",
+    "label": "About Roomchang",
+    "path": "/about",
+    "fields": [
+      {
+        "key": "about.section.facilities.title",
+        "label": "Section / Facilities / Title",
+        "english": "Our Facilities"
+      },
+      {
+        "key": "about.section.facilities.description",
+        "label": "Section / Facilities / Description",
+        "english": "A purpose-built, 10-storey dental hospital with 46 dental chairs, 4 operation rooms, an in-house CAD/CAM lab, and hospital-grade sterilisation."
+      },
+      {
+        "key": "about.section.visionMission.title",
+        "label": "Section / Vision Mission / Title",
+        "english": "Vision, Mission & Values"
+      },
+      {
+        "key": "about.section.visionMission.description",
+        "label": "Section / Vision Mission / Description",
+        "english": "Enriching lives with quality dentistry — guided by professionalism, honesty, teamwork, innovation, and excellence."
+      },
+      {
+        "key": "about.section.directorMessage.title",
+        "label": "Section / Director Message / Title",
+        "english": "Message from Our Director"
+      },
+      {
+        "key": "about.section.directorMessage.description",
+        "label": "Section / Director Message / Description",
+        "english": "A personal message from Dr. Tith Hong Yoeu, DDS, MSc. — Founder & Director — on Roomchang's commitment to quality care."
+      },
+      {
+        "key": "about.section.doctors.title",
+        "label": "Section / Doctors / Title",
+        "english": "Our Doctors"
+      },
+      {
+        "key": "about.section.doctors.description",
+        "label": "Section / Doctors / Description",
+        "english": "Meet the specialist team — multilingual experts in implants, orthodontics, cosmetic dentistry, paediatrics, and more."
+      },
+      {
+        "key": "about.section.community.title",
+        "label": "Section / Community / Title",
+        "english": "Roomchang in the Community"
+      },
+      {
+        "key": "about.section.community.description",
+        "label": "Section / Community / Description",
+        "english": "Free dental care for underserved communities — mobile clinics, blood drives, and oral health education across Cambodia."
+      },
+      {
+        "key": "about.section.partnerships.title",
+        "label": "Section / Partnerships / Title",
+        "english": "Corporate Partnerships"
+      },
+      {
+        "key": "about.section.partnerships.description",
+        "label": "Section / Partnerships / Description",
+        "english": "Trusted by 50+ banks, schools, insurers, and organisations to deliver dental benefits for employees and members."
+      },
+      {
+        "key": "about.section.clinicalResults.title",
+        "label": "Section / Clinical Results / Title",
+        "english": "Clinical Results"
+      },
+      {
+        "key": "about.section.clinicalResults.description",
+        "label": "Section / Clinical Results / Description",
+        "english": "See real before-and-after cases — dental implants, smile makeovers, orthodontics, and full-mouth reconstructions."
+      },
+      {
+        "key": "about.section.technology.title",
+        "label": "Section / Technology / Title",
+        "english": "Technology"
+      },
+      {
+        "key": "about.section.technology.description",
+        "label": "Section / Technology / Description",
+        "english": "CAD/CAM technology, digital intraoral scanning, Invisalign, Ortho-Tain®, ResMed ApneaLink Air™, Beyond® whitening, ICON®, and the Clear Aligner (CA) system."
+      },
+      {
+        "key": "about.section.careers.title",
+        "label": "Section / Careers / Title",
+        "english": "Employment Opportunities"
+      },
+      {
+        "key": "about.section.careers.description",
+        "label": "Section / Careers / Description",
+        "english": "Join Cambodia's leading dental group — clinical fellowships, dental assistant, dentist, and customer service positions available."
+      },
+      {
+        "key": "about.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "Our Story"
+      },
+      {
+        "key": "about.hero.heading",
+        "label": "Hero / Heading",
+        "english": "About Roomchang"
+      },
+      {
+        "key": "about.hero.body",
+        "label": "Hero / Body",
+        "english": "Founded in 1996 by a vision to bring specialist dental care to Cambodia, Roomchang has grown into the country's most trusted dental group — serving local families and international patients from across Asia, Australia, and beyond."
+      },
+      {
+        "key": "about.history.heading",
+        "label": "History / Heading",
+        "english": "A Hospital, Not Just a Clinic"
+      },
+      {
+        "key": "about.history.paragraph1",
+        "label": "History / Paragraph1",
+        "english": "Roomchang Dental Hospital was built on the belief that Cambodian patients deserved access to the same quality of care available in the most advanced dental centres in the world — without having to travel abroad to get it."
+      },
+      {
+        "key": "about.history.paragraph2",
+        "label": "History / Paragraph2",
+        "english": "Over nearly 30 years, we've grown from a single practice to a hospital-scale group with five branches across Phnom Penh, an in-house digital laboratory, and a specialist team covering every major dental discipline."
+      },
+      {
+        "key": "about.history.paragraph3",
+        "label": "History / Paragraph3",
+        "english": "Today, Roomchang treats thousands of patients every month — from routine checkups to complex full-mouth reconstructions — and serves international visitors from more than 20 countries who choose Cambodia for high-quality, cost-effective dental care delivered to the same standards as leading clinics abroad."
+      }
+    ]
+  },
+  {
+    "page": "director-message",
+    "label": "Director's Message",
+    "path": "/about/director-message",
+    "fields": [
+      {
+        "key": "directorMessage.heading",
+        "label": "Heading",
+        "english": "Message from Our Director"
+      },
+      {
+        "key": "directorMessage.letter.salutation",
+        "label": "Letter / Salutation",
+        "english": "Dear Patients,"
+      },
+      {
+        "key": "directorMessage.letter.paragraph1",
+        "label": "Letter / Paragraph1",
+        "english": "Thank you for entrusting your dental care to Roomchang. Over the last three decades, we have always had a strong commitment to providing quality dentistry to everyone — regardless of background, nationality, or the complexity of the case."
+      },
+      {
+        "key": "directorMessage.letter.paragraph2",
+        "label": "Letter / Paragraph2",
+        "english": "When I founded Roomchang in 1996, my goal was simple: to build a dental hospital in Cambodia that could match the standard of care available anywhere in the world. That vision hasn't changed. What has changed is the scale at which we can deliver it — five branches, 74 chairs, a full in-house digital laboratory, and a team of 37 specialist dentists."
+      },
+      {
+        "key": "directorMessage.letter.paragraph3",
+        "label": "Letter / Paragraph3",
+        "english": "We maintain strict ethical codes and invest continuously in the latest equipment and procedures. Our partnership with Prof. Nentwig and Goethe University of Frankfurt, Germany has been instrumental in shaping Roomchang's clinical philosophy — bringing European standards of implantology and oral surgery to our daily practice."
+      },
+      {
+        "key": "directorMessage.letter.paragraph4",
+        "label": "Letter / Paragraph4",
+        "english": "Every member of our team — from our specialists to our front-desk staff — shares a belief that dentistry should be transparent, accessible, and delivered with genuine care. We don't just treat teeth; we build trust."
+      },
+      {
+        "key": "directorMessage.letter.paragraph5",
+        "label": "Letter / Paragraph5",
+        "english": "I'm grateful for the support our patients have given us over the years. It is your confidence in us that drives us to keep improving, keep innovating, and keep showing up every day with the same commitment we started with."
+      },
+      {
+        "key": "directorMessage.letter.signatureName",
+        "label": "Letter / Signature Name",
+        "english": "Dr. Tith Hong Yoeu"
+      },
+      {
+        "key": "directorMessage.letter.signatureTitle",
+        "label": "Letter / Signature Title",
+        "english": "Director, Roomchang Dental Hospital"
+      },
+      {
+        "key": "directorMessage.cta.title",
+        "label": "Cta / Title",
+        "english": "Meet the full team"
+      },
+      {
+        "key": "directorMessage.cta.description",
+        "label": "Cta / Description",
+        "english": "Get to know the specialist dentists Dr. Tith has assembled."
+      }
+    ]
+  },
+  {
+    "page": "facilities",
+    "label": "Our Facilities",
+    "path": "/about/facilities",
+    "fields": [
+      {
+        "key": "facilities.hero.title",
+        "label": "Hero / Title",
+        "english": "Our Facilities"
+      },
+      {
+        "key": "facilities.hero.intro",
+        "label": "Hero / Intro",
+        "english": "A purpose-built, 10-storey dental hospital in the heart of Phnom Penh — equipped with advanced digital technology from Germany and hospital-grade sterilisation throughout."
+      },
+      {
+        "key": "facilities.sections.digital_lab.title",
+        "label": "Sections / Digital Lab / Title",
+        "english": "In-House Digital Laboratory"
+      },
+      {
+        "key": "facilities.sections.imaging.title",
+        "label": "Sections / Imaging / Title",
+        "english": "Diagnostic Imaging"
+      },
+      {
+        "key": "facilities.sections.sterilisation.title",
+        "label": "Sections / Sterilisation / Title",
+        "english": "Sterilisation & Infection Control"
+      },
+      {
+        "key": "facilities.sections.comfort.title",
+        "label": "Sections / Comfort / Title",
+        "english": "Patient Comfort & Access"
+      },
+      {
+        "key": "facilities.buildingHero.title",
+        "label": "Building Hero / Title",
+        "english": "10-Storey Building"
+      },
+      {
+        "key": "facilities.locations.title",
+        "label": "Locations / Title",
+        "english": "Five Branches Across Phnom Penh"
+      },
+      {
+        "key": "facilities.locations.intro",
+        "label": "Locations / Intro",
+        "english": "Every Roomchang branch delivers the same specialist care and hospital-grade standards — with the same team quality, equipment, and sterilisation protocols."
+      },
+      {
+        "key": "facilities.quality.title",
+        "label": "Quality / Title",
+        "english": "Hospital-Grade Standards"
+      },
+      {
+        "key": "facilities.quality.body",
+        "label": "Quality / Body",
+        "english": "Roomchang follows strict sterilisation, infection control, and clinical protocols — the same standards expected of leading international dental hospitals."
+      }
+    ]
+  },
+  {
+    "page": "partnerships",
+    "label": "Corporate Partnerships",
+    "path": "/about/partnerships",
+    "fields": [
+      {
+        "key": "partnerships.hero.title",
+        "label": "Hero / Title",
+        "english": "Corporate Partnerships"
+      },
+      {
+        "key": "partnerships.cta.title",
+        "label": "Cta / Title",
+        "english": "Become a Partner"
+      },
+      {
+        "key": "partnerships.cta.description",
+        "label": "Cta / Description",
+        "english": "Offer your employees or members access to Cambodia's leading dental hospital. Contact us to discuss partnership options."
+      }
+    ]
+  },
+  {
+    "page": "testimonials",
+    "label": "Patient Testimonials",
+    "path": "/about/testimonials",
+    "fields": [
+      {
+        "key": "testimonialsPage.hero.title",
+        "label": "Hero / Title",
+        "english": "Patient Testimonials"
+      },
+      {
+        "key": "testimonialsPage.hero.description",
+        "label": "Hero / Description",
+        "english": "Thousands of patients travel to Roomchang each year from Australia, Japan, Singapore, the USA, and beyond. Here's what they say about their experience."
+      },
+      {
+        "key": "testimonialsPage.written.title",
+        "label": "Written / Title",
+        "english": "What Patients Say"
+      },
+      {
+        "key": "testimonialsPage.written.description",
+        "label": "Written / Description",
+        "english": "Verified reviews from patients who have visited Roomchang."
+      },
+      {
+        "key": "testimonialsPage.video.title",
+        "label": "Video / Title",
+        "english": "Video Testimonials"
+      },
+      {
+        "key": "testimonialsPage.video.description",
+        "label": "Video / Description",
+        "english": "Watch real patients share their experience at Roomchang Dental Hospital."
+      },
+      {
+        "key": "testimonialsPage.cta.title",
+        "label": "Cta / Title",
+        "english": "Ready to start your journey?"
+      },
+      {
+        "key": "testimonialsPage.cta.description",
+        "label": "Cta / Description",
+        "english": "Join thousands of patients who have trusted Roomchang for world-class dental care. Get a free consultation and personalised treatment plan."
+      }
+    ]
+  },
+  {
+    "page": "vision-mission",
+    "label": "Vision, Mission and Values",
+    "path": "/about/vision-mission-values",
+    "fields": [
+      {
+        "key": "visionMission.title",
+        "label": "Title",
+        "english": "Vision, Mission & Values"
+      },
+      {
+        "key": "visionMission.intro",
+        "label": "Intro",
+        "english": "The principles that have guided Roomchang since 1996 — and continue to shape every consultation, treatment plan, and patient interaction."
+      },
+      {
+        "key": "visionMission.vision.statement",
+        "label": "Vision / Statement",
+        "english": "Enriching lives with quality dentistry."
+      },
+      {
+        "key": "visionMission.vision.description",
+        "label": "Vision / Description",
+        "english": "We see a Cambodia where every person has access to world-class dental care — and where choosing local doesn't mean compromising on quality."
+      },
+      {
+        "key": "visionMission.mission.statement",
+        "label": "Mission / Statement",
+        "english": "We truly care for your teeth."
+      },
+      {
+        "key": "visionMission.mission.description",
+        "label": "Mission / Description",
+        "english": "Every treatment plan is designed around the patient — not the procedure. We listen, educate, and deliver care that respects your time, your budget, and your goals."
+      },
+      {
+        "key": "visionMission.values.heading",
+        "label": "Values / Heading",
+        "english": "Our Core Values"
+      },
+      {
+        "key": "visionMission.values.intro",
+        "label": "Values / Intro",
+        "english": "Five principles shape every interaction at Roomchang, from how we design treatments to how we answer the phone."
+      },
+      {
+        "key": "visionMission.values.items.professionalism.title",
+        "label": "Values / Items / Professionalism / Title",
+        "english": "Professionalism"
+      },
+      {
+        "key": "visionMission.values.items.professionalism.description",
+        "label": "Values / Items / Professionalism / Description",
+        "english": "Our team holds international qualifications and operates to the highest clinical standards, guided by rigorous internal protocols and continuous training."
+      },
+      {
+        "key": "visionMission.values.items.honesty.title",
+        "label": "Values / Items / Honesty / Title",
+        "english": "Honesty"
+      },
+      {
+        "key": "visionMission.values.items.honesty.description",
+        "label": "Values / Items / Honesty / Description",
+        "english": "Clear pricing, transparent treatment options, and no hidden fees. We believe informed patients make the best decisions."
+      },
+      {
+        "key": "visionMission.values.items.teamwork.title",
+        "label": "Values / Items / Teamwork / Title",
+        "english": "Teamwork"
+      },
+      {
+        "key": "visionMission.values.items.teamwork.description",
+        "label": "Values / Items / Teamwork / Description",
+        "english": "A collaborative environment where specialists across disciplines work together to deliver the best outcome for every patient."
+      },
+      {
+        "key": "visionMission.values.items.innovation.title",
+        "label": "Values / Items / Innovation / Title",
+        "english": "Innovation"
+      },
+      {
+        "key": "visionMission.values.items.innovation.description",
+        "label": "Values / Items / Innovation / Description",
+        "english": "We invest continuously in technology — from CAD/CAM digital labs to 3D CBCT imaging — to stay at the forefront of dentistry."
+      },
+      {
+        "key": "visionMission.values.items.excellence.title",
+        "label": "Values / Items / Excellence / Title",
+        "english": "Excellence"
+      },
+      {
+        "key": "visionMission.values.items.excellence.description",
+        "label": "Values / Items / Excellence / Description",
+        "english": "From routine check-ups to complex full-mouth reconstructions, we hold ourselves to the same standard of excellence every time."
+      },
+      {
+        "key": "visionMission.cta.heading",
+        "label": "Cta / Heading",
+        "english": "See our values in action"
+      },
+      {
+        "key": "visionMission.cta.description",
+        "label": "Cta / Description",
+        "english": "Meet the specialist team that brings these principles to life every day."
+      }
+    ]
+  },
+  {
+    "page": "services",
+    "label": "Services",
+    "path": "/services",
+    "fields": [
+      {
+        "key": "services.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "What We Treat"
+      },
+      {
+        "key": "services.hero.heading",
+        "label": "Hero / Heading",
+        "english": "Dental Services"
+      },
+      {
+        "key": "services.hero.body",
+        "label": "Hero / Body",
+        "english": "Roomchang offers hospital-level dental care across all major specialties. Whether you're based in Phnom Penh or travelling from overseas, our multilingual team is here to guide you through every step."
+      },
+      {
+        "key": "services.cta.heading",
+        "label": "Cta / Heading",
+        "english": "Not sure which treatment?"
+      },
+      {
+        "key": "services.cta.body",
+        "label": "Cta / Body",
+        "english": "Send us a message or call and our team will help you find the right path."
+      }
+    ]
+  },
+  {
+    "page": "implants-comparison",
+    "label": "Implant Price Comparison",
+    "path": "/pricing/implants-comparison",
+    "fields": [
+      {
+        "key": "implantsComparison.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "Why Our Implants Cost Less"
+      },
+      {
+        "key": "implantsComparison.hero.title",
+        "label": "Hero / Title",
+        "english": "Dental Implants Price Comparison"
+      },
+      {
+        "key": "implantsComparison.hero.body",
+        "label": "Hero / Body",
+        "english": "Patients often ask how Roomchang can offer dental implants at roughly half the Australian price. The short answer: same materials, lower overheads. Here's the honest breakdown."
+      },
+      {
+        "key": "implantsComparison.costDrivers.heading",
+        "label": "Cost Drivers / Heading",
+        "english": "Three things drive the price of a dental implant"
+      },
+      {
+        "key": "implantsComparison.costDrivers.intro",
+        "label": "Cost Drivers / Intro",
+        "english": "Material quality, lab work, and clinical overheads. Only two of those three vary by country — and that's where the savings come from."
+      },
+      {
+        "key": "implantsComparison.costDrivers.materials.title",
+        "label": "Cost Drivers / Materials / Title",
+        "english": "Implant materials"
+      },
+      {
+        "key": "implantsComparison.costDrivers.materials.body",
+        "label": "Cost Drivers / Materials / Body",
+        "english": "Every dental implant has three parts — the titanium implant, an abutment, and a crown (E-max, ceramic fused to metal, or zirconium). Roomchang uses Myplant Two® from Germany, internationally recognised as one of the most reliable and stable implant systems on the market. Material cost is the same whether the implant is placed in Phnom Penh or Perth."
+      },
+      {
+        "key": "implantsComparison.costDrivers.laboratory.title",
+        "label": "Cost Drivers / Laboratory / Title",
+        "english": "Laboratory fees"
+      },
+      {
+        "key": "implantsComparison.costDrivers.laboratory.body",
+        "label": "Cost Drivers / Laboratory / Body",
+        "english": "Roomchang operates an in-house CAD/CAM dental laboratory. Crowns, bridges, and custom abutments are designed and fabricated on-site — we don't pay a third-party lab markup the way Australian clinics do. That single line item accounts for a large share of the price difference on anything involving a crown or bridge."
+      },
+      {
+        "key": "implantsComparison.costDrivers.overheads.title",
+        "label": "Cost Drivers / Overheads / Title",
+        "english": "Dentist fees & overheads"
+      },
+      {
+        "key": "implantsComparison.costDrivers.overheads.body",
+        "label": "Cost Drivers / Overheads / Body",
+        "english": "The 2022 Australian Dental Association survey put private-practice chair time at AUD $400–$700 per hour. Cost of living and commercial rent in Cambodia are dramatically lower, so our overheads are lower. Our specialists are internationally trained — many of them in Japan, Korea, and Australia — but their practice costs don't compare."
+      },
+      {
+        "key": "implantsComparison.material.title",
+        "label": "Material / Title",
+        "english": "Myplant Two® — the same German implant system used by leading clinics worldwide"
+      },
+      {
+        "key": "implantsComparison.material.body",
+        "label": "Material / Body",
+        "english": "Cheap implants exist. We don't use them. Roomchang's standard implant is Myplant Two®, a German-engineered titanium system with over a decade of clinical outcomes behind it. The implant sitting in a patient's jaw in Phnom Penh is the same part number that would be placed in Munich, Sydney, or London. Where we save money is in the lab and in clinic operating costs — never in the part we leave in your body."
+      },
+      {
+        "key": "implantsComparison.table.heading",
+        "label": "Table / Heading",
+        "english": "Implant price comparison"
+      },
+      {
+        "key": "implantsComparison.table.intro",
+        "label": "Table / Intro",
+        "english": "All Roomchang prices in USD. Australian prices reflect the 2022 ADA fee survey plus typical 10–25% increases through 2026. Final price depends on bone condition, abutment type, and crown material — confirmed after consultation and CT imaging."
+      },
+      {
+        "key": "implantsComparison.cta.heading",
+        "label": "Cta / Heading",
+        "english": "Ready to plan your implants?"
+      },
+      {
+        "key": "implantsComparison.cta.body",
+        "label": "Cta / Body",
+        "english": "Send us your OPG, CT scan, or recent photos. We'll come back within two business days with a full treatment plan and an exact quote — no charge, no obligation."
+      }
+    ]
+  },
+  {
+    "page": "pricing",
+    "label": "Pricing",
+    "path": "/pricing",
+    "fields": [
+      {
+        "key": "pricing.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "Transparent Pricing"
+      },
+      {
+        "key": "pricing.hero.heading",
+        "label": "Hero / Heading",
+        "english": "Treatment Prices"
+      },
+      {
+        "key": "pricing.hero.body",
+        "label": "Hero / Body",
+        "english": "We believe in clear, upfront pricing — no hidden fees. All prices below are in USD and reflect actual treatment costs. Your exact quote will be confirmed after consultation and X-rays."
+      },
+      {
+        "key": "pricing.cta.heading",
+        "label": "Cta / Heading",
+        "english": "Get your exact quote"
+      },
+      {
+        "key": "pricing.cta.body",
+        "label": "Cta / Body",
+        "english": "Send us your X-rays or photos and we'll provide a detailed treatment plan with exact pricing within two business days — at no charge."
+      },
+      {
+        "key": "pricing.comparison.heading",
+        "label": "Comparison / Heading",
+        "english": "How Roomchang Compares — Australia & Singapore"
+      }
+    ]
+  },
+  {
+    "page": "team",
+    "label": "Our Team",
+    "path": "/team",
+    "fields": [
+      {
+        "key": "doctorGrid.cta.heading",
+        "label": "Cta / Heading",
+        "english": "Not sure who to see?"
+      },
+      {
+        "key": "doctorGrid.cta.body",
+        "label": "Cta / Body",
+        "english": "Tell us what you're looking for and we'll match you with the right specialist."
+      },
+      {
+        "key": "team.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "Meet the Team"
+      },
+      {
+        "key": "team.hero.heading",
+        "label": "Hero / Heading",
+        "english": "Our Doctors"
+      },
+      {
+        "key": "team.hero.body",
+        "label": "Hero / Body",
+        "english": "Roomchang's clinical team combines decades of local experience with internationally trained specialists. All consultations are available in your language."
+      }
+    ]
+  },
+  {
+    "page": "technology",
+    "label": "Technology",
+    "path": "/technology",
+    "fields": [
+      {
+        "key": "technology.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "Precision & Innovation"
+      },
+      {
+        "key": "technology.hero.heading",
+        "label": "Hero / Heading",
+        "english": "Our Technology"
+      },
+      {
+        "key": "technology.hero.body",
+        "label": "Hero / Body",
+        "english": "Roomchang invests continuously in the tools and systems that make dental care safer, faster, and more precise — from in-house CAD/CAM fabrication and 3D surgical planning, to specialised systems like Ortho-Tain® for early orthodontics, ResMed ApneaLink Air™ for sleep diagnostics, and ICON® Vestibular for minimally invasive enamel repair."
+      },
+      {
+        "key": "technology.cta.heading",
+        "label": "Cta / Heading",
+        "english": "See it in person"
+      },
+      {
+        "key": "technology.cta.body",
+        "label": "Cta / Body",
+        "english": "Book a consultation and our team will walk you through exactly what technology applies to your treatment."
+      }
+    ]
+  },
+  {
+    "page": "international",
+    "label": "International Patients",
+    "path": "/international",
+    "fields": [
+      {
+        "key": "international.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "Dental Tourism"
+      },
+      {
+        "key": "international.hero.heading",
+        "label": "Hero / Heading",
+        "english": "International Patients"
+      },
+      {
+        "key": "international.hero.body",
+        "label": "Hero / Body",
+        "english": "Thousands of patients travel from Australia, Japan, Singapore, and beyond to receive world-class dental care at Roomchang. We make the process simple, transparent, and as comfortable as possible."
+      },
+      {
+        "key": "international.why.heading",
+        "label": "Why / Heading",
+        "english": "Why Choose Roomchang?"
+      },
+      {
+        "key": "international.why.body",
+        "label": "Why / Body",
+        "english": "Quality dental care in Cambodia offers genuine value — not as a compromise, but as a deliberate choice by patients who have done their research."
+      },
+      {
+        "key": "international.cost.heading",
+        "label": "Cost / Heading",
+        "english": "Cost Comparison"
+      },
+      {
+        "key": "international.cost.body",
+        "label": "Cost / Body",
+        "english": "Indicative savings vs. equivalent treatments in Australia, Singapore & the UK."
+      },
+      {
+        "key": "international.howItWorks.heading",
+        "label": "How It Works / Heading",
+        "english": "How It Works"
+      },
+      {
+        "key": "international.howItWorks.body",
+        "label": "How It Works / Body",
+        "english": "From your first message to your last appointment, we make every step clear and manageable — even from the other side of the world."
+      },
+      {
+        "key": "international.cta.heading",
+        "label": "Cta / Heading",
+        "english": "Ready to get started?"
+      },
+      {
+        "key": "international.cta.body",
+        "label": "Cta / Body",
+        "english": "Send us your X-rays or a short message and we'll put together a free treatment plan within two business days."
+      }
+    ]
+  },
+  {
+    "page": "clinical-results",
+    "label": "Clinical Results",
+    "path": "/clinical-results",
+    "fields": [
+      {
+        "key": "clinicalResults.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "Real Patients, Real Results"
+      },
+      {
+        "key": "clinicalResults.hero.heading",
+        "label": "Hero / Heading",
+        "english": "Clinical Results"
+      },
+      {
+        "key": "clinicalResults.hero.body",
+        "label": "Hero / Body",
+        "english": "A selection of cases from Roomchang's clinical team — covering implants, orthodontics, full mouth reconstructions, and cosmetic transformations. All cases are documented with clinical notes, photos, and patient consent."
+      },
+      {
+        "key": "clinicalResultsGrid.cta.heading",
+        "label": "Cta / Heading",
+        "english": "Achieve similar results"
+      },
+      {
+        "key": "clinicalResultsGrid.cta.body",
+        "label": "Cta / Body",
+        "english": "Book a consultation and our specialists will assess your case and show you what's possible — with a personalised treatment plan and clear pricing."
+      }
+    ]
+  },
+  {
+    "page": "blog",
+    "label": "Education and News",
+    "path": "/blog",
+    "fields": [
+      {
+        "key": "blogIndex.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "Learn"
+      },
+      {
+        "key": "blogIndex.hero.title",
+        "label": "Hero / Title",
+        "english": "Education Blog"
+      },
+      {
+        "key": "blogIndex.hero.description",
+        "label": "Hero / Description",
+        "english": "Dental health education from our specialist team — frequently asked questions, expert talks, and published research."
+      },
+      {
+        "key": "blogIndex.sections.faq.title",
+        "label": "Sections / Faq / Title",
+        "english": "FAQ"
+      },
+      {
+        "key": "blogIndex.sections.faq.description",
+        "label": "Sections / Faq / Description",
+        "english": "Answers to the most common questions about dental treatments, costs, and what to expect at Roomchang."
+      },
+      {
+        "key": "blogIndex.sections.dentistTalks.title",
+        "label": "Sections / Dentist Talks / Title",
+        "english": "Dentist Talks"
+      },
+      {
+        "key": "blogIndex.sections.dentistTalks.description",
+        "label": "Sections / Dentist Talks / Description",
+        "english": "Watch our specialist dentists explain common dental concerns, treatment options, and modern technologies in short, informative videos."
+      },
+      {
+        "key": "blogIndex.sections.publications.title",
+        "label": "Sections / Publications / Title",
+        "english": "Publications & Research"
+      },
+      {
+        "key": "blogIndex.sections.publications.description",
+        "label": "Sections / Publications / Description",
+        "english": "Peer-reviewed research papers and clinical studies published by Roomchang dentists, advancing evidence-based care."
+      }
+    ]
+  },
+  {
+    "page": "community",
+    "label": "Roomchang in the Community",
+    "path": "/about/community",
+    "fields": [
+      {
+        "key": "communityPage.heading",
+        "label": "Heading",
+        "english": "Roomchang in the Community"
+      },
+      {
+        "key": "communityPage.intro",
+        "label": "Intro",
+        "english": "Dental care shouldn't be a luxury. Since 1996, Roomchang has run charity missions bringing free treatment to underserved communities across Cambodia — rural provinces, schools, orphanages, and beyond."
+      }
+    ]
+  },
+  {
+    "page": "dentist-talks",
+    "label": "Dentist Talks",
+    "path": "/blog/dentist-talks",
+    "fields": [
+      {
+        "key": "dentistTalks.hero.title",
+        "label": "Hero / Title",
+        "english": "Dentist Talks"
+      },
+      {
+        "key": "dentistTalks.hero.intro",
+        "label": "Hero / Intro",
+        "english": "Hear directly from Roomchang's dentists as they explain common dental concerns, treatment options, modern technologies, and how patients can make informed decisions about their oral health."
+      },
+      {
+        "key": "dentistTalks.intro.heading",
+        "label": "Intro / Heading",
+        "english": "Expert Dental Advice from Roomchang"
+      },
+      {
+        "key": "dentistTalks.intro.paragraph1",
+        "label": "Intro / Paragraph1",
+        "english": "At Roomchang Dental Hospital, patient education is part of every treatment journey. In this video series, our dentists share practical insights about dental care, treatment planning, prevention, and advanced procedures available at Roomchang."
+      },
+      {
+        "key": "dentistTalks.intro.paragraph2",
+        "label": "Intro / Paragraph2",
+        "english": "Whether you are considering implants, braces, veneers, crowns, whitening, or routine care, these talks are designed to help you better understand your options before starting treatment."
+      },
+      {
+        "key": "dentistTalks.whyMatter.heading",
+        "label": "Why Matter / Heading",
+        "english": "Why These Talks Matter"
+      },
+      {
+        "key": "dentistTalks.videos.heading",
+        "label": "Videos / Heading",
+        "english": "Watch Our Dentists Explain"
+      },
+      {
+        "key": "dentistTalks.videos.intro",
+        "label": "Videos / Intro",
+        "english": "Learn from Roomchang dentists through short, informative videos covering everyday dental questions and advanced treatment topics."
+      },
+      {
+        "key": "dentistTalks.cta.heading",
+        "label": "Cta / Heading",
+        "english": "Have more questions?"
+      },
+      {
+        "key": "dentistTalks.cta.body",
+        "label": "Cta / Body",
+        "english": "Our team is ready to help. Book a free consultation and get personalised advice from our specialist dentists."
+      }
+    ]
+  },
+  {
+    "page": "news",
+    "label": "News and Events",
+    "path": "/about/news",
+    "fields": [
+      {
+        "key": "newsPage.heading",
+        "label": "Heading",
+        "english": "News & Events"
+      },
+      {
+        "key": "newsPage.intro",
+        "label": "Intro",
+        "english": "Stay updated with the latest news, events, press coverage, and announcements from Roomchang Dental Hospital — Cambodia's leading dental group since 1996."
+      }
+    ]
+  },
+  {
+    "page": "publications",
+    "label": "Publications and Research",
+    "path": "/blog/publications",
+    "fields": [
+      {
+        "key": "publications.hero.title",
+        "label": "Hero / Title",
+        "english": "Publication & Research"
+      },
+      {
+        "key": "publications.hero.intro",
+        "label": "Hero / Intro",
+        "english": "Dentists at Roomchang do more than provide clinical care. They are also actively involved in research that helps improve diagnosis, treatment planning, materials, techniques, and long-term patient outcomes. Through education and research, dental professionals continue to advance evidence-based care and bring the latest knowledge into everyday clinical practice."
+      },
+      {
+        "key": "publications.cta.title",
+        "label": "Cta / Title",
+        "english": "Interested in collaborating?"
+      },
+      {
+        "key": "publications.cta.body",
+        "label": "Cta / Body",
+        "english": "Roomchang welcomes research collaborations with universities and dental institutions worldwide."
+      }
+    ]
+  },
+  {
+    "page": "careers",
+    "label": "Careers",
+    "path": "/about/careers",
+    "fields": [
+      {
+        "key": "careers.title",
+        "label": "Title",
+        "english": "Employment Opportunities"
+      },
+      {
+        "key": "careers.intro",
+        "label": "Intro",
+        "english": "Roomchang Dental Hospital is a state-of-the-art dental hospital with over 3 decades of experience and a strong commitment to providing quality dentistry to everyone. We are always interested in hearing from potential applicants."
+      },
+      {
+        "key": "careers.cta.heading",
+        "label": "Cta / Heading",
+        "english": "Ready to Apply?"
+      },
+      {
+        "key": "careers.cta.description",
+        "label": "Cta / Description",
+        "english": "Send your resume with related references and a cover letter to our HR team."
+      }
+    ]
+  },
+  {
+    "page": "contact",
+    "label": "Contact",
+    "path": "/contact",
+    "fields": [
+      {
+        "key": "contact.hero.eyebrow",
+        "label": "Hero / Eyebrow",
+        "english": "Get In Touch"
+      },
+      {
+        "key": "contact.hero.heading",
+        "label": "Hero / Heading",
+        "english": "Contact & Appointments"
+      },
+      {
+        "key": "contact.hero.body",
+        "label": "Hero / Body",
+        "english": "Fill in the form and one of our team will be in touch within one business day. For urgent enquiries, call us directly — we have a 24/7 line."
+      },
+      {
+        "key": "contactForm.success.heading",
+        "label": "Success / Heading",
+        "english": "Thanks, we'll be in touch!"
+      },
+      {
+        "key": "contactForm.success.body",
+        "label": "Success / Body",
+        "english": "Your enquiry has been received. A member of our team will contact you within one business day to confirm your appointment or answer your questions."
+      },
+      {
+        "key": "contactForm.branches.heading",
+        "label": "Branches / Heading",
+        "english": "Our Branches"
+      },
+      {
+        "key": "contactForm.messaging.heading",
+        "label": "Messaging / Heading",
+        "english": "Message Us"
+      }
+    ]
+  },
+  {
+    "page": "branch-pages",
+    "label": "Branch Pages",
+    "path": "/contact",
+    "fields": [
+      {
+        "key": "branchDetail.map.title",
+        "label": "Map / Title",
+        "english": "Map — {name}"
+      }
+    ]
+  },
+  {
+    "page": "navigation",
+    "label": "Navigation",
+    "path": "",
+    "fields": [
+      {
+        "key": "nav.home",
+        "label": "Home",
+        "english": "Home"
+      },
+      {
+        "key": "nav.about",
+        "label": "About",
+        "english": "About"
+      },
+      {
+        "key": "nav.aboutRoomchang",
+        "label": "About Roomchang",
+        "english": "About Roomchang"
+      },
+      {
+        "key": "nav.ourFacilities",
+        "label": "Our Facilities",
+        "english": "Our Facilities"
+      },
+      {
+        "key": "nav.visionMission",
+        "label": "Vision Mission",
+        "english": "Vision, Mission & Values"
+      },
+      {
+        "key": "nav.directorMessage",
+        "label": "Director Message",
+        "english": "Message from Our Director"
+      },
+      {
+        "key": "nav.newsEvents",
+        "label": "News Events",
+        "english": "News & Events"
+      },
+      {
+        "key": "nav.communityCharity",
+        "label": "Community Charity",
+        "english": "Roomchang in the Community"
+      },
+      {
+        "key": "nav.corporatePartnerships",
+        "label": "Corporate Partnerships",
+        "english": "Corporate Partnerships"
+      },
+      {
+        "key": "nav.employmentOpportunities",
+        "label": "Employment Opportunities",
+        "english": "Employment Opportunities"
+      },
+      {
+        "key": "nav.services",
+        "label": "Services",
+        "english": "Services"
+      },
+      {
+        "key": "nav.preventiveDentistry",
+        "label": "Preventive Dentistry",
+        "english": "Preventive Dentistry"
+      },
+      {
+        "key": "nav.cosmeticDentistry",
+        "label": "Cosmetic Dentistry",
+        "english": "Cosmetic Dentistry"
+      },
+      {
+        "key": "nav.endodontics",
+        "label": "Endodontics",
+        "english": "Endodontics"
+      },
+      {
+        "key": "nav.dentalCrowns",
+        "label": "Dental Crowns",
+        "english": "Crowns & Bridges"
+      },
+      {
+        "key": "nav.orthodontics",
+        "label": "Orthodontics",
+        "english": "Orthodontics"
+      },
+      {
+        "key": "nav.pediatricDentistry",
+        "label": "Pediatric Dentistry",
+        "english": "Pediatric Dentistry"
+      },
+      {
+        "key": "nav.periodontalDentistry",
+        "label": "Periodontal Dentistry",
+        "english": "Periodontal Dentistry"
+      },
+      {
+        "key": "nav.dentures",
+        "label": "Dentures",
+        "english": "Dentures"
+      },
+      {
+        "key": "nav.dentalImplants",
+        "label": "Dental Implants",
+        "english": "Dental Implants"
+      },
+      {
+        "key": "nav.oralSurgery",
+        "label": "Oral Surgery",
+        "english": "Oral Surgery"
+      },
+      {
+        "key": "nav.fullMouthReconstruction",
+        "label": "Full Mouth Reconstruction",
+        "english": "Full Mouth Reconstruction"
+      },
+      {
+        "key": "nav.teethWhitening",
+        "label": "Teeth Whitening",
+        "english": "Teeth Whitening"
+      },
+      {
+        "key": "nav.snoringApnea",
+        "label": "Snoring Apnea",
+        "english": "Sleep Apnea & Snoring"
+      },
+      {
+        "key": "nav.doctors",
+        "label": "Doctors",
+        "english": "Doctors"
+      },
+      {
+        "key": "nav.technology",
+        "label": "Technology",
+        "english": "Technology"
+      },
+      {
+        "key": "nav.cadCam",
+        "label": "Cad Cam",
+        "english": "CAD/CAM Digital Dentistry"
+      },
+      {
+        "key": "nav.clearAligner",
+        "label": "Clear Aligner",
+        "english": "Clear Aligner® (CA)"
+      },
+      {
+        "key": "nav.invisalign",
+        "label": "Invisalign",
+        "english": "Invisalign®"
+      },
+      {
+        "key": "nav.orthoTain",
+        "label": "Ortho Tain",
+        "english": "Ortho-Tain® System"
+      },
+      {
+        "key": "nav.resmedApnealink",
+        "label": "Resmed Apnealink",
+        "english": "ResMed ApneaLink Air™"
+      },
+      {
+        "key": "nav.beyondWhitening",
+        "label": "Beyond Whitening",
+        "english": "Beyond® Teeth Whitening"
+      },
+      {
+        "key": "nav.iconVestibular",
+        "label": "Icon Vestibular",
+        "english": "ICON® Vestibular"
+      },
+      {
+        "key": "nav.sterilisationTech",
+        "label": "Sterilisation Tech",
+        "english": "Sterilisation Technologies"
+      },
+      {
+        "key": "nav.international",
+        "label": "International",
+        "english": "International"
+      },
+      {
+        "key": "nav.pricing",
+        "label": "Pricing",
+        "english": "Pricing"
+      },
+      {
+        "key": "nav.dentalTreatmentCosts",
+        "label": "Dental Treatment Costs",
+        "english": "Dental Treatment Costs"
+      },
+      {
+        "key": "nav.priceComparison",
+        "label": "Price Comparison",
+        "english": "International Price Comparison"
+      },
+      {
+        "key": "nav.implantsComparison",
+        "label": "Implants Comparison",
+        "english": "Dental Implants Price Comparison"
+      },
+      {
+        "key": "nav.clinicalResults",
+        "label": "Clinical Results",
+        "english": "Clinical Results"
+      },
+      {
+        "key": "nav.allCases",
+        "label": "All Cases",
+        "english": "All Cases"
+      },
+      {
+        "key": "nav.fullMouthReconstructionResults",
+        "label": "Full Mouth Reconstruction Results",
+        "english": "Full Mouth Reconstruction"
+      },
+      {
+        "key": "nav.implantsCrowns",
+        "label": "Implants Crowns",
+        "english": "Implants & Crowns"
+      },
+      {
+        "key": "nav.implantBridges",
+        "label": "Implant Bridges",
+        "english": "Implant Bridges"
+      },
+      {
+        "key": "nav.orthodonticsResults",
+        "label": "Orthodontics Results",
+        "english": "Orthodontics"
+      },
+      {
+        "key": "nav.cosmeticEmax",
+        "label": "Cosmetic Emax",
+        "english": "Cosmetic & E-Max"
+      },
+      {
+        "key": "nav.patientTestimonials",
+        "label": "Patient Testimonials",
+        "english": "Patient Testimonials"
+      },
+      {
+        "key": "nav.educationBlog",
+        "label": "Education Blog",
+        "english": "Education Blog"
+      },
+      {
+        "key": "nav.faq",
+        "label": "Faq",
+        "english": "FAQ"
+      },
+      {
+        "key": "nav.dentistTalks",
+        "label": "Dentist Talks",
+        "english": "Dentist Talks"
+      },
+      {
+        "key": "nav.publications",
+        "label": "Publications",
+        "english": "Publications"
+      }
+    ]
+  },
+  {
+    "page": "footer",
+    "label": "Footer",
+    "path": "#site-footer",
+    "fields": [
+      {
+        "key": "footer.heading.services",
+        "label": "Heading / Services",
+        "english": "Services"
+      },
+      {
+        "key": "footer.heading.about",
+        "label": "Heading / About",
+        "english": "About"
+      },
+      {
+        "key": "footer.heading.international",
+        "label": "Heading / International",
+        "english": "International Patients"
+      },
+      {
+        "key": "footer.heading.contact",
+        "label": "Heading / Contact",
+        "english": "Contact"
+      },
+      {
+        "key": "footer.link.allServices",
+        "label": "Link / All Services",
+        "english": "All Services"
+      },
+      {
+        "key": "footer.link.visionMission",
+        "label": "Link / Vision Mission",
+        "english": "Vision & Mission"
+      },
+      {
+        "key": "footer.link.ourDoctors",
+        "label": "Link / Our Doctors",
+        "english": "Our Doctors"
+      },
+      {
+        "key": "footer.link.comingToCambodia",
+        "label": "Link / Coming To Cambodia",
+        "english": "Coming to Cambodia?"
+      },
+      {
+        "key": "footer.link.howItWorks",
+        "label": "Link / How It Works",
+        "english": "How It Works"
+      },
+      {
+        "key": "footer.link.treatmentCosts",
+        "label": "Link / Treatment Costs",
+        "english": "Treatment Costs"
+      },
+      {
+        "key": "footer.link.bookAppointment",
+        "label": "Link / Book Appointment",
+        "english": "Book Appointment"
+      },
+      {
+        "key": "footer.link.branches",
+        "label": "Link / Branches",
+        "english": "Branches"
+      },
+      {
+        "key": "footer.link.implantsComparison",
+        "label": "Link / Implants Comparison",
+        "english": "Implants Price Comparison"
+      },
+      {
+        "key": "footer.link.warranty",
+        "label": "Link / Warranty",
+        "english": "Treatment Warranty"
+      },
+      {
+        "key": "footer.link.chooseYourCountry",
+        "label": "Link / Choose Your Country",
+        "english": "Choose your country"
+      },
+      {
+        "key": "footer.social.whatsapp",
+        "label": "Social / Whatsapp",
+        "english": "WhatsApp"
+      },
+      {
+        "key": "footer.social.wechat",
+        "label": "Social / Wechat",
+        "english": "WeChat"
+      },
+      {
+        "key": "footer.social.facebook",
+        "label": "Social / Facebook",
+        "english": "Facebook"
+      },
+      {
+        "key": "footer.social.youtube",
+        "label": "Social / Youtube",
+        "english": "YouTube"
+      },
+      {
+        "key": "footer.social.instagram",
+        "label": "Social / Instagram",
+        "english": "Instagram"
+      },
+      {
+        "key": "footer.social.telegram",
+        "label": "Social / Telegram",
+        "english": "Telegram"
+      },
+      {
+        "key": "footer.social.tiktok",
+        "label": "Social / Tiktok",
+        "english": "TikTok"
+      },
+      {
+        "key": "footer.social.linkedin",
+        "label": "Social / Linkedin",
+        "english": "LinkedIn"
+      },
+      {
+        "key": "footer.logoAlt",
+        "label": "Logo Alt",
+        "english": "Roomchang Dental Hospital"
+      },
+      {
+        "key": "footer.tagline",
+        "label": "Tagline",
+        "english": "Premium dental care for local and international patients. Multilingual, technology-first, and rooted in compassionate care since 1996."
+      },
+      {
+        "key": "footer.address.line1",
+        "label": "Address / Line1",
+        "english": "No.4, Street 184, Phsar Thmey 3"
+      },
+      {
+        "key": "footer.address.line2",
+        "label": "Address / Line2",
+        "english": "Khan Daun Penh, Phnom Penh 120203"
+      },
+      {
+        "key": "footer.phoneMobile247",
+        "label": "Phone Mobile247",
+        "english": "(Mobile 24/7)"
+      },
+      {
+        "key": "footer.copyright",
+        "label": "Copyright",
+        "english": "© {year} Roomchang Dental Hospital. Operated by Kravan Healthcare Co., Ltd."
+      },
+      {
+        "key": "footer.legal.ariaLabel",
+        "label": "Legal / Aria Label",
+        "english": "Legal links"
+      },
+      {
+        "key": "footer.legal.privacyPolicy",
+        "label": "Legal / Privacy Policy",
+        "english": "Privacy Policy"
+      },
+      {
+        "key": "footer.legal.termsOfService",
+        "label": "Legal / Terms Of Service",
+        "english": "Terms of Service"
+      },
+      {
+        "key": "footer.legal.disclaimer",
+        "label": "Legal / Disclaimer",
+        "english": "Disclaimer"
+      },
+      {
+        "key": "footer.legal.cookiePolicy",
+        "label": "Legal / Cookie Policy",
+        "english": "Cookie Policy"
+      },
+      {
+        "key": "footer.legal.bookingCancellation",
+        "label": "Legal / Booking Cancellation",
+        "english": "Booking & Cancellation Policy"
+      }
+    ]
+  }
+]

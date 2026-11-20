@@ -1,4 +1,5 @@
 import * as migration_20260708_061931_initial from './20260708_061931_initial';
+import * as migration_20261120_110000_website_text from './20261120_110000_website_text';
 import * as migration_20260708_071008_media_r2_prefix from './20260708_071008_media_r2_prefix';
 import * as migration_20260708_071914_modules_billing_branding from './20260708_071914_modules_billing_branding';
 import * as migration_20260708_073232_wave1_content from './20260708_073232_wave1_content';
@@ -167,5 +168,10 @@ export const migrations = [
     up: migration_20261111_030000_nested_block_copies.up,
     down: migration_20261111_030000_nested_block_copies.down,
     name: '20261111_030000_nested_block_copies',
+  },
+  {
+    up: migration_20261120_110000_website_text.up,
+    down: migration_20261120_110000_website_text.down,
+    name: '20261120_110000_website_text',
   },
 ];

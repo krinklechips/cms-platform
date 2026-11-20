@@ -13,6 +13,10 @@ export type SitePage = { page: string; path: string; parts: PagePart[] }
 
 export const SITE_PAGES: SitePage[] = [
   {
+    page: 'Website Text, Navigation and Footer', path: '/en',
+    parts: [{ collection: 'website-text', controls: 'Page introductions and headings use their page record. Navigation labels keep their existing shared header/footer consumers; the Footer record contains footer-only text. Existing content editors retain ownership of their own wording. Link destinations, media and layouts remain in website code.' }],
+  },
+  {
     page: "Home page",
     path: "/en",
     parts: [
@@ -221,15 +225,13 @@ export const SITE_PAGES: SitePage[] = [
 /** Website sections not yet rendered from CMS content. Some have collections
  *  and readers already, but their page consumers are still unwired. */
 export const UNMODELED_PAGES: { path: string; whatsThere: string; source: string }[] = [
-  { path: "/en/about — headings, intro and section shortcuts", whatsThere: "Page headline, intro copy and the section shortcut tiles; the stats band and history timeline are CMS-fed in Payload mode.", source: "messages/*.json (`about.*`) + SECTION_DEFS in src/app/[locale]/about/page.tsx. Timeline events are separate CMS records." },
-  { path: "/en/about/vision-mission-values", whatsThere: "Whole page — vision, mission, and the five value cards.", source: "messages/*.json, `visionMission` namespace. No CMS collection at all." },
-  { path: "/en/about/director-message", whatsThere: "Whole page — the director's portrait and full letter.", source: "messages/*.json, `directorMessage` namespace + a hardcoded <Image> path. No CMS collection at all." },
-  { path: "/en/about/facilities — general copy and facility photo blocks", whatsThere: "General facility copy and facility photo sections, excluding the CMS-fed stat strip and branch location cards.", source: "messages/*.json (`facilities` namespace) + page code. Branch cards use getBranchDetails() in Payload mode with bundled field fallbacks." },
-  { path: "/en/blog (blog hub)", whatsThere: "The three-card hub linking to FAQ, Dentist Talks and Publications.", source: "messages/*.json, `blogIndex` namespace. No CMS collection." },
+  { path: "/en/about — shortcut destinations and layout", whatsThere: "Fixed shortcut destinations and layout; reviewed page wording is editable in Website Text.", source: "SECTION_DEFS and page JSX. Timeline and statistics retain their existing CMS editors." },
+  { path: "/en/about/director-message — portrait", whatsThere: "The director portrait; letter wording is editable in Website Text.", source: "The image path remains in page JSX." },
+  { path: "/en/about/facilities — facility photos", whatsThere: "Fixed facility photo blocks; reviewed page wording is editable in Website Text.", source: "Page JSX. Branch cards retain their separate CMS source." },
   { path: "/en/pricing/warranty", whatsThere: "The whole warranty page — coverage table, covered/not-covered lists, validity conditions, post-warranty terms, limitation of liability, contact block.", source: "Supabase table `warranty_terms` via getWarrantyTerms() in src/lib/data.ts (English-only, no i18n overlay). The" },
   { path: "/en/privacy-policy, /en/terms-of-service, /en/cookie-policy, /en/disclaimer, /en/booking-cancellation-policy", whatsThere: "All five legal pages, in full.", source: "messages/en.json | km.json | zh.json namespaces `privacyPolicy`, `termsOfService`, `cookiePolicy`, `disclaimer" },
-  { path: "Site header / main navigation (every page)", whatsThere: "The whole nav tree including the Services dropdown's 13 links and the Technology dropdown's links, the logo, and the language switcher.", source: "Hardcoded NAV_ITEMS array in src/components/site/site-header.tsx + labels from the `nav`/`header` namespaces i" },
-  { path: "Site footer (every page)", whatsThere: "All four footer columns, the social links (Facebook, YouTube, Instagram, Telegram, TikTok, LinkedIn), the legal link row, and the address/phone block.", source: "Hardcoded FOOTER_STRUCTURE, SOCIAL and LEGAL_LINKS arrays in src/components/site/site-footer.tsx + `footer`/`n" },
+  { path: "Site header / main navigation (every page)", whatsThere: "Navigation structure, destinations, logo, language switcher and unregistered header interface labels. Shared Navigation wording is editable in Website Text.", source: "NAV_ITEMS and header JSX retain layout and URLs; the nav catalogue uses the Website Text overlay in Payload mode." },
+  { path: "Site footer (every page)", whatsThere: "Fixed destinations, phone/email links, logo and layout. Footer wording and shared Navigation labels are editable in Website Text.", source: "FOOTER_STRUCTURE, SOCIAL and LEGAL_LINKS retain URLs; footer/nav catalogues use the Website Text overlay in Payload mode." },
   { path: "Floating contact widget + cookie/consent banner (every page)", whatsThere: "The bottom-right WhatsApp/Telegram/Messenger/phone buttons and the consent banner text.", source: "src/components/site/floating-contact.tsx and consent-banner.tsx, with copy from the `floatingContact` and `con" },
   { path: "SEO — global/static page metadata", whatsThere: "Static page metadata remains in website code and translations. Custom pages have CMS SEO fields; content-detail metadata follows its selected content source.", source: "getSeoPageMeta() in src/lib/data.ts does not overlay Supabase metadata in CMS mode. Non-CMS deployments retain the legacy seo_page_meta table." },
 ]

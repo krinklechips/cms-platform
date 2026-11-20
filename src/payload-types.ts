@@ -75,6 +75,7 @@ export interface Config {
     'feature-cards': FeatureCard;
     testimonials: Testimonial;
     pages: Page;
+    'website-text': WebsiteText;
     services: Service;
     doctors: Doctor;
     technology: Technology;
@@ -120,6 +121,7 @@ export interface Config {
     'feature-cards': FeatureCardsSelect<false> | FeatureCardsSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    'website-text': WebsiteTextSelect<false> | WebsiteTextSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     doctors: DoctorsSelect<false> | DoctorsSelect<true>;
     technology: TechnologySelect<false> | TechnologySelect<true>;
@@ -1524,6 +1526,53 @@ export interface Page {
    * Image URL used when the page is shared (Facebook/Telegram).
    */
   seoImage?: string | null;
+  _editorialRevision?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * Page introductions, shared navigation labels and footer text.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "website-text".
+ */
+export interface WebsiteText {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  page:
+    | 'about'
+    | 'director-message'
+    | 'facilities'
+    | 'partnerships'
+    | 'testimonials'
+    | 'vision-mission'
+    | 'services'
+    | 'implants-comparison'
+    | 'pricing'
+    | 'team'
+    | 'technology'
+    | 'international'
+    | 'clinical-results'
+    | 'blog'
+    | 'community'
+    | 'dentist-talks'
+    | 'news'
+    | 'publications'
+    | 'careers'
+    | 'contact'
+    | 'branch-pages'
+    | 'navigation'
+    | 'footer';
+  copy?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   _editorialRevision?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -4052,6 +4101,10 @@ export interface PayloadLockedDocument {
         value: number | Page;
       } | null)
     | ({
+        relationTo: 'website-text';
+        value: number | WebsiteText;
+      } | null)
+    | ({
         relationTo: 'services';
         value: number | Service;
       } | null)
@@ -5109,6 +5162,19 @@ export interface PagesSelect<T extends boolean = true> {
   seoTitle?: T;
   seoDescription?: T;
   seoImage?: T;
+  _editorialRevision?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "website-text_select".
+ */
+export interface WebsiteTextSelect<T extends boolean = true> {
+  tenant?: T;
+  page?: T;
+  copy?: T;
   _editorialRevision?: T;
   updatedAt?: T;
   createdAt?: T;
